@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
 import { useAuth } from '@/lib/auth'
-import { profileAPI, authAPI } from '@/lib/api'
+import { profileAPI } from '@/lib/api'
 
 export default function ProfilePage() {
   const { isAuthenticated, isLoading, profileLoaded, isVerified, user, fetchProfile } = useAuth()

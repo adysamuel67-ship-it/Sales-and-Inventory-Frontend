@@ -6,6 +6,8 @@
  * 2. Active nav item is highlighted
  * 3. Profile dropdown shows user info
  * 4. Logout clears auth state
+ * 5. Business switcher shows current business
+ * 6. Role-based nav visibility
  */
 
 import React from 'react'
@@ -24,13 +26,20 @@ jest.mock('next/link', () => {
 })
 
 jest.mock('next/navigation', () => ({
-  usePathname: jest.fn(() => '/dashboard'),
+  usePathname: jest.fn(() => '/business/1/dashboard'),
+  useParams: jest.fn(() => ({ id: '1' })),
 }))
 
 jest.mock('@/lib/auth', () => ({
   useAuth: jest.fn(() => ({
-    user: { id: 1, name: 'Kwame Mensah', email: 'kwame@test.com', phone: '0241234567', role: 'admin' },
+    user: { id: 1, name: 'Kwame Mensah', email: 'kwame@test.com', phone: '0241234567', role: 'OWNER', is_verified: true },
     logout: jest.fn(),
+    businesses: [
+      { business_id: 1, name: 'Kwame Shop' },
+      { business_id: 2, name: 'Second Shop' },
+    ],
+    currentBusiness: { business_id: 1, name: 'Kwame Shop' },
+    switchBusiness: jest.fn(),
   })),
 }))
 
@@ -38,7 +47,7 @@ import DashboardLayout from '@/components/DashboardLayout'
 import { render, screen } from '@testing-library/react'
 
 describe('DashboardLayout', () => {
-  it('renders all navigation items as Link components', () => {
+  it('renders navigation links as Link components', () => {
     render(
       <DashboardLayout>
         <div>Test Content</div>
@@ -46,16 +55,15 @@ describe('DashboardLayout', () => {
     )
 
     const links = screen.getAllByTestId('next-link')
-    expect(links.length).toBe(4)
+    expect(links.length).toBeGreaterThanOrEqual(4)
 
     const hrefs = links.map(link => link.getAttribute('href'))
-    expect(hrefs).toContain('/dashboard')
-    expect(hrefs).toContain('/sales')
-    expect(hrefs).toContain('/products')
-    expect(hrefs).toContain('/businesses')
+    expect(hrefs).toContain('/business/1/dashboard')
+    expect(hrefs).toContain('/business/1/sales')
+    expect(hrefs).toContain('/business/1/products')
   })
 
-  it('renders navigation labels inside Link elements', () => {
+  it('renders navigation labels', () => {
     render(
       <DashboardLayout>
         <div>Content</div>
@@ -67,7 +75,6 @@ describe('DashboardLayout', () => {
     expect(linkTexts.some(t => t?.includes('Dashboard'))).toBe(true)
     expect(linkTexts.some(t => t?.includes('Sales'))).toBe(true)
     expect(linkTexts.some(t => t?.includes('Products'))).toBe(true)
-    expect(linkTexts.some(t => t?.includes('Businesses'))).toBe(true)
   })
 
   it('renders children content', () => {
@@ -97,7 +104,8 @@ describe('DashboardLayout', () => {
       </DashboardLayout>
     )
 
-    expect(screen.getByText('admin')).toBeTruthy()
+    const roleBadges = screen.getAllByText('OWNER')
+    expect(roleBadges.length).toBeGreaterThanOrEqual(1)
   })
 
   it('displays brand name', () => {
@@ -107,8 +115,8 @@ describe('DashboardLayout', () => {
       </DashboardLayout>
     )
 
-    expect(screen.getByText('Smart Sales')).toBeTruthy()
-    expect(screen.getByText('Inventory System')).toBeTruthy()
+    expect(screen.getByText('Business Bot')).toBeTruthy()
+    expect(screen.getByText('Sales & Inventory')).toBeTruthy()
   })
 
   it('header shows Live indicator', () => {
@@ -143,7 +151,7 @@ describe('DashboardLayout', () => {
     )
 
     const links = screen.getAllByTestId('next-link')
-    const dashboardLink = links.find(l => l.getAttribute('href') === '/dashboard')
+    const dashboardLink = links.find(l => l.getAttribute('href') === '/business/1/dashboard')
     expect(dashboardLink?.className).toContain('bg-white/20')
     expect(dashboardLink?.className).toContain('font-medium')
   })
@@ -156,8 +164,66 @@ describe('DashboardLayout', () => {
     )
 
     const links = screen.getAllByTestId('next-link')
-    const salesLink = links.find(l => l.getAttribute('href') === '/sales')
+    const salesLink = links.find(l => l.getAttribute('href') === '/business/1/sales')
     expect(salesLink?.className).not.toContain('bg-white/20')
     expect(salesLink?.className).toContain('text-white/70')
+  })
+
+  it('shows current business name', () => {
+    render(
+      <DashboardLayout>
+        <div>Content</div>
+      </DashboardLayout>
+    )
+
+    expect(screen.getByText('Kwame Shop')).toBeTruthy()
+  })
+
+  it('shows business count when multiple businesses', () => {
+    render(
+      <DashboardLayout>
+        <div>Content</div>
+      </DashboardLayout>
+    )
+
+    expect(screen.getByText('2 businesses')).toBeTruthy()
+  })
+
+  it('renders sidebar with user name and role', () => {
+    render(
+      <DashboardLayout>
+        <div>Content</div>
+      </DashboardLayout>
+    )
+
+    expect(screen.getByText('Kwame Mensah')).toBeTruthy()
+    const roles = screen.getAllByText('OWNER')
+    expect(roles.length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('owner-only nav items (Approvals/Reports/Settings) are visible for OWNER', () => {
+    render(
+      <DashboardLayout>
+        <div>Content</div>
+      </DashboardLayout>
+    )
+
+    const links = screen.getAllByTestId('next-link')
+    const hrefs = links.map(l => l.getAttribute('href'))
+    expect(hrefs).toContain('/businesses')
+    expect(hrefs).toContain('/business/1/reports')
+    expect(hrefs).toContain('/business/1/settings')
+  })
+
+  it('shows Customers nav item', () => {
+    render(
+      <DashboardLayout>
+        <div>Content</div>
+      </DashboardLayout>
+    )
+
+    const links = screen.getAllByTestId('next-link')
+    const hrefs = links.map(l => l.getAttribute('href'))
+    expect(hrefs).toContain('/business/1/customers')
   })
 })

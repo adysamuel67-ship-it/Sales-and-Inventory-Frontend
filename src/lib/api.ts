@@ -258,6 +258,23 @@ export const saleAPI = {
     api.delete(`/sales/${businessId}/${saleId}`),
 }
 
+export const customerAPI = {
+  list: (businessId: number, params?: any) =>
+    api.get(`/business/customers/${businessId}`, { params }),
+  get: (businessId: number, customerId: number) =>
+    api.get(`/business/customers/${businessId}/${customerId}`),
+  create: (businessId: number, data: any) =>
+    api.post(`/business/customers/${businessId}`, data),
+  update: (businessId: number, customerId: number, data: any) =>
+    api.put(`/business/customers/${businessId}/${customerId}`, data),
+  delete: (businessId: number, customerId: number) =>
+    api.delete(`/business/customers/${businessId}/${customerId}`),
+  deactivate: (businessId: number, customerId: number) =>
+    api.put(`/business/customers/${businessId}/deactivate/${customerId}`),
+  listWithDebt: (businessId: number, params?: any) =>
+    api.get(`/debts/customers/${businessId}`, { params }),
+}
+
 export const reportAPI = {
   profit: (businessId: number, date: string, endDate: string) =>
     api.get(`/reports/profit/${businessId}`, { params: { date, end_date: endDate } }),

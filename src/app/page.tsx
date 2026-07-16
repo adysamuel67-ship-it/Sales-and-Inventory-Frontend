@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/auth'
 
 export default function Home() {
   const router = useRouter()
-  const { isAuthenticated, isLoading, profileLoaded, isVerified } = useAuth()
+  const { isAuthenticated, isLoading, profileLoaded, isVerified, currentBusiness } = useAuth()
 
   useEffect(() => {
     if (!isLoading) {
@@ -14,11 +14,13 @@ export default function Home() {
         router.replace('/login')
       } else if (profileLoaded && !isVerified) {
         router.replace('/verify')
+      } else if (profileLoaded && isVerified && currentBusiness) {
+        router.replace(`/business/${currentBusiness.business_id}/dashboard`)
       } else if (profileLoaded && isVerified) {
-        router.replace('/dashboard')
+        router.replace('/businesses')
       }
     }
-  }, [isLoading, isAuthenticated, profileLoaded, isVerified, router])
+  }, [isLoading, isAuthenticated, profileLoaded, isVerified, currentBusiness, router])
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">

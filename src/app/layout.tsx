@@ -3,9 +3,8 @@ import './globals.css'
 import { AuthProvider } from '@/lib/auth'
 
 export const metadata: Metadata = {
-  title: 'Smart Sales & Inventory System',
-  description: 'Inventory and sales tracking for Ghanaian businesses',
-  manifest: '/manifest.json',
+  title: 'Business Bot — Sales & Inventory',
+  description: 'Multi-tenant inventory & sales platform for informal market traders',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

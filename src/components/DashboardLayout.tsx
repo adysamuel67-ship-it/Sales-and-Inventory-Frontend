@@ -2,25 +2,20 @@
 
 import { useAuth } from '@/lib/auth'
 import { useState, useRef, useEffect } from 'react'
-import { usePathname } from 'next/navigation'
+import { usePathname, useParams } from 'next/navigation'
 import Link from 'next/link'
 
-const normalNavItems = [
-  { label: 'Dashboard', icon: '📊', href: '/dashboard', id: 'dashboard' },
-  { label: 'Sales', icon: '💰', href: '/sales', id: 'sales' },
-  { label: 'Products', icon: '📦', href: '/products', id: 'products' },
-  { label: 'Businesses', icon: '🏢', href: '/businesses', id: 'businesses' },
-]
+interface DashboardLayoutProps {
+  children: React.ReactNode
+  businessId?: string
+}
 
-const adminSubItems = [
-  { label: 'Overview', icon: '🛡️', href: '/admin', id: 'admin' },
-  { label: 'User Management', icon: '👥', href: '/admin/users', id: 'admin-users' },
-  { label: 'Business Management', icon: '🏢', href: '/admin/businesses', id: 'admin-businesses' },
-]
-
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default function DashboardLayout({ children, businessId: propBusinessId }: DashboardLayoutProps) {
   const { user, logout, businesses, currentBusiness, switchBusiness } = useAuth()
   const pathname = usePathname()
+  const params = useParams()
+  const businessId = propBusinessId || (params?.id as string) || currentBusiness?.business_id?.toString() || ''
+
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const [sidebarProfileOpen, setSidebarProfileOpen] = useState(false)
@@ -30,8 +25,33 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const sidebarProfileRef = useRef<HTMLDivElement>(null)
   const bizSwitcherRef = useRef<HTMLDivElement>(null)
 
-  const isAdmin = user?.role === 'super_admin'
-  const allNavItems = [...normalNavItems, ...(isAdmin ? adminSubItems : [])]
+  const isSuperAdmin = user?.role === 'super_admin'
+  const isManager = user?.role === 'OWNER' || user?.role === 'ADMIN' || user?.role === 'owner' || user?.role === 'admin' || isSuperAdmin
+  const bizBase = businessId ? `/business/${businessId}` : ''
+
+  const normalNavItems = [
+    { label: 'Dashboard', icon: '📊', href: `${bizBase}/dashboard`, id: 'dashboard' },
+    { label: 'Sales', icon: '💰', href: `${bizBase}/sales`, id: 'sales' },
+    { label: 'Products', icon: '📦', href: `${bizBase}/products`, id: 'products' },
+    { label: 'Customers', icon: '👥', href: `${bizBase}/customers`, id: 'customers' },
+    { label: 'Approvals', icon: '✅', href: '/businesses', id: 'approvals', ownerOnly: true },
+    { label: 'Reports', icon: '📈', href: `${bizBase}/reports`, id: 'reports', ownerOnly: true },
+    { label: 'Settings', icon: '⚙️', href: `${bizBase}/settings`, id: 'settings', ownerOnly: true },
+  ]
+
+  const visibleNavItems = normalNavItems.filter((item) => {
+    if (item.ownerOnly && isManager) return true
+    if (item.ownerOnly && !isManager) return false
+    return true
+  })
+
+  const adminSubItems = [
+    { label: 'Overview', icon: '🛡️', href: '/admin', id: 'admin' },
+    { label: 'User Management', icon: '👥', href: '/admin/users', id: 'admin-users' },
+    { label: 'Business Management', icon: '🏢', href: '/admin/businesses', id: 'admin-businesses' },
+    { label: 'Low Stock', icon: '⚠️', href: '/admin/low-stock', id: 'admin-low-stock' },
+    { label: 'Jobs', icon: '🕐', href: '/admin/jobs', id: 'admin-jobs' },
+  ]
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -53,7 +73,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     if (biz) {
       switchBusiness(biz)
       setBizSwitcherOpen(false)
+      window.location.href = `/business/${biz.business_id}/dashboard`
     }
+  }
+
+  const isNavItemActive = (href: string) => {
+    return pathname === href || pathname.startsWith(href + '/')
   }
 
   return (
@@ -79,8 +104,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </svg>
               </div>
               <div>
-                <p className="text-white font-semibold text-sm">Smart Sales</p>
-                <p className="text-white/60 text-xs">Inventory System</p>
+                <p className="text-white font-semibold text-sm">Business Bot</p>
+                <p className="text-white/60 text-xs">Sales & Inventory</p>
               </div>
             </div>
           </div>
@@ -92,7 +117,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   onClick={() => setBizSwitcherOpen(!bizSwitcherOpen)}
                   className="w-full flex items-center gap-2 px-3 py-2.5 bg-white/10 rounded-xl hover:bg-white/15 transition-all cursor-pointer"
                 >
-                  <div className="w-8 h-8 bg-african-gold/30 rounded-lg flex items-center justify-center text-white text-xs font-bold shrink-0">
+                  <div className="w-8 h-8 bg-primary/30 rounded-lg flex items-center justify-center text-white text-xs font-bold shrink-0">
                     {currentBusiness.name.charAt(0).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0 text-left">
@@ -146,14 +171,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
           )}
 
-          <nav className="flex-1 p-4 space-y-1">
-            {normalNavItems.map((item) => {
-              const isActive = pathname === item.href
+          <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+            {visibleNavItems.map((item) => {
+              const isActive = isNavItemActive(item.href)
               return (
                 <Link
                   key={item.id}
                   href={item.href}
-                  className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-all ${
+                  onClick={() => setSidebarOpen(false)}
+                  className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-all min-h-[44px] ${
                     isActive
                       ? 'bg-white/20 text-white font-medium'
                       : 'text-white/70 hover:bg-white/10 hover:text-white'
@@ -165,11 +191,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               )
             })}
 
-            {isAdmin && (
+            {isSuperAdmin && (
               <div className="pt-2">
                 <button
                   onClick={() => setAdminOpen(!adminOpen)}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-all ${
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-all min-h-[44px] ${
                     pathname.startsWith('/admin')
                       ? 'bg-white/20 text-white font-medium'
                       : 'text-white/70 hover:bg-white/10 hover:text-white'
@@ -177,9 +203,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 >
                   <span>🛡️</span>
                   <span className="flex-1 text-left">Admin</span>
-                  <span className="text-[9px] font-bold uppercase tracking-wider bg-african-gold/30 text-african-gold px-1.5 py-0.5 rounded-full mr-1">
-                    Admin
-                  </span>
                   <svg
                     className={`w-4 h-4 transition-transform ${adminOpen ? 'rotate-180' : ''}`}
                     fill="none"
@@ -198,7 +221,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         <Link
                           key={item.id}
                           href={item.href}
-                          className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all ${
+                          onClick={() => setSidebarOpen(false)}
+                          className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all min-h-[40px] ${
                             isActive
                               ? 'bg-white/15 text-white font-medium'
                               : 'text-white/60 hover:bg-white/10 hover:text-white'
@@ -219,18 +243,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <div ref={sidebarProfileRef} className="relative">
               <button
                 onClick={() => setSidebarProfileOpen(!sidebarProfileOpen)}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-all cursor-pointer"
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-all cursor-pointer min-h-[44px]"
               >
-                <div className="w-9 h-9 rounded-full bg-african-gold/30 flex items-center justify-center text-white text-sm font-medium">
+                <div className="w-9 h-9 rounded-full bg-primary/30 flex items-center justify-center text-white text-sm font-medium">
                   {user?.name?.charAt(0)?.toUpperCase() || 'U'}
                 </div>
                 <div className="flex-1 min-w-0 text-left">
                   <p className="text-white text-sm font-medium truncate">{user?.name || 'User'}</p>
-                  <p className="text-white/50 text-xs capitalize flex items-center gap-1">
+                  <p className="text-white/50 text-xs capitalize">
                     {user?.role || 'user'}
-                    {isAdmin && (
-                      <span className="text-[9px] bg-african-gold/30 text-african-gold px-1 rounded">SUPER</span>
-                    )}
                   </p>
                 </div>
                 <svg className={`w-4 h-4 text-white/40 transition-transform ${sidebarProfileOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -242,10 +263,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <div className="absolute bottom-full left-0 right-0 mb-2 mx-2 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
                   <div className="px-4 py-3 border-b border-gray-100">
                     <p className="text-sm font-semibold text-gray-900 truncate">{user?.name || 'User'}</p>
-                    <p className="text-xs text-gray-500 truncate">{user?.email || ''}</p>
-                    {user?.phone && (
-                      <p className="text-xs text-gray-400 mt-0.5">{user.phone}</p>
-                    )}
                     <div className="flex items-center gap-2 mt-1.5">
                       <span className="inline-block text-[10px] font-medium uppercase tracking-wider bg-primary/10 text-primary px-2 py-0.5 rounded-full">
                         {user?.role || 'user'}
@@ -264,7 +281,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   <Link
                     href="/profile"
                     onClick={() => setSidebarProfileOpen(false)}
-                    className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors min-h-[44px]"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -273,7 +290,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   </Link>
                   <button
                     onClick={() => { setSidebarProfileOpen(false); logout() }}
-                    className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                    className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors min-h-[44px]"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -292,7 +309,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="flex items-center justify-between px-4 sm:px-6 h-16">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="lg:hidden p-2 rounded-lg hover:bg-gray-100"
+              className="lg:hidden p-2 rounded-lg hover:bg-gray-100 min-h-[44px] min-w-[44px] flex items-center justify-center"
             >
               <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -301,7 +318,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
             <div className="flex-1 lg:flex-none">
               <h2 className="text-lg font-bold text-gray-900 lg:hidden">
-                {allNavItems.find((item: { href: string }) => item.href === pathname)?.label || 'Dashboard'}
+                {visibleNavItems.find((item) => isNavItemActive(item.href))?.label || 'Dashboard'}
               </h2>
             </div>
 
@@ -319,32 +336,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </button>
 
                 {profileOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
+                  <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
                     <div className="px-4 py-3 border-b border-gray-100">
                       <p className="text-sm font-semibold text-gray-900 truncate">{user?.name || 'User'}</p>
-                      <p className="text-xs text-gray-500 truncate">{user?.email || ''}</p>
-                      {user?.phone && (
-                        <p className="text-xs text-gray-400 mt-0.5">{user.phone}</p>
-                      )}
-                      <div className="flex items-center gap-2 mt-1.5">
+                      <div className="flex items-center gap-2 mt-1">
                         <span className="inline-block text-[10px] font-medium uppercase tracking-wider bg-primary/10 text-primary px-2 py-0.5 rounded-full">
                           {user?.role || 'user'}
                         </span>
-                        {user?.is_verified ? (
-                          <span className="inline-block text-[10px] font-medium uppercase tracking-wider bg-success-light text-success px-2 py-0.5 rounded-full">
-                            Verified
-                          </span>
-                        ) : (
-                          <span className="inline-block text-[10px] font-medium uppercase tracking-wider bg-warning-light text-warning px-2 py-0.5 rounded-full">
-                            Unverified
-                          </span>
-                        )}
                       </div>
                     </div>
                     <Link
                       href="/profile"
                       onClick={() => setProfileOpen(false)}
-                      className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors min-h-[44px]"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -353,7 +357,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </Link>
                     <button
                       onClick={() => { setProfileOpen(false); logout() }}
-                      className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                      className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors min-h-[44px]"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />

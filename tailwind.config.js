@@ -7,35 +7,54 @@ module.exports = {
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#1A56DB',
-          dark: '#1344B0',
-          light: '#E8F0FE',
+          DEFAULT: '#2563EB',
+          dark: '#1D4ED8',
+          light: '#EFF4FF',
+        },
+        navy: {
+          DEFAULT: '#14213D',
+          light: '#1E293B',
         },
         success: {
-          DEFAULT: '#057A55',
-          light: '#E6F7EC',
+          DEFAULT: '#16A34A',
+          light: '#DCFCE7',
         },
         warning: {
-          DEFAULT: '#C27803',
-          light: '#FFF3D6',
+          DEFAULT: '#D97706',
+          light: '#FEF3C7',
         },
         danger: {
-          DEFAULT: '#C81E1E',
-          light: '#FDE8E8',
+          DEFAULT: '#DC2626',
+          light: '#FEE2E2',
         },
         neutral: {
-          DEFAULT: '#374151',
-          light: '#6B7280',
+          DEFAULT: '#475569',
+          light: '#94A3B8',
         },
         background: '#F9FAFB',
         surface: '#FFFFFF',
-        accent: {
-          DEFAULT: '#D4782B',
-          light: '#FEF3E7',
-        },
-        'african-gold': '#D4A017',
-        'african-terracotta': '#C75B39',
-        'african-green': '#2D6A4F',
+        border: '#CBD5E1',
+        surfaceAlt: '#F1F5F9',
+      },
+      fontFamily: {
+        sans: [
+          'Inter',
+          '-apple-system',
+          'BlinkMacSystemFont',
+          'Segoe UI',
+          'system-ui',
+          'Roboto',
+          'Helvetica Neue',
+          'Arial',
+          'sans-serif',
+        ],
+      },
+      borderRadius: {
+        '2xl': '1rem',
+        '3xl': '1.5rem',
+      },
+      minHeight: {
+        'touch': '44px',
       },
     },
   },

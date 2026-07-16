@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
 import { useAuth } from '@/lib/auth'
-import { businessAPI, getUserIdFromToken } from '@/lib/api'
+import { businessAPI } from '@/lib/api'
 
 interface Business {
   business_id: number
@@ -23,7 +23,7 @@ interface Approval {
 }
 
 export default function BusinessesPage() {
-  const { isAuthenticated, isLoading, profileLoaded, isVerified, user, businesses, currentBusiness, switchBusiness, fetchBusinesses } = useAuth()
+  const { isAuthenticated, isLoading, profileLoaded, user, businesses, currentBusiness, switchBusiness, fetchBusinesses } = useAuth()
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -132,6 +132,7 @@ export default function BusinessesPage() {
       setSuccess('Business created successfully!')
       await fetchBusinesses()
       switchBusiness(newBiz)
+      router.push(`/business/${newBiz.business_id}/dashboard`)
     } catch (err: any) {
       const detail = err.response?.data?.detail
       if (Array.isArray(detail)) {
@@ -181,6 +182,9 @@ export default function BusinessesPage() {
       await businessAPI.confirmApproval(bizId, { approval_id: approvalId, dir })
       setSuccess(dir === 1 ? 'Approved!' : 'Rejected')
       loadApprovals(bizId)
+      if (dir === 1) {
+        await fetchBusinesses()
+      }
     } catch (err: any) {
       const detail = err.response?.data?.detail
       setError(typeof detail === 'string' ? detail : 'Failed to process approval')
@@ -193,7 +197,10 @@ export default function BusinessesPage() {
       await businessAPI.delete(id)
       if (currentBusiness?.business_id === id && businesses.length > 1) {
         const remaining = businesses.find((b) => b.business_id !== id)
-        if (remaining) switchBusiness(remaining)
+        if (remaining) {
+          switchBusiness(remaining)
+          router.push(`/business/${remaining.business_id}/dashboard`)
+        }
       }
       setSuccess('Business deleted')
       await fetchBusinesses()
@@ -206,6 +213,11 @@ export default function BusinessesPage() {
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
     setSuccess('Business key copied to clipboard!')
+  }
+
+  const handleEnterBusiness = (biz: Business) => {
+    switchBusiness(biz)
+    router.push(`/business/${biz.business_id}/dashboard`)
   }
 
   if (isLoading || !isAuthenticated || !profileLoaded) {
@@ -226,7 +238,7 @@ export default function BusinessesPage() {
         <div className="flex gap-2">
           <button
             onClick={() => { setShowJoin(!showJoin); setShowCreate(false) }}
-            className="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors flex items-center gap-2"
+            className="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors flex items-center gap-2 min-h-[44px]"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
@@ -235,7 +247,7 @@ export default function BusinessesPage() {
           </button>
           <button
             onClick={() => { setShowCreate(!showCreate); setShowJoin(false) }}
-            className="px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors flex items-center gap-2"
+            className="px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors flex items-center gap-2 min-h-[44px]"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -272,19 +284,19 @@ export default function BusinessesPage() {
               onChange={(e) => setNewName(e.target.value)}
               placeholder="Business name"
               required
-              className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+              className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
             />
             <button
               type="submit"
               disabled={creating}
-              className="px-6 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-60"
+              className="px-6 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-60 min-h-[44px]"
             >
               {creating ? 'Creating...' : 'Create'}
             </button>
             <button
               type="button"
               onClick={() => setShowCreate(false)}
-              className="px-4 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors"
+              className="px-4 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors min-h-[44px]"
             >
               Cancel
             </button>
@@ -305,7 +317,7 @@ export default function BusinessesPage() {
                   onChange={(e) => setJoinKey(e.target.value)}
                   placeholder="Paste the business key here"
                   required
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                 />
               </div>
               <div>
@@ -313,7 +325,7 @@ export default function BusinessesPage() {
                 <select
                   value={joinRole}
                   onChange={(e) => setJoinRole(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-white"
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-white min-h-[44px]"
                 >
                   <option value="viewer">Viewer</option>
                   <option value="cashier">Cashier</option>
@@ -329,21 +341,21 @@ export default function BusinessesPage() {
                 value={joinReason}
                 onChange={(e) => setJoinReason(e.target.value)}
                 placeholder="Why do you want to join?"
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
               />
             </div>
             <div className="flex gap-3">
               <button
                 type="submit"
                 disabled={joining}
-                className="px-6 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-60"
+                className="px-6 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-60 min-h-[44px]"
               >
                 {joining ? 'Sending...' : 'Send Request'}
               </button>
               <button
                 type="button"
                 onClick={() => setShowJoin(false)}
-                className="px-4 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors"
+                className="px-4 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors min-h-[44px]"
               >
                 Cancel
               </button>
@@ -381,17 +393,15 @@ export default function BusinessesPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      {!isActive && (
-                        <button
-                          onClick={() => switchBusiness(biz)}
-                          className="px-3 py-1.5 text-xs font-medium text-primary bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors"
-                        >
-                          Switch to
-                        </button>
-                      )}
                       <button
-                        onClick={() => { loadBusinessKey(biz.business_id) }}
-                        className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                        onClick={() => handleEnterBusiness(biz)}
+                        className="px-3 py-1.5 text-xs font-medium text-white bg-primary rounded-lg hover:bg-primary-dark transition-colors min-h-[36px]"
+                      >
+                        {isActive ? 'Enter' : 'Switch to'}
+                      </button>
+                      <button
+                        onClick={() => loadBusinessKey(biz.business_id)}
+                        className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors min-h-[36px]"
                         title="Get business key to share"
                       >
                         Get Key
@@ -404,14 +414,14 @@ export default function BusinessesPage() {
                             loadApprovals(biz.business_id)
                           }
                         }}
-                        className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                        className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors min-h-[36px]"
                         title="View pending requests"
                       >
                         Requests {approvals[biz.business_id]?.length ? `(${approvals[biz.business_id].length})` : ''}
                       </button>
                       <button
                         onClick={() => handleDelete(biz.business_id)}
-                        className="px-3 py-1.5 text-xs font-medium text-danger bg-danger-light rounded-lg hover:bg-danger/10 transition-colors"
+                        className="px-3 py-1.5 text-xs font-medium text-danger bg-danger-light rounded-lg hover:bg-danger/10 transition-colors min-h-[36px]"
                       >
                         Delete
                       </button>
@@ -465,13 +475,13 @@ export default function BusinessesPage() {
                               <div className="flex gap-2">
                                 <button
                                   onClick={() => handleApprove(biz.business_id, approval.approval_id, 1)}
-                                  className="px-3 py-1.5 text-xs font-medium text-success bg-success-light rounded-lg hover:bg-success/10 transition-colors"
+                                  className="px-3 py-1.5 text-xs font-medium text-success bg-success-light rounded-lg hover:bg-success/10 transition-colors min-h-[36px]"
                                 >
                                   Approve
                                 </button>
                                 <button
                                   onClick={() => handleApprove(biz.business_id, approval.approval_id, 0)}
-                                  className="px-3 py-1.5 text-xs font-medium text-danger bg-danger-light rounded-lg hover:bg-danger/10 transition-colors"
+                                  className="px-3 py-1.5 text-xs font-medium text-danger bg-danger-light rounded-lg hover:bg-danger/10 transition-colors min-h-[36px]"
                                 >
                                   Reject
                                 </button>
@@ -489,8 +499,28 @@ export default function BusinessesPage() {
             })}
           </div>
         ) : (
-          <div className="px-5 py-12 text-center text-neutral-light text-sm">
-            No businesses yet. Create one or join an existing business.
+          <div className="px-5 py-12 text-center">
+            <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-3">
+              <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+            </div>
+            <p className="text-sm font-medium text-gray-900 mb-1">No businesses yet</p>
+            <p className="text-xs text-neutral-light mb-4">Create one or join an existing business to get started</p>
+            <div className="flex justify-center gap-3">
+              <button
+                onClick={() => setShowJoin(true)}
+                className="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors min-h-[44px]"
+              >
+                Join Business
+              </button>
+              <button
+                onClick={() => setShowCreate(true)}
+                className="px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors min-h-[44px]"
+              >
+                Create Business
+              </button>
+            </div>
           </div>
         )}
       </div>
