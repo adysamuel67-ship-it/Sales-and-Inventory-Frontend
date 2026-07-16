@@ -116,7 +116,7 @@ function generateDateLabels(startDate: string, endDate: string): string[] {
   const start = new Date(startDate)
   const end = new Date(endDate)
   for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-    labels.push(d.toLocaleDateString())
+    labels.push(d.toISOString().split('T')[0])
   }
   return labels
 }
@@ -214,7 +214,7 @@ export default function BusinessDashboardPage() {
         }
 
         for (const s of filtered) {
-          const dateStr = s.created_at ? new Date(s.created_at).toLocaleDateString() : null
+          const dateStr = s.created_at ? new Date(s.created_at).toISOString().split('T')[0] : null
           if (!dateStr || !dailyMap[dateStr]) continue
           dailyMap[dateStr].revenue += Number(s.total_amount ?? s.amount ?? 0)
           dailyMap[dateStr].count += 1

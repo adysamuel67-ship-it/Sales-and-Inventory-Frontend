@@ -53,7 +53,7 @@ export default function BusinessLayout({
     )
   }
 
-  if (!businessId) {
+  if (!businessId || isNaN(parseInt(businessId))) {
     router.replace('/businesses')
     return null
   }

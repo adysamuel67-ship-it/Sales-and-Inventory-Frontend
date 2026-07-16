@@ -44,6 +44,7 @@ export default function BusinessesPage() {
   const [loadingApprovals, setLoadingApprovals] = useState<Record<number, boolean>>({})
   const [approvalErrors, setApprovalErrors] = useState<Record<number, string>>({})
   const [showingApprovals, setShowingApprovals] = useState<Record<number, boolean>>({})
+  const [processingApproval, setProcessingApproval] = useState<number | null>(null)
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) router.replace('/login')
@@ -178,6 +179,9 @@ export default function BusinessesPage() {
   }
 
   const handleApprove = async (bizId: number, approvalId: number, dir: 0 | 1) => {
+    setError('')
+    setSuccess('')
+    setProcessingApproval(approvalId)
     try {
       await businessAPI.confirmApproval(bizId, { approval_id: approvalId, dir })
       setSuccess(dir === 1 ? 'Approved!' : 'Rejected')
@@ -188,6 +192,8 @@ export default function BusinessesPage() {
     } catch (err: any) {
       const detail = err.response?.data?.detail
       setError(typeof detail === 'string' ? detail : 'Failed to process approval')
+    } finally {
+      setProcessingApproval(null)
     }
   }
 
@@ -475,15 +481,17 @@ export default function BusinessesPage() {
                               <div className="flex gap-2">
                                 <button
                                   onClick={() => handleApprove(biz.business_id, approval.approval_id, 1)}
-                                  className="px-3 py-1.5 text-xs font-medium text-success bg-success-light rounded-lg hover:bg-success/10 transition-colors min-h-[36px]"
+                                  disabled={processingApproval === approval.approval_id}
+                                  className="px-3 py-1.5 text-xs font-medium text-success bg-success-light rounded-lg hover:bg-success/10 transition-colors min-h-[36px] disabled:opacity-50"
                                 >
-                                  Approve
+                                  {processingApproval === approval.approval_id ? '...' : 'Approve'}
                                 </button>
                                 <button
                                   onClick={() => handleApprove(biz.business_id, approval.approval_id, 0)}
-                                  className="px-3 py-1.5 text-xs font-medium text-danger bg-danger-light rounded-lg hover:bg-danger/10 transition-colors min-h-[36px]"
+                                  disabled={processingApproval === approval.approval_id}
+                                  className="px-3 py-1.5 text-xs font-medium text-danger bg-danger-light rounded-lg hover:bg-danger/10 transition-colors min-h-[36px] disabled:opacity-50"
                                 >
-                                  Reject
+                                  {processingApproval === approval.approval_id ? '...' : 'Reject'}
                                 </button>
                               </div>
                             </div>

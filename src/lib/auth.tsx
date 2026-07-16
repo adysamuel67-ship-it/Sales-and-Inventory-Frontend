@@ -191,29 +191,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       fetchProfile()
       fetchBusinesses()
 
-      if (storedRefreshToken) {
-        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://smart-sales-inventory-bmbn.onrender.com'}/auth/refresh`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            access_token: storedToken,
-            refresh_token: storedRefreshToken,
-            token_type: 'Bearer',
-          }),
-        }).then(async (res) => {
-          if (res.ok && !cancelled) {
-            const data = await res.json()
-            const newToken = data.access_token || data.token
-            const newRefresh = data.refresh_token || storedRefreshToken
-            if (newToken) {
-              localStorage.setItem('token', newToken)
-              localStorage.setItem('refresh_token', newRefresh)
-              setToken(newToken)
-              setRefreshTokenValue(newRefresh)
-            }
-          }
-        }).catch(() => {})
-      }
     } else {
       if (storedUser === 'undefined') localStorage.removeItem('user')
       setIsLoading(false)

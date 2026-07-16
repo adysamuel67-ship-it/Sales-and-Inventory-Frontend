@@ -220,7 +220,7 @@ export default function DashboardPage() {
 
         const dailyMap: Record<string, { revenue: number; count: number }> = {}
         for (const s of filtered) {
-          const dateStr = s.created_at ? new Date(s.created_at).toLocaleDateString() : null
+          const dateStr = s.created_at ? new Date(s.created_at).toISOString().split('T')[0] : null
           if (!dateStr) continue
           if (!dailyMap[dateStr]) dailyMap[dateStr] = { revenue: 0, count: 0 }
           dailyMap[dateStr].revenue += Number(s.total_amount ?? s.amount ?? 0)

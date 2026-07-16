@@ -418,14 +418,18 @@ function CustomersContent() {
               {search
                 ? 'No customers match your search'
                 : activeTab === 'debt'
-                  ? 'No customers with outstanding debt'
+                  ? debtError
+                    ? 'Unable to load debt data'
+                    : 'No customers with outstanding debt'
                   : 'No customers yet'}
             </p>
             <p className="text-xs text-neutral-light mb-3">
               {search
                 ? 'Try a different search term'
                 : activeTab === 'debt'
-                  ? 'All customers are up to date'
+                  ? debtError
+                    ? 'Check your connection and try again'
+                    : 'All customers are up to date'
                   : 'Add your first customer to get started'}
             </p>
             {!search && activeTab === 'all' && !isStaff && (
