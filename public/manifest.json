@@ -1,0 +1,9 @@
+{
+  "name": "Smart Sales & Inventory System",
+  "short_name": "SmartSales",
+  "description": "Inventory and sales tracking for Ghanaian businesses",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F9FAFB",
+  "theme_color": "#1A56DB"
+}
