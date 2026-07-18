@@ -1,5 +1,6 @@
 'use client'
 
+import { memo } from 'react'
 import Link from 'next/link'
 
 interface LowStockItem {
@@ -14,7 +15,7 @@ interface Props {
   businessId?: number
 }
 
-export default function LowStockAlerts({ items, businessId }: Props) {
+export default memo(function LowStockAlerts({ items, businessId }: Props) {
   const productsLink = businessId ? `/business/${businessId}/products` : '/products'
 
   return (
@@ -70,4 +71,4 @@ export default function LowStockAlerts({ items, businessId }: Props) {
       </div>
     </div>
   )
-}
+})

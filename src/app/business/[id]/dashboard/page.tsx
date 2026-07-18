@@ -1,14 +1,18 @@
 'use client'
 
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
+import { useMemo } from 'react'
 import KpiCard from '@/components/KpiCard'
-import RevenueChart from '@/components/RevenueChart'
 import RecentSales from '@/components/RecentSales'
 import LowStockAlerts from '@/components/LowStockAlerts'
+
+const RevenueChart = dynamic(() => import('@/components/RevenueChart'), { ssr: false })
 import { useAuth } from '@/lib/auth'
 import { reportAPI, saleAPI, productAPI } from '@/lib/api'
+import { extractArray, extractSummary, mapSale, mapLowStock, generateDateLabels, isStaffRole, parseApiError, getDateRange } from '@/lib/utils'
 
 interface DashboardSummary {
   total_revenue: number
@@ -39,86 +43,14 @@ interface ChartDataPoint {
   profit: number
 }
 
-function mapSale(raw: any, productMap?: Map<number, string>): SaleRecord {
-  const items = raw.sales_items || []
-  const productNames = items.map((i: any) => {
-    if (i.product_name || i.name) return i.product_name || i.name
-    const pid = i.product_id ?? i.productId
-    if (pid != null && productMap && productMap.has(pid)) return productMap.get(pid)!
-    return pid != null ? `Product #${pid}` : 'Unknown'
-  }).join(', ')
-  const totalQty = items.reduce((sum: number, i: any) => sum + (i.quantity ?? 0), 0)
+function mapSaleLocal(raw: any, productMap?: Map<number, string>): SaleRecord {
+  const result = mapSale(raw, productMap)
   return {
-    id: raw.sale_id ?? raw.id,
-    product: productNames || raw.product_name || raw.product || 'Unknown',
-    qty: totalQty || raw.quantity || raw.qty || 0,
-    amount: raw.total_amount ?? raw.amount ?? 0,
-    payment: raw.payment_method || raw.payment || 'N/A',
+    ...result,
     time: raw.created_at
       ? new Date(raw.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       : raw.time || '',
   }
-}
-
-function mapLowStock(raw: any): LowStockItem {
-  return {
-    name: raw.name || raw.product_name || 'Unknown',
-    stock: raw.quantity ?? raw.stock ?? 0,
-    threshold: raw.threshold ?? raw.reorder_level ?? 10,
-    unit: raw.unit || 'units',
-  }
-}
-
-function extractArray(data: any, depth = 0): any[] {
-  if (depth > 3) return []
-  if (Array.isArray(data)) return data
-  if (data && typeof data === 'object') {
-    for (const key of Object.keys(data)) {
-      if (Array.isArray(data[key])) return data[key]
-    }
-    for (const key of Object.keys(data)) {
-      if (data[key] && typeof data[key] === 'object') {
-        const found = extractArray(data[key], depth + 1)
-        if (found.length > 0) return found
-      }
-    }
-  }
-  return []
-}
-
-function extractSummary(data: any): DashboardSummary | null {
-  if (!data || typeof data !== 'object') return null
-  const revenue = data.total_revenue ?? data.revenue ?? data.total_amount ?? null
-  const profit = data.total_profit ?? data.profit ?? data.net_profit ?? null
-  const sales = data.total_sales ?? data.sales ?? data.sales_count ?? null
-  const products = data.total_active_products ?? data.total_products ?? data.products ?? null
-  if (revenue === null && profit === null && sales === null && products === null) return null
-  return {
-    total_revenue: Number(revenue ?? 0),
-    total_profit: Number(profit ?? 0),
-    total_sales: Number(sales ?? 0),
-    total_products: Number(products ?? 0),
-  }
-}
-
-function getDateRange(daysAgo: number) {
-  const end = new Date()
-  const start = new Date(end)
-  start.setDate(start.getDate() - daysAgo)
-  return {
-    start: start.toISOString().split('T')[0],
-    end: end.toISOString().split('T')[0],
-  }
-}
-
-function generateDateLabels(startDate: string, endDate: string): string[] {
-  const labels: string[] = []
-  const start = new Date(startDate)
-  const end = new Date(endDate)
-  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-    labels.push(d.toISOString().split('T')[0])
-  }
-  return labels
 }
 
 const datePresets = [
@@ -141,8 +73,9 @@ export default function BusinessDashboardPage() {
   const [dateRange, setDateRange] = useState(() => getDateRange(30))
   const [activePreset, setActivePreset] = useState(30)
   const [showDatePicker, setShowDatePicker] = useState(false)
+  const [draftDateRange, setDraftDateRange] = useState(() => getDateRange(30))
 
-  const isStaff = user?.role === 'STAFF' || user?.role === 'staff'
+  const isStaff = isStaffRole(user?.role)
 
   const loadDashboard = useCallback(async () => {
     if (!businessId) return
@@ -164,8 +97,10 @@ export default function BusinessDashboardPage() {
       if (results[0].status === 'rejected') failedApis.push('summary')
       if (results[1].status === 'rejected') failedApis.push('sales')
       if (results[2].status === 'rejected') failedApis.push('products')
+
+      let apiError = ''
       if (failedApis.length > 0) {
-        setError(`Failed to load: ${failedApis.join(', ')}`)
+        apiError = `Failed to load: ${failedApis.join(', ')}`
       }
 
       if (summaryRes) {
@@ -205,7 +140,7 @@ export default function BusinessDashboardPage() {
           return d >= start && d <= end
         })
 
-        setRecentSales(filtered.slice(0, 10).map((s: any) => mapSale(s, productMap)))
+        setRecentSales(filtered.slice(0, 10).map((s: any) => mapSaleLocal(s, productMap)))
 
         const dailyMap: Record<string, { revenue: number; count: number }> = {}
         const allDateLabels = generateDateLabels(dateRange.start, dateRange.end)
@@ -254,20 +189,20 @@ export default function BusinessDashboardPage() {
           if (extracted && extracted.total_revenue > 0 && extracted.total_profit > 0) {
             const margin = (extracted.total_profit / extracted.total_revenue) * 100
             if (margin < 5) {
-              setError(`Warning: Low profit margin (${margin.toFixed(1)}%). Please review your figures.`)
+              const marginWarning = `Warning: Low profit margin (${margin.toFixed(1)}%). Please review your figures.`
+              setError(apiError ? `${apiError}. ${marginWarning}` : marginWarning)
+            } else if (apiError) {
+              setError(apiError)
             }
+          } else if (apiError) {
+            setError(apiError)
           }
+        } else if (apiError) {
+          setError(apiError)
         }
       }
     } catch (err: any) {
-      const detail = err.response?.data?.detail
-      if (Array.isArray(detail)) {
-        setError(detail.map((e: any) => e.msg).join(', '))
-      } else if (typeof detail === 'string') {
-        setError(detail)
-      } else {
-        setError(err.message || 'Failed to load dashboard')
-      }
+      setError(parseApiError(err))
     } finally {
       setLoading(false)
     }
@@ -283,9 +218,19 @@ export default function BusinessDashboardPage() {
     setShowDatePicker(false)
   }
 
+  const handleOpenDatePicker = () => {
+    setDraftDateRange(dateRange)
+    setShowDatePicker(true)
+  }
+
   const handleCustomDateChange = (field: 'start' | 'end', value: string) => {
-    setDateRange((prev) => ({ ...prev, [field]: value }))
+    setDraftDateRange((prev) => ({ ...prev, [field]: value }))
+  }
+
+  const handleApplyCustomDate = () => {
+    setDateRange(draftDateRange)
     setActivePreset(0)
+    setShowDatePicker(false)
   }
 
   const dateSubtitle = activePreset > 0 ? `Last ${activePreset} days` : `${dateRange.start} to ${dateRange.end}`
@@ -329,7 +274,7 @@ export default function BusinessDashboardPage() {
         </div>
         <div className="relative">
           <button
-            onClick={() => setShowDatePicker(!showDatePicker)}
+            onClick={() => showDatePicker ? setShowDatePicker(false) : handleOpenDatePicker()}
             className="flex items-center gap-2 px-4 py-2.5 bg-surface border border-border rounded-xl text-sm font-medium text-gray-700 hover:bg-surfaceAlt transition-colors min-h-[44px]"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -365,7 +310,7 @@ export default function BusinessDashboardPage() {
                   <label className="block text-[10px] text-gray-400 mb-1">From</label>
                   <input
                     type="date"
-                    value={dateRange.start}
+                    value={draftDateRange.start}
                     onChange={(e) => handleCustomDateChange('start', e.target.value)}
                     className="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs focus:border-primary outline-none"
                   />
@@ -374,14 +319,14 @@ export default function BusinessDashboardPage() {
                   <label className="block text-[10px] text-gray-400 mb-1">To</label>
                   <input
                     type="date"
-                    value={dateRange.end}
+                    value={draftDateRange.end}
                     onChange={(e) => handleCustomDateChange('end', e.target.value)}
                     className="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs focus:border-primary outline-none"
                   />
                 </div>
               </div>
               <button
-                onClick={() => setShowDatePicker(false)}
+                onClick={handleApplyCustomDate}
                 className="w-full mt-3 px-3 py-2 bg-primary text-white rounded-lg text-xs font-medium hover:bg-primary-dark transition-colors"
               >
                 Apply

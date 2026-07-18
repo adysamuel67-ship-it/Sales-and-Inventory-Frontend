@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import DashboardLayout from '@/components/DashboardLayout'
 import KpiCard from '@/components/KpiCard'
-import RevenueChart from '@/components/RevenueChart'
+import dynamic from 'next/dynamic'
+const RevenueChart = dynamic(() => import('@/components/RevenueChart'), { ssr: false })
 import RecentSales from '@/components/RecentSales'
 import LowStockAlerts from '@/components/LowStockAlerts'
 import { useAuth } from '@/lib/auth'
@@ -133,6 +134,7 @@ export default function DashboardPage() {
   const [dateRange, setDateRange] = useState(() => getDateRange(30))
   const [activePreset, setActivePreset] = useState(30)
   const [showDatePicker, setShowDatePicker] = useState(false)
+  const [draftDateRange, setDraftDateRange] = useState(() => getDateRange(30))
   const [chartLoading, setChartLoading] = useState(false)
   const businessesFetched = useRef(false)
 
@@ -253,9 +255,19 @@ export default function DashboardPage() {
     setShowDatePicker(false)
   }
 
+  const handleOpenDatePicker = () => {
+    setDraftDateRange(dateRange)
+    setShowDatePicker(true)
+  }
+
   const handleCustomDateChange = (field: 'start' | 'end', value: string) => {
-    setDateRange((prev) => ({ ...prev, [field]: value }))
+    setDraftDateRange((prev) => ({ ...prev, [field]: value }))
+  }
+
+  const handleApplyCustomDate = () => {
+    setDateRange(draftDateRange)
     setActivePreset(0)
+    setShowDatePicker(false)
   }
 
   const dateSubtitle = activePreset > 0 ? `Last ${activePreset} days` : `${dateRange.start} to ${dateRange.end}`
@@ -311,7 +323,7 @@ export default function DashboardPage() {
         </div>
         <div className="relative">
           <button
-            onClick={() => setShowDatePicker(!showDatePicker)}
+            onClick={() => showDatePicker ? setShowDatePicker(false) : handleOpenDatePicker()}
             className="flex items-center gap-2 px-4 py-2.5 bg-surface border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -347,7 +359,7 @@ export default function DashboardPage() {
                   <label className="block text-[10px] text-gray-400 mb-1">From</label>
                   <input
                     type="date"
-                    value={dateRange.start}
+                    value={draftDateRange.start}
                     onChange={(e) => handleCustomDateChange('start', e.target.value)}
                     className="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs focus:border-primary outline-none"
                   />
@@ -356,14 +368,14 @@ export default function DashboardPage() {
                   <label className="block text-[10px] text-gray-400 mb-1">To</label>
                   <input
                     type="date"
-                    value={dateRange.end}
+                    value={draftDateRange.end}
                     onChange={(e) => handleCustomDateChange('end', e.target.value)}
                     className="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs focus:border-primary outline-none"
                   />
                 </div>
               </div>
               <button
-                onClick={() => setShowDatePicker(false)}
+                onClick={handleApplyCustomDate}
                 className="w-full mt-3 px-3 py-2 bg-primary text-white rounded-lg text-xs font-medium hover:bg-primary-dark transition-colors"
               >
                 Apply

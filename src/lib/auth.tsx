@@ -1,7 +1,7 @@
 'use client'
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
-import { profileAPI, businessAPI, setTokenRefreshCallback, setAuthLogoutCallback, getUserIdFromToken } from '@/lib/api'
+import { profileAPI, businessAPI, setTokenRefreshCallback, setAuthLogoutCallback, getUserIdFromToken, tryProactiveRefresh, startAutoRefresh, stopAutoRefresh, isTokenExpired } from '@/lib/api'
 
 interface User {
   id: number
@@ -187,15 +187,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(null)
       }
 
-      setIsLoading(false)
-      fetchProfile()
-      fetchBusinesses()
-
+      const init = async () => {
+        if (isTokenExpired(storedToken, 60) && storedRefreshToken) {
+          const refreshed = await tryProactiveRefresh()
+          if (cancelled) return
+          if (refreshed) {
+            setToken(refreshed)
+          } else {
+            localStorage.removeItem('token')
+            localStorage.removeItem('refresh_token')
+            localStorage.removeItem('user')
+            setToken(null)
+            setUser(null)
+            setIsLoading(false)
+            return
+          }
+        }
+        if (cancelled) return
+        setIsLoading(false)
+        startAutoRefresh(5 * 60 * 1000)
+        fetchProfile()
+        fetchBusinesses()
+      }
+      init()
     } else {
       if (storedUser === 'undefined') localStorage.removeItem('user')
       setIsLoading(false)
     }
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+      stopAutoRefresh()
+    }
   }, [])
 
   const login = useCallback((newToken: string, newUser: User | null, newRefreshToken?: string) => {

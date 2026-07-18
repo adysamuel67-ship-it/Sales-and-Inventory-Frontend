@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useState, useCallback, Suspense } from 'react'
+import { useEffect, useState, useCallback, Suspense, useMemo } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
-import { customerAPI } from '@/lib/api'
+import { customerAPI, saleAPI, debtAPI } from '@/lib/api'
+import { extractArray, parseApiError, isAdminRole, isStaffRole } from '@/lib/utils'
 
 interface Customer {
   customer_id: number
@@ -12,6 +13,7 @@ interface Customer {
   email?: string
   address?: string
   is_active?: boolean
+  created_at?: string
   [key: string]: any
 }
 
@@ -20,17 +22,24 @@ interface DebtCustomer {
   customer_debt: number
 }
 
-type Tab = 'all' | 'debt'
-
-function extractArray(data: any): any[] {
-  if (Array.isArray(data)) return data
-  if (data && typeof data === 'object') {
-    for (const key of Object.keys(data)) {
-      if (Array.isArray(data[key])) return data[key]
-    }
-  }
-  return []
+interface CustomerDebtDetail {
+  debt_id: number
+  amount: number
+  due_date: string
+  is_paid: boolean
+  created_at?: string
 }
+
+interface SaleRecord {
+  sale_id: number
+  total_amount: number
+  amount_paid: number
+  payment_method: string
+  created_at: string
+  customer_id?: number
+}
+
+type Tab = 'all' | 'debt'
 
 function CustomersContent() {
   const params = useParams()
@@ -54,12 +63,28 @@ function CustomersContent() {
   const [formName, setFormName] = useState(presetName)
   const [formPhone, setFormPhone] = useState(presetPhone)
   const [formEmail, setFormEmail] = useState('')
+  const [formAddress, setFormAddress] = useState('')
   const [creating, setCreating] = useState(false)
+
+  const [showEditForm, setShowEditForm] = useState(false)
+  const [editCustomer, setEditCustomer] = useState<Customer | null>(null)
+  const [editName, setEditName] = useState('')
+  const [editPhone, setEditPhone] = useState('')
+  const [editEmail, setEditEmail] = useState('')
+  const [editAddress, setEditAddress] = useState('')
+  const [updating, setUpdating] = useState(false)
 
   const [search, setSearch] = useState('')
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null)
 
-  const isStaff = user?.role === 'STAFF' || user?.role === 'staff'
+  const [showProfile, setShowProfile] = useState(false)
+  const [profileCustomer, setProfileCustomer] = useState<Customer | null>(null)
+  const [profileDebt, setProfileDebt] = useState<CustomerDebtDetail[]>([])
+  const [profileSales, setProfileSales] = useState<SaleRecord[]>([])
+  const [profileLoading, setProfileLoading] = useState(false)
+
+  const isStaff = isStaffRole(user?.role)
+  const isAdmin = isAdminRole(user?.role)
 
   const loadCustomers = useCallback(async () => {
     if (!businessId) return
@@ -72,7 +97,8 @@ function CustomersContent() {
         customerAPI.listWithDebt(businessId),
       ])
       if (custRes.status === 'fulfilled') {
-        setCustomers(extractArray(custRes.value.data))
+        const custData = extractArray(custRes.value.data)
+        setCustomers(custData)
       } else {
         const detail = custRes.reason?.response?.data?.detail
         setError(typeof detail === 'string' ? detail : 'Failed to load customers')
@@ -80,10 +106,19 @@ function CustomersContent() {
       if (debtRes.status === 'fulfilled') {
         const raw = debtRes.value.data
         const arr = extractArray(raw)
-        setDebtData(arr.map((d: any) => ({
-          customer_id: d.customer_id ?? d.user_id ?? d.id,
-          customer_debt: Number(d.customer_debt ?? d.debt ?? d.amount ?? 0),
-        })))
+        const aggregated = new Map<number, number>()
+        for (const d of arr) {
+          const debt = d.debt || d
+          const cid = Number(debt.customer_id ?? d.customer_id ?? d.user_id ?? d.id)
+          if (!cid) continue
+          const amt = Number(debt.amount ?? debt.customer_debt ?? debt.debt ?? debt.total_debt ?? debt.debt_amount ?? d.customer_debt ?? d.amount ?? 0)
+          aggregated.set(cid, (aggregated.get(cid) ?? 0) + amt)
+        }
+        const mapped = Array.from(aggregated.entries()).map(([customer_id, customer_debt]) => ({
+          customer_id,
+          customer_debt,
+        }))
+        setDebtData(mapped)
       } else {
         const detail = debtRes.reason?.response?.data?.detail
         setDebtError(typeof detail === 'string' ? detail : 'Could not load debt data')
@@ -106,18 +141,32 @@ function CustomersContent() {
     }
   }, [presetName, presetPhone])
 
-  const debtMap = new Map(debtData.filter((d) => d.customer_debt > 0).map((d) => [d.customer_id, d.customer_debt]))
-  const debtCustomerIds = new Set(debtMap.keys())
-  const debtCustomers = customers.filter((c) => debtCustomerIds.has(c.customer_id))
-  const totalDebt = debtData.filter((d) => d.customer_debt > 0).reduce((sum, d) => sum + d.customer_debt, 0)
+  const { debtMap, debtCustomers, totalDebt } = useMemo(() => {
+    const map = new Map(debtData.filter((d) => d.customer_debt > 0).map((d) => [d.customer_id, d.customer_debt]))
+    const ids = new Set(map.keys())
+    const dCustomers = customers.filter((c) => ids.has(Number(c.customer_id)))
+    const total = debtData.filter((d) => d.customer_debt > 0).reduce((sum, d) => sum + d.customer_debt, 0)
+    return { debtMap: map, debtCustomers: dCustomers, totalDebt: total }
+  }, [debtData, customers])
 
   const displayedCustomers = activeTab === 'debt' ? debtCustomers : customers
 
-  const filtered = displayedCustomers.filter((c) =>
-    c.name?.toLowerCase().includes(search.toLowerCase()) ||
-    c.phone?.includes(search) ||
-    c.email?.toLowerCase().includes(search.toLowerCase())
+  const filtered = useMemo(
+    () => displayedCustomers.filter((c) =>
+      c.name?.toLowerCase().includes(search.toLowerCase()) ||
+      c.phone?.includes(search) ||
+      c.email?.toLowerCase().includes(search.toLowerCase())
+    ),
+    [displayedCustomers, search]
   )
+
+  const resetCreateForm = () => {
+    setFormName('')
+    setFormPhone('')
+    setFormEmail('')
+    setFormAddress('')
+    setShowForm(false)
+  }
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -130,11 +179,9 @@ function CustomersContent() {
         name: formName.trim(),
         phone: formPhone.trim() || undefined,
         email: formEmail.trim() || undefined,
+        address: formAddress.trim() || undefined,
       })
-      setFormName('')
-      setFormPhone('')
-      setFormEmail('')
-      setShowForm(false)
+      resetCreateForm()
       setSuccess('Customer created successfully!')
 
       if (returnSale) {
@@ -159,6 +206,46 @@ function CustomersContent() {
     }
   }
 
+  const openEditForm = (customer: Customer) => {
+    setEditCustomer(customer)
+    setEditName(customer.name || '')
+    setEditPhone(customer.phone || '')
+    setEditEmail(customer.email || '')
+    setEditAddress(customer.address || '')
+    setShowEditForm(true)
+  }
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!businessId || !editCustomer || !editName.trim()) return
+    setUpdating(true)
+    setError('')
+    setSuccess('')
+    try {
+      await customerAPI.update(businessId, editCustomer.customer_id, {
+        name: editName.trim(),
+        phone: editPhone.trim() || undefined,
+        email: editEmail.trim() || undefined,
+        address: editAddress.trim() || undefined,
+      })
+      setShowEditForm(false)
+      setEditCustomer(null)
+      setSuccess('Customer updated successfully!')
+      loadCustomers()
+    } catch (err: any) {
+      const detail = err.response?.data?.detail
+      if (Array.isArray(detail)) {
+        setError(detail.map((e: any) => e.msg).join(', '))
+      } else if (typeof detail === 'string') {
+        setError(detail)
+      } else {
+        setError('Failed to update customer')
+      }
+    } finally {
+      setUpdating(false)
+    }
+  }
+
   const handleDelete = async (id: number) => {
     if (!businessId) return
     try {
@@ -171,6 +258,81 @@ function CustomersContent() {
       setError(typeof detail === 'string' ? detail : 'Failed to delete customer')
     }
   }
+
+  const handleDeactivate = async (customer: Customer) => {
+    if (!businessId) return
+    try {
+      await customerAPI.deactivate(businessId, customer.customer_id)
+      setSuccess(`Customer ${customer.is_active === false ? 'activated' : 'deactivated'} successfully!`)
+      loadCustomers()
+    } catch (err: any) {
+      const detail = err.response?.data?.detail
+      setError(typeof detail === 'string' ? detail : 'Failed to update customer status')
+    }
+  }
+
+  const openProfile = async (customer: Customer) => {
+    setProfileCustomer(customer)
+    setShowProfile(true)
+    setProfileLoading(true)
+    setProfileDebt([])
+    setProfileSales([])
+
+    try {
+      const [debtRes, salesRes] = await Promise.allSettled([
+        debtAPI.getCustomerDebt(businessId, customer.customer_id),
+        saleAPI.list(businessId),
+      ])
+
+      if (debtRes.status === 'fulfilled') {
+        const raw = debtRes.value.data
+        const debt = raw.debt || raw
+        const debtArr = extractArray(raw)
+        if (debtArr.length > 0) {
+          setProfileDebt(debtArr.map((d: any) => {
+            const debtObj = d.debt || d
+            return {
+              debt_id: debtObj.debt_id ?? d.debt_id ?? d.id,
+              amount: Number(debtObj.amount ?? d.amount ?? 0),
+              due_date: debtObj.due_date || d.due_date || '',
+              is_paid: debtObj.is_paid ?? d.is_paid ?? false,
+              created_at: debtObj.created_at || d.created_at || '',
+            }
+          }))
+        } else if (debt && debt.debt_id) {
+          setProfileDebt([{
+            debt_id: debt.debt_id,
+            amount: Number(debt.amount ?? 0),
+            due_date: debt.due_date || '',
+            is_paid: debt.is_paid ?? false,
+            created_at: debt.created_at || '',
+          }])
+        }
+      }
+
+      if (salesRes.status === 'fulfilled') {
+        const sales = extractArray(salesRes.value.data)
+        const customerSales = sales.filter((s: any) => {
+          const saleCid = s.customer_id ?? s.customer?.customer_id ?? s.debt?.customer_id
+          return saleCid != null && Number(saleCid) === Number(customer.customer_id)
+        })
+        setProfileSales(customerSales.map((s: any) => ({
+          sale_id: s.sale_id ?? s.id,
+          total_amount: Number(s.total_amount ?? 0),
+          amount_paid: Number(s.amount_paid ?? 0),
+          payment_method: s.payment_method || 'N/A',
+          created_at: s.created_at || '',
+          customer_id: s.customer_id,
+        })))
+      }
+    } catch {
+    } finally {
+      setProfileLoading(false)
+    }
+  }
+
+  const profileTotalDebt = profileDebt.filter((d) => !d.is_paid).reduce((sum, d) => sum + d.amount, 0)
+  const profileTotalSpent = profileSales.reduce((sum, s) => sum + s.total_amount, 0)
 
   return (
     <div>
@@ -226,7 +388,7 @@ function CustomersContent() {
           </h3>
           <form onSubmit={handleCreate} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Full Name</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Full Name *</label>
               <input
                 type="text"
                 value={formName}
@@ -256,6 +418,16 @@ function CustomersContent() {
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
               />
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Address (optional)</label>
+              <input
+                type="text"
+                value={formAddress}
+                onChange={(e) => setFormAddress(e.target.value)}
+                placeholder="e.g. 123 Main St, Accra"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+              />
+            </div>
             <div className="flex items-end gap-3 sm:col-span-2">
               <button
                 type="submit"
@@ -270,15 +442,76 @@ function CustomersContent() {
                   if (returnSale) {
                     router.push(`/business/${businessId}/sales`)
                   } else {
-                    setShowForm(false)
-                    setFormName('')
-                    setFormPhone('')
-                    setFormEmail('')
+                    resetCreateForm()
                   }
                 }}
                 className="px-4 py-3 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors min-h-[44px]"
               >
                 {returnSale ? 'Back to Sales' : 'Cancel'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {showEditForm && editCustomer && (
+        <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
+          <h3 className="font-semibold text-gray-900 mb-4">Edit Customer</h3>
+          <form onSubmit={handleUpdate} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Full Name *</label>
+              <input
+                type="text"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                required
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone Number</label>
+              <input
+                type="tel"
+                value={editPhone}
+                onChange={(e) => setEditPhone(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+              <input
+                type="email"
+                value={editEmail}
+                onChange={(e) => setEditEmail(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Address</label>
+              <input
+                type="text"
+                value={editAddress}
+                onChange={(e) => setEditAddress(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+              />
+            </div>
+            <div className="flex items-end gap-3 sm:col-span-2">
+              <button
+                type="submit"
+                disabled={updating}
+                className="px-6 py-3 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-60 min-h-[44px]"
+              >
+                {updating ? 'Saving...' : 'Save Changes'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowEditForm(false)
+                  setEditCustomer(null)
+                }}
+                className="px-4 py-3 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors min-h-[44px]"
+              >
+                Cancel
               </button>
             </div>
           </form>
@@ -353,14 +586,25 @@ function CustomersContent() {
               </thead>
               <tbody>
                 {filtered.map((customer) => {
-                  const debt = debtMap.get(customer.customer_id) ?? 0
+                  const debt = debtMap.get(Number(customer.customer_id)) ?? 0
                   return (
                     <tr key={customer.customer_id} className="border-t border-gray-50 table-row-hover">
                       <td className="px-5 py-3.5">
-                        <div className="font-medium text-gray-900">{customer.name}</div>
-                        {customer.address && (
-                          <div className="text-xs text-neutral-light mt-0.5">{customer.address}</div>
-                        )}
+                        <div className="flex items-center gap-3">
+                          <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold shrink-0 ${
+                            customer.is_active === false
+                              ? 'bg-gray-100 text-gray-400'
+                              : 'bg-primary/10 text-primary'
+                          }`}>
+                            {customer.name?.charAt(0)?.toUpperCase() || '?'}
+                          </div>
+                          <div>
+                            <div className="font-medium text-gray-900">{customer.name}</div>
+                            {customer.address && (
+                              <div className="text-xs text-neutral-light mt-0.5">{customer.address}</div>
+                            )}
+                          </div>
+                        </div>
                       </td>
                       <td className="px-5 py-3.5 text-gray-600 hidden sm:table-cell">{customer.phone || '-'}</td>
                       <td className="px-5 py-3.5 text-gray-600 hidden md:table-cell">{customer.email || '-'}</td>
@@ -392,12 +636,34 @@ function CustomersContent() {
                               </button>
                             </div>
                           ) : (
-                            <button
-                              onClick={() => setDeleteConfirm(customer.customer_id)}
-                              className="text-xs text-danger hover:underline font-medium"
-                            >
-                              Delete
-                            </button>
+                            <div className="flex items-center gap-2 justify-end">
+                              <button
+                                onClick={() => openProfile(customer)}
+                                className="px-2.5 py-1 text-xs font-medium text-primary bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors"
+                                title="View Profile"
+                              >
+                                Profile
+                              </button>
+                              {isAdmin && (
+                                <>
+                                  <button
+                                    onClick={() => openEditForm(customer)}
+                                    className="px-2.5 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                                    title="Edit"
+                                  >
+                                    Edit
+                                  </button>
+                                  {customer.is_active !== false && (
+                                    <button
+                                      onClick={() => setDeleteConfirm(customer.customer_id)}
+                                      className="text-xs text-danger hover:underline font-medium"
+                                    >
+                                      Delete
+                                    </button>
+                                  )}
+                                </>
+                              )}
+                            </div>
                           )}
                         </td>
                       )}
@@ -446,6 +712,203 @@ function CustomersContent() {
           </div>
         )}
       </div>
+
+      {showProfile && profileCustomer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowProfile(false)}>
+          <div className="absolute inset-0 bg-black/40" />
+          <div
+            className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 rounded-t-2xl flex items-center justify-between">
+              <h3 className="font-semibold text-gray-900">Customer Profile</h3>
+              <button
+                onClick={() => setShowProfile(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="px-6 py-5">
+              <div className="flex items-center gap-4 mb-6">
+                <div className={`w-14 h-14 rounded-full flex items-center justify-center text-lg font-bold ${
+                  profileCustomer.is_active === false
+                    ? 'bg-gray-100 text-gray-400'
+                    : 'bg-primary/10 text-primary'
+                }`}>
+                  {profileCustomer.name?.charAt(0)?.toUpperCase() || '?'}
+                </div>
+                <div>
+                  <h4 className="text-lg font-semibold text-gray-900">{profileCustomer.name}</h4>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
+                      profileCustomer.is_active === false
+                        ? 'bg-gray-100 text-gray-500'
+                        : 'bg-success-light text-success'
+                    }`}>
+                      {profileCustomer.is_active === false ? 'Inactive' : 'Active'}
+                    </span>
+                    {profileCustomer.created_at && (
+                      <span className="text-xs text-neutral-light">
+                        Since {new Date(profileCustomer.created_at).toLocaleDateString()}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3 mb-6">
+                {profileCustomer.phone && (
+                  <div className="flex items-center gap-3 text-sm">
+                    <svg className="w-4 h-4 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                    </svg>
+                    <span className="text-gray-600">{profileCustomer.phone}</span>
+                  </div>
+                )}
+                {profileCustomer.email && (
+                  <div className="flex items-center gap-3 text-sm">
+                    <svg className="w-4 h-4 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    <span className="text-gray-600">{profileCustomer.email}</span>
+                  </div>
+                )}
+                {profileCustomer.address && (
+                  <div className="flex items-center gap-3 text-sm">
+                    <svg className="w-4 h-4 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span className="text-gray-600">{profileCustomer.address}</span>
+                  </div>
+                )}
+                {!profileCustomer.phone && !profileCustomer.email && !profileCustomer.address && (
+                  <p className="text-sm text-neutral-light">No contact details provided</p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 mb-6">
+                <div className="bg-surfaceAlt rounded-xl p-4">
+                  <p className="text-xs text-neutral-light mb-1">Total Spent</p>
+                  <p className="text-lg font-semibold text-gray-900">
+                    {profileLoading ? '...' : `GH₵${profileTotalSpent.toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
+                  </p>
+                </div>
+                <div className="bg-surfaceAlt rounded-xl p-4">
+                  <p className="text-xs text-neutral-light mb-1">Outstanding Debt</p>
+                  <p className={`text-lg font-semibold ${profileTotalDebt > 0 ? 'text-danger' : 'text-success'}`}>
+                    {profileLoading ? '...' : `GH₵${profileTotalDebt.toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
+                  </p>
+                </div>
+              </div>
+
+              {profileLoading ? (
+                <div className="py-6 text-center">
+                  <div className="w-6 h-6 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+                </div>
+              ) : (
+                <>
+                  {profileDebt.length > 0 && (
+                    <div className="mb-6">
+                      <h5 className="text-sm font-semibold text-gray-900 mb-3">Debt History</h5>
+                      <div className="space-y-2">
+                        {profileDebt.map((debt) => (
+                          <div key={debt.debt_id} className="flex items-center justify-between py-2 px-3 bg-surfaceAlt rounded-lg text-sm">
+                            <div>
+                              <span className="font-medium text-gray-900">GH₵{debt.amount.toFixed(2)}</span>
+                              {debt.due_date && (
+                                <span className="text-xs text-neutral-light ml-2">
+                                  Due {new Date(debt.due_date).toLocaleDateString()}
+                                </span>
+                              )}
+                            </div>
+                            <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
+                              debt.is_paid ? 'bg-success-light text-success' : 'bg-danger-light text-danger'
+                            }`}>
+                              {debt.is_paid ? 'Paid' : 'Unpaid'}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {profileSales.length > 0 && (
+                    <div>
+                      <h5 className="text-sm font-semibold text-gray-900 mb-3">Purchase History</h5>
+                      <div className="space-y-2">
+                        {profileSales.slice(0, 10).map((sale) => (
+                          <div key={sale.sale_id} className="flex items-center justify-between py-2 px-3 bg-surfaceAlt rounded-lg text-sm">
+                            <div>
+                              <span className="font-medium text-gray-900">GH₵{sale.total_amount.toFixed(2)}</span>
+                              <span className="text-xs text-neutral-light ml-2">
+                                {new Date(sale.created_at).toLocaleDateString()}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-gray-500">{sale.payment_method}</span>
+                              <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
+                                sale.amount_paid >= sale.total_amount
+                                  ? 'bg-success-light text-success'
+                                  : 'bg-warning-light text-warning'
+                              }`}>
+                                {sale.amount_paid >= sale.total_amount ? 'Paid' : 'Partial'}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {profileDebt.length === 0 && profileSales.length === 0 && (
+                    <p className="text-sm text-neutral-light text-center py-4">No transaction history</p>
+                  )}
+                </>
+              )}
+            </div>
+
+            <div className="sticky bottom-0 bg-white border-t border-gray-100 px-6 py-4 rounded-b-2xl flex items-center gap-3">
+              {isAdmin && (
+                <>
+                  <button
+                    onClick={() => {
+                      setShowProfile(false)
+                      openEditForm(profileCustomer)
+                    }}
+                    className="px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors min-h-[44px]"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowProfile(false)
+                      handleDeactivate(profileCustomer)
+                    }}
+                    className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-colors min-h-[44px] ${
+                      profileCustomer.is_active === false
+                        ? 'bg-success-light text-success hover:bg-success/10'
+                        : 'bg-warning-light text-warning hover:bg-warning/10'
+                    }`}
+                  >
+                    {profileCustomer.is_active === false ? 'Activate' : 'Deactivate'}
+                  </button>
+                </>
+              )}
+              <button
+                onClick={() => setShowProfile(false)}
+                className="px-4 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors min-h-[44px]"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

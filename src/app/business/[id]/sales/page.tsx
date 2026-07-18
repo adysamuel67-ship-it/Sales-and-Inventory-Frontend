@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
 import { saleAPI, productAPI, customerAPI } from '@/lib/api'
+import { extractArray, normalizeProduct, mapSale, parseApiError, isStaffRole } from '@/lib/utils'
 
 interface SaleRecord {
   id: number
@@ -21,48 +22,6 @@ interface Product {
   price: number
   quantity: number
   [key: string]: any
-}
-
-function extractArray(data: any): any[] {
-  if (Array.isArray(data)) return data
-  if (data && typeof data === 'object') {
-    for (const key of Object.keys(data)) {
-      if (Array.isArray(data[key])) return data[key]
-    }
-  }
-  return []
-}
-
-function normalizeProduct(raw: any): Product {
-  return {
-    product_id: raw.product_id ?? raw.id,
-    name: raw.name,
-    price: raw.price ?? 0,
-    quantity: raw.quantity ?? raw.stock ?? 0,
-    ...raw,
-  }
-}
-
-function mapSale(raw: any, productMap: Map<number, string>): SaleRecord {
-  const items = raw.sales_items || []
-  const productNames = items.map((i: any) => {
-    if (i.product_name || i.name) return i.product_name || i.name
-    const pid = i.product_id ?? i.productId
-    if (pid != null && productMap.has(pid)) return productMap.get(pid)!
-    return pid != null ? `Product #${pid}` : 'Unknown'
-  }).join(', ')
-  const totalQty = items.reduce((sum: number, i: any) => sum + (i.quantity ?? 0), 0)
-  return {
-    id: raw.sale_id ?? raw.id,
-    product: productNames || 'Unknown',
-    qty: totalQty,
-    amount: raw.total_amount ?? raw.amount ?? 0,
-    payment: raw.payment_method || raw.payment || 'N/A',
-    time: raw.created_at
-      ? new Date(raw.created_at).toLocaleString()
-      : raw.time || '',
-    created_at: raw.created_at,
-  }
 }
 
 const PAGE_SIZE = 20
@@ -92,6 +51,7 @@ export default function SalesPage() {
     payment_method: 'Cash',
   })
   const [dateFilter, setDateFilter] = useState({ start: '', end: '' })
+  const [draftDateFilter, setDraftDateFilter] = useState({ start: '', end: '' })
   const [activePreset, setActivePreset] = useState(0)
   const [currentPage, setCurrentPage] = useState(1)
   const [showDatePicker, setShowDatePicker] = useState(false)
@@ -101,7 +61,7 @@ export default function SalesPage() {
   const [customerName, setCustomerName] = useState('')
   const [customerPhone, setCustomerPhone] = useState('')
 
-  const isStaff = user?.role === 'STAFF' || user?.role === 'staff'
+  const isStaff = isStaffRole(user?.role)
 
   const loadData = async () => {
     if (!businessId) return
@@ -168,6 +128,17 @@ export default function SalesPage() {
       const start = new Date(Date.now() - days * 86400000).toISOString().split('T')[0]
       setDateFilter({ start, end })
     }
+    setShowDatePicker(false)
+  }
+
+  const handleOpenDatePicker = () => {
+    setDraftDateFilter(dateFilter)
+    setShowDatePicker(true)
+  }
+
+  const handleApplyCustomDate = () => {
+    setDateFilter(draftDateFilter)
+    setActivePreset(0)
     setShowDatePicker(false)
   }
 
@@ -472,7 +443,7 @@ export default function SalesPage() {
           ))}
           <div className="relative">
             <button
-              onClick={() => setShowDatePicker(!showDatePicker)}
+              onClick={() => showDatePicker ? setShowDatePicker(false) : handleOpenDatePicker()}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -487,8 +458,8 @@ export default function SalesPage() {
                     <label className="block text-[10px] text-gray-400 mb-1">From</label>
                     <input
                       type="date"
-                      value={dateFilter.start}
-                      onChange={(e) => { setDateFilter((prev) => ({ ...prev, start: e.target.value })); setActivePreset(0) }}
+                      value={draftDateFilter.start}
+                      onChange={(e) => setDraftDateFilter((prev) => ({ ...prev, start: e.target.value }))}
                       className="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs focus:border-primary outline-none"
                     />
                   </div>
@@ -496,14 +467,14 @@ export default function SalesPage() {
                     <label className="block text-[10px] text-gray-400 mb-1">To</label>
                     <input
                       type="date"
-                      value={dateFilter.end}
-                      onChange={(e) => { setDateFilter((prev) => ({ ...prev, end: e.target.value })); setActivePreset(0) }}
+                      value={draftDateFilter.end}
+                      onChange={(e) => setDraftDateFilter((prev) => ({ ...prev, end: e.target.value }))}
                       className="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs focus:border-primary outline-none"
                     />
                   </div>
                 </div>
                 <button
-                  onClick={() => setShowDatePicker(false)}
+                  onClick={handleApplyCustomDate}
                   className="w-full mt-3 px-3 py-2 bg-primary text-white rounded-lg text-xs font-medium hover:bg-primary-dark transition-colors"
                 >
                   Apply

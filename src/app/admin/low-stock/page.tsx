@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
 import { useAuth } from '@/lib/auth'
 import { adminAPI, productAPI } from '@/lib/api'
+import { extractArray, isStaffRole } from '@/lib/utils'
 
 interface LowStockItem {
   name: string
@@ -14,18 +15,8 @@ interface LowStockItem {
   business_name?: string
 }
 
-function extractArray(data: any): any[] {
-  if (Array.isArray(data)) return data
-  if (data && typeof data === 'object') {
-    for (const key of Object.keys(data)) {
-      if (Array.isArray(data[key])) return data[key]
-    }
-  }
-  return []
-}
-
 export default function AdminLowStockPage() {
-  const { isAuthenticated, isLoading, profileLoaded, isVerified, user } = useAuth()
+  const { isAuthenticated, isLoading, profileLoaded, user } = useAuth()
   const router = useRouter()
   const [items, setItems] = useState<LowStockItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -84,7 +75,7 @@ export default function AdminLowStockPage() {
     if (isAuthenticated && user?.role === 'super_admin') loadLowStock()
   }, [isAuthenticated, user])
 
-  if (isLoading || !isAuthenticated || !profileLoaded) {
+  if (isLoading || !isAuthenticated || !profileLoaded || user?.role !== 'super_admin') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />

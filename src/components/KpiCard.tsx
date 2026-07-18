@@ -1,5 +1,7 @@
 'use client'
 
+import { memo } from 'react'
+
 interface KpiCardProps {
   title: string
   value: string | number
@@ -36,7 +38,7 @@ const colorMap = {
   },
 }
 
-export default function KpiCard({ title, value, subtitle, icon, color, trend }: KpiCardProps) {
+export default memo(function KpiCard({ title, value, subtitle, icon, color, trend }: KpiCardProps) {
   const styles = colorMap[color]
 
   return (
@@ -58,4 +60,4 @@ export default function KpiCard({ title, value, subtitle, icon, color, trend }: 
       {subtitle && <p className="text-[10px] text-gray-400 mt-2 pl-[52px]">{subtitle}</p>}
     </div>
   )
-}
+})

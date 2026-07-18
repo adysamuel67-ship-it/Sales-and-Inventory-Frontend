@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import AuthLayout from '@/components/AuthLayout'
-import { authAPI } from '@/lib/api'
+import { authAPI, tryProactiveRefresh, isTokenExpired, setLoginGrace } from '@/lib/api'
 import { useAuth } from '@/lib/auth'
 
 function LoginForm() {
@@ -38,8 +38,21 @@ function LoginForm() {
         return
       }
       login(access_token, user, refreshToken)
+      setLoginGrace()
 
-      let profileUser = await fetchProfile()
+      if (isTokenExpired(access_token, 60) && refreshToken) {
+        const refreshed = await tryProactiveRefresh()
+        if (refreshed) {
+          login(refreshed, user, refreshToken)
+        }
+      }
+
+      let profileUser: any = null
+      try {
+        profileUser = await fetchProfile()
+      } catch {
+        // Profile fetch failed — continue with login response user
+      }
 
       if (!profileUser && user) {
         profileUser = user
@@ -51,7 +64,11 @@ function LoginForm() {
         return
       }
 
-      await fetchBusinesses()
+      try {
+        await fetchBusinesses()
+      } catch {
+        // Businesses fetch failed — continue anyway
+      }
       router.push('/dashboard')
     } catch (err: any) {
       const detail = err.response?.data?.detail

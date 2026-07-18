@@ -4,11 +4,11 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
 import { useAuth } from '@/lib/auth'
-import { adminAPI } from '@/lib/api'
+import { adminAPI, businessAPI } from '@/lib/api'
 import KpiCard from '@/components/KpiCard'
 
 export default function AdminDashboardPage() {
-  const { isAuthenticated, isLoading, profileLoaded, isVerified, user } = useAuth()
+  const { isAuthenticated, isLoading, profileLoaded, user } = useAuth()
   const router = useRouter()
   const [userCount, setUserCount] = useState(0)
   const [businessCount, setBusinessCount] = useState(0)
@@ -19,10 +19,10 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     if (!isLoading && !isAuthenticated) router.replace('/login')
     if (profileLoaded && isAuthenticated && user && user.is_verified === false) router.replace('/verify')
-    if (profileLoaded && isAuthenticated && isVerified && user && user.role !== 'super_admin') {
+    if (profileLoaded && isAuthenticated && user?.is_verified && user.role !== 'super_admin') {
       router.replace('/dashboard')
     }
-  }, [isLoading, isAuthenticated, profileLoaded, isVerified, user, router])
+  }, [isLoading, isAuthenticated, profileLoaded, user, router])
 
   useEffect(() => {
     if (!isAuthenticated || user?.role !== 'super_admin') return
@@ -33,7 +33,7 @@ export default function AdminDashboardPage() {
       try {
         const [usersRes, businessesRes] = await Promise.allSettled([
           adminAPI.listAllUsers(),
-          adminAPI.listUsers(),
+          businessAPI.listAll(),
         ])
         if (cancelled) return
 
@@ -127,7 +127,7 @@ export default function AdminDashboardPage() {
                     <td className="px-5 py-3.5 text-neutral-light">{u.email}</td>
                     <td className="px-5 py-3.5 text-center">
                       <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
-                        u.role === 'super_admin' ? 'bg-african-gold/20 text-african-gold'
+                        u.role === 'super_admin' ? 'bg-warning-light text-warning'
                           : u.role === 'admin' ? 'bg-primary/10 text-primary'
                           : 'bg-gray-100 text-gray-600'
                       }`}>

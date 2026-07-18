@@ -5,11 +5,13 @@ const API_BASE_URL = 'https://smart-sales-inventory-bmbn.onrender.com'
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: { 'Content-Type': 'application/json' },
+  timeout: 60000,
 })
 
 const profileApi = axios.create({
   baseURL: API_BASE_URL,
   headers: { 'Content-Type': 'application/json' },
+  timeout: 60000,
 })
 
 export function decodeJwt(token: string): any {
@@ -42,9 +44,21 @@ export function setAuthLogoutCallback(cb: (() => void) | null) {
   onAuthLogout = cb
 }
 
+export function isTokenExpired(token: string, bufferSeconds = 60): boolean {
+  const payload = decodeJwt(token)
+  if (!payload || !payload.exp) return true
+  const now = Math.floor(Date.now() / 1000)
+  return payload.exp < now + bufferSeconds
+}
+
 let isRefreshing = false
 let refreshPromise: Promise<string> | null = null
 let failedQueue: { resolve: (token: string) => void; reject: (err: any) => void }[] = []
+let loginGraceUntil = 0
+
+export function setLoginGrace() {
+  loginGraceUntil = Date.now() + 5000
+}
 
 function processQueue(error: any, token: string | null) {
   failedQueue.forEach((prom) => {
@@ -76,6 +90,7 @@ async function performTokenRefresh(): Promise<string> {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${refreshToken}`,
     },
+    timeout: 30000,
   })
 
   const newToken = extractAccessToken(data)
@@ -86,6 +101,8 @@ async function performTokenRefresh(): Promise<string> {
   localStorage.setItem('refresh_token', newRefresh)
   return newToken
 }
+
+export { startRefresh }
 
 function startRefresh(): Promise<string> {
   if (!refreshPromise) {
@@ -145,6 +162,9 @@ function handle401Interceptor(instance: any) {
           originalRequest.headers.Authorization = `Bearer ${newToken}`
           return instance(originalRequest)
         } catch {
+          if (Date.now() < loginGraceUntil) {
+            return Promise.reject(error)
+          }
           localStorage.removeItem('token')
           localStorage.removeItem('refresh_token')
           localStorage.removeItem('user')
@@ -153,6 +173,9 @@ function handle401Interceptor(instance: any) {
         }
       }
 
+      if (Date.now() < loginGraceUntil) {
+        return Promise.reject(error)
+      }
       localStorage.removeItem('token')
       localStorage.removeItem('refresh_token')
       localStorage.removeItem('user')
@@ -233,6 +256,7 @@ export const adminAPI = {
   updateUser: (id: number, data: any) => api.put(`/users/${id}`, data),
   deleteUser: (id: number) => api.delete(`/users/${id}`),
   activateUser: (id: number) => api.put(`/users/${id}/activate`),
+  verifyUser: (userId: number) => api.post(`/auth/verify_user/${userId}`),
 }
 
 export const productAPI = {
@@ -273,6 +297,21 @@ export const customerAPI = {
     api.put(`/business/customers/${businessId}/deactivate/${customerId}`),
   listWithDebt: (businessId: number, params?: any) =>
     api.get(`/debts/customers/${businessId}`, { params }),
+  getCustomerDebt: (businessId: number, customerId: number) =>
+    api.get(`/debts/customers/${businessId}/${customerId}`),
+}
+
+export const debtAPI = {
+  getCustomerDebt: (businessId: number, customerId: number) =>
+    api.get(`/debts/customers/${businessId}/${customerId}`),
+  listCustomersWithDebt: (businessId: number, params?: any) =>
+    api.get(`/debts/customers/${businessId}`, { params }),
+  getTotalDebt: (businessId: number) =>
+    api.get(`/debts/${businessId}`),
+  addDebt: (businessId: number, customerId: number, data: any) =>
+    api.post(`/debts/add_debt/${businessId}/${customerId}`, data),
+  updateDebt: (businessId: number, customerId: number, data: any) =>
+    api.put(`/debts/update_customer_debt/${businessId}/${customerId}`, data),
 }
 
 export const reportAPI = {
@@ -282,6 +321,35 @@ export const reportAPI = {
     api.get(`/reports/analytics/dashboard/${businessId}`, { params: { date, end_date: endDate } }),
   dashboard: (businessId: number) =>
     api.get(`/reports/analytics/dashboard/${businessId}`),
+}
+
+export async function tryProactiveRefresh(): Promise<string | null> {
+  if (typeof window === 'undefined') return null
+  const token = localStorage.getItem('token')
+  const refreshToken = localStorage.getItem('refresh_token')
+  if (!token || !refreshToken) return null
+  if (!isTokenExpired(token, 60)) return token
+  try {
+    return await startRefresh()
+  } catch {
+    return null
+  }
+}
+
+let refreshIntervalId: ReturnType<typeof setInterval> | null = null
+
+export function startAutoRefresh(intervalMs = 5 * 60 * 1000) {
+  stopAutoRefresh()
+  refreshIntervalId = setInterval(() => {
+    tryProactiveRefresh()
+  }, intervalMs)
+}
+
+export function stopAutoRefresh() {
+  if (refreshIntervalId !== null) {
+    clearInterval(refreshIntervalId)
+    refreshIntervalId = null
+  }
 }
 
 export default api

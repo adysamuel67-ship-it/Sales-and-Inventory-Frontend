@@ -81,7 +81,7 @@ export default function AdminJobsPage() {
     { name: 'monthly_summery', label: 'Monthly Summary', description: 'Generate monthly analytics report' },
   ]
 
-  if (isLoading || !isAuthenticated || !profileLoaded) {
+  if (isLoading || !isAuthenticated || !profileLoaded || user?.role !== 'super_admin') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />

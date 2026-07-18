@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
 import { productAPI } from '@/lib/api'
+import { extractArray, normalizeProduct, parseApiError, isStaffRole } from '@/lib/utils'
 
 interface Product {
   product_id: number
@@ -13,28 +14,6 @@ interface Product {
   quantity: number
   unit: string
   [key: string]: any
-}
-
-function extractArray(data: any): any[] {
-  if (Array.isArray(data)) return data
-  if (data && typeof data === 'object') {
-    for (const key of Object.keys(data)) {
-      if (Array.isArray(data[key])) return data[key]
-    }
-  }
-  return []
-}
-
-function normalizeProduct(raw: any): Product {
-  return {
-    product_id: raw.product_id ?? raw.id,
-    name: raw.name,
-    price: raw.price ?? 0,
-    cost_price: raw.cost_price ?? 0,
-    quantity: raw.quantity ?? raw.stock ?? 0,
-    unit: raw.unit || 'units',
-    ...raw,
-  }
 }
 
 function getStockBadge(qty: number, threshold: number = 10) {
@@ -60,7 +39,7 @@ export default function ProductsPage() {
   const [search, setSearch] = useState('')
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null)
 
-  const isStaff = user?.role === 'STAFF' || user?.role === 'staff'
+  const isStaff = isStaffRole(user?.role)
 
   const loadProducts = async () => {
     if (!businessId) return

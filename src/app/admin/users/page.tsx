@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
 import { useAuth } from '@/lib/auth'
@@ -83,10 +83,24 @@ export default function AdminUsersPage() {
     }
   }
 
-  const filteredUsers = users.filter(
-    (u) =>
-      u.name?.toLowerCase().includes(search.toLowerCase()) ||
-      u.email?.toLowerCase().includes(search.toLowerCase())
+  const handleVerifyUser = async (userId: number) => {
+    try {
+      await adminAPI.verifyUser(userId)
+      setSuccess('User verified successfully')
+      loadUsers()
+    } catch (err: any) {
+      const detail = err.response?.data?.detail
+      setError(typeof detail === 'string' ? detail : 'Failed to verify user')
+    }
+  }
+
+  const filteredUsers = useMemo(
+    () => users.filter(
+      (u) =>
+        u.name?.toLowerCase().includes(search.toLowerCase()) ||
+        u.email?.toLowerCase().includes(search.toLowerCase())
+    ),
+    [users, search]
   )
 
   if (isLoading || !isAuthenticated || user?.role !== 'super_admin') {
@@ -168,11 +182,20 @@ export default function AdminUsersPage() {
                       </select>
                     </td>
                     <td className="px-5 py-3.5 text-center">
-                      <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
-                        u.is_verified ? 'bg-success-light text-success' : 'bg-warning-light text-warning'
-                      }`}>
-                        {u.is_verified ? 'Verified' : 'Unverified'}
-                      </span>
+                      {u.is_verified ? (
+                        <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-success-light text-success">
+                          Verified
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => handleVerifyUser(u.user_id)}
+                          disabled={u.user_id === user?.id}
+                          className="inline-block px-2.5 py-1 rounded-full text-xs font-medium bg-warning-light text-warning hover:bg-warning/10 transition-colors disabled:opacity-50"
+                          title="Click to verify this user"
+                        >
+                          Verify
+                        </button>
+                      )}
                     </td>
                     <td className="px-5 py-3.5 text-right">
                       <div className="flex items-center justify-end gap-2">

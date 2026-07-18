@@ -1,9 +1,10 @@
 'use client'
 
 import { useAuth } from '@/lib/auth'
-import { useState, useRef, useEffect } from 'react'
-import { usePathname, useParams } from 'next/navigation'
+import { useState, useRef, useEffect, useMemo } from 'react'
+import { usePathname, useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { isManagerRole } from '@/lib/utils'
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -13,6 +14,7 @@ interface DashboardLayoutProps {
 export default function DashboardLayout({ children, businessId: propBusinessId }: DashboardLayoutProps) {
   const { user, logout, businesses, currentBusiness, switchBusiness } = useAuth()
   const pathname = usePathname()
+  const router = useRouter()
   const params = useParams()
   const businessId = propBusinessId || (params?.id as string) || currentBusiness?.business_id?.toString() || ''
 
@@ -26,32 +28,36 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
   const bizSwitcherRef = useRef<HTMLDivElement>(null)
 
   const isSuperAdmin = user?.role === 'super_admin'
-  const isManager = user?.role === 'OWNER' || user?.role === 'ADMIN' || user?.role === 'owner' || user?.role === 'admin' || isSuperAdmin
+  const isManager = isManagerRole(user?.role)
   const bizBase = businessId ? `/business/${businessId}` : ''
 
-  const normalNavItems = [
+  const normalNavItems = useMemo(() => [
     { label: 'Dashboard', icon: '📊', href: `${bizBase}/dashboard`, id: 'dashboard' },
     { label: 'Sales', icon: '💰', href: `${bizBase}/sales`, id: 'sales' },
     { label: 'Products', icon: '📦', href: `${bizBase}/products`, id: 'products' },
     { label: 'Customers', icon: '👥', href: `${bizBase}/customers`, id: 'customers' },
+    { label: 'Debts', icon: '💳', href: `${bizBase}/debts`, id: 'debts' },
     { label: 'Approvals', icon: '✅', href: '/businesses', id: 'approvals', ownerOnly: true },
     { label: 'Reports', icon: '📈', href: `${bizBase}/reports`, id: 'reports', ownerOnly: true },
     { label: 'Settings', icon: '⚙️', href: `${bizBase}/settings`, id: 'settings', ownerOnly: true },
-  ]
+  ], [bizBase])
 
-  const visibleNavItems = normalNavItems.filter((item) => {
-    if (item.ownerOnly && isManager) return true
-    if (item.ownerOnly && !isManager) return false
-    return true
-  })
+  const visibleNavItems = useMemo(
+    () => normalNavItems.filter((item) => {
+      if (item.ownerOnly && isManager) return true
+      if (item.ownerOnly && !isManager) return false
+      return true
+    }),
+    [normalNavItems, isManager]
+  )
 
-  const adminSubItems = [
+  const adminSubItems = useMemo(() => [
     { label: 'Overview', icon: '🛡️', href: '/admin', id: 'admin' },
     { label: 'User Management', icon: '👥', href: '/admin/users', id: 'admin-users' },
     { label: 'Business Management', icon: '🏢', href: '/admin/businesses', id: 'admin-businesses' },
     { label: 'Low Stock', icon: '⚠️', href: '/admin/low-stock', id: 'admin-low-stock' },
     { label: 'Jobs', icon: '🕐', href: '/admin/jobs', id: 'admin-jobs' },
-  ]
+  ], [])
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -73,7 +79,7 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
     if (biz) {
       switchBusiness(biz)
       setBizSwitcherOpen(false)
-      window.location.href = `/business/${biz.business_id}/dashboard`
+      router.push(`/business/${biz.business_id}/dashboard`)
     }
   }
 

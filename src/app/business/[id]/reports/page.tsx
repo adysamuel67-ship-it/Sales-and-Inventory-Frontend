@@ -4,7 +4,9 @@ import { useEffect, useState, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
 import { reportAPI, saleAPI, productAPI } from '@/lib/api'
-import RevenueChart from '@/components/RevenueChart'
+import dynamic from 'next/dynamic'
+const RevenueChart = dynamic(() => import('@/components/RevenueChart'), { ssr: false })
+import { extractArray, extractProfit, extractSummary, getDateRange, parseApiError, isStaffRole } from '@/lib/utils'
 
 interface ProfitData {
   total_revenue: number
@@ -27,16 +29,6 @@ interface ChartDataPoint {
   profit: number
 }
 
-function getDateRange(daysAgo: number) {
-  const end = new Date()
-  const start = new Date(end)
-  start.setDate(start.getDate() - daysAgo)
-  return {
-    start: start.toISOString().split('T')[0],
-    end: end.toISOString().split('T')[0],
-  }
-}
-
 const datePresets = [
   { label: '7 days', days: 7 },
   { label: '30 days', days: 30 },
@@ -44,46 +36,8 @@ const datePresets = [
   { label: '1 year', days: 365 },
 ]
 
-function extractProfit(data: any): ProfitData | null {
-  if (!data || typeof data !== 'object') return null
-  const d = data.data || data
-  const revenue = d.total_revenue ?? d.revenue ?? d.total_amount ?? null
-  const cost = d.total_cost ?? d.cost ?? d.total_cost_of_goods ?? null
-  const profit = d.total_profit ?? d.profit ?? d.net_profit ?? null
-  if (revenue === null && profit === null) return null
-  return {
-    total_revenue: Number(revenue ?? 0),
-    total_cost: Number(cost ?? 0),
-    total_profit: Number(profit ?? 0),
-    items_sold: d.items_sold ?? d.quantity_sold ?? undefined,
-    sales_count: d.sales_count ?? d.total_sales ?? undefined,
-  }
-}
-
-function extractSummary(data: any): SummaryData | null {
-  if (!data || typeof data !== 'object') return null
-  const d = data.data || data
-  const revenue = d.total_revenue ?? d.revenue ?? d.total_amount ?? null
-  const profit = d.total_profit ?? d.profit ?? d.net_profit ?? null
-  const sales = d.total_sales ?? d.sales ?? d.sales_count ?? null
-  const products = d.total_active_products ?? d.total_products ?? d.products ?? null
-  if (revenue === null && profit === null && sales === null) return null
-  return {
-    total_revenue: Number(revenue ?? 0),
-    total_profit: Number(profit ?? 0),
-    total_sales: Number(sales ?? 0),
-    total_products: products != null ? Number(products) : undefined,
-  }
-}
-
 function extractSaleArray(data: any): any[] {
-  if (Array.isArray(data)) return data
-  if (data && typeof data === 'object') {
-    for (const key of Object.keys(data)) {
-      if (Array.isArray(data[key])) return data[key]
-    }
-  }
-  return []
+  return extractArray(data)
 }
 
 export default function ReportsPage() {
@@ -98,6 +52,7 @@ export default function ReportsPage() {
   const [dateRange, setDateRange] = useState(() => getDateRange(30))
   const [activePreset, setActivePreset] = useState(30)
   const [showDatePicker, setShowDatePicker] = useState(false)
+  const [draftDateRange, setDraftDateRange] = useState(() => getDateRange(30))
 
   const loadReports = useCallback(async () => {
     if (!businessId) return
@@ -138,11 +93,11 @@ export default function ReportsPage() {
 
         const dailyMap: Record<string, { revenue: number; count: number }> = {}
         for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-          dailyMap[d.toLocaleDateString()] = { revenue: 0, count: 0 }
+          dailyMap[d.toISOString().split('T')[0]] = { revenue: 0, count: 0 }
         }
 
         for (const s of filtered) {
-          const dateStr = new Date(s.created_at).toLocaleDateString()
+          const dateStr = new Date(s.created_at).toISOString().split('T')[0]
           if (!dailyMap[dateStr]) continue
           dailyMap[dateStr].revenue += Number(s.total_amount ?? s.amount ?? 0)
           dailyMap[dateStr].count += 1
@@ -205,9 +160,19 @@ export default function ReportsPage() {
     setShowDatePicker(false)
   }
 
+  const handleOpenDatePicker = () => {
+    setDraftDateRange(dateRange)
+    setShowDatePicker(true)
+  }
+
   const handleCustomDateChange = (field: 'start' | 'end', value: string) => {
-    setDateRange((prev) => ({ ...prev, [field]: value }))
+    setDraftDateRange((prev) => ({ ...prev, [field]: value }))
+  }
+
+  const handleApplyCustomDate = () => {
+    setDateRange(draftDateRange)
     setActivePreset(0)
+    setShowDatePicker(false)
   }
 
   const dateSubtitle = activePreset > 0
@@ -228,7 +193,7 @@ export default function ReportsPage() {
         </div>
         <div className="relative">
           <button
-            onClick={() => setShowDatePicker(!showDatePicker)}
+            onClick={() => showDatePicker ? setShowDatePicker(false) : handleOpenDatePicker()}
             className="flex items-center gap-2 px-4 py-2.5 bg-surface border border-border rounded-xl text-sm font-medium text-gray-700 hover:bg-surfaceAlt transition-colors min-h-[44px]"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -264,7 +229,7 @@ export default function ReportsPage() {
                   <label className="block text-[10px] text-gray-400 mb-1">From</label>
                   <input
                     type="date"
-                    value={dateRange.start}
+                    value={draftDateRange.start}
                     onChange={(e) => handleCustomDateChange('start', e.target.value)}
                     className="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs focus:border-primary outline-none"
                   />
@@ -273,14 +238,14 @@ export default function ReportsPage() {
                   <label className="block text-[10px] text-gray-400 mb-1">To</label>
                   <input
                     type="date"
-                    value={dateRange.end}
+                    value={draftDateRange.end}
                     onChange={(e) => handleCustomDateChange('end', e.target.value)}
                     className="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs focus:border-primary outline-none"
                   />
                 </div>
               </div>
               <button
-                onClick={() => setShowDatePicker(false)}
+                onClick={handleApplyCustomDate}
                 className="w-full mt-3 px-3 py-2 bg-primary text-white rounded-lg text-xs font-medium hover:bg-primary-dark transition-colors"
               >
                 Apply

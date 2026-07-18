@@ -1,5 +1,6 @@
 'use client'
 
+import { memo } from 'react'
 import Link from 'next/link'
 
 interface SaleRecord {
@@ -22,7 +23,7 @@ const paymentColors: Record<string, string> = {
   Card: 'bg-warning-light text-warning',
 }
 
-export default function RecentSales({ sales, businessId }: Props) {
+export default memo(function RecentSales({ sales, businessId }: Props) {
   const salesLink = businessId ? `/business/${businessId}/sales` : '/sales'
 
   return (
@@ -82,4 +83,4 @@ export default function RecentSales({ sales, businessId }: Props) {
       )}
     </div>
   )
-}
+})

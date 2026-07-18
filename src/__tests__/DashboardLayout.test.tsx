@@ -28,6 +28,13 @@ jest.mock('next/link', () => {
 jest.mock('next/navigation', () => ({
   usePathname: jest.fn(() => '/business/1/dashboard'),
   useParams: jest.fn(() => ({ id: '1' })),
+  useRouter: jest.fn(() => ({
+    push: jest.fn(),
+    replace: jest.fn(),
+    refresh: jest.fn(),
+    back: jest.fn(),
+    prefetch: jest.fn(),
+  })),
 }))
 
 jest.mock('@/lib/auth', () => ({

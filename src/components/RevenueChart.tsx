@@ -1,5 +1,6 @@
 'use client'
 
+import { memo } from 'react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 
 interface ChartDataPoint {
@@ -28,7 +29,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null
 }
 
-export default function RevenueChart({ data }: Props) {
+export default memo(function RevenueChart({ data }: Props) {
   return (
     <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm p-5">
       <div className="flex items-center justify-between mb-5">
@@ -85,4 +86,4 @@ export default function RevenueChart({ data }: Props) {
       </div>
     </div>
   )
-}
+})

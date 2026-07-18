@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
 import { businessAPI } from '@/lib/api'
+import { isAdminRole, parseApiError } from '@/lib/utils'
 
 export default function SettingsPage() {
   const params = useParams()
@@ -21,7 +22,7 @@ export default function SettingsPage() {
   const [deleteInput, setDeleteInput] = useState('')
   const [deleting, setDeleting] = useState(false)
 
-  const isOwner = user?.role === 'OWNER' || user?.role === 'ADMIN' || user?.role === 'owner' || user?.role === 'admin' || user?.role === 'super_admin'
+  const isOwner = isAdminRole(user?.role)
 
   const loadSettings = useCallback(async () => {
     if (!businessId) return
