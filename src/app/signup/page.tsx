@@ -89,12 +89,13 @@ export default function SignUpPage() {
           <input
             type="password"
             required
-            minLength={6}
+            minLength={8}
             value={form.password}
             onChange={(e) => setForm({ ...form, password: e.target.value })}
             className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-            placeholder="At least 6 characters"
+            placeholder="Min 8 characters"
           />
+          <p className="text-xs text-neutral-light mt-1">Must include at least 1 uppercase letter and 1 number</p>
         </div>
 
         <button
