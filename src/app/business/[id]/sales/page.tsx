@@ -119,6 +119,15 @@ export default function SalesPage() {
   const totalAmount = useMemo(() => filteredSales.reduce((sum, s) => sum + s.amount, 0), [filteredSales])
   const totalQty = useMemo(() => filteredSales.reduce((sum, s) => sum + s.qty, 0), [filteredSales])
 
+  if (isNaN(businessId)) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <h2 className="text-lg font-semibold text-gray-900 mb-2">Invalid business</h2>
+        <p className="text-sm text-gray-500">This business doesn&apos;t exist or the URL is invalid.</p>
+      </div>
+    )
+  }
+
   const handlePreset = (days: number) => {
     setActivePreset(days)
     if (days === 0) {

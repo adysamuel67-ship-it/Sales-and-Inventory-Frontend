@@ -6,6 +6,7 @@ import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { useMemo } from 'react'
 import KpiCard from '@/components/KpiCard'
+import { kpiIcons } from '@/components/KpiIcons'
 import RecentSales from '@/components/RecentSales'
 import LowStockAlerts from '@/components/LowStockAlerts'
 
@@ -244,7 +245,7 @@ export default function BusinessDashboardPage() {
             <div className="skeleton h-4 w-32" />
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="skeleton h-24 rounded-2xl" />
           ))}
@@ -337,50 +338,50 @@ export default function BusinessDashboardPage() {
       </div>
 
       {isStaff ? (
-        <div className="grid grid-cols-2 gap-3 mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           <KpiCard
             title="Today's Sales"
             value={summary?.total_sales != null ? summary.total_sales.toLocaleString() : '---'}
             subtitle={dateSubtitle}
-            icon="🛒"
+            icon={kpiIcons.sales}
             color="primary"
           />
           <KpiCard
             title="Low Stock"
             value={lowStockItems.length.toLocaleString()}
             subtitle="Items need restocking"
-            icon="⚠️"
+            icon={kpiIcons.warning}
             color="warning"
           />
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3 mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           <KpiCard
             title="Revenue"
             value={summary?.total_revenue != null ? `GH₵${summary.total_revenue.toLocaleString()}` : '---'}
             subtitle={dateSubtitle}
-            icon="💰"
+            icon={kpiIcons.revenue}
             color="primary"
           />
           <KpiCard
             title="Profit"
             value={summary?.total_profit != null ? `GH₵${summary.total_profit.toLocaleString()}` : '---'}
             subtitle={dateSubtitle}
-            icon="📈"
+            icon={kpiIcons.profit}
             color="success"
           />
           <KpiCard
             title="Sales"
             value={summary?.total_sales != null ? summary.total_sales.toLocaleString() : '---'}
             subtitle={dateSubtitle}
-            icon="🛒"
+            icon={kpiIcons.sales}
             color="warning"
           />
           <KpiCard
             title="Products"
             value={summary?.total_products != null ? summary.total_products.toLocaleString() : '---'}
             subtitle="In inventory"
-            icon="📦"
+            icon={kpiIcons.products}
             color="danger"
           />
         </div>

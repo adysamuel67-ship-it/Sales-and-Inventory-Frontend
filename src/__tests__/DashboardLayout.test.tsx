@@ -101,7 +101,7 @@ describe('DashboardLayout', () => {
       </DashboardLayout>
     )
 
-    expect(screen.getByText('Kwame Mensah')).toBeTruthy()
+    expect(screen.getAllByText('Kwame Mensah').length).toBeGreaterThanOrEqual(1)
   })
 
   it('displays user role', () => {
@@ -159,7 +159,7 @@ describe('DashboardLayout', () => {
 
     const links = screen.getAllByTestId('next-link')
     const dashboardLink = links.find(l => l.getAttribute('href') === '/business/1/dashboard')
-    expect(dashboardLink?.className).toContain('bg-white/20')
+    expect(dashboardLink?.className).toContain('bg-white/[0.12]')
     expect(dashboardLink?.className).toContain('font-medium')
   })
 
@@ -172,8 +172,8 @@ describe('DashboardLayout', () => {
 
     const links = screen.getAllByTestId('next-link')
     const salesLink = links.find(l => l.getAttribute('href') === '/business/1/sales')
-    expect(salesLink?.className).not.toContain('bg-white/20')
-    expect(salesLink?.className).toContain('text-white/70')
+    expect(salesLink?.className).not.toContain('bg-white/[0.12]')
+    expect(salesLink?.className).toContain('text-white/55')
   })
 
   it('shows current business name', () => {
@@ -203,7 +203,7 @@ describe('DashboardLayout', () => {
       </DashboardLayout>
     )
 
-    expect(screen.getByText('Kwame Mensah')).toBeTruthy()
+    expect(screen.getAllByText('Kwame Mensah').length).toBeGreaterThanOrEqual(1)
     const roles = screen.getAllByText('OWNER')
     expect(roles.length).toBeGreaterThanOrEqual(1)
   })

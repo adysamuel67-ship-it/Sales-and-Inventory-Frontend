@@ -385,33 +385,55 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
         <KpiCard
           title="Revenue"
           value={summary?.total_revenue != null ? `GH₵${summary.total_revenue.toLocaleString()}` : '---'}
           subtitle={dateSubtitle}
-          icon="💰"
+          icon={
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="1" x2="12" y2="23" />
+              <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
+            </svg>
+          }
           color="primary"
         />
         <KpiCard
           title="Profit"
           value={summary?.total_profit != null ? `GH₵${summary.total_profit.toLocaleString()}` : '---'}
           subtitle={dateSubtitle}
-          icon="📈"
+          icon={
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+              <polyline points="17 6 23 6 23 12" />
+            </svg>
+          }
           color="success"
         />
         <KpiCard
           title="Sales"
           value={summary?.total_sales != null ? summary.total_sales.toLocaleString() : '---'}
           subtitle={dateSubtitle}
-          icon="🛒"
+          icon={
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="9" cy="21" r="1" />
+              <circle cx="20" cy="21" r="1" />
+              <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6" />
+            </svg>
+          }
           color="warning"
         />
         <KpiCard
           title="Products"
           value={summary?.total_products != null ? summary.total_products.toLocaleString() : '---'}
           subtitle="In inventory"
-          icon="📦"
+          icon={
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0022 16z" />
+              <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+              <line x1="12" y1="22.08" x2="12" y2="12" />
+            </svg>
+          }
           color="danger"
         />
       </div>

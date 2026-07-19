@@ -6,6 +6,7 @@ import DashboardLayout from '@/components/DashboardLayout'
 import { useAuth } from '@/lib/auth'
 import { adminAPI, businessAPI } from '@/lib/api'
 import KpiCard from '@/components/KpiCard'
+import { kpiIcons } from '@/components/KpiIcons'
 
 export default function AdminDashboardPage() {
   const { isAuthenticated, isLoading, profileLoaded, user } = useAuth()
@@ -82,21 +83,21 @@ export default function AdminDashboardPage() {
           title="Total Users"
           value={loading ? '---' : userCount.toLocaleString()}
           subtitle="Registered accounts"
-          icon="👥"
+          icon={kpiIcons.users}
           color="primary"
         />
         <KpiCard
           title="Total Businesses"
           value={loading ? '---' : businessCount.toLocaleString()}
           subtitle="Active businesses"
-          icon="🏢"
+          icon={kpiIcons.businesses}
           color="success"
         />
         <KpiCard
           title="Your Role"
           value="Super Admin"
           subtitle="Full platform access"
-          icon="🛡️"
+          icon={kpiIcons.shield}
           color="warning"
         />
       </div>

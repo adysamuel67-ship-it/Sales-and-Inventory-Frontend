@@ -154,6 +154,15 @@ export default function ReportsPage() {
     loadReports()
   }, [loadReports])
 
+  if (isNaN(businessId)) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <h2 className="text-lg font-semibold text-gray-900 mb-2">Invalid business</h2>
+        <p className="text-sm text-gray-500">This business doesn&apos;t exist or the URL is invalid.</p>
+      </div>
+    )
+  }
+
   const handlePresetChange = (days: number) => {
     setActivePreset(days)
     setDateRange(getDateRange(days))
@@ -266,7 +275,7 @@ export default function ReportsPage() {
 
       {loading ? (
         <div className="space-y-6">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className="skeleton h-24 rounded-2xl" />
             ))}

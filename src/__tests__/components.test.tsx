@@ -40,49 +40,51 @@ import LowStockAlerts from '@/components/LowStockAlerts'
 import { render, screen } from '@testing-library/react'
 
 describe('KpiCard', () => {
+  const testIcon = <span data-testid="test-icon">ICON</span>
+
   it('renders title and value', () => {
-    render(<KpiCard title="Revenue" value="GH₵1,500" icon="💰" color="primary" />)
+    render(<KpiCard title="Revenue" value="GH₵1,500" icon={testIcon} color="primary" />)
     expect(screen.getByText('Revenue')).toBeTruthy()
     expect(screen.getByText('GH₵1,500')).toBeTruthy()
   })
 
   it('renders subtitle when provided', () => {
-    render(<KpiCard title="Revenue" value="GH₵1,500" subtitle="Last 30 days" icon="💰" color="primary" />)
+    render(<KpiCard title="Revenue" value="GH₵1,500" subtitle="Last 30 days" icon={testIcon} color="primary" />)
     expect(screen.getByText('Last 30 days')).toBeTruthy()
   })
 
   it('does not render subtitle when absent', () => {
-    const { container } = render(<KpiCard title="Revenue" value="GH₵1,500" icon="💰" color="primary" />)
+    const { container } = render(<KpiCard title="Revenue" value="GH₵1,500" icon={testIcon} color="primary" />)
     expect(container.textContent).not.toContain('subtitle')
   })
 
   it('renders icon', () => {
-    render(<KpiCard title="Revenue" value="GH₵1,500" icon="💰" color="primary" />)
-    expect(screen.getByText('💰')).toBeTruthy()
+    render(<KpiCard title="Revenue" value="GH₵1,500" icon={testIcon} color="primary" />)
+    expect(screen.getByTestId('test-icon')).toBeTruthy()
   })
 
   it('renders with primary color', () => {
-    const { container } = render(<KpiCard title="Revenue" value="100" icon="💰" color="primary" />)
+    const { container } = render(<KpiCard title="Revenue" value="100" icon={testIcon} color="primary" />)
     const card = container.querySelector('.kpi-card')
-    expect(card?.className).toContain('from-blue-50')
+    expect(card?.className).toContain('border-blue-100')
   })
 
   it('renders with success color', () => {
-    const { container } = render(<KpiCard title="Profit" value="500" icon="📈" color="success" />)
+    const { container } = render(<KpiCard title="Profit" value="500" icon={testIcon} color="success" />)
     const card = container.querySelector('.kpi-card')
-    expect(card?.className).toContain('from-emerald-50')
+    expect(card?.className).toContain('border-emerald-100')
   })
 
   it('renders with warning color', () => {
-    const { container } = render(<KpiCard title="Low Stock" value="3" icon="⚠️" color="warning" />)
+    const { container } = render(<KpiCard title="Low Stock" value="3" icon={testIcon} color="warning" />)
     const card = container.querySelector('.kpi-card')
-    expect(card?.className).toContain('from-amber-50')
+    expect(card?.className).toContain('border-amber-100')
   })
 
   it('renders with danger color', () => {
-    const { container } = render(<KpiCard title="Products" value="8" icon="📦" color="danger" />)
+    const { container } = render(<KpiCard title="Products" value="8" icon={testIcon} color="danger" />)
     const card = container.querySelector('.kpi-card')
-    expect(card?.className).toContain('from-rose-50')
+    expect(card?.className).toContain('border-rose-100')
   })
 
   it('renders trend indicator when provided', () => {
@@ -90,12 +92,12 @@ describe('KpiCard', () => {
       <KpiCard
         title="Revenue"
         value="GH₵1,500"
-        icon="💰"
+        icon={testIcon}
         color="primary"
         trend={{ value: '+12%', positive: true }}
       />
     )
-    expect(screen.getByText('↑ +12%')).toBeTruthy()
+    expect(screen.getByText(/12%/)).toBeTruthy()
   })
 
   it('renders negative trend', () => {
@@ -103,23 +105,28 @@ describe('KpiCard', () => {
       <KpiCard
         title="Revenue"
         value="GH₵1,500"
-        icon="💰"
+        icon={testIcon}
         color="primary"
         trend={{ value: '-5%', positive: false }}
       />
     )
-    expect(screen.getByText('↓ -5%')).toBeTruthy()
+    expect(screen.getByText(/5%/)).toBeTruthy()
   })
 
   it('does not render trend when absent', () => {
-    const { container } = render(<KpiCard title="Revenue" value="100" icon="💰" color="primary" />)
-    expect(container.textContent).not.toContain('↑')
-    expect(container.textContent).not.toContain('↓')
+    const { container } = render(<KpiCard title="Revenue" value={100} icon={testIcon} color="primary" />)
+    expect(container.querySelector('[class*="emerald-50"]')).toBeNull()
+    expect(container.querySelector('[class*="rose-50"]')).toBeNull()
   })
 
   it('renders numeric value', () => {
-    render(<KpiCard title="Sales" value={42} icon="🛒" color="primary" />)
+    render(<KpiCard title="Sales" value={42} icon={testIcon} color="primary" />)
     expect(screen.getByText('42')).toBeTruthy()
+  })
+
+  it('accepts string icon', () => {
+    render(<KpiCard title="Revenue" value="100" icon="$" color="primary" />)
+    expect(screen.getByText('$')).toBeTruthy()
   })
 })
 

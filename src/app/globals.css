@@ -37,6 +37,82 @@ body {
   -webkit-backdrop-filter: blur(20px);
 }
 
+.auth-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* Auth animations */
+@keyframes authFadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes authFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes authSlideRight {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.9); opacity: 0.5; }
+  50% { transform: scale(1.05); opacity: 0.8; }
+  100% { transform: scale(0.9); opacity: 0.5; }
+}
+
+@keyframes shimmer-dot {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+.auth-animate-fade-up {
+  animation: authFadeUp 0.6s ease-out both;
+}
+
+.auth-animate-fade-in {
+  animation: authFadeIn 0.5s ease-out both;
+}
+
+.auth-animate-slide-right {
+  animation: authSlideRight 0.5s ease-out both;
+}
+
+.auth-animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+.auth-animate-float-slow {
+  animation: floatSlow 5s ease-in-out infinite;
+}
+
+.auth-animate-pulse-ring {
+  animation: pulse-ring 3s ease-in-out infinite;
+}
+
+.auth-animate-shimmer {
+  animation: shimmer-dot 2s ease-in-out infinite;
+}
+
+.auth-delay-1 { animation-delay: 0.1s; }
+.auth-delay-2 { animation-delay: 0.2s; }
+.auth-delay-3 { animation-delay: 0.3s; }
+.auth-delay-4 { animation-delay: 0.4s; }
+.auth-delay-5 { animation-delay: 0.5s; }
+
 .dashboard-sidebar {
   background: linear-gradient(180deg, #14213D 0%, #0F172A 100%);
 }
@@ -67,8 +143,8 @@ body {
   border-radius: 0.5rem;
 }
 
-/* Touch-friendly minimum targets */
-button, a, input, select, textarea {
+/* Touch-friendly minimum targets for interactive elements */
+button, a {
   min-height: 44px;
 }
 
