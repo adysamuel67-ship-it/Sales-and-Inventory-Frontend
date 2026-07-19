@@ -193,23 +193,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(null)
       }
 
-      const init = async () => {
+      const init = () => {
         setLoginGrace(60000)
-        if (isTokenExpired(storedToken, 60) && storedRefreshToken) {
-          const refreshed = await tryProactiveRefresh()
-          if (cancelled) return
-          if (refreshed) {
-            setToken(refreshed)
-          } else {
-            setIsLoading(false)
-            return
-          }
-        }
-        if (cancelled) return
         setIsLoading(false)
         startAutoRefresh(5 * 60 * 1000)
         fetchProfile()
         fetchBusinesses()
+        if (isTokenExpired(storedToken, 60) && storedRefreshToken) {
+          tryProactiveRefresh().then((refreshed) => {
+            if (cancelled) return
+            if (refreshed) setToken(refreshed)
+          }).catch(() => {})
+        }
       }
       init()
     } else {
