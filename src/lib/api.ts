@@ -312,6 +312,8 @@ export const debtAPI = {
     api.post(`/debts/add_debt/${businessId}/${customerId}`, data),
   updateDebt: (businessId: number, customerId: number, data: any) =>
     api.put(`/debts/update_customer_debt/${businessId}/${customerId}`, data),
+  getCustomerTransactions: (businessId: number, customerId: number) =>
+    api.get(`/debts/customer_transactions/${businessId}/${customerId}`),
 }
 
 export const reportAPI = {

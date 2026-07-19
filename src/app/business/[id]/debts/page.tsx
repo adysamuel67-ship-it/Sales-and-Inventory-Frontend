@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
-import { debtAPI, customerAPI } from '@/lib/api'
+import { debtAPI, customerAPI, saleAPI } from '@/lib/api'
 import { extractArray, parseApiError, isAdminRole } from '@/lib/utils'
 
 interface DebtRecord {
@@ -28,6 +28,21 @@ interface DebtSummary {
   total_customers: number
   total_overdue: number
   overdue_amount: number
+}
+
+interface CustomerTransaction {
+  transaction_id: number
+  debt_id: number
+  performer_id: number
+  business_id: number
+  customer_id?: number
+  amount_paid: number
+  note?: string
+  created_at: string
+  customer_name?: string
+  customer_phone?: string
+  customer_email?: string
+  customer_address?: string
 }
 
 type Tab = 'all' | 'overdue' | 'paid'
@@ -80,6 +95,12 @@ export default function DebtsPage() {
 
   const [showDetailModal, setShowDetailModal] = useState(false)
   const [detailCustomer, setDetailCustomer] = useState<CustomerWithDebt | null>(null)
+
+  const [showProfileModal, setShowProfileModal] = useState(false)
+  const [profileCustomer, setProfileCustomer] = useState<CustomerWithDebt | null>(null)
+  const [profileTransactions, setProfileTransactions] = useState<CustomerTransaction[]>([])
+  const [profileLoading, setProfileLoading] = useState(false)
+  const [profileSales, setProfileSales] = useState<any[]>([])
 
   const isAdmin = isAdminRole(user?.role)
 
@@ -313,6 +334,55 @@ export default function DebtsPage() {
     setShowDetailModal(true)
   }
 
+  const openProfile = async (customer: CustomerWithDebt) => {
+    setProfileCustomer(customer)
+    setShowProfileModal(true)
+    setProfileLoading(true)
+    setProfileTransactions([])
+    setProfileSales([])
+
+    try {
+      const [txnRes, salesRes] = await Promise.allSettled([
+        debtAPI.getCustomerTransactions(businessId, customer.customer_id),
+        saleAPI.list(businessId),
+      ])
+
+      if (txnRes.status === 'fulfilled') {
+        const raw = txnRes.value.data
+        const arr = extractArray(raw)
+        setProfileTransactions(arr.map((item: any) => {
+          const txn = item.transactions || item
+          return {
+            transaction_id: txn.transaction_id ?? txn.id ?? item.transaction_id ?? item.id,
+            debt_id: txn.debt_id ?? item.debt_id,
+            performer_id: txn.performer_id ?? item.performer_id,
+            business_id: txn.business_id ?? item.business_id,
+            customer_id: txn.customer_id ?? item.customer_id,
+            amount_paid: Number(txn.amount_paid ?? item.amount_paid ?? 0),
+            note: txn.note || item.note || '',
+            created_at: txn.created_at || item.created_at || '',
+            customer_name: item.customer_name || txn.customer_name,
+            customer_phone: item.customer_phone || txn.customer_phone,
+            customer_email: item.customer_email || txn.customer_email,
+            customer_address: item.customer_address || txn.customer_address,
+          }
+        }))
+      }
+
+      if (salesRes.status === 'fulfilled') {
+        const sales = extractArray(salesRes.value.data)
+        const customerSales = sales.filter((s: any) => {
+          const saleCid = s.customer_id ?? s.customer?.customer_id
+          return saleCid != null && Number(saleCid) === Number(customer.customer_id)
+        })
+        setProfileSales(customerSales)
+      }
+    } catch {
+    } finally {
+      setProfileLoading(false)
+    }
+  }
+
   const formatCurrency = (amount: number) =>
     `GH\u20B5${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
@@ -441,19 +511,22 @@ export default function DebtsPage() {
                       return (
                         <tr key={customer.customer_id} className="border-t border-gray-50 table-row-hover">
                           <td className="px-5 py-3.5">
-                            <div className="flex items-center gap-3">
+                            <button
+                              onClick={() => openProfile(customer)}
+                              className="flex items-center gap-3 text-left hover:opacity-80 transition-opacity"
+                            >
                               <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold shrink-0 ${
                                 hasOverdue ? 'bg-danger-light text-danger' : 'bg-warning-light text-warning'
                               }`}>
                                 {customer.customer_name?.charAt(0)?.toUpperCase() || '?'}
                               </div>
                               <div>
-                                <div className="font-medium text-gray-900">{customer.customer_name}</div>
+                                <div className="font-medium text-gray-900 underline decoration-dotted underline-offset-2 cursor-pointer">{customer.customer_name}</div>
                                 {customer.customer_phone && (
                                   <div className="text-xs text-neutral-light mt-0.5">{customer.customer_phone}</div>
                                 )}
                               </div>
-                            </div>
+                            </button>
                           </td>
                           <td className="px-5 py-3.5 text-right">
                             <span className={`font-semibold ${customer.total_debt >= 100 ? 'text-danger' : 'text-warning'}`}>
@@ -478,7 +551,7 @@ export default function DebtsPage() {
                           <td className="px-5 py-3.5 text-right">
                             <div className="flex items-center gap-2 justify-end">
                               <button
-                                onClick={() => openDetail(customer)}
+                                onClick={() => openProfile(customer)}
                                 className="px-2.5 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
                               >
                                 Details
@@ -793,6 +866,147 @@ export default function DebtsPage() {
               )}
               <button
                 onClick={() => setShowDetailModal(false)}
+                className="px-4 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors min-h-[44px]"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showProfileModal && profileCustomer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowProfileModal(false)}>
+          <div className="absolute inset-0 bg-black/40" />
+          <div
+            className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
+              <h3 className="font-semibold text-gray-900">Customer Profile</h3>
+              <button
+                onClick={() => setShowProfileModal(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="px-6 py-5">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-lg font-bold text-primary">
+                  {profileCustomer.customer_name?.charAt(0)?.toUpperCase() || '?'}
+                </div>
+                <div>
+                  <h4 className="text-lg font-semibold text-gray-900">{profileCustomer.customer_name}</h4>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    {profileCustomer.customer_phone && (
+                      <span className="text-sm text-neutral-light">{profileCustomer.customer_phone}</span>
+                    )}
+                    {profileCustomer.customer_email && (
+                      <span className="text-sm text-neutral-light">| {profileCustomer.customer_email}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 mb-6">
+                <div className="bg-danger-light rounded-xl p-4">
+                  <p className="text-xs text-neutral-light mb-1">Outstanding Debt</p>
+                  <p className="text-lg font-bold text-danger">
+                    {profileLoading ? '...' : formatCurrency(profileCustomer.total_debt)}
+                  </p>
+                </div>
+                <div className="bg-surfaceAlt rounded-xl p-4">
+                  <p className="text-xs text-neutral-light mb-1">Transactions</p>
+                  <p className="text-lg font-semibold text-gray-900">
+                    {profileLoading ? '...' : profileTransactions.length}
+                  </p>
+                </div>
+              </div>
+
+              {profileCustomer.debts.length > 0 && (
+                <div className="mb-6">
+                  <h5 className="text-sm font-semibold text-gray-900 mb-3">Debt Records</h5>
+                  <div className="space-y-2">
+                    {profileCustomer.debts.map((debt) => {
+                      const overdue = !debt.is_paid && debt.due_date && isOverdue(debt.due_date)
+                      const daysLeft = debt.due_date ? daysUntilDue(debt.due_date) : null
+                      return (
+                        <div key={debt.debt_id} className="flex items-center justify-between py-2.5 px-3 bg-surfaceAlt rounded-lg text-sm">
+                          <div>
+                            <span className="font-medium text-gray-900">{formatCurrency(debt.amount)}</span>
+                            {debt.due_date && (
+                              <span className="text-xs text-neutral-light ml-2">
+                                Due {new Date(debt.due_date).toLocaleDateString()}
+                                {overdue && <span className="text-danger ml-1">(overdue)</span>}
+                                {!overdue && !debt.is_paid && daysLeft != null && (
+                                  <span className="ml-1">({daysLeft}d left)</span>
+                                )}
+                              </span>
+                            )}
+                          </div>
+                          <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
+                            debt.is_paid ? 'bg-success-light text-success' : overdue ? 'bg-danger-light text-danger' : 'bg-warning-light text-warning'
+                          }`}>
+                            {debt.is_paid ? 'Paid' : overdue ? 'Overdue' : 'Pending'}
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {profileLoading ? (
+                <div className="py-6 text-center">
+                  <div className="w-6 h-6 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+                </div>
+              ) : profileTransactions.length > 0 ? (
+                <div>
+                  <h5 className="text-sm font-semibold text-gray-900 mb-3">Payment Transactions</h5>
+                  <div className="space-y-2">
+                    {profileTransactions.map((txn) => (
+                      <div key={txn.transaction_id} className="flex items-center justify-between py-2.5 px-3 bg-surfaceAlt rounded-lg text-sm">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-success">{formatCurrency(txn.amount_paid)}</span>
+                            <span className="text-xs text-neutral-light">payment</span>
+                          </div>
+                          {txn.note && (
+                            <p className="text-xs text-neutral-light mt-0.5">{txn.note}</p>
+                          )}
+                          <p className="text-xs text-neutral-light mt-0.5">
+                            {new Date(txn.created_at).toLocaleDateString()} at {new Date(txn.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-4">
+                  <p className="text-sm text-neutral-light">No payment transactions yet</p>
+                </div>
+              )}
+            </div>
+
+            <div className="sticky bottom-0 bg-white border-t border-gray-100 px-6 py-4 rounded-b-2xl flex items-center gap-3">
+              {profileCustomer.total_debt > 0 && isAdmin && (
+                <button
+                  onClick={() => {
+                    setShowProfileModal(false)
+                    openPayment(profileCustomer)
+                  }}
+                  className="px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors min-h-[44px]"
+                >
+                  Record Payment
+                </button>
+              )}
+              <button
+                onClick={() => setShowProfileModal(false)}
                 className="px-4 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors min-h-[44px]"
               >
                 Close
