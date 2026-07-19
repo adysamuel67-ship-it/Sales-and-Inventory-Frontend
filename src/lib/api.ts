@@ -57,7 +57,7 @@ let failedQueue: { resolve: (token: string) => void; reject: (err: any) => void 
 let loginGraceUntil = 0
 
 export function setLoginGrace() {
-  loginGraceUntil = Date.now() + 5000
+  loginGraceUntil = Date.now() + 15000
 }
 
 function processQueue(error: any, token: string | null) {
@@ -81,25 +81,35 @@ async function performTokenRefresh(): Promise<string> {
   const accessToken = localStorage.getItem('token')
   if (!refreshToken) throw new Error('No refresh token')
 
-  const { data } = await axios.post(`${API_BASE_URL}/auth/refresh`, {
-    access_token: accessToken,
-    refresh_token: refreshToken,
-    token_type: 'Bearer',
-  }, {
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${refreshToken}`,
-    },
-    timeout: 30000,
-  })
+  let lastError: any = null
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const { data } = await axios.post(`${API_BASE_URL}/auth/refresh`, {
+        access_token: accessToken,
+        refresh_token: refreshToken,
+        token_type: 'Bearer',
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${refreshToken}`,
+        },
+        timeout: 60000,
+      })
 
-  const newToken = extractAccessToken(data)
-  if (!newToken) throw new Error('No access token in refresh response')
+      const newToken = extractAccessToken(data)
+      if (!newToken) throw new Error('No access token in refresh response')
 
-  const newRefresh = data.refresh_token || refreshToken
-  localStorage.setItem('token', newToken)
-  localStorage.setItem('refresh_token', newRefresh)
-  return newToken
+      const newRefresh = data.refresh_token || refreshToken
+      localStorage.setItem('token', newToken)
+      localStorage.setItem('refresh_token', newRefresh)
+      return newToken
+    } catch (err: any) {
+      lastError = err
+      if (err.response?.status === 403) throw err
+      if (attempt === 0) await new Promise((r) => setTimeout(r, 2000))
+    }
+  }
+  throw lastError
 }
 
 export { startRefresh }
@@ -109,6 +119,7 @@ function startRefresh(): Promise<string> {
     isRefreshing = true
     refreshPromise = performTokenRefresh()
       .then((newToken) => {
+        setLoginGrace()
         if (onTokenRefreshed) onTokenRefreshed(newToken)
         processQueue(null, newToken)
         return newToken
@@ -142,7 +153,11 @@ function handle401Interceptor(instance: any) {
   return async (error: any) => {
     const originalRequest = error.config
 
-    if (error.response?.status === 401 && typeof window !== 'undefined' && !originalRequest._retry) {
+    if (error.response?.status === 401 && typeof window !== 'undefined') {
+      if (originalRequest._retry) {
+        return Promise.reject(error)
+      }
+
       const refreshToken = localStorage.getItem('refresh_token')
 
       if (refreshToken) {

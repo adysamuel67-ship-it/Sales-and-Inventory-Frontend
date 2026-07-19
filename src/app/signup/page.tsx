@@ -25,8 +25,11 @@ export default function SignUpPage() {
         setError(detail.map((e: any) => e.msg || JSON.stringify(e)).join(', '))
       } else if (typeof detail === 'string') {
         setError(detail)
+      } else if (err.code === 'ERR_NETWORK' || !err.response) {
+        setError('Unable to reach the server. Please check your connection and try again.')
       } else {
-        setError(detail ? JSON.stringify(detail) : 'Registration failed. Please try again.')
+        const status = err.response?.status
+        setError(detail ? JSON.stringify(detail) : `Registration failed (${status || 'unknown error'}). Please try again.`)
       }
     } finally {
       setLoading(false)

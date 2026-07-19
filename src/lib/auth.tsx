@@ -1,7 +1,7 @@
 'use client'
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
-import { profileAPI, businessAPI, setTokenRefreshCallback, setAuthLogoutCallback, getUserIdFromToken, tryProactiveRefresh, startAutoRefresh, stopAutoRefresh, isTokenExpired } from '@/lib/api'
+import { profileAPI, businessAPI, setTokenRefreshCallback, setAuthLogoutCallback, getUserIdFromToken, tryProactiveRefresh, startAutoRefresh, stopAutoRefresh, isTokenExpired, setLoginGrace } from '@/lib/api'
 
 interface User {
   id: number
@@ -188,6 +188,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       const init = async () => {
+        setLoginGrace()
         if (isTokenExpired(storedToken, 60) && storedRefreshToken) {
           const refreshed = await tryProactiveRefresh()
           if (cancelled) return
@@ -231,6 +232,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     setToken(newToken)
     setUser(newUser)
+    setLoginGrace()
     if (newUser && !newUser.is_verified) {
       setPendingVerificationEmail(newUser.email)
     } else {

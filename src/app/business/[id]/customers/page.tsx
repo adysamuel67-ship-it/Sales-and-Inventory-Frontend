@@ -39,6 +39,21 @@ interface SaleRecord {
   customer_id?: number
 }
 
+interface CustomerTransaction {
+  transaction_id: number
+  debt_id: number
+  performer_id: number
+  business_id: number
+  customer_id?: number
+  amount_paid: number
+  note?: string
+  created_at: string
+  customer_name?: string
+  customer_phone?: string
+  customer_email?: string
+  customer_address?: string
+}
+
 type Tab = 'all' | 'debt'
 
 function CustomersContent() {
@@ -81,6 +96,7 @@ function CustomersContent() {
   const [profileCustomer, setProfileCustomer] = useState<Customer | null>(null)
   const [profileDebt, setProfileDebt] = useState<CustomerDebtDetail[]>([])
   const [profileSales, setProfileSales] = useState<SaleRecord[]>([])
+  const [profileTransactions, setProfileTransactions] = useState<CustomerTransaction[]>([])
   const [profileLoading, setProfileLoading] = useState(false)
 
   const isStaff = isStaffRole(user?.role)
@@ -277,11 +293,13 @@ function CustomersContent() {
     setProfileLoading(true)
     setProfileDebt([])
     setProfileSales([])
+    setProfileTransactions([])
 
     try {
-      const [debtRes, salesRes] = await Promise.allSettled([
+      const [debtRes, salesRes, txnRes] = await Promise.allSettled([
         debtAPI.getCustomerDebt(businessId, customer.customer_id),
         saleAPI.list(businessId),
+        debtAPI.getCustomerTransactions(businessId, customer.customer_id),
       ])
 
       if (debtRes.status === 'fulfilled') {
@@ -324,6 +342,28 @@ function CustomersContent() {
           created_at: s.created_at || '',
           customer_id: s.customer_id,
         })))
+      }
+
+      if (txnRes.status === 'fulfilled') {
+        const raw = txnRes.value.data
+        const arr = extractArray(raw)
+        setProfileTransactions(arr.map((item: any) => {
+          const txn = item.transactions || item
+          return {
+            transaction_id: txn.transaction_id ?? txn.id ?? item.transaction_id ?? item.id,
+            debt_id: txn.debt_id ?? item.debt_id,
+            performer_id: txn.performer_id ?? item.performer_id,
+            business_id: txn.business_id ?? item.business_id,
+            customer_id: txn.customer_id ?? item.customer_id,
+            amount_paid: Number(txn.amount_paid ?? item.amount_paid ?? 0),
+            note: txn.note || item.note || '',
+            created_at: txn.created_at || item.created_at || '',
+            customer_name: item.customer_name || txn.customer_name,
+            customer_phone: item.customer_phone || txn.customer_phone,
+            customer_email: item.customer_email || txn.customer_email,
+            customer_address: item.customer_address || txn.customer_address,
+          }
+        }))
       }
     } catch {
     } finally {
@@ -791,7 +831,7 @@ function CustomersContent() {
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-3 mb-6">
+              <div className="grid grid-cols-3 gap-3 mb-6">
                 <div className="bg-surfaceAlt rounded-xl p-4">
                   <p className="text-xs text-neutral-light mb-1">Total Spent</p>
                   <p className="text-lg font-semibold text-gray-900">
@@ -802,6 +842,12 @@ function CustomersContent() {
                   <p className="text-xs text-neutral-light mb-1">Outstanding Debt</p>
                   <p className={`text-lg font-semibold ${profileTotalDebt > 0 ? 'text-danger' : 'text-success'}`}>
                     {profileLoading ? '...' : `GH₵${profileTotalDebt.toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
+                  </p>
+                </div>
+                <div className="bg-surfaceAlt rounded-xl p-4">
+                  <p className="text-xs text-neutral-light mb-1">Transactions</p>
+                  <p className="text-lg font-semibold text-gray-900">
+                    {profileLoading ? '...' : profileTransactions.length}
                   </p>
                 </div>
               </div>
@@ -838,7 +884,7 @@ function CustomersContent() {
                   )}
 
                   {profileSales.length > 0 && (
-                    <div>
+                    <div className="mb-6">
                       <h5 className="text-sm font-semibold text-gray-900 mb-3">Purchase History</h5>
                       <div className="space-y-2">
                         {profileSales.slice(0, 10).map((sale) => (
@@ -865,7 +911,31 @@ function CustomersContent() {
                     </div>
                   )}
 
-                  {profileDebt.length === 0 && profileSales.length === 0 && (
+                  {profileTransactions.length > 0 && (
+                    <div className="mb-6">
+                      <h5 className="text-sm font-semibold text-gray-900 mb-3">Payment Transactions</h5>
+                      <div className="space-y-2">
+                        {profileTransactions.map((txn) => (
+                          <div key={txn.transaction_id} className="flex items-center justify-between py-2.5 px-3 bg-surfaceAlt rounded-lg text-sm">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium text-success">GH₵{txn.amount_paid.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                <span className="text-xs text-neutral-light">payment</span>
+                              </div>
+                              {txn.note && (
+                                <p className="text-xs text-neutral-light mt-0.5">{txn.note}</p>
+                              )}
+                              <p className="text-xs text-neutral-light mt-0.5">
+                                {new Date(txn.created_at).toLocaleDateString()} at {new Date(txn.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {profileDebt.length === 0 && profileSales.length === 0 && profileTransactions.length === 0 && (
                     <p className="text-sm text-neutral-light text-center py-4">No transaction history</p>
                   )}
                 </>
