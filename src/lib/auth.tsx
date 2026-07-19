@@ -138,9 +138,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(profileUser)
       localStorage.setItem('user', JSON.stringify(profileUser))
       setProfileLoaded(true)
+      if (!profileUser.is_verified) {
+        setPendingVerificationEmail(profileUser.email)
+      }
       return profileUser
-    } catch {
-      setProfileLoaded(true)
+    } catch (err: any) {
+      const isNetworkError = !err.response || err.code === 'ERR_NETWORK' || err.code === 'ECONNABORTED'
+      if (!isNetworkError) {
+        setProfileLoaded(true)
+      }
       return null
     }
   }, [])
@@ -188,18 +194,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       const init = async () => {
-        setLoginGrace()
+        setLoginGrace(60000)
         if (isTokenExpired(storedToken, 60) && storedRefreshToken) {
           const refreshed = await tryProactiveRefresh()
           if (cancelled) return
           if (refreshed) {
             setToken(refreshed)
           } else {
-            localStorage.removeItem('token')
-            localStorage.removeItem('refresh_token')
-            localStorage.removeItem('user')
-            setToken(null)
-            setUser(null)
             setIsLoading(false)
             return
           }
@@ -232,7 +233,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     setToken(newToken)
     setUser(newUser)
-    setLoginGrace()
+    setLoginGrace(60000)
     if (newUser && !newUser.is_verified) {
       setPendingVerificationEmail(newUser.email)
     } else {

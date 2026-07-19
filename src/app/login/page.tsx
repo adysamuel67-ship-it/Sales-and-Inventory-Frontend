@@ -38,7 +38,7 @@ function LoginForm() {
         return
       }
       login(access_token, user, refreshToken)
-      setLoginGrace()
+      setLoginGrace(60000)
 
       if (isTokenExpired(access_token, 60) && refreshToken) {
         const refreshed = await tryProactiveRefresh()

@@ -6,13 +6,13 @@ import { useAuth } from '@/lib/auth'
 
 export default function Home() {
   const router = useRouter()
-  const { isAuthenticated, isLoading, profileLoaded, isVerified, currentBusiness } = useAuth()
+  const { isAuthenticated, isLoading, profileLoaded, isVerified, user, currentBusiness } = useAuth()
 
   useEffect(() => {
     if (!isLoading) {
       if (!isAuthenticated) {
         router.replace('/login')
-      } else if (profileLoaded && !isVerified) {
+      } else if (profileLoaded && user && !isVerified) {
         router.replace('/verify')
       } else if (profileLoaded && isVerified && currentBusiness) {
         router.replace(`/business/${currentBusiness.business_id}/dashboard`)

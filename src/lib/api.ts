@@ -56,8 +56,8 @@ let refreshPromise: Promise<string> | null = null
 let failedQueue: { resolve: (token: string) => void; reject: (err: any) => void }[] = []
 let loginGraceUntil = 0
 
-export function setLoginGrace() {
-  loginGraceUntil = Date.now() + 15000
+export function setLoginGrace(durationMs = 60000) {
+  loginGraceUntil = Date.now() + durationMs
 }
 
 function processQueue(error: any, token: string | null) {
@@ -176,14 +176,15 @@ function handle401Interceptor(instance: any) {
           const newToken = await startRefresh()
           originalRequest.headers.Authorization = `Bearer ${newToken}`
           return instance(originalRequest)
-        } catch {
-          if (Date.now() < loginGraceUntil) {
+        } catch (refreshError: any) {
+          const isExplicitAuthFailure = refreshError?.response?.status === 403
+          if (isExplicitAuthFailure && Date.now() >= loginGraceUntil) {
+            localStorage.removeItem('token')
+            localStorage.removeItem('refresh_token')
+            localStorage.removeItem('user')
+            if (onAuthLogout) onAuthLogout()
             return Promise.reject(error)
           }
-          localStorage.removeItem('token')
-          localStorage.removeItem('refresh_token')
-          localStorage.removeItem('user')
-          if (onAuthLogout) onAuthLogout()
           return Promise.reject(error)
         }
       }
