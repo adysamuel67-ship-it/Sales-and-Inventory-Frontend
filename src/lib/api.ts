@@ -244,6 +244,7 @@ export const profileAPI = {
     if (!id) return Promise.reject(new Error('No user ID available'))
     return profileApi.get(`/users/${id}`)
   },
+  getMyProfile: () => profileApi.get('/users/me/profile'),
   updateProfile: (userId: number, data: { name?: string; phone?: string }) =>
     api.put(`/users/${userId}`, data),
   deleteProfile: (userId: number) =>

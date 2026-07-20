@@ -123,9 +123,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchProfile = useCallback(async (): Promise<User | null> => {
     try {
-      const userId = getUserIdFromToken()
-      if (!userId) { setProfileLoaded(true); return null }
-      const res = await profileAPI.getProfile(userId)
+      const res = await profileAPI.getMyProfile()
       const data = res.data
 
       const tokenName = localStorage.getItem('user')
