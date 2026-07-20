@@ -478,7 +478,7 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
                 </button>
 
                 {notificationsOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden">
+                  <div className="absolute right-0 top-full mt-2 w-[calc(100vw-2rem)] sm:w-80 max-w-80 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden">
                     <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
                       <h3 className="text-sm font-semibold text-gray-900">
                         Requests {pendingApprovals.length > 0 && <span className="text-primary">({pendingApprovals.length})</span>}

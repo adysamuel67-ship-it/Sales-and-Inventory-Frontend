@@ -154,10 +154,10 @@ export default function SettingsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-          <p className="text-sm text-neutral-light mt-1">Manage your business settings</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Settings</h1>
+          <p className="text-xs sm:text-sm text-neutral-light mt-1">Manage your business settings</p>
         </div>
       </div>
 
@@ -186,7 +186,7 @@ export default function SettingsPage() {
       ) : (
         <>
           {isOwner && (
-            <form onSubmit={handleSave} className="bg-surface rounded-2xl border border-gray-100 shadow-sm p-6 mb-4">
+            <form onSubmit={handleSave} className="bg-surface rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6 mb-4">
               <h3 className="font-semibold text-gray-900 mb-4">Business Name</h3>
               <div className="flex flex-col sm:flex-row items-end gap-3">
                 <div className="flex-1 w-full">
@@ -212,17 +212,17 @@ export default function SettingsPage() {
           )}
 
           {isOwner && (
-            <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm p-6 mb-4">
+            <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6 mb-4">
               <h3 className="font-semibold text-gray-900 mb-1">Business Key</h3>
               <p className="text-xs text-neutral-light mb-4">Share this key with team members so they can request to join.</p>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                 <div className="flex-1 px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 font-mono text-sm text-gray-700 truncate">
                   {businessKey || 'No key available'}
                 </div>
                 {businessKey && (
                   <button
                     onClick={handleCopyKey}
-                    className="px-4 py-3 bg-gray-100 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors min-h-[44px] shrink-0 flex items-center gap-1.5"
+                    className="px-4 py-3 bg-gray-100 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors min-h-[44px] shrink-0 flex items-center justify-center gap-1.5"
                   >
                     {copied ? (
                       <>
@@ -246,14 +246,14 @@ export default function SettingsPage() {
           )}
 
           {/* Leave Business — visible to ALL members */}
-          <div className="bg-surface rounded-2xl border border-amber-200 shadow-sm p-6 mb-4">
+          <div className="bg-surface rounded-2xl border border-amber-200 shadow-sm p-4 sm:p-6 mb-4">
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center shrink-0 mt-0.5">
                 <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
                 </svg>
               </div>
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <h3 className="font-semibold text-gray-900 mb-1">Leave Business</h3>
                 <p className="text-xs text-neutral-light mb-3">
                   You will lose access to this business and all its data. You can request to rejoin later using the business key.
@@ -275,7 +275,7 @@ export default function SettingsPage() {
                     <p className="text-sm text-amber-800 font-medium mb-3">
                       Are you sure you want to leave <strong>{currentBusiness?.name || 'this business'}</strong>?
                     </p>
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                       <button
                         onClick={handleLeave}
                         disabled={leaving}
@@ -306,7 +306,7 @@ export default function SettingsPage() {
 
           {/* Delete Business — owner only */}
           {isOwner && (
-            <div className="bg-surface rounded-2xl border border-danger/20 shadow-sm p-6">
+            <div className="bg-surface rounded-2xl border border-danger/20 shadow-sm p-4 sm:p-6">
               <h3 className="font-semibold text-danger mb-1">Danger Zone</h3>
               <p className="text-xs text-neutral-light mb-4">
                 Permanently delete this business and all its data. This action cannot be undone.

@@ -400,10 +400,10 @@ export default function DebtsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Debt Tracker</h1>
-          <p className="text-sm text-neutral-light mt-1">Track and manage customer debts</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Debt Tracker</h1>
+          <p className="text-xs sm:text-sm text-neutral-light mt-1">Track and manage customer debts</p>
         </div>
         {isAdmin && (
           <button
@@ -793,7 +793,7 @@ export default function DebtsPage() {
             className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 rounded-t-2xl flex items-center justify-between">
+            <div className="sticky top-0 bg-white border-b border-gray-100 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between">
               <h3 className="font-semibold text-gray-900">Debt Details</h3>
               <button
                 onClick={() => setShowDetailModal(false)}
@@ -804,13 +804,13 @@ export default function DebtsPage() {
                 </svg>
               </button>
             </div>
-            <div className="px-6 py-5">
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-14 h-14 rounded-full bg-danger-light flex items-center justify-center text-lg font-bold text-danger">
+            <div className="px-4 sm:px-6 py-5">
+              <div className="flex items-center gap-3 sm:gap-4 mb-5 sm:mb-6">
+                <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-danger-light flex items-center justify-center text-base sm:text-lg font-bold text-danger shrink-0">
                   {detailCustomer.customer_name?.charAt(0)?.toUpperCase() || '?'}
                 </div>
-                <div>
-                  <h4 className="text-lg font-semibold text-gray-900">{detailCustomer.customer_name}</h4>
+                <div className="min-w-0 flex-1">
+                  <h4 className="text-base sm:text-lg font-semibold text-gray-900 truncate">{detailCustomer.customer_name}</h4>
                   {detailCustomer.customer_phone && (
                     <p className="text-sm text-neutral-light">{detailCustomer.customer_phone}</p>
                   )}
@@ -864,7 +864,7 @@ export default function DebtsPage() {
                 <p className="text-sm text-neutral-light text-center py-4">No debt records found</p>
               )}
             </div>
-            <div className="sticky bottom-0 bg-white border-t border-gray-100 px-6 py-4 rounded-b-2xl flex items-center gap-3">
+            <div className="sticky bottom-0 bg-white border-t border-gray-100 px-4 sm:px-6 py-4 rounded-b-2xl flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
               {detailCustomer.total_debt > 0 && isAdmin && (
                 <button
                   onClick={() => {
@@ -894,7 +894,7 @@ export default function DebtsPage() {
             className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
+            <div className="sticky top-0 bg-white border-b border-gray-100 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
               <h3 className="font-semibold text-gray-900">Customer Profile</h3>
               <button
                 onClick={() => setShowProfileModal(false)}
@@ -906,40 +906,40 @@ export default function DebtsPage() {
               </button>
             </div>
 
-            <div className="px-6 py-5">
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-lg font-bold text-primary">
+            <div className="px-4 sm:px-6 py-5">
+              <div className="flex items-center gap-3 sm:gap-4 mb-5 sm:mb-6">
+                <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-primary/10 flex items-center justify-center text-base sm:text-lg font-bold text-primary shrink-0">
                   {profileCustomer.customer_name?.charAt(0)?.toUpperCase() || '?'}
                 </div>
-                <div>
-                  <h4 className="text-lg font-semibold text-gray-900">{profileCustomer.customer_name}</h4>
-                  <div className="flex items-center gap-2 mt-0.5">
+                <div className="min-w-0 flex-1">
+                  <h4 className="text-base sm:text-lg font-semibold text-gray-900 truncate">{profileCustomer.customer_name}</h4>
+                  <div className="flex items-center gap-1 sm:gap-2 mt-0.5 text-xs sm:text-sm flex-wrap">
                     {profileCustomer.customer_phone && (
-                      <span className="text-sm text-neutral-light">{profileCustomer.customer_phone}</span>
+                      <span className="text-neutral-light truncate">{profileCustomer.customer_phone}</span>
                     )}
                     {profileCustomer.customer_email && (
-                      <span className="text-sm text-neutral-light">| {profileCustomer.customer_email}</span>
+                      <span className="text-neutral-light truncate hidden sm:inline">| {profileCustomer.customer_email}</span>
                     )}
                   </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-3 mb-6">
-                <div className="bg-warning-light rounded-xl p-4">
-                  <p className="text-xs text-neutral-light mb-1">Total Borrowed</p>
-                  <p className="text-lg font-bold text-warning">
+              <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-5 sm:mb-6">
+                <div className="bg-warning-light rounded-xl p-2.5 sm:p-4">
+                  <p className="text-[10px] sm:text-xs text-neutral-light mb-0.5 sm:mb-1">Total Borrowed</p>
+                  <p className="text-sm sm:text-lg font-bold text-warning">
                     {profileLoading ? '...' : formatCurrency(profileCustomer.debts.reduce((sum, d) => sum + (d.is_paid ? 0 : d.amount), 0))}
                   </p>
                 </div>
-                <div className="bg-success-light rounded-xl p-4">
-                  <p className="text-xs text-neutral-light mb-1">Total Paid</p>
-                  <p className="text-lg font-bold text-success">
+                <div className="bg-success-light rounded-xl p-2.5 sm:p-4">
+                  <p className="text-[10px] sm:text-xs text-neutral-light mb-0.5 sm:mb-1">Total Paid</p>
+                  <p className="text-sm sm:text-lg font-bold text-success">
                     {profileLoading ? '...' : formatCurrency(profileTransactions.reduce((sum, t) => sum + t.amount_paid, 0))}
                   </p>
                 </div>
-                <div className="bg-surfaceAlt rounded-xl p-4">
-                  <p className="text-xs text-neutral-light mb-1">Transactions</p>
-                  <p className="text-lg font-semibold text-gray-900">
+                <div className="bg-surfaceAlt rounded-xl p-2.5 sm:p-4">
+                  <p className="text-[10px] sm:text-xs text-neutral-light mb-0.5 sm:mb-1">Transactions</p>
+                  <p className="text-sm sm:text-lg font-semibold text-gray-900">
                     {profileLoading ? '...' : profileTransactions.length}
                   </p>
                 </div>
@@ -1019,7 +1019,7 @@ export default function DebtsPage() {
               )}
             </div>
 
-            <div className="sticky bottom-0 bg-white border-t border-gray-100 px-6 py-4 rounded-b-2xl flex items-center gap-3">
+            <div className="sticky bottom-0 bg-white border-t border-gray-100 px-4 sm:px-6 py-4 rounded-b-2xl flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
               {profileCustomer.total_debt > 0 && isAdmin && (
                 <button
                   onClick={() => {
