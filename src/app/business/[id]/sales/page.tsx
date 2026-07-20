@@ -579,16 +579,32 @@ export default function SalesPage() {
                     <th className="text-center px-5 py-3 font-medium">Qty</th>
                     <th className="text-right px-5 py-3 font-medium">Amount</th>
                     <th className="text-center px-5 py-3 font-medium">Payment</th>
+                    <th className="text-center px-5 py-3 font-medium">Status</th>
                     <th className="text-right px-5 py-3 font-medium">Date</th>
                     {!isStaff && <th className="text-right px-5 py-3 font-medium">Actions</th>}
                   </tr>
                 </thead>
                 <tbody>
-                  {paginatedSales.map((sale) => (
+                  {paginatedSales.map((sale) => {
+                    const isPartial = sale.amount_paid != null && sale.amount_paid < sale.amount && sale.amount > 0
+                    const isBorrow = isPartial || sale.payment_status === 'partial' || sale.payment_status === 'borrowed' || sale.payment_status === 'unpaid'
+                    const balance = sale.amount - (sale.amount_paid ?? sale.amount)
+                    return (
                     <tr key={sale.id} className="border-t border-gray-50 hover:bg-gray-50/50 cursor-pointer transition-colors" onClick={() => setDetailSale(sale)}>
-                      <td className="px-5 py-3.5 font-medium text-gray-900">{sale.product}</td>
+                      <td className="px-5 py-3.5 font-medium text-gray-900">
+                        <div className="flex items-center gap-2">
+                          {isBorrow && <span className="w-1.5 h-1.5 rounded-full bg-warning shrink-0" />}
+                          {sale.product}
+                        </div>
+                      </td>
                       <td className="px-5 py-3.5 text-center text-neutral-light">{sale.qty}</td>
-                      <td className="px-5 py-3.5 text-right font-semibold text-gray-900">GH₵{sale.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                      <td className="px-5 py-3.5 text-right font-semibold text-gray-900">
+                        {sale.amount > 0 ? (
+                          `GH₵${sale.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+                        ) : (
+                          <span className="text-neutral-light text-xs">No charge</span>
+                        )}
+                      </td>
                       <td className="px-5 py-3.5 text-center">
                         <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
                           sale.payment === 'Cash' ? 'bg-success-light text-success'
@@ -598,6 +614,20 @@ export default function SalesPage() {
                         }`}>
                           {sale.payment}
                         </span>
+                      </td>
+                      <td className="px-5 py-3.5 text-center">
+                        {isBorrow ? (
+                          <div className="flex items-center justify-center gap-1.5">
+                            <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-warning-light text-warning">Borrow</span>
+                            {balance > 0 && (
+                              <span className="text-[10px] text-danger font-medium">GH₵{balance.toLocaleString(undefined, { minimumFractionDigits: 2 })} due</span>
+                            )}
+                          </div>
+                        ) : sale.amount_paid != null && sale.amount_paid >= sale.amount ? (
+                          <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-success-light text-success">Paid</span>
+                        ) : (
+                          <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500">Full</span>
+                        )}
                       </td>
                       <td className="px-5 py-3.5 text-right text-neutral-light text-xs">{sale.time}</td>
                       {!isStaff && (
@@ -628,7 +658,8 @@ export default function SalesPage() {
                         </td>
                       )}
                     </tr>
-                  ))}
+                  )
+                  })}
                 </tbody>
               </table>
             </div>
@@ -637,6 +668,8 @@ export default function SalesPage() {
             <div className="md:hidden divide-y divide-gray-50">
               {paginatedSales.map((sale) => {
                 const isPartial = sale.amount_paid != null && sale.amount_paid < sale.amount && sale.amount > 0
+                const isBorrow = isPartial || sale.payment_status === 'partial' || sale.payment_status === 'borrowed' || sale.payment_status === 'unpaid'
+                const balance = sale.amount - (sale.amount_paid ?? sale.amount)
                 return (
                   <div
                     key={sale.id}
@@ -645,13 +678,22 @@ export default function SalesPage() {
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
-                        <p className="font-medium text-gray-900 truncate text-sm">{sale.product}</p>
+                        <div className="flex items-center gap-2">
+                          {isBorrow && <span className="w-1.5 h-1.5 rounded-full bg-warning shrink-0" />}
+                          <p className="font-medium text-gray-900 truncate text-sm">{sale.product}</p>
+                        </div>
                         <p className="text-xs text-neutral-light mt-0.5">{sale.time}</p>
                       </div>
-                      <p className="font-bold text-gray-900 shrink-0">GH₵{sale.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                      <p className="font-bold text-gray-900 shrink-0">
+                        {sale.amount > 0 ? (
+                          `GH₵${sale.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+                        ) : (
+                          <span className="text-neutral-light text-xs font-normal">No charge</span>
+                        )}
+                      </p>
                     </div>
                     <div className="flex items-center justify-between mt-2">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
                           sale.payment === 'Cash' ? 'bg-success-light text-success'
                             : sale.payment === 'MoMo' ? 'bg-primary-light text-primary'
@@ -660,9 +702,13 @@ export default function SalesPage() {
                         }`}>
                           {sale.payment}
                         </span>
-                        {isPartial && (
-                          <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-warning-light text-warning">Partial</span>
-                        )}
+                        {isBorrow ? (
+                          <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-warning-light text-warning">
+                            Borrow {balance > 0 && `· GH₵${balance.toLocaleString(undefined, { minimumFractionDigits: 2 })} due`}
+                          </span>
+                        ) : sale.amount_paid != null && sale.amount_paid >= sale.amount ? (
+                          <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-success-light text-success">Paid</span>
+                        ) : null}
                       </div>
                       <div className="flex items-center gap-3">
                         <span className="text-xs text-neutral-light">×{sale.qty}</span>

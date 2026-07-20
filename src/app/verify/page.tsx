@@ -9,7 +9,7 @@ import { useAuth } from '@/lib/auth'
 
 export default function VerifyPage() {
   const router = useRouter()
-  const { pendingVerificationEmail, setPendingVerification, fetchProfile, fetchBusinesses, logout } = useAuth()
+  const { user, fetchProfile, fetchBusinesses, logout } = useAuth()
   const [code, setCode] = useState(['', '', '', '', '', ''])
   const [loading, setLoading] = useState(false)
   const [sending, setSending] = useState(false)
@@ -18,13 +18,13 @@ export default function VerifyPage() {
   const [resendTimer, setResendTimer] = useState(0)
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
 
-  const email = pendingVerificationEmail
+  const userId = user?.id
 
   useEffect(() => {
-    if (!email) {
+    if (!userId) {
       router.replace('/login')
     }
-  }, [email, router])
+  }, [userId, router])
 
   useEffect(() => {
     if (resendTimer > 0) {
@@ -34,12 +34,12 @@ export default function VerifyPage() {
   }, [resendTimer])
 
   const sendOtp = useCallback(async () => {
-    if (!email) return
+    if (!userId) return
     setSending(true)
     setError('')
     setSuccess('')
     try {
-      await authAPI.sendVerification(email)
+      await authAPI.sendVerification()
       setSuccess('Verification code sent to your email.')
       setResendTimer(60)
     } catch (err: any) {
@@ -48,7 +48,7 @@ export default function VerifyPage() {
     } finally {
       setSending(false)
     }
-  }, [email])
+  }, [userId])
 
   useEffect(() => {
     sendOtp()
@@ -89,13 +89,16 @@ export default function VerifyPage() {
       setError('Please enter the full 6-digit code.')
       return
     }
+    if (!userId) {
+      setError('Session expired. Please log in again.')
+      return
+    }
     setError('')
     setLoading(true)
     try {
-      await authAPI.verifyEmail({ email: email!, code: fullCode })
+      await authAPI.verifyEmail({ user_id: userId, code: fullCode })
       const profileUser = await fetchProfile()
       if (profileUser?.is_verified) {
-        setPendingVerification(null)
         await fetchBusinesses()
         router.push('/dashboard')
       } else {
@@ -105,7 +108,7 @@ export default function VerifyPage() {
       const detail = err.response?.data?.detail
       if (Array.isArray(detail)) {
         setError(detail.map((e: any) => e.msg || JSON.stringify(e)).join(', '))
-      } else if (typeof detail === 'string') {
+      } else if (typeof detail === 'string' && detail) {
         setError(detail)
       } else {
         setError('Invalid verification code. Please try again.')
@@ -117,11 +120,10 @@ export default function VerifyPage() {
 
   const handleLogout = () => {
     logout()
-    setPendingVerification(null)
     router.replace('/login')
   }
 
-  if (!email) return null
+  if (!userId) return null
 
   return (
     <AuthLayout
@@ -134,7 +136,7 @@ export default function VerifyPage() {
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
           </svg>
-          {email}
+          {user?.email || 'your email'}
         </p>
       </div>
 

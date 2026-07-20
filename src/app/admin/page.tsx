@@ -57,7 +57,7 @@ export default function AdminDashboardPage() {
 
     load()
     return () => { cancelled = true }
-  }, [isAuthenticated, user])
+  }, [isAuthenticated, user?.role])
 
   if (isLoading || !isAuthenticated || !profileLoaded || user?.role !== 'super_admin') {
     return (

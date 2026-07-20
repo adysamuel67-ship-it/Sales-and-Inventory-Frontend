@@ -66,7 +66,7 @@ export default function ReportsPage() {
       const [profitRes, summaryRes, salesRes] = await Promise.allSettled([
         reportAPI.profit(businessId, dateRange.start, dateRange.end),
         reportAPI.summary(businessId, dateRange.start, dateRange.end),
-        saleAPI.list(businessId),
+        saleAPI.list(businessId, { date: dateRange.start, end_date: dateRange.end }),
       ])
 
       if (profitRes.status === 'fulfilled') {

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
 import { useAuth } from '@/lib/auth'
 import { profileAPI } from '@/lib/api'
+import { parseApiError } from '@/lib/utils'
 
 export default function ProfilePage() {
   const { isAuthenticated, isLoading, profileLoaded, isVerified, user, fetchProfile, businesses, logout } = useAuth()
@@ -36,22 +37,36 @@ export default function ProfilePage() {
     setLoading(true)
     setError('')
     setSuccess('')
+
+    const trimmedName = form.name.trim()
+    if (!trimmedName) {
+      setError('Name is required')
+      setLoading(false)
+      return
+    }
+
     try {
       const userId = user?.id
       if (!userId) throw new Error('No user ID')
-      await profileAPI.updateProfile(userId, { name: form.name, phone: form.phone })
-      await fetchProfile()
+
+      const payload: { name: string; phone?: string } = { name: trimmedName }
+      const trimmedPhone = form.phone.trim()
+      if (trimmedPhone) {
+        payload.phone = trimmedPhone
+      }
+
+      await profileAPI.updateProfile(userId, payload)
+
+      try {
+        await fetchProfile()
+      } catch {
+        // Update succeeded but profile refresh failed; data will sync on next navigation
+      }
+
       setSuccess('Profile updated successfully!')
       setEditing(false)
     } catch (err: any) {
-      const detail = err.response?.data?.detail
-      if (Array.isArray(detail)) {
-        setError(detail.map((e: any) => e.msg).join(', '))
-      } else if (typeof detail === 'string') {
-        setError(detail)
-      } else {
-        setError('Failed to update profile')
-      }
+      setError(parseApiError(err) || 'Failed to update profile')
     } finally {
       setLoading(false)
     }

@@ -79,7 +79,7 @@ export default function BusinessDashboardPage() {
   const isStaff = isStaffRole(user?.role)
 
   const loadDashboard = useCallback(async () => {
-    if (!businessId) return
+    if (!businessId || isNaN(businessId)) return
     setError('')
     setLoading(true)
 
@@ -237,7 +237,16 @@ export default function BusinessDashboardPage() {
   const dateSubtitle = activePreset > 0 ? `Last ${activePreset} days` : `${dateRange.start} to ${dateRange.end}`
 
   if (loading) {
+  if (isNaN(businessId)) {
     return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <h2 className="text-lg font-semibold text-gray-900 mb-2">Invalid business</h2>
+        <p className="text-sm text-gray-500">This business doesn&apos;t exist or the URL is invalid.</p>
+      </div>
+    )
+  }
+
+  return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>

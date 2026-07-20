@@ -10,7 +10,7 @@ import { useAuth } from '@/lib/auth'
 function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { login, fetchProfile, fetchBusinesses, setPendingVerification } = useAuth()
+  const { login, fetchProfile, fetchBusinesses } = useAuth()
   const [form, setForm] = useState({ email: '', password: '' })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -63,7 +63,6 @@ function LoginForm() {
       }
 
       if (profileUser && !profileUser.is_verified) {
-        setPendingVerification(profileUser.email || form.email)
         router.push('/verify')
         return
       }
@@ -75,13 +74,26 @@ function LoginForm() {
       }
       router.push('/dashboard')
     } catch (err: any) {
+      const status = err.response?.status
       const detail = err.response?.data?.detail
+      const msg = err.response?.data?.message || err.response?.data?.msg || err.response?.data?.error
+      const rawMessage = err.message
       if (Array.isArray(detail)) {
         setError(detail.map((e: any) => e.msg || JSON.stringify(e)).join(', '))
-      } else if (typeof detail === 'string') {
+      } else if (typeof detail === 'string' && detail) {
         setError(detail)
+      } else if (typeof msg === 'string' && msg) {
+        setError(msg)
+      } else if (rawMessage && /network|fetch|econnrefused|timeout/i.test(rawMessage)) {
+        setError('Unable to connect to the server. Please try again later.')
+      } else if (status === 401) {
+        setError('Invalid email or password. Please try again.')
+      } else if (status === 422) {
+        setError('Invalid request. Please check your email format and try again.')
+      } else if (status && status >= 500) {
+        setError('Server error. Please try again in a few moments.')
       } else {
-        setError(detail ? JSON.stringify(detail) : 'Login failed. Check your credentials.')
+        setError('Login failed. Check your credentials and try again.')
       }
     } finally {
       setLoading(false)

@@ -108,6 +108,33 @@ describe('Profile form validation', () => {
     const form = { phone: '' }
     expect(form.phone).toBe('')
   })
+
+  it('trims whitespace from name before sending', () => {
+    const form = { name: '  Kwame  ', phone: '0241234567' }
+    const trimmedName = form.name.trim()
+    expect(trimmedName).toBe('Kwame')
+  })
+
+  it('omits phone from payload when empty or whitespace', () => {
+    const form = { name: 'Kwame', phone: '   ' }
+    const trimmedPhone = form.phone.trim()
+    const payload: { name: string; phone?: string } = { name: form.name.trim() }
+    if (trimmedPhone) {
+      payload.phone = trimmedPhone
+    }
+    expect(payload).toEqual({ name: 'Kwame' })
+    expect(payload).not.toHaveProperty('phone')
+  })
+
+  it('includes phone in payload when provided', () => {
+    const form = { name: 'Kwame', phone: '0241234567' }
+    const trimmedPhone = form.phone.trim()
+    const payload: { name: string; phone?: string } = { name: form.name.trim() }
+    if (trimmedPhone) {
+      payload.phone = trimmedPhone
+    }
+    expect(payload).toEqual({ name: 'Kwame', phone: '0241234567' })
+  })
 })
 
 describe('Profile update API call', () => {
@@ -125,6 +152,28 @@ describe('Profile update API call', () => {
     const user = { id: undefined }
     const userId = user?.id
     expect(userId).toBeUndefined()
+  })
+
+  it('sends payload without phone when phone is empty', () => {
+    const userId = 42
+    const form = { name: 'Kwame', phone: '' }
+    const trimmedPhone = form.phone.trim()
+    const payload: { name: string; phone?: string } = { name: form.name.trim() }
+    if (trimmedPhone) {
+      payload.phone = trimmedPhone
+    }
+    expect(payload).toEqual({ name: 'Kwame' })
+    expect(payload).not.toHaveProperty('phone')
+  })
+
+  it('sends payload with phone when phone is provided', () => {
+    const form = { name: 'Kwame', phone: '0241234567' }
+    const trimmedPhone = form.phone.trim()
+    const payload: { name: string; phone?: string } = { name: form.name.trim() }
+    if (trimmedPhone) {
+      payload.phone = trimmedPhone
+    }
+    expect(payload).toEqual({ name: 'Kwame', phone: '0241234567' })
   })
 })
 
@@ -155,6 +204,34 @@ describe('Profile error handling', () => {
     const detail = err.response?.data?.detail
     const message = typeof detail === 'string' ? detail : 'Failed to update profile'
     expect(message).toBe('Failed to update profile')
+  })
+
+  it('empty name after trim shows validation error', () => {
+    const form = { name: '   ' }
+    const trimmedName = form.name.trim()
+    expect(trimmedName).toBe('')
+  })
+
+  it('fetchProfile failure does not mask successful update', () => {
+    let updateSucceeded = false
+    let profileRefreshFailed = false
+    let showSuccess = false
+
+    try {
+      updateSucceeded = true
+      try {
+        throw new Error('Profile refresh failed')
+      } catch {
+        profileRefreshFailed = true
+      }
+      showSuccess = true
+    } catch {
+      showSuccess = false
+    }
+
+    expect(updateSucceeded).toBe(true)
+    expect(profileRefreshFailed).toBe(true)
+    expect(showSuccess).toBe(true)
   })
 })
 

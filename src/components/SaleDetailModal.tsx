@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect } from 'react'
 import { MappedSale } from '@/lib/utils'
 
 interface Props {
@@ -16,6 +17,12 @@ const paymentColorMap: Record<string, string> = {
 export default function SaleDetailModal({ sale, onClose }: Props) {
   const isPartial = sale.amount_paid != null && sale.amount_paid < sale.amount && sale.amount > 0
   const balance = sale.amount - (sale.amount_paid ?? sale.amount)
+
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', handleEsc)
+    return () => window.removeEventListener('keydown', handleEsc)
+  }, [onClose])
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>

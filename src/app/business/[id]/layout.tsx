@@ -12,7 +12,7 @@ export default function BusinessLayout({
 }) {
   const router = useRouter()
   const params = useParams()
-  const { isAuthenticated, isLoading, profileLoaded, isVerified, user, currentBusiness, businesses, fetchBusinesses, switchBusiness, setPendingVerification } = useAuth()
+  const { isAuthenticated, isLoading, profileLoaded, isVerified, user, currentBusiness, businesses, fetchBusinesses, switchBusiness } = useAuth()
   const businessId = params?.id as string
 
   useEffect(() => {
@@ -23,10 +23,9 @@ export default function BusinessLayout({
 
   useEffect(() => {
     if (profileLoaded && isAuthenticated && user && user.is_verified === false) {
-      setPendingVerification(user.email)
       router.replace('/verify')
     }
-  }, [profileLoaded, isAuthenticated, user, router, setPendingVerification])
+  }, [profileLoaded, isAuthenticated, user, router])
 
   useEffect(() => {
     if (isAuthenticated && businesses.length === 0) {

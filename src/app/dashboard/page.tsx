@@ -12,6 +12,7 @@ import LowStockAlerts from '@/components/LowStockAlerts'
 import { useAuth } from '@/lib/auth'
 import { reportAPI, saleAPI, productAPI } from '@/lib/api'
 import { useBusinessId } from '@/lib/useBusinessId'
+import { extractArray, mapLowStock } from '@/lib/utils'
 
 interface DashboardSummary {
   total_revenue: number
@@ -61,32 +62,6 @@ function mapSale(raw: any, productMap?: Map<number, string>): SaleRecord {
       ? new Date(raw.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       : raw.time || '',
   }
-}
-
-function mapLowStock(raw: any): LowStockItem {
-  return {
-    name: raw.name || raw.product_name || 'Unknown',
-    stock: raw.quantity ?? raw.stock ?? 0,
-    threshold: raw.threshold ?? raw.reorder_level ?? 10,
-    unit: raw.unit || 'units',
-  }
-}
-
-function extractArray(data: any, depth = 0): any[] {
-  if (depth > 3) return []
-  if (Array.isArray(data)) return data
-  if (data && typeof data === 'object') {
-    for (const key of Object.keys(data)) {
-      if (Array.isArray(data[key])) return data[key]
-    }
-    for (const key of Object.keys(data)) {
-      if (data[key] && typeof data[key] === 'object') {
-        const found = extractArray(data[key], depth + 1)
-        if (found.length > 0) return found
-      }
-    }
-  }
-  return []
 }
 
 function extractSummary(data: any): DashboardSummary | null {
@@ -148,7 +123,7 @@ export default function DashboardPage() {
     if (profileLoaded && isAuthenticated && user && user.is_verified === false) {
       router.replace('/verify')
     }
-  }, [profileLoaded, isAuthenticated, user, router])
+  }, [profileLoaded, isAuthenticated, user?.is_verified, router])
 
   useEffect(() => {
     if (!isAuthenticated || !profileLoaded || businessesLoading || businessesFetched.current) return

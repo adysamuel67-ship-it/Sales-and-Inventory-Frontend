@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
 import SaleDetailModal from '@/components/SaleDetailModal'
 import { useAuth } from '@/lib/auth'
-import { saleAPI, productAPI } from '@/lib/api'
+import { saleAPI, productAPI, customerAPI } from '@/lib/api'
 import { useBusinessId } from '@/lib/useBusinessId'
-import { MappedSale } from '@/lib/utils'
+import { extractArray, normalizeProduct, mapSale, MappedSale } from '@/lib/utils'
 
 type SaleRecord = MappedSale
 
@@ -18,50 +18,6 @@ interface Product {
   quantity: number
   [key: string]: any
 }
-
-function extractArray(data: any): any[] {
-  if (Array.isArray(data)) return data
-  if (data && typeof data === 'object') {
-    for (const key of Object.keys(data)) {
-      if (Array.isArray(data[key])) return data[key]
-    }
-  }
-  return []
-}
-
-function normalizeProduct(raw: any): Product {
-  return {
-    product_id: raw.product_id ?? raw.id,
-    name: raw.name,
-    price: raw.price ?? 0,
-    quantity: raw.quantity ?? raw.stock ?? 0,
-    ...raw,
-  }
-}
-
-function mapSale(raw: any, productMap: Map<number, string>): SaleRecord {
-  const items = raw.sales_items || []
-  const productNames = items.map((i: any) => {
-    if (i.product_name || i.name) return i.product_name || i.name
-    const pid = i.product_id ?? i.productId
-    if (pid != null && productMap.has(pid)) return productMap.get(pid)!
-    return pid != null ? `Product #${pid}` : 'Unknown'
-  }).join(', ')
-  const totalQty = items.reduce((sum: number, i: any) => sum + (i.quantity ?? 0), 0)
-  return {
-    id: raw.sale_id ?? raw.id,
-    product: productNames || 'Unknown',
-    qty: totalQty,
-    amount: raw.total_amount ?? raw.amount ?? 0,
-    payment: raw.payment_method || raw.payment || 'N/A',
-    time: raw.created_at
-      ? new Date(raw.created_at).toLocaleString()
-      : raw.time || '',
-    created_at: raw.created_at,
-  }
-}
-
-const PAGE_SIZE = 20
 
 const datePresets = [
   { label: 'All', days: 0 },
@@ -86,11 +42,12 @@ export default function SalesPage() {
     product_id: '',
     quantity: '',
     payment_method: 'Cash',
+    customer_name: '',
+    customer_phone: '',
   })
   const [dateFilter, setDateFilter] = useState({ start: '', end: '' })
   const [draftDateFilter, setDraftDateFilter] = useState({ start: '', end: '' })
   const [activePreset, setActivePreset] = useState(0)
-  const [currentPage, setCurrentPage] = useState(1)
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [detailSale, setDetailSale] = useState<MappedSale | null>(null)
 
@@ -102,7 +59,7 @@ export default function SalesPage() {
     if (profileLoaded && isAuthenticated && user && user.is_verified === false) {
       router.replace('/verify')
     }
-  }, [profileLoaded, isAuthenticated, user, router])
+  }, [profileLoaded, isAuthenticated, user?.is_verified, router])
 
   const loadData = async () => {
     if (!businessId) return
@@ -143,18 +100,8 @@ export default function SalesPage() {
     })
   }, [allSales, dateFilter])
 
-  const totalPages = Math.ceil(filteredSales.length / PAGE_SIZE)
-  const paginatedSales = useMemo(() => {
-    const start = (currentPage - 1) * PAGE_SIZE
-    return filteredSales.slice(start, start + PAGE_SIZE)
-  }, [filteredSales, currentPage])
-
   useEffect(() => {
-    setCurrentPage(1)
-  }, [dateFilter])
-
-  useEffect(() => {
-    if (businessId) loadData()
+    loadData()
   }, [businessId])
 
   const totalAmount = useMemo(() => filteredSales.reduce((sum, s) => sum + s.amount, 0), [filteredSales])
@@ -193,6 +140,27 @@ export default function SalesPage() {
     setError('')
     setSuccess('')
     try {
+      let customerId: number | undefined
+
+      if (form.customer_name.trim()) {
+        const nameLower = form.customer_name.trim().toLowerCase()
+        try {
+          const custRes = await customerAPI.list(businessId)
+          const existing = extractArray(custRes.data)
+          const match = existing.find((c: any) => c.name?.toLowerCase() === nameLower)
+          if (match) {
+            customerId = match.customer_id ?? match.id
+          } else {
+            const newCust = await customerAPI.create(businessId, {
+              name: form.customer_name.trim(),
+              phone: form.customer_phone.trim() || undefined,
+            })
+            customerId = newCust.data?.customer_id ?? newCust.data?.id
+          }
+        } catch {
+        }
+      }
+
       await saleAPI.record(businessId, {
         list_items: [{
           product_id: parseInt(form.product_id),
@@ -200,8 +168,9 @@ export default function SalesPage() {
         }],
         amount_paid: formTotal,
         payment_method: form.payment_method,
+        ...(customerId ? { customer_id: customerId } : {}),
       })
-      setForm({ product_id: '', quantity: '', payment_method: 'Cash' })
+      setForm({ product_id: '', quantity: '', payment_method: 'Cash', customer_name: '', customer_phone: '' })
       setShowForm(false)
       setSuccess('Sale recorded successfully!')
       loadData()
@@ -226,6 +195,12 @@ export default function SalesPage() {
       </div>
     )
   }
+
+  const paymentBadge = (method: string) =>
+    method === 'Cash' ? 'bg-success-light text-success'
+      : method === 'MoMo' ? 'bg-primary-light text-primary'
+      : method === 'Card' ? 'bg-warning-light text-warning'
+      : 'bg-gray-100 text-gray-600'
 
   return (
     <DashboardLayout>
@@ -304,6 +279,31 @@ export default function SalesPage() {
               <div className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200">
                 <p className="text-xs text-neutral-light">Total Amount</p>
                 <p className="text-lg font-bold text-gray-900">GH₵{formTotal.toFixed(2)}</p>
+              </div>
+            </div>
+            <div className="sm:col-span-2 border-t border-gray-100 pt-4">
+              <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">Customer (optional — auto-created if new)</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Customer Name</label>
+                  <input
+                    type="text"
+                    value={form.customer_name}
+                    onChange={(e) => setForm({ ...form, customer_name: e.target.value })}
+                    placeholder="Leave blank if no customer"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Customer Phone</label>
+                  <input
+                    type="tel"
+                    value={form.customer_phone}
+                    onChange={(e) => setForm({ ...form, customer_phone: e.target.value })}
+                    placeholder="024XXXXXXX"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                  />
+                </div>
               </div>
             </div>
             <div className="flex items-end gap-3 sm:col-span-2">
@@ -390,78 +390,87 @@ export default function SalesPage() {
         </div>
       </div>
 
-      <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm">
-        {loading || bizLoading ? (
-          <div className="px-5 py-12 text-center">
-            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-          </div>
-        ) : paginatedSales.length > 0 ? (
-          <>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-gray-100">
-                    <th className="text-left px-5 py-3 font-medium">Product</th>
-                    <th className="text-center px-5 py-3 font-medium">Qty</th>
-                    <th className="text-right px-5 py-3 font-medium">Amount</th>
-                    <th className="text-center px-5 py-3 font-medium">Payment</th>
-                    <th className="text-right px-5 py-3 font-medium">Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {paginatedSales.map((sale) => (
-                    <tr key={sale.id} className="border-t border-gray-50 table-row-hover cursor-pointer" onClick={() => setDetailSale(sale)}>
-                      <td className="px-5 py-3.5 font-medium text-gray-900">{sale.product}</td>
-                      <td className="px-5 py-3.5 text-center text-neutral-light">{sale.qty}</td>
-                      <td className="px-5 py-3.5 text-right font-semibold text-gray-900">GH₵{sale.amount.toFixed(2)}</td>
-                      <td className="px-5 py-3.5 text-center">
-                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
-                          sale.payment === 'Cash' ? 'bg-success-light text-success'
-                            : sale.payment === 'MoMo' ? 'bg-primary-light text-primary'
-                            : sale.payment === 'Card' ? 'bg-warning-light text-warning'
-                            : 'bg-gray-100 text-gray-600'
-                        }`}>
-                          {sale.payment}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3.5 text-right text-neutral-light text-xs">{sale.time}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            {totalPages > 1 && (
-              <div className="px-5 py-3 border-t border-gray-100 flex items-center justify-between">
-                <p className="text-xs text-neutral-light">
-                  Page {currentPage} of {totalPages}
-                </p>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                    className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-40"
-                  >
-                    Previous
-                  </button>
-                  <button
-                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                    disabled={currentPage === totalPages}
-                    className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-40"
-                  >
-                    Next
-                  </button>
+      {loading || bizLoading ? (
+        <div className="flex items-center justify-center py-16">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : filteredSales.length > 0 ? (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredSales.map((sale) => (
+              <button
+                key={sale.id}
+                onClick={() => setDetailSale(sale)}
+                className="bg-surface rounded-2xl border border-gray-100 p-5 text-left hover:shadow-md hover:border-primary/20 hover:-translate-y-0.5 transition-all duration-200 group cursor-pointer"
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/15 transition-colors">
+                    <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15a2.25 2.25 0 012.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
+                    </svg>
+                  </div>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${paymentBadge(sale.payment)}`}>
+                    {sale.payment}
+                  </span>
                 </div>
-              </div>
-            )}
-          </>
-        ) : (
-          <div className="px-5 py-12 text-center text-neutral-light text-sm">
+
+                <h3 className="font-medium text-gray-900 text-sm mb-1 truncate group-hover:text-primary transition-colors">
+                  {sale.product}
+                </h3>
+
+                <div className="flex items-baseline gap-1 mb-3">
+                  <span className="text-lg font-bold text-gray-900">GH₵{sale.amount.toFixed(2)}</span>
+                </div>
+
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-neutral-light">Qty: {sale.qty}</span>
+                  {sale.customer_name && (
+                    <span className="text-primary font-medium truncate ml-2">{sale.customer_name}</span>
+                  )}
+                </div>
+
+                <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
+                  <span className="text-xs text-neutral-light">{sale.time}</span>
+                  <svg className="w-4 h-4 text-gray-300 group-hover:text-primary/50 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </button>
+            ))}
+          </div>
+          {filteredSales.length > 20 && (
+            <div className="mt-6 text-center text-xs text-neutral-light">
+              Showing {Math.min(filteredSales.length, 20)} of {filteredSales.length} sales
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center mb-4">
+            <svg className="w-7 h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15a2.25 2.25 0 012.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z" />
+            </svg>
+          </div>
+          <p className="text-sm font-medium text-gray-900 mb-1">
             {dateFilter.start || dateFilter.end
               ? 'No sales found for the selected date range'
-              : 'No sales recorded yet. Record your first sale to get started.'}
-          </div>
-        )}
-      </div>
+              : 'No sales recorded yet'}
+          </p>
+          <p className="text-xs text-neutral-light mb-4">
+            {dateFilter.start || dateFilter.end
+              ? 'Try a different date range'
+              : 'Record your first sale to get started'}
+          </p>
+          {!dateFilter.start && !dateFilter.end && (
+            <button
+              onClick={() => setShowForm(true)}
+              className="px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors"
+            >
+              Record Sale
+            </button>
+          )}
+        </div>
+      )}
       {detailSale && <SaleDetailModal sale={detailSale} onClose={() => setDetailSale(null)} />}
     </DashboardLayout>
   )

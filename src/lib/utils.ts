@@ -72,13 +72,12 @@ export function mapLowStock(raw: any) {
 
 export function normalizeProduct(raw: any) {
   return {
+    ...raw,
     product_id: raw.product_id ?? raw.id,
-    name: raw.name,
     price: raw.price ?? 0,
     cost_price: raw.cost_price ?? 0,
     quantity: raw.quantity ?? raw.stock ?? 0,
     unit: raw.unit || 'units',
-    ...raw,
   }
 }
 

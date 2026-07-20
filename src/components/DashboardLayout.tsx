@@ -128,14 +128,14 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
   const bizBase = businessId ? `/business/${businessId}` : ''
 
   const normalNavItems = useMemo(() => [
-    { label: 'Dashboard', icon: 'dashboard', href: `${bizBase}/dashboard`, id: 'dashboard' },
-    { label: 'Sales', icon: 'sales', href: `${bizBase}/sales`, id: 'sales' },
-    { label: 'Products', icon: 'products', href: `${bizBase}/products`, id: 'products' },
-    { label: 'Customers', icon: 'customers', href: `${bizBase}/customers`, id: 'customers' },
-    { label: 'Debts', icon: 'debts', href: `${bizBase}/debts`, id: 'debts' },
-    { label: 'Approvals', icon: 'approvals', href: '/businesses', id: 'approvals', ownerOnly: true },
-    { label: 'Reports', icon: 'reports', href: `${bizBase}/reports`, id: 'reports', ownerOnly: true },
-    { label: 'Settings', icon: 'settings', href: `${bizBase}/settings`, id: 'settings', ownerOnly: true },
+    { label: 'Dashboard', icon: 'dashboard', href: `${bizBase}/dashboard`, id: 'dashboard', group: 'main' },
+    { label: 'Sales', icon: 'sales', href: `${bizBase}/sales`, id: 'sales', group: 'main' },
+    { label: 'Products', icon: 'products', href: `${bizBase}/products`, id: 'products', group: 'main' },
+    { label: 'Customers', icon: 'customers', href: `${bizBase}/customers`, id: 'customers', group: 'management' },
+    { label: 'Debts', icon: 'debts', href: `${bizBase}/debts`, id: 'debts', group: 'management' },
+    { label: 'Approvals', icon: 'approvals', href: '/businesses', id: 'approvals', group: 'admin', ownerOnly: true },
+    { label: 'Reports', icon: 'reports', href: `${bizBase}/reports`, id: 'reports', group: 'admin', ownerOnly: true },
+    { label: 'Settings', icon: 'settings', href: `${bizBase}/settings`, id: 'settings', group: 'admin', ownerOnly: true },
   ], [bizBase])
 
   const visibleNavItems = useMemo(
@@ -146,6 +146,17 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
     }),
     [normalNavItems, isManager]
   )
+
+  const navGroups = useMemo(() => {
+    const groups: { label: string; items: typeof visibleNavItems }[] = []
+    const mainItems = visibleNavItems.filter(i => i.group === 'main')
+    const mgmtItems = visibleNavItems.filter(i => i.group === 'management')
+    const adminItems = visibleNavItems.filter(i => i.group === 'admin')
+    if (mainItems.length) groups.push({ label: 'Overview', items: mainItems })
+    if (mgmtItems.length) groups.push({ label: 'Manage', items: mgmtItems })
+    if (adminItems.length) groups.push({ label: 'Administration', items: adminItems })
+    return groups
+  }, [visibleNavItems])
 
   const adminSubItems = useMemo(() => [
     { label: 'Overview', icon: 'admin', href: '/admin', id: 'admin' },
@@ -225,12 +236,14 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="px-5 py-5 border-b border-white/[0.08]">
+          <div className="px-5 py-5 border-b border-white/[0.06]">
             <div className="flex items-center gap-3">
-              <BusinessBotLogo size={36} />
+              <div className="relative">
+                <BusinessBotLogo size={36} />
+              </div>
               <div>
                 <p className="text-white font-semibold text-[13px] tracking-tight">Business Bot</p>
-                <p className="text-white/40 text-[11px]">Sales & Inventory</p>
+                <p className="text-white/35 text-[11px]">Sales & Inventory</p>
               </div>
             </div>
           </div>
@@ -241,7 +254,7 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
               <div ref={bizSwitcherRef} className="relative">
                 <button
                   onClick={() => setBizSwitcherOpen(!bizSwitcherOpen)}
-                  className="w-full flex items-center gap-2.5 px-3 py-2.5 bg-white/[0.07] rounded-lg hover:bg-white/[0.12] transition-colors cursor-pointer"
+                  className="w-full flex items-center gap-2.5 px-3 py-2.5 bg-white/[0.05] rounded-xl hover:bg-white/[0.1] transition-colors cursor-pointer border border-white/[0.05]"
                 >
                   <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-sm">
                     {currentBusiness.name.charAt(0).toUpperCase()}
@@ -298,50 +311,61 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
           )}
 
           {/* Navigation */}
-          <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
-            {visibleNavItems.map((item) => {
-              const isActive = isNavItemActive(item.href)
-              return (
-                <Link
-                  key={item.id}
-                  href={item.href}
-                  onClick={() => setSidebarOpen(false)}
-                  className={`relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] transition-all min-h-[40px] group ${
-                    isActive
-                      ? 'bg-white/[0.12] text-white font-medium'
-                      : 'text-white/55 hover:bg-white/[0.07] hover:text-white/90'
-                  }`}
-                >
-                  {isActive && (
-                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-white rounded-r-full" />
-                  )}
-                  <span className={`${isActive ? 'text-white' : 'text-white/40 group-hover:text-white/60'}`}>
-                    <NavIcon name={item.icon} />
-                  </span>
-                  {item.label}
-                </Link>
-              )
-            })}
+          <nav className="flex-1 px-3 py-3 space-y-4 overflow-y-auto">
+            {navGroups.map((group) => (
+              <div key={group.label}>
+                <p className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-white/25">{group.label}</p>
+                <div className="space-y-0.5">
+                {group.items.map((item) => {
+                  const isActive = isNavItemActive(item.href)
+                  return (
+                    <Link
+                      key={item.id}
+                      href={item.href}
+                      onClick={() => setSidebarOpen(false)}
+                      className={`relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] transition-all duration-200 min-h-[40px] group ${
+                        isActive
+                          ? 'bg-white/[0.13] text-white font-medium shadow-sm shadow-black/10'
+                          : 'text-white/50 hover:bg-white/[0.06] hover:text-white/80'
+                      }`}
+                    >
+                      {isActive && (
+                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-white rounded-r-full shadow-sm shadow-white/30" />
+                      )}
+                      <span className={`transition-colors duration-200 ${isActive ? 'text-white' : 'text-white/35 group-hover:text-white/55'}`}>
+                        <NavIcon name={item.icon} />
+                      </span>
+                      <span className="flex-1">{item.label}</span>
+                      {isActive && (
+                        <div className="w-1.5 h-1.5 rounded-full bg-white/60" />
+                      )}
+                    </Link>
+                  )
+                })}
+                </div>
+              </div>
+            ))}
 
             {isSuperAdmin && (
-              <div className="pt-2">
+              <div>
+                <p className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-white/25">Admin</p>
                 <button
                   onClick={() => setAdminOpen(!adminOpen)}
-                  className={`relative w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] transition-all min-h-[40px] group ${
+                  className={`relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] transition-all duration-200 min-h-[40px] group ${
                     pathname.startsWith('/admin')
-                      ? 'bg-white/[0.12] text-white font-medium'
-                      : 'text-white/55 hover:bg-white/[0.07] hover:text-white/90'
+                      ? 'bg-white/[0.13] text-white font-medium shadow-sm shadow-black/10'
+                      : 'text-white/50 hover:bg-white/[0.06] hover:text-white/80'
                   }`}
                 >
                   {pathname.startsWith('/admin') && (
-                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-white rounded-r-full" />
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-white rounded-r-full shadow-sm shadow-white/30" />
                   )}
-                  <span className={`${pathname.startsWith('/admin') ? 'text-white' : 'text-white/40 group-hover:text-white/60'}`}>
+                  <span className={`transition-colors duration-200 ${pathname.startsWith('/admin') ? 'text-white' : 'text-white/35 group-hover:text-white/55'}`}>
                     <NavIcon name="admin" />
                   </span>
-                  <span className="flex-1 text-left">Admin</span>
+                  <span className="flex-1 text-left">Admin Panel</span>
                   <svg
-                    className={`w-3.5 h-3.5 text-white/30 transition-transform ${adminOpen ? 'rotate-180' : ''}`}
+                    className={`w-3.5 h-3.5 text-white/25 transition-transform duration-200 ${adminOpen ? 'rotate-180' : ''}`}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -351,22 +375,25 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
                 </button>
 
                 {adminOpen && (
-                  <div className="ml-3 mt-0.5 space-y-0.5 border-l border-white/[0.08] pl-3">
+                  <div className="ml-3 mt-1 space-y-0.5 border-l border-white/[0.06] pl-3">
                     {adminSubItems.map((item) => {
-                      const isActive = pathname === item.href
+                      const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
                       return (
                         <Link
                           key={item.id}
                           href={item.href}
                           onClick={() => setSidebarOpen(false)}
-                          className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-[12px] transition-all min-h-[36px] ${
+                          className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-[12px] transition-all duration-200 min-h-[36px] ${
                             isActive
-                              ? 'bg-white/[0.1] text-white font-medium'
-                              : 'text-white/40 hover:bg-white/[0.06] hover:text-white/70'
+                              ? 'bg-white/[0.08] text-white font-medium'
+                              : 'text-white/35 hover:bg-white/[0.05] hover:text-white/65'
                           }`}
                         >
                           <NavIcon name={item.icon} />
-                          {item.label}
+                          <span className="flex-1">{item.label}</span>
+                          {isActive && (
+                            <div className="w-1.5 h-1.5 rounded-full bg-white/50" />
+                          )}
                         </Link>
                       )
                     })}
@@ -377,20 +404,20 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
           </nav>
 
           {/* Profile */}
-          <div className="p-3 border-t border-white/[0.08]">
+          <div className="p-3 border-t border-white/[0.06]">
             <div ref={sidebarProfileRef} className="relative">
               <button
                 onClick={() => setSidebarProfileOpen(!sidebarProfileOpen)}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/[0.07] transition-colors cursor-pointer min-h-[44px]"
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/[0.06] transition-colors cursor-pointer min-h-[44px] group"
               >
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-xs font-semibold shrink-0">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-xs font-semibold shrink-0 ring-2 ring-white/10">
                   {user?.name?.charAt(0)?.toUpperCase() || 'U'}
                 </div>
                 <div className="flex-1 min-w-0 text-left">
                   <p className="text-white text-[13px] font-medium truncate">{user?.name || 'User'}</p>
-                  <p className="text-white/35 text-[11px] capitalize">{user?.role?.replace('_', ' ') || 'user'}</p>
+                  <p className="text-white/30 text-[11px] capitalize">{user?.role?.replace('_', ' ') || 'user'}</p>
                 </div>
-                <svg className={`w-3.5 h-3.5 text-white/30 transition-transform ${sidebarProfileOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className={`w-3.5 h-3.5 text-white/25 transition-transform duration-200 ${sidebarProfileOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>

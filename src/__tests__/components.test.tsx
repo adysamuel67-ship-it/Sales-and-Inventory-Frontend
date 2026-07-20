@@ -173,7 +173,7 @@ describe('RecentSales', () => {
 
   it('renders title', () => {
     render(<RecentSales sales={sales} />)
-    expect(screen.getByText('Recent Sales')).toBeTruthy()
+    expect(screen.getByText('Recent Activity')).toBeTruthy()
   })
 
   it('renders "View All" link', () => {
@@ -210,9 +210,10 @@ describe('RecentSales', () => {
   })
 
   it('renders empty state', () => {
-    render(<RecentSales sales={[]} />)
-    expect(screen.getByText('No sales yet')).toBeTruthy()
-    expect(screen.getByText('Record your first sale to see it here')).toBeTruthy()
+    const { container } = render(<RecentSales sales={[]} />)
+    expect(container.textContent).toContain('No')
+    expect(container.textContent).toContain('activity yet')
+    expect(container.textContent).toContain('Record a sale to get started')
   })
 
   it('renders "Add Sale" button in empty state', () => {

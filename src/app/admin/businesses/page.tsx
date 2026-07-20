@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
 import { useAuth } from '@/lib/auth'
 import { businessAPI, adminAPI, productAPI, saleAPI, debtAPI } from '@/lib/api'
+import { extractArray } from '@/lib/utils'
 
 interface BusinessRecord {
   business_id: number
@@ -22,16 +23,6 @@ interface MemberRecord {
   is_verified?: boolean
   is_active?: boolean
   business_id?: number
-}
-
-function extractArray(data: any): any[] {
-  if (Array.isArray(data)) return data
-  if (data && typeof data === 'object') {
-    for (const key of Object.keys(data)) {
-      if (Array.isArray(data[key])) return data[key]
-    }
-  }
-  return []
 }
 
 export default function AdminBusinessesPage() {
@@ -57,7 +48,7 @@ export default function AdminBusinessesPage() {
     if (!isLoading && isAuthenticated && user && user.role !== 'super_admin') {
       router.replace('/dashboard')
     }
-  }, [isLoading, isAuthenticated, user, router])
+  }, [isLoading, isAuthenticated, user?.role, router])
 
   const loadBusinesses = async () => {
     setLoading(true)
@@ -89,7 +80,7 @@ export default function AdminBusinessesPage() {
 
   useEffect(() => {
     if (isAuthenticated && user?.role === 'super_admin') loadBusinesses()
-  }, [isAuthenticated, user])
+  }, [isAuthenticated, user?.role])
 
   const handleDelete = async (id: number) => {
     if (!confirm('Are you sure you want to delete this business?')) return

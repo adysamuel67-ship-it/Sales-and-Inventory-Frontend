@@ -48,7 +48,7 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     if (isAuthenticated && user?.role === 'super_admin') loadUsers()
-  }, [isAuthenticated, user])
+  }, [isAuthenticated, user?.role])
 
   const handleToggleActive = async (userId: number) => {
     try {

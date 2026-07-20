@@ -3,9 +3,11 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
+import ProductDetailModal from '@/components/ProductDetailModal'
 import { useAuth } from '@/lib/auth'
 import { productAPI } from '@/lib/api'
 import { useBusinessId } from '@/lib/useBusinessId'
+import { extractArray, normalizeProduct } from '@/lib/utils'
 
 interface Product {
   product_id: number
@@ -15,28 +17,6 @@ interface Product {
   quantity: number
   unit: string
   [key: string]: any
-}
-
-function extractArray(data: any): any[] {
-  if (Array.isArray(data)) return data
-  if (data && typeof data === 'object') {
-    for (const key of Object.keys(data)) {
-      if (Array.isArray(data[key])) return data[key]
-    }
-  }
-  return []
-}
-
-function normalizeProduct(raw: any): Product {
-  return {
-    product_id: raw.product_id ?? raw.id,
-    name: raw.name,
-    price: raw.price ?? 0,
-    cost_price: raw.cost_price ?? 0,
-    quantity: raw.quantity ?? raw.stock ?? 0,
-    unit: raw.unit || 'units',
-    ...raw,
-  }
 }
 
 export default function ProductsPage() {
@@ -50,6 +30,7 @@ export default function ProductsPage() {
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ name: '', price: '', cost_price: '', quantity: '', unit: 'units' })
   const [creating, setCreating] = useState(false)
+  const [detailProduct, setDetailProduct] = useState<Product | null>(null)
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) router.replace('/login')
@@ -59,7 +40,7 @@ export default function ProductsPage() {
     if (profileLoaded && isAuthenticated && user && user.is_verified === false) {
       router.replace('/verify')
     }
-  }, [profileLoaded, isAuthenticated, user, router])
+  }, [profileLoaded, isAuthenticated, user?.is_verified, router])
 
   const loadProducts = async () => {
     if (!businessId) return
@@ -239,56 +220,87 @@ export default function ProductsPage() {
         </div>
       )}
 
-      <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm">
-        {loading || bizLoading ? (
-          <div className="px-5 py-12 text-center">
-            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+      {loading || bizLoading ? (
+        <div className="flex items-center justify-center py-16">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : products.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {products.map((product) => {
+            const isOutOfStock = product.quantity <= 0
+            const isLowStock = product.quantity > 0 && product.quantity <= (product.low_stock_threshold ?? 10)
+            const margin = product.price > 0 && product.cost_price > 0
+              ? ((product.price - product.cost_price) / product.price * 100)
+              : null
+            return (
+              <button
+                key={product.product_id}
+                onClick={() => setDetailProduct(product)}
+                className="bg-surface rounded-2xl border border-gray-100 p-5 text-left hover:shadow-md hover:border-primary/20 hover:-translate-y-0.5 transition-all duration-200 group cursor-pointer"
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/15 transition-colors">
+                    <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+                    </svg>
+                  </div>
+                  {isOutOfStock ? (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide bg-danger-light text-danger">Out of stock</span>
+                  ) : isLowStock ? (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide bg-warning-light text-warning">Low stock</span>
+                  ) : null}
+                </div>
+
+                <h3 className="font-semibold text-gray-900 text-sm mb-1 truncate group-hover:text-primary transition-colors">{product.name}</h3>
+
+                <div className="flex items-baseline gap-1 mb-3">
+                  <span className="text-lg font-bold text-gray-900">GH₵{(product.price ?? 0).toFixed(2)}</span>
+                  <span className="text-[11px] text-neutral-light">/ {product.unit || 'unit'}</span>
+                </div>
+
+                <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-3">
+                    <span className="text-neutral-light">
+                      Cost: <span className="text-gray-700 font-medium">GH₵{(product.cost_price ?? 0).toFixed(2)}</span>
+                    </span>
+                    {margin !== null && (
+                      <span className="text-success font-medium">
+                        {margin.toFixed(0)}% margin
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
+                  <span className={`text-xs font-medium ${isOutOfStock ? 'text-danger' : isLowStock ? 'text-warning' : 'text-success'}`}>
+                    {product.quantity ?? 0} {product.unit || 'units'} in stock
+                  </span>
+                  <svg className="w-4 h-4 text-gray-300 group-hover:text-primary/50 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </button>
+            )
+          })}
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center mb-4">
+            <svg className="w-7 h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+            </svg>
           </div>
-        ) : products.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-gray-100">
-                  <th className="text-left px-5 py-3 font-medium">Product</th>
-                  <th className="text-right px-5 py-3 font-medium">Price</th>
-                  <th className="text-right px-5 py-3 font-medium">Cost</th>
-                  <th className="text-center px-5 py-3 font-medium">Quantity</th>
-                  <th className="text-center px-5 py-3 font-medium">Unit</th>
-                  <th className="text-right px-5 py-3 font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {products.map((product) => (
-                    <tr key={product.product_id} className="border-t border-gray-50 table-row-hover">
-                      <td className="px-5 py-3.5 font-medium text-gray-900">{product.name}</td>
-                      <td className="px-5 py-3.5 text-right text-gray-900">GH₵{(product.price ?? 0).toFixed(2)}</td>
-                      <td className="px-5 py-3.5 text-right text-gray-600">GH₵{(product.cost_price ?? 0).toFixed(2)}</td>
-                      <td className="px-5 py-3.5 text-center">
-                        <span className={`font-medium ${product.quantity <= 0 ? 'text-danger' : 'text-gray-900'}`}>
-                          {product.quantity ?? 0}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3.5 text-center text-neutral-light">{product.unit || '-'}</td>
-                      <td className="px-5 py-3.5 text-right">
-                        <button
-                          onClick={() => handleDelete(product.product_id)}
-                          className="text-xs text-danger hover:underline font-medium"
-                        >
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                  )
-                )}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="px-5 py-12 text-center text-neutral-light text-sm">
-            No products yet. Add your first product to get started.
-          </div>
-        )}
-      </div>
+          <p className="text-sm font-medium text-gray-900 mb-1">No products yet</p>
+          <p className="text-xs text-neutral-light mb-4">Add your first product to get started</p>
+          <button
+            onClick={() => setShowForm(true)}
+            className="px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors"
+          >
+            Add Product
+          </button>
+        </div>
+      )}
+      {detailProduct && <ProductDetailModal product={detailProduct} onClose={() => setDetailProduct(null)} />}
     </DashboardLayout>
   )
 }

@@ -54,7 +54,7 @@ export default function BusinessesPage() {
     if (profileLoaded && isAuthenticated && user && user.is_verified === false) {
       router.replace('/verify')
     }
-  }, [profileLoaded, isAuthenticated, user, router])
+  }, [profileLoaded, isAuthenticated, user?.is_verified, router])
 
   useEffect(() => {
     if (isAuthenticated) {

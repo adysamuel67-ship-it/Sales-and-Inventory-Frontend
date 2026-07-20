@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
 import { useAuth } from '@/lib/auth'
 import api from '@/lib/api'
+import { extractArray } from '@/lib/utils'
 
 interface Job {
   id: string
@@ -12,16 +13,6 @@ interface Job {
   status: string
   last_run?: string
   next_run?: string
-}
-
-function extractArray(data: any): any[] {
-  if (Array.isArray(data)) return data
-  if (data && typeof data === 'object') {
-    for (const key of Object.keys(data)) {
-      if (Array.isArray(data[key])) return data[key]
-    }
-  }
-  return []
 }
 
 export default function AdminJobsPage() {
@@ -41,7 +32,7 @@ export default function AdminJobsPage() {
     if (profileLoaded && isAuthenticated && user && user.role !== 'super_admin') {
       router.replace('/dashboard')
     }
-  }, [profileLoaded, isAuthenticated, user, router])
+  }, [profileLoaded, isAuthenticated, user?.role, router])
 
   const loadJobs = async () => {
     setLoading(true)
@@ -59,7 +50,7 @@ export default function AdminJobsPage() {
 
   useEffect(() => {
     if (isAuthenticated && user?.role === 'super_admin') loadJobs()
-  }, [isAuthenticated, user])
+  }, [isAuthenticated, user?.role])
 
   const handleTrigger = async (jobName: string) => {
     setTriggering(jobName)

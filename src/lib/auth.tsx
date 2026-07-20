@@ -103,12 +103,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       setCurrentBusiness((prev) => {
         if (prev) return prev
-        if (mapped.length > 0) {
-          localStorage.setItem('current_business_id', String(mapped[0].business_id))
-          return mapped[0]
-        }
-        return null
+        return mapped.length > 0 ? mapped[0] : null
       })
+      if (!storedBizId && mapped.length > 0) {
+        localStorage.setItem('current_business_id', String(mapped[0].business_id))
+      }
     } catch {
       // Failed to load businesses
     } finally {
@@ -161,6 +160,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const logout = useCallback(() => {
+    stopAutoRefresh()
     localStorage.removeItem('token')
     localStorage.removeItem('refresh_token')
     localStorage.removeItem('user')
@@ -228,6 +228,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = useCallback((newToken: string, newUser: User | null, newRefreshToken?: string) => {
     localStorage.setItem('token', newToken)
+    localStorage.removeItem('current_business_id')
     if (newRefreshToken) {
       localStorage.setItem('refresh_token', newRefreshToken)
       setRefreshTokenValue(newRefreshToken)
@@ -238,6 +239,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setToken(newToken)
     setUser(newUser)
     setLoginGrace(60000)
+    startAutoRefresh(3 * 60 * 1000)
     if (newUser && !newUser.is_verified) {
       setPendingVerificationEmail(newUser.email)
     } else {

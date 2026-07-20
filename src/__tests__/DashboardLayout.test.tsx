@@ -159,7 +159,7 @@ describe('DashboardLayout', () => {
 
     const links = screen.getAllByTestId('next-link')
     const dashboardLink = links.find(l => l.getAttribute('href') === '/business/1/dashboard')
-    expect(dashboardLink?.className).toContain('bg-white/[0.12]')
+    expect(dashboardLink?.className).toContain('bg-white/[0.13]')
     expect(dashboardLink?.className).toContain('font-medium')
   })
 
@@ -172,8 +172,8 @@ describe('DashboardLayout', () => {
 
     const links = screen.getAllByTestId('next-link')
     const salesLink = links.find(l => l.getAttribute('href') === '/business/1/sales')
-    expect(salesLink?.className).not.toContain('bg-white/[0.12]')
-    expect(salesLink?.className).toContain('text-white/55')
+    expect(salesLink?.className).not.toContain('bg-white/[0.13]')
+    expect(salesLink?.className).toContain('text-white/50')
   })
 
   it('shows current business name', () => {

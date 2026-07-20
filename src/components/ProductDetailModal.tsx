@@ -1,5 +1,7 @@
 'use client'
 
+import { useEffect } from 'react'
+
 interface Product {
   product_id: number
   name: string
@@ -26,6 +28,12 @@ export default function ProductDetailModal({ product, onClose }: Props) {
     : null
   const isLowStock = product.quantity <= (product.low_stock_threshold ?? 10)
   const isOutOfStock = product.quantity === 0
+
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', handleEsc)
+    return () => window.removeEventListener('keydown', handleEsc)
+  }, [onClose])
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>

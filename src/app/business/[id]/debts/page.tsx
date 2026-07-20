@@ -105,6 +105,11 @@ export default function DebtsPage() {
   const [profileLoading, setProfileLoading] = useState(false)
   const [profileSales, setProfileSales] = useState<any[]>([])
 
+  const [showDebtDetailModal, setShowDebtDetailModal] = useState(false)
+  const [debtDetailData, setDebtDetailData] = useState<{ debt: DebtRecord; customer: CustomerWithDebt } | null>(null)
+
+  const [showTxnDetailModal, setShowTxnDetailModal] = useState(false)
+  const [txnDetailData, setTxnDetailData] = useState<CustomerTransaction | null>(null)
   const isAdmin = isAdminRole(user?.role)
 
   const successTimer = useCallback(() => {
@@ -964,7 +969,7 @@ export default function DebtsPage() {
                         const overdue = debt.due_date && isOverdue(debt.due_date)
                         const daysLeft = debt.due_date ? daysUntilDue(debt.due_date) : null
                         return (
-                          <div key={debt.debt_id} className="flex items-center justify-between py-2.5 px-3 bg-surfaceAlt rounded-lg text-sm cursor-pointer hover:bg-gray-50 transition-colors">
+                          <div key={debt.debt_id} onClick={() => { setDebtDetailData({ debt, customer: profileCustomer }); setShowDebtDetailModal(true) }} className="flex items-center justify-between py-2.5 px-3 bg-surfaceAlt rounded-lg text-sm cursor-pointer hover:bg-gray-100 transition-colors">
                             <div>
                               <span className="font-medium text-gray-900">{formatCurrency(debt.amount)}</span>
                               {debt.due_date && (
@@ -998,7 +1003,7 @@ export default function DebtsPage() {
                   </h5>
                   <div className="space-y-2">
                     {profileTransactions.map((txn) => (
-                      <div key={txn.transaction_id} className="flex items-center justify-between py-2.5 px-3 bg-surfaceAlt rounded-lg text-sm cursor-pointer hover:bg-gray-50 transition-colors">
+                      <div key={txn.transaction_id} onClick={() => { setTxnDetailData(txn); setShowTxnDetailModal(true) }} className="flex items-center justify-between py-2.5 px-3 bg-surfaceAlt rounded-lg text-sm cursor-pointer hover:bg-gray-100 transition-colors">
                         <div>
                           <span className="font-medium text-success">{formatCurrency(txn.amount_paid)}</span>
                           <p className="text-xs text-neutral-light mt-0.5">
@@ -1042,6 +1047,132 @@ export default function DebtsPage() {
         </div>
       )}
       {detailSale && <SaleDetailModal sale={detailSale} onClose={() => setDetailSale(null)} />}
+
+      {showDebtDetailModal && debtDetailData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowDebtDetailModal(false)}>
+          <div className="absolute inset-0 bg-black/40" />
+          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 bg-white border-b border-gray-100 px-5 py-4 rounded-t-2xl flex items-center justify-between z-10">
+              <h3 className="font-semibold text-gray-900">Borrow Details</h3>
+              <button onClick={() => setShowDebtDetailModal(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors">
+                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="px-5 py-5 space-y-5">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-warning-light flex items-center justify-center shrink-0">
+                  <svg className="w-6 h-6 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-xs text-neutral-light">Amount Borrowed</p>
+                  <p className="text-xl font-bold text-warning">{formatCurrency(debtDetailData.debt.amount)}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-surfaceAlt rounded-xl p-4">
+                  <p className="text-xs text-neutral-light mb-1">Status</p>
+                  <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${
+                    debtDetailData.debt.is_paid ? 'bg-success-light text-success' : isOverdue(debtDetailData.debt.due_date) ? 'bg-danger-light text-danger' : 'bg-warning-light text-warning'
+                  }`}>
+                    {debtDetailData.debt.is_paid ? 'Paid' : isOverdue(debtDetailData.debt.due_date) ? 'Overdue' : 'Pending'}
+                  </span>
+                </div>
+                <div className="bg-surfaceAlt rounded-xl p-4">
+                  <p className="text-xs text-neutral-light mb-1">Customer</p>
+                  <p className="text-sm font-medium text-gray-900">{debtDetailData.customer.customer_name}</p>
+                </div>
+              </div>
+
+              <div className="bg-surfaceAlt rounded-xl p-4 space-y-2">
+                <div className="flex items-center gap-2 text-sm">
+                  <svg className="w-4 h-4 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>
+                  <span className="text-gray-700">Created: {debtDetailData.debt.created_at ? new Date(debtDetailData.debt.created_at).toLocaleDateString() : 'N/A'}</span>
+                </div>
+                {debtDetailData.debt.due_date && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <svg className="w-4 h-4 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <span className="text-gray-700">Due: {new Date(debtDetailData.debt.due_date).toLocaleDateString()}</span>
+                    {!debtDetailData.debt.is_paid && isOverdue(debtDetailData.debt.due_date) && (
+                      <span className="text-xs text-danger font-medium ml-1">(overdue)</span>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {debtDetailData.customer.customer_phone && (
+                <div className="bg-surfaceAlt rounded-xl p-4">
+                  <p className="text-xs text-neutral-light mb-1">Customer Phone</p>
+                  <p className="text-sm font-medium text-gray-900">{debtDetailData.customer.customer_phone}</p>
+                </div>
+              )}
+            </div>
+            <div className="sticky bottom-0 bg-white border-t border-gray-100 px-5 py-4 rounded-b-2xl">
+              <button onClick={() => setShowDebtDetailModal(false)} className="w-full py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors">
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showTxnDetailModal && txnDetailData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowTxnDetailModal(false)}>
+          <div className="absolute inset-0 bg-black/40" />
+          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 bg-white border-b border-gray-100 px-5 py-4 rounded-t-2xl flex items-center justify-between z-10">
+              <h3 className="font-semibold text-gray-900">Payment Details</h3>
+              <button onClick={() => setShowTxnDetailModal(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors">
+                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="px-5 py-5 space-y-5">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-success-light flex items-center justify-center shrink-0">
+                  <svg className="w-6 h-6 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-xs text-neutral-light">Amount Paid</p>
+                  <p className="text-xl font-bold text-success">{formatCurrency(txnDetailData.amount_paid)}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-surfaceAlt rounded-xl p-4">
+                  <p className="text-xs text-neutral-light mb-1">Transaction ID</p>
+                  <p className="text-sm font-medium text-gray-900">#{txnDetailData.transaction_id}</p>
+                </div>
+                <div className="bg-surfaceAlt rounded-xl p-4">
+                  <p className="text-xs text-neutral-light mb-1">Customer</p>
+                  <p className="text-sm font-medium text-gray-900">{txnDetailData.customer_name || profileCustomer?.customer_name || 'N/A'}</p>
+                </div>
+              </div>
+
+              <div className="bg-surfaceAlt rounded-xl p-4 space-y-2">
+                <div className="flex items-center gap-2 text-sm">
+                  <svg className="w-4 h-4 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>
+                  <span className="text-gray-700">Date: {txnDetailData.created_at ? new Date(txnDetailData.created_at).toLocaleDateString() : 'N/A'}</span>
+                </div>
+                {txnDetailData.note && (
+                  <div className="flex items-start gap-2 text-sm">
+                    <svg className="w-4 h-4 text-neutral-light shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" /></svg>
+                    <span className="text-gray-700">{txnDetailData.note}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="sticky bottom-0 bg-white border-t border-gray-100 px-5 py-4 rounded-b-2xl">
+              <button onClick={() => setShowTxnDetailModal(false)} className="w-full py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors">
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

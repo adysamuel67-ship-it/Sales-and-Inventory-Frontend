@@ -624,105 +624,94 @@ function CustomersContent() {
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
           </div>
         ) : filtered.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-gray-100">
-                  <th className="text-left px-5 py-3 font-medium">Customer</th>
-                  <th className="text-left px-5 py-3 font-medium hidden sm:table-cell">Phone</th>
-                  <th className="text-left px-5 py-3 font-medium hidden md:table-cell">Email</th>
-                  {activeTab === 'debt' && <th className="text-right px-5 py-3 font-medium">Debt</th>}
-                  {!isStaff && <th className="text-right px-5 py-3 font-medium">Actions</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((customer) => {
-                  const debt = debtMap.get(Number(customer.customer_id)) ?? 0
-                  return (
-                    <tr key={customer.customer_id} className="border-t border-gray-50 table-row-hover">
-                      <td className="px-5 py-3.5">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold shrink-0 ${
-                            customer.is_active === false
-                              ? 'bg-gray-100 text-gray-400'
-                              : 'bg-primary/10 text-primary'
-                          }`}>
-                            {customer.name?.charAt(0)?.toUpperCase() || '?'}
-                          </div>
-                          <div>
-                            <div className="font-medium text-gray-900">{customer.name}</div>
-                            {customer.address && (
-                              <div className="text-xs text-neutral-light mt-0.5">{customer.address}</div>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-5 py-3.5 text-gray-600 hidden sm:table-cell">{customer.phone || '-'}</td>
-                      <td className="px-5 py-3.5 text-gray-600 hidden md:table-cell">{customer.email || '-'}</td>
-                      {activeTab === 'debt' && (
-                        <td className="px-5 py-3.5 text-right">
-                          <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
-                            debt >= 100 ? 'bg-danger-light text-danger'
-                              : 'bg-warning-light text-warning'
-                          }`}>
-                            GH₵{debt.toFixed(2)}
+          <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filtered.map((customer) => {
+              const debt = debtMap.get(Number(customer.customer_id)) ?? 0
+              return (
+                <button
+                  key={customer.customer_id}
+                  onClick={() => openProfile(customer)}
+                  className="bg-white rounded-2xl border border-gray-100 p-5 text-left hover:shadow-md hover:border-primary/20 hover:-translate-y-0.5 transition-all duration-200 group cursor-pointer"
+                >
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className={`w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
+                      customer.is_active === false
+                        ? 'bg-gray-100 text-gray-400'
+                        : 'bg-primary/10 text-primary'
+                    }`}>
+                      {customer.name?.charAt(0)?.toUpperCase() || '?'}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-semibold text-gray-900 text-sm truncate group-hover:text-primary transition-colors">{customer.name}</h3>
+                      {customer.is_active === false && (
+                        <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-semibold uppercase tracking-wide bg-gray-100 text-gray-500 mt-0.5">Inactive</span>
+                      )}
+                    </div>
+                    {debt > 0 && (
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold shrink-0 ${
+                        debt >= 100 ? 'bg-danger-light text-danger' : 'bg-warning-light text-warning'
+                      }`}>
+                        GH₵{debt.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="space-y-1.5 mb-3">
+                    {customer.phone && (
+                      <div className="flex items-center gap-2 text-xs text-gray-600">
+                        <svg className="w-3.5 h-3.5 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                        </svg>
+                        <span className="truncate">{customer.phone}</span>
+                      </div>
+                    )}
+                    {customer.email && (
+                      <div className="flex items-center gap-2 text-xs text-gray-600">
+                        <svg className="w-3.5 h-3.5 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                        <span className="truncate">{customer.email}</span>
+                      </div>
+                    )}
+                    {customer.address && (
+                      <div className="flex items-center gap-2 text-xs text-gray-600">
+                        <svg className="w-3.5 h-3.5 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <span className="truncate">{customer.address}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      {!isStaff && isAdmin && (
+                        <>
+                          <span
+                            onClick={(e) => { e.stopPropagation(); openEditForm(customer) }}
+                            className="px-2 py-0.5 text-[10px] font-medium text-gray-500 bg-gray-100 rounded hover:bg-gray-200 transition-colors cursor-pointer"
+                          >
+                            Edit
                           </span>
-                        </td>
-                      )}
-                      {!isStaff && (
-                        <td className="px-5 py-3.5 text-right">
-                          {deleteConfirm === customer.customer_id ? (
-                            <div className="flex items-center gap-1 justify-end">
-                              <button
-                                onClick={() => handleDelete(customer.customer_id)}
-                                className="px-2 py-1 text-xs font-medium text-white bg-danger rounded-lg"
-                              >
-                                Confirm
-                              </button>
-                              <button
-                                onClick={() => setDeleteConfirm(null)}
-                                className="px-2 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg"
-                              >
-                                Cancel
-                              </button>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-2 justify-end">
-                              <button
-                                onClick={() => openProfile(customer)}
-                                className="px-2.5 py-1 text-xs font-medium text-primary bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors"
-                                title="View Profile"
-                              >
-                                Profile
-                              </button>
-                              {isAdmin && (
-                                <>
-                                  <button
-                                    onClick={() => openEditForm(customer)}
-                                    className="px-2.5 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                                    title="Edit"
-                                  >
-                                    Edit
-                                  </button>
-                                  {customer.is_active !== false && (
-                                    <button
-                                      onClick={() => setDeleteConfirm(customer.customer_id)}
-                                      className="text-xs text-danger hover:underline font-medium"
-                                    >
-                                      Delete
-                                    </button>
-                                  )}
-                                </>
-                              )}
-                            </div>
+                          {customer.is_active !== false && (
+                            <span
+                              onClick={(e) => { e.stopPropagation(); handleDelete(customer.customer_id) }}
+                              className="px-2 py-0.5 text-[10px] font-medium text-danger bg-danger-light rounded hover:bg-danger/20 transition-colors cursor-pointer"
+                            >
+                              Delete
+                            </span>
                           )}
-                        </td>
+                        </>
                       )}
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+                    </div>
+                    <svg className="w-4 h-4 text-gray-300 group-hover:text-primary/50 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                </button>
+              )
+            })}
           </div>
         ) : (
           <div className="px-5 py-12 text-center">

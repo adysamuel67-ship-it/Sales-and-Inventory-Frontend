@@ -63,7 +63,7 @@ export function setLoginGrace(durationMs = 60000) {
 function processQueue(error: any, token: string | null) {
   failedQueue.forEach((prom) => {
     if (error || !token) {
-      prom.reject(error)
+      prom.reject(error || new Error('Token refresh failed'))
     } else {
       prom.resolve(token)
     }
@@ -112,8 +112,6 @@ async function performTokenRefresh(): Promise<string> {
   throw lastError
 }
 
-export { startRefresh }
-
 function startRefresh(): Promise<string> {
   if (!refreshPromise) {
     isRefreshing = true
@@ -136,14 +134,23 @@ function startRefresh(): Promise<string> {
   return refreshPromise
 }
 
+export { startRefresh }
+
 function attachToken(config: any) {
   if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('token')
-    if (token) {
-      if (isTokenExpired(token, 30) && !isRefreshing) {
-        startRefresh().catch(() => {})
+    const url = config?.url || ''
+    const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/refresh') ||
+      url.includes('/users/sign_up') || url.includes('/auth/verify_email') ||
+      url.includes('/auth/send_verification') || url.includes('/otp/get_code') ||
+      url.includes('/verify_user/')
+    if (!isAuthEndpoint) {
+      const token = localStorage.getItem('token')
+      if (token) {
+        if (isTokenExpired(token, 30) && !isRefreshing) {
+          startRefresh().catch(() => {})
+        }
+        config.headers.Authorization = `Bearer ${token}`
       }
-      config.headers.Authorization = `Bearer ${token}`
     }
   }
   return config
@@ -155,8 +162,14 @@ profileApi.interceptors.request.use(attachToken)
 function handle401Interceptor(instance: any) {
   return async (error: any) => {
     const originalRequest = error.config
+    const url = originalRequest?.url || ''
 
-    if (error.response?.status === 401 && typeof window !== 'undefined') {
+    const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/refresh') ||
+      url.includes('/users/sign_up') || url.includes('/auth/verify_email') ||
+      url.includes('/auth/send_verification') || url.includes('/otp/get_code') ||
+      url.includes('/verify_user/')
+
+    if (error.response?.status === 401 && typeof window !== 'undefined' && !isAuthEndpoint) {
       if (originalRequest._retry) {
         if (Date.now() >= loginGraceUntil) {
           localStorage.removeItem('token')
@@ -187,7 +200,6 @@ function handle401Interceptor(instance: any) {
           originalRequest.headers.Authorization = `Bearer ${newToken}`
           return instance(originalRequest)
         } catch (refreshError: any) {
-          const isExplicitAuthFailure = refreshError?.response?.status === 403
           if (Date.now() >= loginGraceUntil) {
             localStorage.removeItem('token')
             localStorage.removeItem('refresh_token')
@@ -216,6 +228,13 @@ api.interceptors.response.use((response) => response, handle401Interceptor(api))
 
 function suppressAuthErrors(error: any): any {
   if (!error || !error.response) return error
+  if (error.response?.status !== 401 && error.response?.status !== 403) return error
+  const url = error.config?.url || ''
+  if (url.includes('/auth/login') || url.includes('/auth/refresh') ||
+    url.includes('/users/sign_up') || url.includes('/auth/verify_email') ||
+    url.includes('/auth/send_verification') || url.includes('/otp/get_code') || url.includes('/verify_user/')) {
+    return error
+  }
   const detail = error.response?.data?.detail
   if (typeof detail === 'string' && /invalid|expired|token/i.test(detail)) {
     error.response.data = { ...error.response.data, detail: '' }
@@ -255,10 +274,10 @@ export const authAPI = {
       new URLSearchParams({ username: data.email, password: data.password }),
       { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
     ),
-  sendVerification: (email: string) =>
-    api.post('/auth/send_verification', { email }),
-  verifyEmail: (data: { email: string; code: string }) =>
-    api.post('/auth/verify_email', data),
+  sendVerification: () =>
+    api.post('/otp/get_code'),
+  verifyEmail: (data: { user_id: number; code: string }) =>
+    api.post(`/verify_user/${data.user_id}`, { code: data.code }),
 }
 
 export const profileAPI = {

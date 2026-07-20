@@ -30,7 +30,7 @@ export default function AdminLowStockPage() {
     if (profileLoaded && isAuthenticated && user && user.role !== 'super_admin') {
       router.replace('/dashboard')
     }
-  }, [profileLoaded, isAuthenticated, user, router])
+  }, [profileLoaded, isAuthenticated, user?.role, router])
 
   useEffect(() => {
     const loadLowStock = async () => {
@@ -39,25 +39,32 @@ export default function AdminLowStockPage() {
       try {
         const res = await adminAPI.listAllUsers()
         const users = extractArray(res.data)
-        const allItems: LowStockItem[] = []
+        const businessesWithProducts = users
+          .filter((u: any) => u.business_id)
+          .slice(0, 20)
 
-        for (const u of users.slice(0, 20)) {
+        const productResults = await Promise.allSettled(
+          businessesWithProducts.map((u: any) => productAPI.list(u.business_id))
+        )
+
+        const allItems: LowStockItem[] = []
+        for (let i = 0; i < productResults.length; i++) {
+          const result = productResults[i]
+          if (result.status !== 'fulfilled') continue
+          const u = businessesWithProducts[i]
           try {
-            if (u.business_id) {
-              const prodRes = await productAPI.list(u.business_id)
-              const prods = extractArray(prodRes.data)
-              for (const p of prods) {
-                const qty = p.quantity ?? p.stock ?? 0
-                const threshold = p.threshold ?? p.reorder_level ?? 10
-                if (qty <= threshold) {
-                  allItems.push({
-                    name: p.name || 'Unknown',
-                    stock: qty,
-                    threshold,
-                    unit: p.unit || 'units',
-                    business_name: u.business_name || `Business #${u.business_id}`,
-                  })
-                }
+            const prods = extractArray(result.value.data)
+            for (const p of prods) {
+              const qty = p.quantity ?? p.stock ?? 0
+              const threshold = p.threshold ?? p.reorder_level ?? 10
+              if (qty <= threshold) {
+                allItems.push({
+                  name: p.name || 'Unknown',
+                  stock: qty,
+                  threshold,
+                  unit: p.unit || 'units',
+                  business_name: u.business_name || `Business #${u.business_id}`,
+                })
               }
             }
           } catch {
@@ -73,7 +80,7 @@ export default function AdminLowStockPage() {
       }
     }
     if (isAuthenticated && user?.role === 'super_admin') loadLowStock()
-  }, [isAuthenticated, user])
+  }, [isAuthenticated, user?.role])
 
   if (isLoading || !isAuthenticated || !profileLoaded || user?.role !== 'super_admin') {
     return (

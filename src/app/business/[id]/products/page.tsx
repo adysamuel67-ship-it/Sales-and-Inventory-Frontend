@@ -25,6 +25,15 @@ export default function ProductsPage() {
   const [lowStockOnly, setLowStockOnly] = useState(false)
   const [detailProduct, setDetailProduct] = useState<any>(null)
 
+  if (isNaN(businessId)) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <h2 className="text-lg font-semibold text-gray-900 mb-2">Invalid business</h2>
+        <p className="text-sm text-gray-500">This business doesn&apos;t exist or the URL is invalid.</p>
+      </div>
+    )
+  }
+
   // Add/Edit form state
   const [form, setForm] = useState({
     name: '', price: '', cost_price: '', quantity: '', unit: 'units', low_stock_threshold: '10', category: '', description: '', sku: '',
@@ -125,7 +134,7 @@ export default function ProductsPage() {
       setShowAdd(false)
       load()
     } catch (err: any) {
-      alert(parseApiError(err))
+      setError(parseApiError(err))
     } finally {
       setSaving(false)
     }
@@ -138,7 +147,7 @@ export default function ProductsPage() {
       setDeleteConfirm({ open: false, product: null })
       load()
     } catch (err: any) {
-      alert(parseApiError(err))
+      setError(parseApiError(err))
     }
   }
 

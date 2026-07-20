@@ -30,15 +30,14 @@ function extractArray(data: any, depth = 0): any[] {
 
 function normalizeApproval(raw: any) {
   return {
+    ...raw,
     approval_id: raw.approval_id ?? raw.id,
-    user_id: raw.user_id,
     requester_name: raw.requester_name || raw.name || raw.user?.name || 'Unknown',
     email: raw.email || raw.user?.email || 'N/A',
     reason: raw.reason || '',
     requested_role: raw.requested_role || raw.role || 'staff',
     status: raw.status || 'pending',
     created_at: raw.created_at || '',
-    ...raw,
   }
 }
 
