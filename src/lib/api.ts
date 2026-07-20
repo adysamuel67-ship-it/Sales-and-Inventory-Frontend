@@ -246,6 +246,8 @@ export const profileAPI = {
   },
   updateProfile: (userId: number, data: { name?: string; phone?: string }) =>
     api.put(`/users/${userId}`, data),
+  deleteProfile: (userId: number) =>
+    api.delete(`/users/${userId}`),
 }
 
 export const businessAPI = {
@@ -253,6 +255,7 @@ export const businessAPI = {
   get: (id: number) => api.get(`/businesses/${id}`),
   update: (id: number, data: any) => api.put(`/businesses/${id}`, data),
   delete: (id: number) => api.delete(`/businesses/${id}`),
+  leave: (id: number) => api.post(`/businesses/${id}/leave`),
   myBusinesses: () => api.get('/businesses/my_businesses'),
   listAll: () => api.get('/businesses/'),
   getBusinessKey: (businessId: number) => api.get(`/businesses/business_key/${businessId}`),

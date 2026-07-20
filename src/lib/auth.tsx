@@ -1,7 +1,7 @@
 'use client'
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
-import { profileAPI, businessAPI, setTokenRefreshCallback, setAuthLogoutCallback, getUserIdFromToken, tryProactiveRefresh, startAutoRefresh, stopAutoRefresh, isTokenExpired, setLoginGrace } from '@/lib/api'
+import { profileAPI, businessAPI, setTokenRefreshCallback, setAuthLogoutCallback, getUserIdFromToken, tryProactiveRefresh, startAutoRefresh, stopAutoRefresh, isTokenExpired, setLoginGrace, decodeJwt } from '@/lib/api'
 
 interface User {
   id: number
@@ -127,15 +127,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!userId) { setProfileLoaded(true); return null }
       const res = await profileAPI.getProfile(userId)
       const data = res.data
+
+      const tokenName = localStorage.getItem('user')
+      let parsed: any = null
+      try { parsed = tokenName ? JSON.parse(tokenName) : null } catch {}
+
+      const token = localStorage.getItem('token')
+      const jwtPayload = token ? decodeJwt(token) : null
+      const iatDate = jwtPayload?.iat ? new Date(jwtPayload.iat * 1000).toISOString() : undefined
+
       const profileUser: User = {
-        id: data.user_id ?? data.id,
-        name: data.name,
-        email: data.email,
-        phone: data.phone || '',
-        role: data.role || 'user',
-        business_id: data.business_id || data.business?.id || undefined,
-        is_verified: data.is_verified ?? false,
-        created_at: data.created_at || undefined,
+        id: data.user_id ?? data.id ?? parsed?.id,
+        name: data.name || data.full_name || data.username || parsed?.name || (data.email || parsed?.email || '').split('@')[0] || 'User',
+        email: data.email || parsed?.email || '',
+        phone: data.phone || parsed?.phone || '',
+        role: data.role || parsed?.role || 'user',
+        business_id: data.business_id || data.business?.id || parsed?.business_id || undefined,
+        is_verified: data.is_verified ?? parsed?.is_verified ?? false,
+        created_at: data.created_at || data.date_joined || data.joined_at || parsed?.created_at || iatDate,
       }
       setUser(profileUser)
       localStorage.setItem('user', JSON.stringify(profileUser))

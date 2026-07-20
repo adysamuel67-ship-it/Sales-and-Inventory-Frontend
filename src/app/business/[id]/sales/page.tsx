@@ -22,9 +22,9 @@ const PAGE_SIZE = 20
 const datePresets = [
   { label: 'All', days: 0 },
   { label: 'Today', days: 1 },
-  { label: '7 days', days: 7 },
-  { label: '30 days', days: 30 },
-  { label: '90 days', days: 90 },
+  { label: '7d', days: 7 },
+  { label: '30d', days: 30 },
+  { label: '90d', days: 90 },
 ]
 
 export default function SalesPage() {
@@ -242,15 +242,16 @@ export default function SalesPage() {
   }
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
+    <div className="p-3 sm:p-6 max-w-7xl mx-auto space-y-4 sm:space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Sales</h1>
-          <p className="text-sm text-neutral-light mt-1">Record and view your sales</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Sales</h1>
+          <p className="text-sm text-neutral-light mt-0.5">Record and view your sales</p>
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors flex items-center gap-2 min-h-[44px]"
+          className="px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors flex items-center gap-2 min-h-[44px] w-full sm:w-auto justify-center"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -259,8 +260,9 @@ export default function SalesPage() {
         </button>
       </div>
 
+      {/* Alerts */}
       {error && (
-        <div className="mb-4 bg-danger-light text-danger text-sm p-3 rounded-xl flex items-center gap-2">
+        <div className="bg-danger-light text-danger text-sm p-3 rounded-xl flex items-center gap-2">
           <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
           </svg>
@@ -268,7 +270,7 @@ export default function SalesPage() {
         </div>
       )}
       {success && (
-        <div className="mb-4 bg-success-light text-success text-sm p-3 rounded-xl flex items-center gap-2">
+        <div className="bg-success-light text-success text-sm p-3 rounded-xl flex items-center gap-2">
           <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
           </svg>
@@ -276,8 +278,9 @@ export default function SalesPage() {
         </div>
       )}
 
+      {/* Record Sale Form */}
       {showForm && (
-        <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6">
           <h3 className="font-semibold text-gray-900 mb-4">Record New Sale</h3>
           <form onSubmit={handleCreate} className="space-y-4">
             <div className="space-y-3">
@@ -295,7 +298,7 @@ export default function SalesPage() {
                         updated[idx] = { ...updated[idx], product_id: e.target.value }
                         setLineItems(updated)
                       }}
-                      className="flex-1 px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-white min-h-[44px]"
+                      className="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-white min-h-[44px]"
                     >
                       <option value="">Select a product</option>
                       {availableProducts.map((p) => (
@@ -315,7 +318,7 @@ export default function SalesPage() {
                         setLineItems(updated)
                       }}
                       placeholder="Qty"
-                      className="w-24 px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                      className="w-20 px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                     />
                     {lineItems.length > 1 && (
                       <button
@@ -356,7 +359,7 @@ export default function SalesPage() {
                     key={method}
                     type="button"
                     onClick={() => setPaymentMethod(method)}
-                    className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all min-h-[44px] ${
+                    className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all min-h-[44px] ${
                       paymentMethod === method
                         ? method === 'Cash' ? 'bg-success text-white'
                           : method === 'MoMo' ? 'bg-primary text-white'
@@ -375,7 +378,7 @@ export default function SalesPage() {
                 <button
                   type="button"
                   onClick={() => { setPaymentStatus('fully_paid'); setAmountPaid('') }}
-                  className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all min-h-[44px] ${
+                  className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all min-h-[44px] ${
                     paymentStatus === 'fully_paid'
                       ? 'bg-success text-white'
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -386,7 +389,7 @@ export default function SalesPage() {
                 <button
                   type="button"
                   onClick={() => setPaymentStatus('partial')}
-                  className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all min-h-[44px] ${
+                  className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all min-h-[44px] ${
                     paymentStatus === 'partial'
                       ? 'bg-warning text-white'
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -409,7 +412,7 @@ export default function SalesPage() {
                     onChange={(e) => setAmountPaid(e.target.value)}
                     placeholder="0.00"
                     required
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                    className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                   />
                 </div>
                 <div>
@@ -420,7 +423,7 @@ export default function SalesPage() {
                     onChange={(e) => setCustomerName(e.target.value)}
                     placeholder="Customer's full name"
                     required
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                    className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                   />
                 </div>
                 <div>
@@ -431,7 +434,7 @@ export default function SalesPage() {
                     onChange={(e) => setCustomerPhone(e.target.value)}
                     placeholder="024XXXXXXX"
                     required
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                    className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                   />
                 </div>
                 {isPartialPayment && (
@@ -476,14 +479,14 @@ export default function SalesPage() {
                   const product = products.find((p) => p.product_id === parseInt(item.product_id))
                   return product && parseInt(item.quantity) > (product.quantity ?? 0)
                 })}
-                className="flex-1 py-3 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed min-h-[44px]"
+                className="flex-1 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed min-h-[44px]"
               >
                 {creating ? 'Recording...' : paymentStatus === 'partial' ? 'Record Partial Sale' : 'Confirm Sale'}
               </button>
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
-                className="px-4 py-3 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors min-h-[44px]"
+                className="px-4 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors min-h-[44px]"
               >
                 Cancel
               </button>
@@ -492,13 +495,15 @@ export default function SalesPage() {
         </div>
       )}
 
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
-        <div className="flex flex-wrap items-center gap-2">
+      {/* Filters + Summary */}
+      <div className="bg-white rounded-xl border border-gray-100 p-3 sm:p-4 space-y-3">
+        {/* Date presets */}
+        <div className="flex flex-wrap items-center gap-1.5">
           {datePresets.map((preset) => (
             <button
               key={preset.label}
               onClick={() => handlePreset(preset.days)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                 activePreset === preset.days
                   ? 'bg-primary text-white'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -510,7 +515,7 @@ export default function SalesPage() {
           <div className="relative">
             <button
               onClick={() => showDatePicker ? setShowDatePicker(false) : handleOpenDatePicker()}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -549,21 +554,24 @@ export default function SalesPage() {
             )}
           </div>
         </div>
-        <div className="flex items-center gap-4 text-xs text-neutral-light">
+        {/* Summary */}
+        <div className="flex items-center gap-4 text-xs text-neutral-light pt-1 border-t border-gray-50">
           <span>{filteredSales.length} sales</span>
           <span>{totalQty} items</span>
           <span className="font-semibold text-gray-900">GH₵{totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
         </div>
       </div>
 
-      <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm">
+      {/* Sales list */}
+      <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
         {loading ? (
           <div className="px-5 py-12 text-center">
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
           </div>
         ) : paginatedSales.length > 0 ? (
           <>
-            <div className="overflow-x-auto">
+            {/* Desktop table */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-gray-100">
@@ -577,7 +585,7 @@ export default function SalesPage() {
                 </thead>
                 <tbody>
                   {paginatedSales.map((sale) => (
-                    <tr key={sale.id} className="border-t border-gray-50 table-row-hover cursor-pointer" onClick={() => setDetailSale(sale)}>
+                    <tr key={sale.id} className="border-t border-gray-50 hover:bg-gray-50/50 cursor-pointer transition-colors" onClick={() => setDetailSale(sale)}>
                       <td className="px-5 py-3.5 font-medium text-gray-900">{sale.product}</td>
                       <td className="px-5 py-3.5 text-center text-neutral-light">{sale.qty}</td>
                       <td className="px-5 py-3.5 text-right font-semibold text-gray-900">GH₵{sale.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
@@ -624,8 +632,75 @@ export default function SalesPage() {
                 </tbody>
               </table>
             </div>
+
+            {/* Mobile cards */}
+            <div className="md:hidden divide-y divide-gray-50">
+              {paginatedSales.map((sale) => {
+                const isPartial = sale.amount_paid != null && sale.amount_paid < sale.amount && sale.amount > 0
+                return (
+                  <div
+                    key={sale.id}
+                    className="p-4 cursor-pointer hover:bg-gray-50/50 transition-colors active:bg-gray-100"
+                    onClick={() => setDetailSale(sale)}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-gray-900 truncate text-sm">{sale.product}</p>
+                        <p className="text-xs text-neutral-light mt-0.5">{sale.time}</p>
+                      </div>
+                      <p className="font-bold text-gray-900 shrink-0">GH₵{sale.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                    </div>
+                    <div className="flex items-center justify-between mt-2">
+                      <div className="flex items-center gap-2">
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
+                          sale.payment === 'Cash' ? 'bg-success-light text-success'
+                            : sale.payment === 'MoMo' ? 'bg-primary-light text-primary'
+                            : sale.payment === 'Card' ? 'bg-warning-light text-warning'
+                            : 'bg-gray-100 text-gray-600'
+                        }`}>
+                          {sale.payment}
+                        </span>
+                        {isPartial && (
+                          <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-warning-light text-warning">Partial</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs text-neutral-light">×{sale.qty}</span>
+                        {!isStaff && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setDeleteConfirm(sale.id) }}
+                            className="text-xs text-danger font-medium"
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    {/* Inline delete confirm */}
+                    {deleteConfirm === sale.id && (
+                      <div className="mt-2 flex items-center gap-2">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleDelete(sale.id) }}
+                          className="flex-1 py-2 text-xs font-medium text-white bg-danger rounded-lg"
+                        >
+                          Confirm Delete
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setDeleteConfirm(null) }}
+                          className="flex-1 py-2 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Pagination */}
             {totalPages > 1 && (
-              <div className="px-5 py-3 border-t border-gray-100 flex items-center justify-between">
+              <div className="px-4 py-3 border-t border-gray-100 flex items-center justify-between">
                 <p className="text-xs text-neutral-light">
                   Page {currentPage} of {totalPages}
                 </p>
@@ -635,7 +710,7 @@ export default function SalesPage() {
                     disabled={currentPage === 1}
                     className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-40"
                   >
-                    Previous
+                    Prev
                   </button>
                   <button
                     onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
@@ -679,6 +754,7 @@ export default function SalesPage() {
           </div>
         )}
       </div>
+
       {detailSale && <SaleDetailModal sale={detailSale} onClose={() => setDetailSale(null)} />}
     </div>
   )

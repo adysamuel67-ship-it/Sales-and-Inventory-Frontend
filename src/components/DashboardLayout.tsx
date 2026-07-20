@@ -117,6 +117,7 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
   const [adminOpen, setAdminOpen] = useState(false)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [pendingApprovals, setPendingApprovals] = useState<any[]>([])
+  const [selectedApproval, setSelectedApproval] = useState<any>(null)
   const profileRef = useRef<HTMLDivElement>(null)
   const sidebarProfileRef = useRef<HTMLDivElement>(null)
   const bizSwitcherRef = useRef<HTMLDivElement>(null)
@@ -500,7 +501,11 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
                           const role = approval.approval_type || approval.role || 'member'
                           const reason = approval.reason || ''
                           return (
-                            <div key={approval.approval_id || approval.id || idx} className="px-4 py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">
+                            <button
+                              key={approval.approval_id || approval.id || idx}
+                              onClick={() => { setSelectedApproval(approval); setNotificationsOpen(false) }}
+                              className="w-full text-left px-4 py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors cursor-pointer"
+                            >
                               <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                                   <span className="text-xs font-semibold text-primary">{requesterName.charAt(0).toUpperCase()}</span>
@@ -516,7 +521,7 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
                               {reason && (
                                 <p className="text-xs text-neutral-light mt-1.5 ml-11 line-clamp-2">{reason}</p>
                               )}
-                            </div>
+                            </button>
                           )
                         })
                       ) : (
@@ -585,6 +590,96 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
           {children}
         </main>
       </div>
+
+      {selectedApproval && (() => {
+        const a = selectedApproval
+        const name = a.requester?.name || a.requester_name || a.name || 'Unknown'
+        const email = a.requester?.email || a.email || ''
+        const phone = a.requester?.phone || a.phone || ''
+        const role = a.approval_type || a.role || 'member'
+        const reason = a.reason || ''
+        const status = a.status || 'pending'
+        const createdAt = a.created_at || a.sent_at || ''
+        return (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" onClick={() => setSelectedApproval(null)}>
+            <div className="absolute inset-0 bg-black/40" />
+            <div
+              className="relative bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="px-6 py-5 bg-gradient-to-br from-primary to-primary-dark">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-full bg-white/15 backdrop-blur-sm border-2 border-white/30 flex items-center justify-center text-white text-xl font-bold">
+                    {name.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-white">{name}</h3>
+                    <p className="text-white/70 text-sm">{email}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="px-6 py-5 space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-surfaceAlt rounded-xl p-3">
+                    <p className="text-[10px] text-neutral-light uppercase tracking-wider mb-1">Requested Role</p>
+                    <span className="inline-block px-2.5 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary capitalize">{role}</span>
+                  </div>
+                  <div className="bg-surfaceAlt rounded-xl p-3">
+                    <p className="text-[10px] text-neutral-light uppercase tracking-wider mb-1">Status</p>
+                    <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold capitalize ${
+                      status === 'pending' ? 'bg-warning-light text-warning'
+                        : status === 'approved' ? 'bg-success-light text-success'
+                        : 'bg-danger-light text-danger'
+                    }`}>{status}</span>
+                  </div>
+                </div>
+
+                {phone && (
+                  <div className="flex items-center gap-3 text-sm bg-surfaceAlt rounded-xl p-3">
+                    <svg className="w-4 h-4 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
+                    </svg>
+                    <span className="text-gray-700">{phone}</span>
+                  </div>
+                )}
+
+                {reason && (
+                  <div className="bg-surfaceAlt rounded-xl p-3">
+                    <p className="text-[10px] text-neutral-light uppercase tracking-wider mb-1">Reason</p>
+                    <p className="text-sm text-gray-700">{reason}</p>
+                  </div>
+                )}
+
+                {createdAt && (
+                  <div className="flex items-center gap-2 text-xs text-neutral-light">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                    </svg>
+                    <span>Requested {new Date(createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="px-6 py-4 border-t border-gray-100 flex items-center gap-3">
+                <Link
+                  href="/businesses"
+                  onClick={() => setSelectedApproval(null)}
+                  className="flex-1 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors text-center"
+                >
+                  Review Request
+                </Link>
+                <button
+                  onClick={() => setSelectedApproval(null)}
+                  className="px-4 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
     </div>
   )
 }
