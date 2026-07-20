@@ -771,8 +771,8 @@ function CustomersContent() {
             className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 rounded-t-2xl flex items-center justify-between">
-              <h3 className="font-semibold text-gray-900">Customer Profile</h3>
+            <div className="sticky top-0 bg-white border-b border-gray-100 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
+              <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Customer Profile</h3>
               <button
                 onClick={() => setShowProfile(false)}
                 className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
@@ -783,17 +783,17 @@ function CustomersContent() {
               </button>
             </div>
 
-            <div className="px-6 py-5">
-              <div className="flex items-center gap-4 mb-6">
-                <div className={`w-14 h-14 rounded-full flex items-center justify-center text-lg font-bold ${
+            <div className="px-4 sm:px-6 py-4 sm:py-5">
+              <div className="flex items-center gap-3 sm:gap-4 mb-5 sm:mb-6">
+                <div className={`w-11 h-11 sm:w-14 sm:h-14 rounded-full flex items-center justify-center text-base sm:text-lg font-bold shrink-0 ${
                   profileCustomer.is_active === false
                     ? 'bg-gray-100 text-gray-400'
                     : 'bg-primary/10 text-primary'
                 }`}>
                   {profileCustomer.name?.charAt(0)?.toUpperCase() || '?'}
                 </div>
-                <div>
-                  <h4 className="text-lg font-semibold text-gray-900">{profileCustomer.name}</h4>
+                <div className="min-w-0 flex-1">
+                  <h4 className="text-base sm:text-lg font-semibold text-gray-900 truncate">{profileCustomer.name}</h4>
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
                       profileCustomer.is_active === false
@@ -842,22 +842,22 @@ function CustomersContent() {
                 )}
               </div>
 
-              <div className="grid grid-cols-3 gap-3 mb-6">
-                <div className="bg-surfaceAlt rounded-xl p-4">
-                  <p className="text-xs text-neutral-light mb-1">Total Spent</p>
-                  <p className="text-lg font-semibold text-gray-900">
+              <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-5 sm:mb-6">
+                <div className="bg-surfaceAlt rounded-xl p-2.5 sm:p-4">
+                  <p className="text-[10px] sm:text-xs text-neutral-light mb-0.5 sm:mb-1">Total Spent</p>
+                  <p className="text-sm sm:text-lg font-semibold text-gray-900">
                     {profileLoading ? '...' : `GH₵${profileTotalSpent.toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
                   </p>
                 </div>
-                <div className="bg-surfaceAlt rounded-xl p-4">
-                  <p className="text-xs text-neutral-light mb-1">Outstanding Debt</p>
-                  <p className={`text-lg font-semibold ${profileTotalDebt > 0 ? 'text-danger' : 'text-success'}`}>
+                <div className="bg-surfaceAlt rounded-xl p-2.5 sm:p-4">
+                  <p className="text-[10px] sm:text-xs text-neutral-light mb-0.5 sm:mb-1">Outstanding Debt</p>
+                  <p className={`text-sm sm:text-lg font-semibold ${profileTotalDebt > 0 ? 'text-danger' : 'text-success'}`}>
                     {profileLoading ? '...' : `GH₵${profileTotalDebt.toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
                   </p>
                 </div>
-                <div className="bg-surfaceAlt rounded-xl p-4">
-                  <p className="text-xs text-neutral-light mb-1">Transactions</p>
-                  <p className="text-lg font-semibold text-gray-900">
+                <div className="bg-surfaceAlt rounded-xl p-2.5 sm:p-4">
+                  <p className="text-[10px] sm:text-xs text-neutral-light mb-0.5 sm:mb-1">Transactions</p>
+                  <p className="text-sm sm:text-lg font-semibold text-gray-900">
                     {profileLoading ? '...' : profileTransactions.length}
                   </p>
                 </div>
@@ -924,7 +924,7 @@ function CustomersContent() {
                               {borrowedItems.map((item) => (
                                 <div
                                   key={item.key}
-                                  className={`flex items-center justify-between py-2 px-3 bg-surfaceAlt rounded-lg text-sm${item.source === 'sale' ? ' cursor-pointer hover:bg-gray-50 transition-colors' : ''}`}
+                                  className={`flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 px-3 bg-surfaceAlt rounded-lg text-sm${item.source === 'sale' ? ' cursor-pointer hover:bg-gray-50 transition-colors' : ''}`}
                                   onClick={item.source === 'sale' ? () => {
                                     const sale = profileSales.find(s => s.sale_id === Number(item.key.replace('sale-', '')))
                                     if (sale) setDetailSale(saleToMappedSale(sale))
@@ -964,7 +964,7 @@ function CustomersContent() {
                             </div>
                             <div className="space-y-2">
                               {profileTransactions.map((txn) => (
-                                <div key={txn.transaction_id} className="flex items-center justify-between py-2.5 px-3 bg-surfaceAlt rounded-lg text-sm cursor-pointer hover:bg-gray-50 transition-colors">
+                                <div key={txn.transaction_id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2.5 px-3 bg-surfaceAlt rounded-lg text-sm cursor-pointer hover:bg-gray-50 transition-colors">
                                   <div>
                                     <div className="flex items-center gap-2">
                                       <span className="font-medium text-success">GH₵{txn.amount_paid.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
@@ -995,7 +995,7 @@ function CustomersContent() {
               )}
             </div>
 
-            <div className="sticky bottom-0 bg-white border-t border-gray-100 px-6 py-4 rounded-b-2xl flex items-center gap-3">
+            <div className="sticky bottom-0 bg-white border-t border-gray-100 px-4 sm:px-6 py-3 sm:py-4 rounded-b-2xl flex flex-wrap items-center gap-2 sm:gap-3">
               {isAdmin && (
                 <>
                   <button

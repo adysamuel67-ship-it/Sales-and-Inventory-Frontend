@@ -203,12 +203,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       const init = () => {
-        setLoginGrace(60000)
+        setLoginGrace(120000)
         setIsLoading(false)
-        startAutoRefresh(5 * 60 * 1000)
+        startAutoRefresh(3 * 60 * 1000)
         fetchProfile()
         fetchBusinesses()
-        if (isTokenExpired(storedToken, 60) && storedRefreshToken) {
+        if (isTokenExpired(storedToken, 120) && storedRefreshToken) {
           tryProactiveRefresh().then((refreshed) => {
             if (cancelled) return
             if (refreshed) setToken(refreshed)

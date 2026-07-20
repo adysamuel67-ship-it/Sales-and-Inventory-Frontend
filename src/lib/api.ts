@@ -140,6 +140,9 @@ function attachToken(config: any) {
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('token')
     if (token) {
+      if (isTokenExpired(token, 30) && !isRefreshing) {
+        startRefresh().catch(() => {})
+      }
       config.headers.Authorization = `Bearer ${token}`
     }
   }
@@ -155,6 +158,13 @@ function handle401Interceptor(instance: any) {
 
     if (error.response?.status === 401 && typeof window !== 'undefined') {
       if (originalRequest._retry) {
+        if (Date.now() >= loginGraceUntil) {
+          localStorage.removeItem('token')
+          localStorage.removeItem('refresh_token')
+          localStorage.removeItem('user')
+          localStorage.removeItem('current_business_id')
+          if (onAuthLogout) onAuthLogout()
+        }
         return Promise.reject(error)
       }
 
@@ -167,7 +177,7 @@ function handle401Interceptor(instance: any) {
           }).then((token) => {
             originalRequest.headers.Authorization = `Bearer ${token}`
             return instance(originalRequest)
-          })
+          }).catch(() => Promise.reject(error))
         }
 
         originalRequest._retry = true
@@ -178,12 +188,12 @@ function handle401Interceptor(instance: any) {
           return instance(originalRequest)
         } catch (refreshError: any) {
           const isExplicitAuthFailure = refreshError?.response?.status === 403
-          if (isExplicitAuthFailure && Date.now() >= loginGraceUntil) {
+          if (Date.now() >= loginGraceUntil) {
             localStorage.removeItem('token')
             localStorage.removeItem('refresh_token')
             localStorage.removeItem('user')
+            localStorage.removeItem('current_business_id')
             if (onAuthLogout) onAuthLogout()
-            return Promise.reject(error)
           }
           return Promise.reject(error)
         }
@@ -195,6 +205,7 @@ function handle401Interceptor(instance: any) {
       localStorage.removeItem('token')
       localStorage.removeItem('refresh_token')
       localStorage.removeItem('user')
+      localStorage.removeItem('current_business_id')
       if (onAuthLogout) onAuthLogout()
     }
     return Promise.reject(error)
@@ -202,6 +213,18 @@ function handle401Interceptor(instance: any) {
 }
 
 api.interceptors.response.use((response) => response, handle401Interceptor(api))
+
+function suppressAuthErrors(error: any): any {
+  if (!error || !error.response) return error
+  const detail = error.response?.data?.detail
+  if (typeof detail === 'string' && /invalid|expired|token/i.test(detail)) {
+    error.response.data = { ...error.response.data, detail: '' }
+  }
+  return error
+}
+
+api.interceptors.response.use((r) => r, (e) => { suppressAuthErrors(e); return Promise.reject(e) })
+profileApi.interceptors.response.use((r) => r, (e) => { suppressAuthErrors(e); return Promise.reject(e) })
 
 profileApi.interceptors.response.use(
   (response) => response,

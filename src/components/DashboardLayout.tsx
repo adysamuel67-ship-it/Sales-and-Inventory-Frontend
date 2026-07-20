@@ -607,9 +607,9 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
               className="relative bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="px-6 py-5 bg-gradient-to-br from-primary to-primary-dark">
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-full bg-white/15 backdrop-blur-sm border-2 border-white/30 flex items-center justify-center text-white text-xl font-bold">
+              <div className="px-4 sm:px-6 py-4 sm:py-5 bg-gradient-to-br from-primary to-primary-dark">
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-white/15 backdrop-blur-sm border-2 border-white/30 flex items-center justify-center text-white text-lg sm:text-xl font-bold shrink-0">
                     {name.charAt(0).toUpperCase()}
                   </div>
                   <div>
@@ -619,7 +619,7 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
                 </div>
               </div>
 
-              <div className="px-6 py-5 space-y-4">
+              <div className="px-4 sm:px-6 py-4 sm:py-5 space-y-3 sm:space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-surfaceAlt rounded-xl p-3">
                     <p className="text-[10px] text-neutral-light uppercase tracking-wider mb-1">Requested Role</p>
@@ -661,7 +661,7 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
                 )}
               </div>
 
-              <div className="px-6 py-4 border-t border-gray-100 flex items-center gap-3">
+              <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-gray-100 flex items-center gap-3">
                 <Link
                   href="/businesses"
                   onClick={() => setSelectedApproval(null)}
