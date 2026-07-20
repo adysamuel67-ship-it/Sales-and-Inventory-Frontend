@@ -4,7 +4,8 @@ import { useEffect, useState, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
 import { debtAPI, customerAPI, saleAPI } from '@/lib/api'
-import { extractArray, parseApiError, isAdminRole } from '@/lib/utils'
+import { extractArray, parseApiError, isAdminRole, MappedSale } from '@/lib/utils'
+import SaleDetailModal from '@/components/SaleDetailModal'
 
 interface DebtRecord {
   debt_id: number
@@ -95,6 +96,8 @@ export default function DebtsPage() {
 
   const [showDetailModal, setShowDetailModal] = useState(false)
   const [detailCustomer, setDetailCustomer] = useState<CustomerWithDebt | null>(null)
+
+  const [detailSale, setDetailSale] = useState<MappedSale | null>(null)
 
   const [showProfileModal, setShowProfileModal] = useState(false)
   const [profileCustomer, setProfileCustomer] = useState<CustomerWithDebt | null>(null)
@@ -921,11 +924,17 @@ export default function DebtsPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 mb-6">
-                <div className="bg-danger-light rounded-xl p-4">
-                  <p className="text-xs text-neutral-light mb-1">Outstanding Debt</p>
-                  <p className="text-lg font-bold text-danger">
-                    {profileLoading ? '...' : formatCurrency(profileCustomer.total_debt)}
+              <div className="grid grid-cols-3 gap-3 mb-6">
+                <div className="bg-warning-light rounded-xl p-4">
+                  <p className="text-xs text-neutral-light mb-1">Total Borrowed</p>
+                  <p className="text-lg font-bold text-warning">
+                    {profileLoading ? '...' : formatCurrency(profileCustomer.debts.reduce((sum, d) => sum + (d.is_paid ? 0 : d.amount), 0))}
+                  </p>
+                </div>
+                <div className="bg-success-light rounded-xl p-4">
+                  <p className="text-xs text-neutral-light mb-1">Total Paid</p>
+                  <p className="text-lg font-bold text-success">
+                    {profileLoading ? '...' : formatCurrency(profileTransactions.reduce((sum, t) => sum + t.amount_paid, 0))}
                   </p>
                 </div>
                 <div className="bg-surfaceAlt rounded-xl p-4">
@@ -936,38 +945,46 @@ export default function DebtsPage() {
                 </div>
               </div>
 
-              {profileCustomer.debts.length > 0 && (
-                <div className="mb-6">
-                  <h5 className="text-sm font-semibold text-gray-900 mb-3">Debt Records</h5>
-                  <div className="space-y-2">
-                    {profileCustomer.debts.map((debt) => {
-                      const overdue = !debt.is_paid && debt.due_date && isOverdue(debt.due_date)
-                      const daysLeft = debt.due_date ? daysUntilDue(debt.due_date) : null
-                      return (
-                        <div key={debt.debt_id} className="flex items-center justify-between py-2.5 px-3 bg-surfaceAlt rounded-lg text-sm">
-                          <div>
-                            <span className="font-medium text-gray-900">{formatCurrency(debt.amount)}</span>
-                            {debt.due_date && (
-                              <span className="text-xs text-neutral-light ml-2">
-                                Due {new Date(debt.due_date).toLocaleDateString()}
-                                {overdue && <span className="text-danger ml-1">(overdue)</span>}
-                                {!overdue && !debt.is_paid && daysLeft != null && (
-                                  <span className="ml-1">({daysLeft}d left)</span>
-                                )}
-                              </span>
-                            )}
+              {(() => {
+                const unpaidDebts = profileCustomer.debts
+                  .filter((d) => !d.is_paid)
+                  .sort((a, b) => {
+                    if (!a.due_date) return 1
+                    if (!b.due_date) return -1
+                    return new Date(a.due_date).getTime() - new Date(b.due_date).getTime()
+                  })
+                return unpaidDebts.length > 0 ? (
+                  <div className="mb-6">
+                    <h5 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                      <span>Borrowed</span>
+                      <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-warning-light text-warning">{unpaidDebts.length}</span>
+                    </h5>
+                    <div className="space-y-2">
+                      {unpaidDebts.map((debt) => {
+                        const overdue = debt.due_date && isOverdue(debt.due_date)
+                        const daysLeft = debt.due_date ? daysUntilDue(debt.due_date) : null
+                        return (
+                          <div key={debt.debt_id} className="flex items-center justify-between py-2.5 px-3 bg-surfaceAlt rounded-lg text-sm cursor-pointer hover:bg-gray-50 transition-colors">
+                            <div>
+                              <span className="font-medium text-gray-900">{formatCurrency(debt.amount)}</span>
+                              {debt.due_date && (
+                                <span className="text-xs text-neutral-light ml-2">
+                                  Due {new Date(debt.due_date).toLocaleDateString()}
+                                </span>
+                              )}
+                            </div>
+                            {overdue ? (
+                              <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-danger-light text-danger">Overdue</span>
+                            ) : daysLeft != null ? (
+                              <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-warning-light text-warning">{daysLeft}d left</span>
+                            ) : null}
                           </div>
-                          <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
-                            debt.is_paid ? 'bg-success-light text-success' : overdue ? 'bg-danger-light text-danger' : 'bg-warning-light text-warning'
-                          }`}>
-                            {debt.is_paid ? 'Paid' : overdue ? 'Overdue' : 'Pending'}
-                          </span>
-                        </div>
-                      )
-                    })}
+                        )
+                      })}
+                    </div>
                   </div>
-                </div>
-              )}
+                ) : null
+              })()}
 
               {profileLoading ? (
                 <div className="py-6 text-center">
@@ -975,21 +992,21 @@ export default function DebtsPage() {
                 </div>
               ) : profileTransactions.length > 0 ? (
                 <div>
-                  <h5 className="text-sm font-semibold text-gray-900 mb-3">Payment Transactions</h5>
+                  <h5 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                    <span>Payments</span>
+                    <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-success-light text-success">{profileTransactions.length}</span>
+                  </h5>
                   <div className="space-y-2">
                     {profileTransactions.map((txn) => (
-                      <div key={txn.transaction_id} className="flex items-center justify-between py-2.5 px-3 bg-surfaceAlt rounded-lg text-sm">
+                      <div key={txn.transaction_id} className="flex items-center justify-between py-2.5 px-3 bg-surfaceAlt rounded-lg text-sm cursor-pointer hover:bg-gray-50 transition-colors">
                         <div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium text-success">{formatCurrency(txn.amount_paid)}</span>
-                            <span className="text-xs text-neutral-light">payment</span>
-                          </div>
-                          {txn.note && (
-                            <p className="text-xs text-neutral-light mt-0.5">{txn.note}</p>
-                          )}
+                          <span className="font-medium text-success">{formatCurrency(txn.amount_paid)}</span>
                           <p className="text-xs text-neutral-light mt-0.5">
                             {new Date(txn.created_at).toLocaleDateString()} at {new Date(txn.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </p>
+                          {txn.note && (
+                            <p className="text-xs text-neutral-light mt-0.5">{txn.note}</p>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -997,7 +1014,7 @@ export default function DebtsPage() {
                 </div>
               ) : (
                 <div className="text-center py-4">
-                  <p className="text-sm text-neutral-light">No payment transactions yet</p>
+                  <p className="text-sm text-neutral-light">No payments yet</p>
                 </div>
               )}
             </div>
@@ -1024,6 +1041,7 @@ export default function DebtsPage() {
           </div>
         </div>
       )}
+      {detailSale && <SaleDetailModal sale={detailSale} onClose={() => setDetailSale(null)} />}
     </div>
   )
 }

@@ -4,17 +4,10 @@ import { useEffect, useState, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
 import { saleAPI, productAPI, customerAPI } from '@/lib/api'
-import { extractArray, normalizeProduct, mapSale, parseApiError, isStaffRole } from '@/lib/utils'
+import { extractArray, normalizeProduct, mapSale, parseApiError, isStaffRole, MappedSale } from '@/lib/utils'
+import SaleDetailModal from '@/components/SaleDetailModal'
 
-interface SaleRecord {
-  id: number
-  product: string
-  qty: number
-  amount: number
-  payment: string
-  time: string
-  created_at?: string
-}
+type SaleRecord = MappedSale
 
 interface Product {
   product_id: number
@@ -45,17 +38,17 @@ export default function SalesPage() {
   const [success, setSuccess] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [creating, setCreating] = useState(false)
-  const [form, setForm] = useState({
-    product_id: '',
-    quantity: '',
-    payment_method: 'Cash',
-  })
+  const [lineItems, setLineItems] = useState<{ product_id: string; quantity: string }[]>([
+    { product_id: '', quantity: '' },
+  ])
+  const [paymentMethod, setPaymentMethod] = useState('Cash')
   const [dateFilter, setDateFilter] = useState({ start: '', end: '' })
   const [draftDateFilter, setDraftDateFilter] = useState({ start: '', end: '' })
   const [activePreset, setActivePreset] = useState(0)
   const [currentPage, setCurrentPage] = useState(1)
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null)
+  const [detailSale, setDetailSale] = useState<MappedSale | null>(null)
   const [paymentStatus, setPaymentStatus] = useState<'fully_paid' | 'partial'>('fully_paid')
   const [amountPaid, setAmountPaid] = useState('')
   const [customerName, setCustomerName] = useState('')
@@ -151,25 +144,32 @@ export default function SalesPage() {
     setShowDatePicker(false)
   }
 
-  const selectedProduct = products.find((p) => p.product_id === parseInt(form.product_id))
-  const formTotal = selectedProduct ? selectedProduct.price * (parseInt(form.quantity) || 0) : 0
+  const formTotal = useMemo(() => {
+    return lineItems.reduce((sum, item) => {
+      const product = products.find((p) => p.product_id === parseInt(item.product_id))
+      return sum + (product ? product.price * (parseInt(item.quantity) || 0) : 0)
+    }, 0)
+  }, [lineItems, products])
+
   const effectiveAmountPaid = paymentStatus === 'fully_paid' ? formTotal : (parseFloat(amountPaid) || 0)
   const isPartialPayment = paymentStatus === 'partial' && effectiveAmountPaid < formTotal && formTotal > 0
 
+  const validLineItems = lineItems.filter((item) => item.product_id && item.quantity)
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!businessId || !form.product_id || !form.quantity) return
+    if (!businessId || validLineItems.length === 0) return
     setCreating(true)
     setError('')
     setSuccess('')
     try {
       const salePayload: any = {
-        list_items: [{
-          product_id: parseInt(form.product_id),
-          quantity: parseInt(form.quantity),
-        }],
+        list_items: validLineItems.map((item) => ({
+          product_id: parseInt(item.product_id),
+          quantity: parseInt(item.quantity),
+        })),
         amount_paid: effectiveAmountPaid,
-        payment_method: form.payment_method,
+        payment_method: paymentMethod,
       }
 
       if (paymentStatus === 'partial' && customerName.trim() && customerPhone.trim()) {
@@ -188,14 +188,15 @@ export default function SalesPage() {
         }
 
         if (!customerId) {
+          const first = validLineItems[0]
           const params = new URLSearchParams({
             name: customerName.trim(),
             phone: customerPhone.trim(),
             return_sale: '1',
             amount_paid: String(effectiveAmountPaid),
-            payment_method: form.payment_method,
-            product_id: form.product_id,
-            quantity: form.quantity,
+            payment_method: paymentMethod,
+            product_id: first.product_id,
+            quantity: first.quantity,
           })
           window.location.href = `/business/${businessId}/customers?${params.toString()}`
           return
@@ -205,7 +206,8 @@ export default function SalesPage() {
       }
 
       await saleAPI.record(businessId, salePayload)
-      setForm({ product_id: '', quantity: '', payment_method: 'Cash' })
+      setLineItems([{ product_id: '', quantity: '' }])
+      setPaymentMethod('Cash')
       setPaymentStatus('fully_paid')
       setAmountPaid('')
       setCustomerName('')
@@ -278,37 +280,73 @@ export default function SalesPage() {
         <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
           <h3 className="font-semibold text-gray-900 mb-4">Record New Sale</h3>
           <form onSubmit={handleCreate} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Product</label>
-              <select
-                value={form.product_id}
-                onChange={(e) => setForm({ ...form, product_id: e.target.value })}
-                required
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-white min-h-[44px]"
-              >
-                <option value="">Select a product</option>
-                {products.map((p) => (
-                  <option key={p.product_id} value={p.product_id}>
-                    {p.name} — GH₵{(p.price ?? 0).toFixed(2)} ({p.quantity ?? 0} in stock)
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Quantity</label>
-              <input
-                type="number"
-                min="1"
-                max={selectedProduct?.quantity ?? undefined}
-                value={form.quantity}
-                onChange={(e) => setForm({ ...form, quantity: e.target.value })}
-                placeholder="0"
-                required
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
-              />
-              {selectedProduct && parseInt(form.quantity) > (selectedProduct.quantity ?? 0) && (
-                <p className="text-xs text-danger mt-1">Exceeds available stock ({selectedProduct.quantity})</p>
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Products</label>
+              {lineItems.map((item, idx) => {
+                const selectedIds = lineItems.filter((li) => li.product_id).map((li) => li.product_id)
+                const availableProducts = products.filter((p) => !selectedIds.includes(String(p.product_id)) || p.product_id === parseInt(item.product_id))
+                const currentItemProduct = products.find((p) => p.product_id === parseInt(item.product_id))
+                return (
+                  <div key={idx} className="flex items-center gap-2">
+                    <select
+                      value={item.product_id}
+                      onChange={(e) => {
+                        const updated = [...lineItems]
+                        updated[idx] = { ...updated[idx], product_id: e.target.value }
+                        setLineItems(updated)
+                      }}
+                      className="flex-1 px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-white min-h-[44px]"
+                    >
+                      <option value="">Select a product</option>
+                      {availableProducts.map((p) => (
+                        <option key={p.product_id} value={p.product_id}>
+                          {p.name} — GH₵{(p.price ?? 0).toFixed(2)} ({p.quantity ?? 0} in stock)
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      type="number"
+                      min="1"
+                      max={currentItemProduct?.quantity ?? undefined}
+                      value={item.quantity}
+                      onChange={(e) => {
+                        const updated = [...lineItems]
+                        updated[idx] = { ...updated[idx], quantity: e.target.value }
+                        setLineItems(updated)
+                      }}
+                      placeholder="Qty"
+                      className="w-24 px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                    />
+                    {lineItems.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => setLineItems(lineItems.filter((_, i) => i !== idx))}
+                        className="shrink-0 w-10 h-10 rounded-xl flex items-center justify-center text-neutral-light hover:text-danger hover:bg-danger-light transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                )
+              })}
+              {lineItems.some((item) => {
+                const product = products.find((p) => p.product_id === parseInt(item.product_id))
+                return product && parseInt(item.quantity) > (product.quantity ?? 0)
+              }) && (
+                <p className="text-xs text-danger">One or more items exceed available stock</p>
               )}
+              <button
+                type="button"
+                onClick={() => setLineItems([...lineItems, { product_id: '', quantity: '' }])}
+                className="w-full py-2.5 rounded-xl border border-dashed border-gray-300 text-sm font-medium text-neutral-light hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-1.5"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Add Item
+              </button>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Payment Method</label>
@@ -317,9 +355,9 @@ export default function SalesPage() {
                   <button
                     key={method}
                     type="button"
-                    onClick={() => setForm({ ...form, payment_method: method })}
+                    onClick={() => setPaymentMethod(method)}
                     className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all min-h-[44px] ${
-                      form.payment_method === method
+                      paymentMethod === method
                         ? method === 'Cash' ? 'bg-success text-white'
                           : method === 'MoMo' ? 'bg-primary text-white'
                           : 'bg-warning text-white'
@@ -406,8 +444,24 @@ export default function SalesPage() {
               </>
             )}
             <div className="px-4 py-4 rounded-xl bg-surfaceAlt border border-border">
-              <p className="text-xs text-neutral-light uppercase tracking-wider">Total Amount</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">GH₵{formTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+              <p className="text-xs text-neutral-light uppercase tracking-wider mb-2">Order Summary</p>
+              <div className="space-y-1.5">
+                {validLineItems.map((item, idx) => {
+                  const product = products.find((p) => p.product_id === parseInt(item.product_id))
+                  if (!product) return null
+                  const qty = parseInt(item.quantity) || 0
+                  return (
+                    <div key={idx} className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600">{product.name} × {qty}</span>
+                      <span className="font-medium text-gray-900">GH₵{(product.price * qty).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                    </div>
+                  )
+                })}
+              </div>
+              <div className="border-t border-gray-200 mt-2 pt-2">
+                <p className="text-xs text-neutral-light uppercase tracking-wider">Total Amount</p>
+                <p className="text-2xl font-bold text-gray-900 mt-1">GH₵{formTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+              </div>
               {paymentStatus === 'partial' && effectiveAmountPaid > 0 && (
                 <div className="flex items-center justify-between mt-2">
                   <p className="text-xs text-neutral-light">Amount Paid</p>
@@ -418,7 +472,10 @@ export default function SalesPage() {
             <div className="flex items-center gap-3">
               <button
                 type="submit"
-                disabled={creating || !form.product_id || !form.quantity || (selectedProduct ? parseInt(form.quantity) > (selectedProduct.quantity ?? 0) : false)}
+                disabled={creating || validLineItems.length === 0 || lineItems.some((item) => {
+                  const product = products.find((p) => p.product_id === parseInt(item.product_id))
+                  return product && parseInt(item.quantity) > (product.quantity ?? 0)
+                })}
                 className="flex-1 py-3 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed min-h-[44px]"
               >
                 {creating ? 'Recording...' : paymentStatus === 'partial' ? 'Record Partial Sale' : 'Confirm Sale'}
@@ -520,7 +577,7 @@ export default function SalesPage() {
                 </thead>
                 <tbody>
                   {paginatedSales.map((sale) => (
-                    <tr key={sale.id} className="border-t border-gray-50 table-row-hover">
+                    <tr key={sale.id} className="border-t border-gray-50 table-row-hover cursor-pointer" onClick={() => setDetailSale(sale)}>
                       <td className="px-5 py-3.5 font-medium text-gray-900">{sale.product}</td>
                       <td className="px-5 py-3.5 text-center text-neutral-light">{sale.qty}</td>
                       <td className="px-5 py-3.5 text-right font-semibold text-gray-900">GH₵{sale.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
@@ -622,6 +679,7 @@ export default function SalesPage() {
           </div>
         )}
       </div>
+      {detailSale && <SaleDetailModal sale={detailSale} onClose={() => setDetailSale(null)} />}
     </div>
   )
 }

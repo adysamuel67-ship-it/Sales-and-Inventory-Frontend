@@ -20,7 +20,7 @@ export default function Home() {
         router.replace('/businesses')
       }
     }
-  }, [isLoading, isAuthenticated, profileLoaded, isVerified, currentBusiness, router])
+  }, [isLoading, isAuthenticated, profileLoaded, isVerified, user, currentBusiness, router])
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">

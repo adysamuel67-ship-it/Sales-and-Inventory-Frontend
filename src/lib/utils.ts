@@ -15,7 +15,7 @@ export function extractArray(data: any, depth = 0): any[] {
   return []
 }
 
-export function mapSale(raw: any, productMap?: Map<number, string>): {
+export interface MappedSale {
   id: number
   product: string
   qty: number
@@ -23,7 +23,16 @@ export function mapSale(raw: any, productMap?: Map<number, string>): {
   payment: string
   time: string
   created_at?: string
-} {
+  amount_paid?: number
+  payment_status?: string
+  customer_id?: number
+  customer_name?: string
+  note?: string
+  sales_items?: any[]
+  raw?: any
+}
+
+export function mapSale(raw: any, productMap?: Map<number, string>): MappedSale {
   const items = raw.sales_items || []
   const productNames = items.map((i: any) => {
     if (i.product_name || i.name) return i.product_name || i.name
@@ -42,6 +51,13 @@ export function mapSale(raw: any, productMap?: Map<number, string>): {
       ? new Date(raw.created_at).toLocaleString()
       : raw.time || '',
     created_at: raw.created_at,
+    amount_paid: raw.amount_paid != null ? Number(raw.amount_paid) : undefined,
+    payment_status: raw.payment_status || undefined,
+    customer_id: raw.customer_id ?? raw.customer?.customer_id ?? undefined,
+    customer_name: raw.customer_name ?? raw.customer?.name ?? undefined,
+    note: raw.note || undefined,
+    sales_items: items.length > 0 ? items : undefined,
+    raw,
   }
 }
 

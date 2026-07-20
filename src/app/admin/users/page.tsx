@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
 import { useAuth } from '@/lib/auth'
 import { adminAPI } from '@/lib/api'
+import { extractArray } from '@/lib/utils'
 
 interface UserRecord {
   user_id: number
@@ -37,7 +38,7 @@ export default function AdminUsersPage() {
     setError('')
     try {
       const res = await adminAPI.listAllUsers()
-      setUsers(Array.isArray(res.data) ? res.data : [])
+      setUsers(extractArray(res.data))
     } catch (err: any) {
       setError('Failed to load users')
     } finally {
@@ -98,7 +99,8 @@ export default function AdminUsersPage() {
     () => users.filter(
       (u) =>
         u.name?.toLowerCase().includes(search.toLowerCase()) ||
-        u.email?.toLowerCase().includes(search.toLowerCase())
+        u.email?.toLowerCase().includes(search.toLowerCase()) ||
+        u.phone?.toLowerCase().includes(search.toLowerCase())
     ),
     [users, search]
   )
@@ -142,7 +144,7 @@ export default function AdminUsersPage() {
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search users by name or email..."
+          placeholder="Search users by name, email, or phone..."
           className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
         />
       </div>
@@ -159,6 +161,7 @@ export default function AdminUsersPage() {
                 <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-gray-100">
                   <th className="text-left px-5 py-3 font-medium">Name</th>
                   <th className="text-left px-5 py-3 font-medium">Email</th>
+                  <th className="text-left px-5 py-3 font-medium">Phone</th>
                   <th className="text-center px-5 py-3 font-medium">Role</th>
                   <th className="text-center px-5 py-3 font-medium">Verified</th>
                   <th className="text-right px-5 py-3 font-medium">Actions</th>
@@ -169,6 +172,7 @@ export default function AdminUsersPage() {
                   <tr key={u.user_id} className="border-t border-gray-50 table-row-hover">
                     <td className="px-5 py-3.5 font-medium text-gray-900">{u.name}</td>
                     <td className="px-5 py-3.5 text-neutral-light">{u.email}</td>
+                    <td className="px-5 py-3.5 text-neutral-light">{u.phone || '—'}</td>
                     <td className="px-5 py-3.5 text-center">
                       <select
                         value={u.role || 'user'}

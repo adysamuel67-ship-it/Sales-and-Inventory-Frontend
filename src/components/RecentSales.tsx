@@ -1,16 +1,11 @@
 'use client'
 
-import { memo } from 'react'
+import { useState, memo } from 'react'
 import Link from 'next/link'
+import SaleDetailModal from './SaleDetailModal'
+import { MappedSale } from '@/lib/utils'
 
-interface SaleRecord {
-  id: number
-  product: string
-  qty: number
-  amount: number
-  payment: string
-  time: string
-}
+type SaleRecord = MappedSale
 
 interface Props {
   sales: SaleRecord[]
@@ -25,8 +20,10 @@ const paymentColors: Record<string, string> = {
 
 export default memo(function RecentSales({ sales, businessId }: Props) {
   const salesLink = businessId ? `/business/${businessId}/sales` : '/sales'
+  const [detailSale, setDetailSale] = useState<MappedSale | null>(null)
 
   return (
+    <>
     <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm">
       <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
         <h3 className="font-semibold text-gray-900">Recent Sales</h3>
@@ -46,7 +43,7 @@ export default memo(function RecentSales({ sales, businessId }: Props) {
             </thead>
             <tbody>
               {sales.map((sale) => (
-                <tr key={sale.id} className="border-t border-gray-50 table-row-hover">
+                <tr key={sale.id} onClick={() => setDetailSale(sale)} className="border-t border-gray-50 table-row-hover cursor-pointer">
                   <td className="px-5 py-3 text-gray-900 font-medium">{sale.product}</td>
                   <td className="px-4 py-3 text-center text-neutral-light">{sale.qty}</td>
                   <td className="px-5 py-3 text-right font-semibold text-gray-900">GH₵{sale.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
@@ -82,5 +79,7 @@ export default memo(function RecentSales({ sales, businessId }: Props) {
         </div>
       )}
     </div>
+    {detailSale && <SaleDetailModal sale={detailSale} onClose={() => setDetailSale(null)} />}
+    </>
   )
 })

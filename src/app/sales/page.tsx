@@ -3,19 +3,13 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
+import SaleDetailModal from '@/components/SaleDetailModal'
 import { useAuth } from '@/lib/auth'
 import { saleAPI, productAPI } from '@/lib/api'
 import { useBusinessId } from '@/lib/useBusinessId'
+import { MappedSale } from '@/lib/utils'
 
-interface SaleRecord {
-  id: number
-  product: string
-  qty: number
-  amount: number
-  payment: string
-  time: string
-  created_at?: string
-}
+type SaleRecord = MappedSale
 
 interface Product {
   product_id: number
@@ -98,6 +92,7 @@ export default function SalesPage() {
   const [activePreset, setActivePreset] = useState(0)
   const [currentPage, setCurrentPage] = useState(1)
   const [showDatePicker, setShowDatePicker] = useState(false)
+  const [detailSale, setDetailSale] = useState<MappedSale | null>(null)
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) router.replace('/login')
@@ -415,7 +410,7 @@ export default function SalesPage() {
                 </thead>
                 <tbody>
                   {paginatedSales.map((sale) => (
-                    <tr key={sale.id} className="border-t border-gray-50 table-row-hover">
+                    <tr key={sale.id} className="border-t border-gray-50 table-row-hover cursor-pointer" onClick={() => setDetailSale(sale)}>
                       <td className="px-5 py-3.5 font-medium text-gray-900">{sale.product}</td>
                       <td className="px-5 py-3.5 text-center text-neutral-light">{sale.qty}</td>
                       <td className="px-5 py-3.5 text-right font-semibold text-gray-900">GH₵{sale.amount.toFixed(2)}</td>
@@ -467,6 +462,7 @@ export default function SalesPage() {
           </div>
         )}
       </div>
+      {detailSale && <SaleDetailModal sale={detailSale} onClose={() => setDetailSale(null)} />}
     </DashboardLayout>
   )
 }

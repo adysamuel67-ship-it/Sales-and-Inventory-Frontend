@@ -4,7 +4,8 @@ import { useEffect, useState, useCallback, Suspense, useMemo } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
 import { customerAPI, saleAPI, debtAPI } from '@/lib/api'
-import { extractArray, parseApiError, isAdminRole, isStaffRole } from '@/lib/utils'
+import { extractArray, parseApiError, isAdminRole, isStaffRole, MappedSale } from '@/lib/utils'
+import SaleDetailModal from '@/components/SaleDetailModal'
 
 interface Customer {
   customer_id: number
@@ -98,6 +99,7 @@ function CustomersContent() {
   const [profileSales, setProfileSales] = useState<SaleRecord[]>([])
   const [profileTransactions, setProfileTransactions] = useState<CustomerTransaction[]>([])
   const [profileLoading, setProfileLoading] = useState(false)
+  const [detailSale, setDetailSale] = useState<MappedSale | null>(null)
 
   const isStaff = isStaffRole(user?.role)
   const isAdmin = isAdminRole(user?.role)
@@ -867,86 +869,128 @@ function CustomersContent() {
                 </div>
               ) : (
                 <>
-                  {profileDebt.length > 0 && (
-                    <div className="mb-6">
-                      <h5 className="text-sm font-semibold text-gray-900 mb-3">Debt History</h5>
-                      <div className="space-y-2">
-                        {profileDebt.map((debt) => (
-                          <div key={debt.debt_id} className="flex items-center justify-between py-2 px-3 bg-surfaceAlt rounded-lg text-sm">
-                            <div>
-                              <span className="font-medium text-gray-900">GH₵{debt.amount.toFixed(2)}</span>
-                              {debt.due_date && (
-                                <span className="text-xs text-neutral-light ml-2">
-                                  Due {new Date(debt.due_date).toLocaleDateString()}
-                                </span>
-                              )}
-                            </div>
-                            <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
-                              debt.is_paid ? 'bg-success-light text-success' : 'bg-danger-light text-danger'
-                            }`}>
-                              {debt.is_paid ? 'Paid' : 'Unpaid'}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  {(() => {
+                    const saleToMappedSale = (sale: SaleRecord): MappedSale => ({
+                      id: sale.sale_id,
+                      product: `Sale #${sale.sale_id}`,
+                      qty: 0,
+                      amount: sale.total_amount,
+                      payment: sale.payment_method,
+                      time: new Date(sale.created_at).toLocaleString(),
+                      created_at: sale.created_at,
+                      amount_paid: sale.amount_paid,
+                      sales_items: [],
+                    })
 
-                  {profileSales.length > 0 && (
-                    <div className="mb-6">
-                      <h5 className="text-sm font-semibold text-gray-900 mb-3">Purchase History</h5>
-                      <div className="space-y-2">
-                        {profileSales.slice(0, 10).map((sale) => (
-                          <div key={sale.sale_id} className="flex items-center justify-between py-2 px-3 bg-surfaceAlt rounded-lg text-sm">
-                            <div>
-                              <span className="font-medium text-gray-900">GH₵{sale.total_amount.toFixed(2)}</span>
-                              <span className="text-xs text-neutral-light ml-2">
-                                {new Date(sale.created_at).toLocaleDateString()}
+                    const borrowedItems = [
+                      ...profileSales
+                        .filter((sale) => sale.amount_paid < sale.total_amount)
+                        .map((sale) => ({
+                          key: `sale-${sale.sale_id}`,
+                          date: new Date(sale.created_at),
+                          amount: sale.total_amount,
+                          paid: sale.amount_paid,
+                          method: sale.payment_method,
+                          dueDate: null as string | null,
+                          source: 'sale' as const,
+                        })),
+                      ...profileDebt
+                        .filter((debt) => !debt.is_paid)
+                        .map((debt) => ({
+                          key: `debt-${debt.debt_id}`,
+                          date: new Date(debt.due_date || debt.created_at || ''),
+                          amount: debt.amount,
+                          paid: 0,
+                          method: '',
+                          dueDate: debt.due_date,
+                          source: 'debt' as const,
+                        })),
+                    ].sort((a, b) => b.date.getTime() - a.date.getTime());
+
+                    const hasBorrowed = borrowedItems.length > 0;
+                    const hasPayments = profileTransactions.length > 0;
+
+                    return (
+                      <>
+                        {hasBorrowed && (
+                          <div className="mb-6">
+                            <div className="flex items-center gap-2 mb-3">
+                              <h5 className="text-sm font-semibold text-gray-900">Borrowed</h5>
+                              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-warning text-white text-xs font-bold">
+                                {borrowedItems.length}
                               </span>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs text-gray-500">{sale.payment_method}</span>
-                              <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
-                                sale.amount_paid >= sale.total_amount
-                                  ? 'bg-success-light text-success'
-                                  : 'bg-warning-light text-warning'
-                              }`}>
-                                {sale.amount_paid >= sale.total_amount ? 'Paid' : 'Partial'}
+                            <div className="space-y-2">
+                              {borrowedItems.map((item) => (
+                                <div
+                                  key={item.key}
+                                  className={`flex items-center justify-between py-2 px-3 bg-surfaceAlt rounded-lg text-sm${item.source === 'sale' ? ' cursor-pointer hover:bg-gray-50 transition-colors' : ''}`}
+                                  onClick={item.source === 'sale' ? () => {
+                                    const sale = profileSales.find(s => s.sale_id === Number(item.key.replace('sale-', '')))
+                                    if (sale) setDetailSale(saleToMappedSale(sale))
+                                  } : undefined}
+                                >
+                                  <div>
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-medium text-gray-900">GH₵{item.amount.toFixed(2)}</span>
+                                      <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-warning-light text-warning">
+                                        Borrowed
+                                      </span>
+                                    </div>
+                                    <p className="text-xs text-neutral-light mt-0.5">
+                                      {item.date.toLocaleDateString()}
+                                      {item.dueDate && ` · Due ${new Date(item.dueDate).toLocaleDateString()}`}
+                                      {item.method && ` · ${item.method}`}
+                                    </p>
+                                    {item.source === 'sale' && (
+                                      <p className="text-xs text-neutral-light mt-0.5">
+                                        Paid GH₵{item.paid.toFixed(2)} of GH₵{item.amount.toFixed(2)}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {hasPayments && (
+                          <div className="mb-6">
+                            <div className="flex items-center gap-2 mb-3">
+                              <h5 className="text-sm font-semibold text-gray-900">Payments</h5>
+                              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-success text-white text-xs font-bold">
+                                {profileTransactions.length}
                               </span>
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {profileTransactions.length > 0 && (
-                    <div className="mb-6">
-                      <h5 className="text-sm font-semibold text-gray-900 mb-3">Payment Transactions</h5>
-                      <div className="space-y-2">
-                        {profileTransactions.map((txn) => (
-                          <div key={txn.transaction_id} className="flex items-center justify-between py-2.5 px-3 bg-surfaceAlt rounded-lg text-sm">
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium text-success">GH₵{txn.amount_paid.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-                                <span className="text-xs text-neutral-light">payment</span>
-                              </div>
-                              {txn.note && (
-                                <p className="text-xs text-neutral-light mt-0.5">{txn.note}</p>
-                              )}
-                              <p className="text-xs text-neutral-light mt-0.5">
-                                {new Date(txn.created_at).toLocaleDateString()} at {new Date(txn.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                              </p>
+                            <div className="space-y-2">
+                              {profileTransactions.map((txn) => (
+                                <div key={txn.transaction_id} className="flex items-center justify-between py-2.5 px-3 bg-surfaceAlt rounded-lg text-sm cursor-pointer hover:bg-gray-50 transition-colors">
+                                  <div>
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-medium text-success">GH₵{txn.amount_paid.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                      <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-success-light text-success">
+                                        Payment
+                                      </span>
+                                    </div>
+                                    {txn.note && (
+                                      <p className="text-xs text-neutral-light mt-0.5">{txn.note}</p>
+                                    )}
+                                    <p className="text-xs text-neutral-light mt-0.5">
+                                      {new Date(txn.created_at).toLocaleDateString()} at {new Date(txn.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </p>
+                                  </div>
+                                </div>
+                              ))}
                             </div>
                           </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                        )}
 
-                  {profileDebt.length === 0 && profileSales.length === 0 && profileTransactions.length === 0 && (
-                    <p className="text-sm text-neutral-light text-center py-4">No transaction history</p>
-                  )}
+                        {!hasBorrowed && !hasPayments && (
+                          <p className="text-sm text-neutral-light text-center py-4">No transaction history</p>
+                        )}
+                      </>
+                    );
+                  })()}
                 </>
               )}
             </div>
@@ -988,6 +1032,7 @@ function CustomersContent() {
           </div>
         </div>
       )}
+      {detailSale && <SaleDetailModal sale={detailSale} onClose={() => setDetailSale(null)} />}
     </div>
   )
 }

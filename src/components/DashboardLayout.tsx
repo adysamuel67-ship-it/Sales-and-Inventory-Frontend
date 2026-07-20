@@ -5,6 +5,7 @@ import { useState, useRef, useEffect, useMemo } from 'react'
 import { usePathname, useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { isManagerRole } from '@/lib/utils'
+import { businessAPI } from '@/lib/api'
 import BusinessBotLogo from './BusinessBotLogo'
 
 interface DashboardLayoutProps {
@@ -114,9 +115,12 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
   const [sidebarProfileOpen, setSidebarProfileOpen] = useState(false)
   const [bizSwitcherOpen, setBizSwitcherOpen] = useState(false)
   const [adminOpen, setAdminOpen] = useState(false)
+  const [notificationsOpen, setNotificationsOpen] = useState(false)
+  const [pendingApprovals, setPendingApprovals] = useState<any[]>([])
   const profileRef = useRef<HTMLDivElement>(null)
   const sidebarProfileRef = useRef<HTMLDivElement>(null)
   const bizSwitcherRef = useRef<HTMLDivElement>(null)
+  const notificationsRef = useRef<HTMLDivElement>(null)
 
   const isSuperAdmin = user?.role === 'super_admin'
   const isManager = isManagerRole(user?.role)
@@ -161,6 +165,9 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
       if (bizSwitcherRef.current && !bizSwitcherRef.current.contains(e.target as Node)) {
         setBizSwitcherOpen(false)
       }
+      if (notificationsRef.current && !notificationsRef.current.contains(e.target as Node)) {
+        setNotificationsOpen(false)
+      }
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
@@ -173,6 +180,29 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
       router.push(`/business/${biz.business_id}/dashboard`)
     }
   }
+
+  useEffect(() => {
+    if (!businessId || !isManager) return
+    let cancelled = false
+    const loadPending = async () => {
+      try {
+        const res = await businessAPI.getApprovals(Number(businessId), 'pending')
+        if (cancelled) return
+        const data = res.data
+        const arr = Array.isArray(data) ? data
+          : Array.isArray(data?.approvals) ? data.approvals
+          : Array.isArray(data?.data) ? data.data
+          : Array.isArray(data?.data?.approvals) ? data.data.approvals
+          : []
+        setPendingApprovals(arr)
+      } catch {
+        if (!cancelled) setPendingApprovals([])
+      }
+    }
+    loadPending()
+    const interval = setInterval(loadPending, 30000)
+    return () => { cancelled = true; clearInterval(interval) }
+  }, [businessId, isManager])
 
   const isNavItemActive = (href: string) => {
     return pathname === href || pathname.startsWith(href + '/')
@@ -431,11 +461,76 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
                 Live
               </div>
 
-              <button className="relative p-2 rounded-lg hover:bg-gray-100 min-h-[40px] min-w-[40px] flex items-center justify-center">
-                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                </svg>
-              </button>
+              <div ref={notificationsRef} className="relative">
+                <button
+                  onClick={() => setNotificationsOpen(!notificationsOpen)}
+                  className="relative p-2 rounded-lg hover:bg-gray-100 min-h-[40px] min-w-[40px] flex items-center justify-center"
+                >
+                  <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                  </svg>
+                  {pendingApprovals.length > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full bg-primary text-white text-[10px] font-bold leading-none ring-2 ring-white">
+                      {pendingApprovals.length}
+                    </span>
+                  )}
+                </button>
+
+                {notificationsOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden">
+                    <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+                      <h3 className="text-sm font-semibold text-gray-900">
+                        Requests {pendingApprovals.length > 0 && <span className="text-primary">({pendingApprovals.length})</span>}
+                      </h3>
+                      {pendingApprovals.length > 0 && (
+                        <Link
+                          href="/businesses"
+                          onClick={() => setNotificationsOpen(false)}
+                          className="text-xs text-primary font-medium hover:underline"
+                        >
+                          View all
+                        </Link>
+                      )}
+                    </div>
+                    <div className="max-h-72 overflow-y-auto">
+                      {pendingApprovals.length > 0 ? (
+                        pendingApprovals.map((approval: any, idx: number) => {
+                          const requesterName = approval.requester?.name || approval.requester_name || approval.name || 'Unknown'
+                          const requesterEmail = approval.requester?.email || approval.email || ''
+                          const role = approval.approval_type || approval.role || 'member'
+                          const reason = approval.reason || ''
+                          return (
+                            <div key={approval.approval_id || approval.id || idx} className="px-4 py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                                  <span className="text-xs font-semibold text-primary">{requesterName.charAt(0).toUpperCase()}</span>
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-sm font-medium text-gray-900 truncate">{requesterName}</p>
+                                  <p className="text-xs text-neutral-light truncate">{requesterEmail}</p>
+                                </div>
+                                <span className="text-[10px] font-medium uppercase tracking-wider bg-primary/10 text-primary px-2 py-0.5 rounded-full shrink-0">
+                                  {role}
+                                </span>
+                              </div>
+                              {reason && (
+                                <p className="text-xs text-neutral-light mt-1.5 ml-11 line-clamp-2">{reason}</p>
+                              )}
+                            </div>
+                          )
+                        })
+                      ) : (
+                        <div className="px-4 py-8 text-center">
+                          <svg className="w-8 h-8 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                          </svg>
+                          <p className="text-sm text-gray-500">No pending requests</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
 
               <div ref={profileRef} className="relative">
                 <button

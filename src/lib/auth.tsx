@@ -11,6 +11,7 @@ interface User {
   role: string
   business_id?: number
   is_verified?: boolean
+  created_at?: string
 }
 
 interface Business {
@@ -134,6 +135,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         role: data.role || 'user',
         business_id: data.business_id || data.business?.id || undefined,
         is_verified: data.is_verified ?? false,
+        created_at: data.created_at || undefined,
       }
       setUser(profileUser)
       localStorage.setItem('user', JSON.stringify(profileUser))
