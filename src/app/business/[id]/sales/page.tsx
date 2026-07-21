@@ -113,6 +113,13 @@ export default function SalesPage() {
   const totalAmount = useMemo(() => filteredSales.reduce((sum, s) => sum + s.amount, 0), [filteredSales])
   const totalQty = useMemo(() => filteredSales.reduce((sum, s) => sum + s.qty, 0), [filteredSales])
 
+  const formTotal = useMemo(() => {
+    return lineItems.reduce((sum, item) => {
+      const product = products.find((p) => p.product_id === parseInt(item.product_id))
+      return sum + (product ? product.price * (parseInt(item.quantity) || 0) : 0)
+    }, 0)
+  }, [lineItems, products])
+
   if (isNaN(businessId)) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -144,13 +151,6 @@ export default function SalesPage() {
     setActivePreset(0)
     setShowDatePicker(false)
   }
-
-  const formTotal = useMemo(() => {
-    return lineItems.reduce((sum, item) => {
-      const product = products.find((p) => p.product_id === parseInt(item.product_id))
-      return sum + (product ? product.price * (parseInt(item.quantity) || 0) : 0)
-    }, 0)
-  }, [lineItems, products])
 
   const effectiveAmountPaid = paymentStatus === 'fully_paid' ? formTotal : (parseFloat(amountPaid) || 0)
   const isPartialPayment = paymentStatus === 'partial' && effectiveAmountPaid < formTotal && formTotal > 0

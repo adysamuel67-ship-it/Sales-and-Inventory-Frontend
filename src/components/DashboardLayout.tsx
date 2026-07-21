@@ -109,13 +109,6 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
   const router = useRouter()
   const params = useParams()
 
-  useEffect(() => {
-    if (user && user.is_verified === false) {
-      router.replace('/verify')
-    }
-  }, [user, router])
-
-  if (user && user.is_verified === false) return null
   const businessId = propBusinessId || (params?.id as string) || currentBusiness?.business_id?.toString() || ''
 
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -130,6 +123,12 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
   const sidebarProfileRef = useRef<HTMLDivElement>(null)
   const bizSwitcherRef = useRef<HTMLDivElement>(null)
   const notificationsRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (user && user.is_verified === false) {
+      router.replace('/verify')
+    }
+  }, [user, router])
 
   const isSuperAdmin = user?.role === 'super_admin'
   const effectiveRole = user?.business_role || user?.role
@@ -224,6 +223,8 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
     const interval = setInterval(loadPending, 30000)
     return () => { cancelled = true; clearInterval(interval) }
   }, [businessId, isManager])
+
+  if (user && user.is_verified === false) return null
 
   const isNavItemActive = (href: string) => {
     return pathname === href || pathname.startsWith(href + '/')
