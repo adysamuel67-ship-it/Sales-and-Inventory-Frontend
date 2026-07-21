@@ -18,13 +18,13 @@ export default function VerifyPage() {
   const [resendTimer, setResendTimer] = useState(0)
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
 
-  const userId = user?.id
+  const userEmail = user?.email
 
   useEffect(() => {
-    if (!userId) {
+    if (!userEmail) {
       router.replace('/login')
     }
-  }, [userId, router])
+  }, [userEmail, router])
 
   useEffect(() => {
     if (resendTimer > 0) {
@@ -34,12 +34,12 @@ export default function VerifyPage() {
   }, [resendTimer])
 
   const sendOtp = useCallback(async () => {
-    if (!userId) return
+    if (!user?.email) return
     setSending(true)
     setError('')
     setSuccess('')
     try {
-      await authAPI.sendVerification()
+      await authAPI.sendVerification(user.email)
       setSuccess('Verification code sent to your email.')
       setResendTimer(60)
     } catch (err: any) {
@@ -48,7 +48,7 @@ export default function VerifyPage() {
     } finally {
       setSending(false)
     }
-  }, [userId])
+  }, [user?.email])
 
   useEffect(() => {
     sendOtp()
@@ -89,14 +89,14 @@ export default function VerifyPage() {
       setError('Please enter the full 6-digit code.')
       return
     }
-    if (!userId) {
+    if (!userEmail) {
       setError('Session expired. Please log in again.')
       return
     }
     setError('')
     setLoading(true)
     try {
-      await authAPI.verifyEmail({ user_id: userId, code: fullCode })
+      await authAPI.verifyEmail({ email: userEmail, code: fullCode })
       const profileUser = await fetchProfile()
       if (profileUser?.is_verified) {
         await fetchBusinesses()
@@ -123,7 +123,7 @@ export default function VerifyPage() {
     router.replace('/login')
   }
 
-  if (!userId) return null
+  if (!userEmail) return null
 
   return (
     <AuthLayout
