@@ -83,7 +83,17 @@ export default function BusinessLayout({
     )
   }
 
+  if (user && user.is_verified === false) {
+    router.replace('/verify')
+    return null
+  }
+
   if (!businessId || isNaN(parseInt(businessId))) {
+    router.replace('/businesses')
+    return null
+  }
+
+  if (businesses.length > 0 && !businesses.find((b) => b.business_id === parseInt(businessId))) {
     router.replace('/businesses')
     return null
   }

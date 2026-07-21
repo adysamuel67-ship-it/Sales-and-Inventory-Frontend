@@ -234,6 +234,11 @@ export default function BusinessesPage() {
     )
   }
 
+  if (user && user.is_verified === false) {
+    router.replace('/verify')
+    return null
+  }
+
   return (
     <DashboardLayout>
       <div className="flex items-center justify-between mb-6">

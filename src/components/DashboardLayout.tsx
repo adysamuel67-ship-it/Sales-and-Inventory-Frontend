@@ -108,6 +108,14 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
   const pathname = usePathname()
   const router = useRouter()
   const params = useParams()
+
+  useEffect(() => {
+    if (user && user.is_verified === false) {
+      router.replace('/verify')
+    }
+  }, [user, router])
+
+  if (user && user.is_verified === false) return null
   const businessId = propBusinessId || (params?.id as string) || currentBusiness?.business_id?.toString() || ''
 
   const [sidebarOpen, setSidebarOpen] = useState(false)

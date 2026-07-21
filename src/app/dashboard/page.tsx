@@ -247,6 +247,11 @@ export default function DashboardPage() {
     )
   }
 
+  if (user && user.is_verified === false) {
+    router.replace('/verify')
+    return null
+  }
+
   if (!businessId) {
     return (
       <DashboardLayout>
