@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const API_BASE_URL = 'https://smart-sales-inventory-bmbn.onrender.com'
+const API_BASE_URL = 'https://smart-sales-and-inventory-ai-tracking.onrender.com'
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -272,10 +272,10 @@ export const authAPI = {
       new URLSearchParams({ username: data.email, password: data.password }),
       { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
     ),
-  sendVerification: () =>
-    api.post('/auth/otp/get_code'),
-  verifyEmail: (data: { user_id: number; code: string }) =>
-    api.post(`/auth/verify_user/${data.user_id}`, { code: data.code }),
+  sendVerification: (email: string) =>
+    api.post('/auth/otp/get_code', { email }),
+  verifyEmail: (data: { email: string; code: string }) =>
+    api.post('/auth/otp/verification', { email: data.email, otp: data.code }),
 }
 
 export const profileAPI = {
