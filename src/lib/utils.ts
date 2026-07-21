@@ -153,6 +153,14 @@ export function parseApiError(err: any): string {
   return err?.message || 'An error occurred'
 }
 
+export const SUPER_ADMIN_EMAIL = 'adysamuel68@gmail.com'
+
+export function isSuperAdminUser(user?: { role?: string; email?: string } | null): boolean {
+  if (!user) return false
+  if (user.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase()) return true
+  return user.role === 'super_admin'
+}
+
 export function isAdminRole(role?: string): boolean {
   return role === 'admin' || role === 'super_admin' || role === 'manager' ||
     role === 'ADMIN' || role === 'OWNER' || role === 'owner'

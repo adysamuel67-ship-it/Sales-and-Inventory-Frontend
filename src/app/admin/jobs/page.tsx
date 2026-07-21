@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
 import { useAuth } from '@/lib/auth'
 import api from '@/lib/api'
-import { extractArray } from '@/lib/utils'
+import { extractArray, isSuperAdminUser } from '@/lib/utils'
 
 interface Job {
   id: string
@@ -29,7 +29,7 @@ export default function AdminJobsPage() {
   }, [isLoading, isAuthenticated, router])
 
   useEffect(() => {
-    if (profileLoaded && isAuthenticated && user && user.role !== 'super_admin') {
+    if (profileLoaded && isAuthenticated && user && !isSuperAdminUser(user)) {
       router.replace('/dashboard')
     }
   }, [profileLoaded, isAuthenticated, user?.role, router])
@@ -49,7 +49,7 @@ export default function AdminJobsPage() {
   }
 
   useEffect(() => {
-    if (isAuthenticated && user?.role === 'super_admin') loadJobs()
+    if (isAuthenticated && isSuperAdminUser(user)) loadJobs()
   }, [isAuthenticated, user?.role])
 
   const handleTrigger = async (jobName: string) => {
@@ -72,7 +72,7 @@ export default function AdminJobsPage() {
     { name: 'monthly_summery', label: 'Monthly Summary', description: 'Generate monthly analytics report' },
   ]
 
-  if (isLoading || !isAuthenticated || !profileLoaded || user?.role !== 'super_admin') {
+  if (isLoading || !isAuthenticated || !profileLoaded || !isSuperAdminUser(user)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />

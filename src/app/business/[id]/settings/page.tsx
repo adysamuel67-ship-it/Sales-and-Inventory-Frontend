@@ -30,6 +30,8 @@ export default function SettingsPage() {
   const [editRole, setEditRole] = useState('')
   const [editActive, setEditActive] = useState(true)
   const [memberSaving, setMemberSaving] = useState(false)
+  const [removingMemberId, setRemovingMemberId] = useState<number | null>(null)
+  const [confirmRemoveId, setConfirmRemoveId] = useState<number | null>(null)
 
   const isOwner = isAdminRole(user?.business_role || user?.role)
 
@@ -70,7 +72,8 @@ export default function SettingsPage() {
     setMembersLoading(true)
     try {
       const res = await adminAPI.listMembers()
-      setMembers(extractArray(res.data))
+      const allMembers = extractArray(res.data)
+      setMembers(allMembers.filter((m: any) => Number(m.business_id) === businessId))
     } catch {
     } finally {
       setMembersLoading(false)
@@ -94,6 +97,22 @@ export default function SettingsPage() {
       setError(parseApiError(err))
     } finally {
       setMemberSaving(false)
+    }
+  }
+
+  const handleRemoveMember = async (memberId: number) => {
+    setRemovingMemberId(memberId)
+    setError('')
+    setSuccess('')
+    try {
+      await businessAPI.removeMember(businessId, memberId)
+      setSuccess('Member removed from business')
+      setConfirmRemoveId(null)
+      loadMembers()
+    } catch (err: any) {
+      setError(parseApiError(err))
+    } finally {
+      setRemovingMemberId(null)
     }
   }
 
@@ -364,16 +383,45 @@ export default function SettingsPage() {
                               {m.role}
                             </span>
                             {m.member_id !== user?.id && (
-                              <button
-                                onClick={() => {
-                                  setEditingMember(m.member_id)
-                                  setEditRole(m.role || 'viewer')
-                                  setEditActive(m.is_active !== false)
-                                }}
-                                className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                              >
-                                Edit
-                              </button>
+                              <>
+                                {confirmRemoveId === m.member_id ? (
+                                  <div className="flex items-center gap-1.5">
+                                    <button
+                                      onClick={() => handleRemoveMember(m.member_id)}
+                                      disabled={removingMemberId === m.member_id}
+                                      className="px-2.5 py-1.5 bg-red-600 text-white rounded-lg text-xs font-medium hover:bg-red-700 transition-colors disabled:opacity-60 min-h-[32px]"
+                                    >
+                                      {removingMemberId === m.member_id ? '...' : 'Confirm'}
+                                    </button>
+                                    <button
+                                      onClick={() => setConfirmRemoveId(null)}
+                                      disabled={removingMemberId === m.member_id}
+                                      className="px-2.5 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-xs font-medium hover:bg-gray-200 transition-colors min-h-[32px]"
+                                    >
+                                      No
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <button
+                                      onClick={() => {
+                                        setEditingMember(m.member_id)
+                                        setEditRole(m.role || 'viewer')
+                                        setEditActive(m.is_active !== false)
+                                      }}
+                                      className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                                    >
+                                      Edit
+                                    </button>
+                                    <button
+                                      onClick={() => setConfirmRemoveId(m.member_id)}
+                                      className="px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+                                    >
+                                      Remove
+                                    </button>
+                                  </>
+                                )}
+                              </>
                             )}
                           </div>
                         </>

@@ -4,7 +4,7 @@ import { useAuth } from '@/lib/auth'
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { usePathname, useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { isManagerRole } from '@/lib/utils'
+import { isManagerRole, isSuperAdminUser } from '@/lib/utils'
 import { businessAPI } from '@/lib/api'
 import BusinessBotLogo from './BusinessBotLogo'
 
@@ -104,7 +104,7 @@ function NavIcon({ name }: { name: string }) {
 }
 
 export default function DashboardLayout({ children, businessId: propBusinessId }: DashboardLayoutProps) {
-  const { user, logout, businesses, currentBusiness, switchBusiness } = useAuth()
+  const { user, logout, businesses, currentBusiness, switchBusiness, profileLoaded } = useAuth()
   const pathname = usePathname()
   const router = useRouter()
   const params = useParams()
@@ -125,12 +125,12 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
   const notificationsRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (user && user.is_verified === false) {
+    if (profileLoaded && user && user.is_verified === false) {
       router.replace('/verify')
     }
-  }, [user, router])
+  }, [profileLoaded, user, router])
 
-  const isSuperAdmin = user?.role === 'super_admin'
+  const isSuperAdmin = isSuperAdminUser(user)
   const effectiveRole = user?.business_role || user?.role
   const isManager = isManagerRole(effectiveRole)
   const bizBase = businessId ? `/business/${businessId}` : ''
@@ -223,6 +223,17 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
     const interval = setInterval(loadPending, 30000)
     return () => { cancelled = true; clearInterval(interval) }
   }, [businessId, isManager])
+
+  if (!profileLoaded) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-gray-400">Loading...</p>
+        </div>
+      </div>
+    )
+  }
 
   if (user && user.is_verified === false) return null
 

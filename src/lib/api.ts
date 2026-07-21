@@ -308,6 +308,8 @@ export const businessAPI = {
     api.post(`/businesses/approvals/confirm_approvals/${businessId}`, data),
   updateMember: (businessId: number, memberId: number, data: { role?: string; is_active?: boolean }) =>
     api.put(`/businesses/${businessId}/members/${memberId}`, data),
+  removeMember: (businessId: number, memberId: number) =>
+    api.delete(`/businesses/leave_business/${businessId}/${memberId}`),
 }
 
 export const adminAPI = {

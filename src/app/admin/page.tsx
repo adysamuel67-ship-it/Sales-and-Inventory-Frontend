@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/auth'
 import { adminAPI, businessAPI } from '@/lib/api'
 import KpiCard from '@/components/KpiCard'
 import { kpiIcons } from '@/components/KpiIcons'
+import { isSuperAdminUser } from '@/lib/utils'
 
 export default function AdminDashboardPage() {
   const { isAuthenticated, isLoading, profileLoaded, user } = useAuth()
@@ -20,13 +21,13 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     if (!isLoading && !isAuthenticated) router.replace('/login')
     if (profileLoaded && isAuthenticated && user && user.is_verified === false) router.replace('/verify')
-    if (profileLoaded && isAuthenticated && user?.is_verified && user.role !== 'super_admin') {
+    if (profileLoaded && isAuthenticated && user?.is_verified && !isSuperAdminUser(user)) {
       router.replace('/dashboard')
     }
   }, [isLoading, isAuthenticated, profileLoaded, user, router])
 
   useEffect(() => {
-    if (!isAuthenticated || user?.role !== 'super_admin') return
+    if (!isAuthenticated || !isSuperAdminUser(user)) return
     let cancelled = false
 
     const load = async () => {
@@ -59,7 +60,7 @@ export default function AdminDashboardPage() {
     return () => { cancelled = true }
   }, [isAuthenticated, user?.role])
 
-  if (isLoading || !isAuthenticated || !profileLoaded || user?.role !== 'super_admin') {
+  if (isLoading || !isAuthenticated || !profileLoaded || !isSuperAdminUser(user)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />

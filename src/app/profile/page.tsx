@@ -4,11 +4,11 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
 import { useAuth } from '@/lib/auth'
-import { profileAPI } from '@/lib/api'
+import { profileAPI, adminAPI } from '@/lib/api'
 import { parseApiError } from '@/lib/utils'
 
 export default function ProfilePage() {
-  const { isAuthenticated, isLoading, profileLoaded, isVerified, user, fetchProfile, businesses, currentBusiness, logout } = useAuth()
+  const { isAuthenticated, isLoading, profileLoaded, isVerified, user, fetchProfile, businesses, currentBusiness, logout, setBusinessRole } = useAuth()
   const router = useRouter()
   const [editing, setEditing] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -17,6 +17,8 @@ export default function ProfilePage() {
   const [form, setForm] = useState({ name: '', phone: '' })
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [showBusinessDropdown, setShowBusinessDropdown] = useState(false)
+  const [showPhotoToast, setShowPhotoToast] = useState(false)
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) router.replace('/login')
@@ -24,13 +26,40 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (profileLoaded && isAuthenticated && user && user.is_verified === false) router.replace('/verify')
-  }, [profileLoaded, isAuthenticated, isVerified, router])
+  }, [profileLoaded, isAuthenticated, user, isVerified, router])
+
+  useEffect(() => {
+    if (showPhotoToast) {
+      const t = setTimeout(() => setShowPhotoToast(false), 3000)
+      return () => clearTimeout(t)
+    }
+  }, [showPhotoToast])
 
   useEffect(() => {
     if (user) {
       setForm({ name: user.name || '', phone: user.phone || '' })
     }
   }, [user])
+
+  useEffect(() => {
+    if (!user?.id || !profileLoaded || !currentBusiness) return
+    if (user.business_role) return
+    adminAPI.getMemberByUser(user.id).then((res) => {
+      const data = res.data
+      let memberRole: string | undefined
+      if (Array.isArray(data)) {
+        const bizMember = data.find((m: any) => String(m.business_id) === String(currentBusiness.business_id))
+        if (bizMember) memberRole = bizMember.role
+        else if (data.length > 0) memberRole = data[0].role
+      } else if (data && typeof data === 'object') {
+        memberRole = data.role
+      }
+      if (memberRole) setBusinessRole(memberRole)
+      else if (currentBusiness.role) setBusinessRole(currentBusiness.role)
+    }).catch(() => {
+      if (currentBusiness.role) setBusinessRole(currentBusiness.role)
+    })
+  }, [user?.id, user?.business_role, profileLoaded, currentBusiness, setBusinessRole])
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -173,9 +202,26 @@ export default function ProfilePage() {
           {/* Avatar + Info */}
           <div className="relative px-4 sm:px-6 -mt-10 sm:-mt-14 pb-5 sm:pb-6">
             <div className="flex flex-col sm:flex-row sm:items-end gap-3 sm:gap-4">
-              <div className="w-[80px] h-[80px] sm:w-[104px] sm:h-[104px] rounded-[22px] sm:rounded-[28px] bg-gradient-to-br from-primary to-indigo-500 border-4 border-surface shadow-lg flex items-center justify-center text-white text-3xl sm:text-4xl font-bold shrink-0 -mt-0 sm:-mt-0">
+              <button
+                onClick={() => setShowPhotoToast(true)}
+                className="group relative w-[80px] h-[80px] sm:w-[104px] sm:h-[104px] rounded-[22px] sm:rounded-[28px] bg-gradient-to-br from-primary to-indigo-500 border-4 border-surface shadow-lg flex items-center justify-center text-white text-3xl sm:text-4xl font-bold shrink-0 cursor-pointer hover:shadow-xl hover:scale-[1.03] transition-all duration-200"
+              >
                 {initial}
-              </div>
+                <div className="absolute inset-0 rounded-[22px] sm:rounded-[28px] bg-black/0 group-hover:bg-black/30 transition-all duration-200 flex items-center justify-center">
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col items-center gap-1">
+                    <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white drop-shadow-md" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
+                    </svg>
+                    <span className="text-[9px] sm:text-[10px] font-semibold text-white drop-shadow-md">Upload</span>
+                  </div>
+                </div>
+                <div className="absolute -bottom-1 -right-1 w-7 h-7 sm:w-8 sm:h-8 bg-white rounded-full shadow-md flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+                  <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                  </svg>
+                </div>
+              </button>
               <div className="flex-1 min-w-0 sm:pb-1">
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">{displayName}</h2>
                 <p className="text-xs sm:text-sm text-neutral-light truncate">{displayEmail}</p>
@@ -216,8 +262,11 @@ export default function ProfilePage() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mt-4">
-          <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm p-3 sm:p-4 flex items-center gap-2.5 sm:gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mt-4 relative">
+          <div
+            onClick={() => businessCount > 0 && setShowBusinessDropdown(!showBusinessDropdown)}
+            className={`bg-surface rounded-2xl border border-gray-100 shadow-sm p-3 sm:p-4 flex items-center gap-2.5 sm:gap-3 ${businessCount > 0 ? 'cursor-pointer hover:border-primary/30 hover:shadow-md transition-all' : ''}`}
+          >
             <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
               <svg className="w-4 h-4 sm:w-5 sm:h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" />
@@ -228,6 +277,46 @@ export default function ProfilePage() {
               <p className="text-base sm:text-lg font-bold text-gray-900">{businessCount}</p>
             </div>
           </div>
+          {showBusinessDropdown && businessCount > 0 && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setShowBusinessDropdown(false)} />
+              <div className="absolute top-full left-0 mt-2 w-72 bg-surface rounded-2xl border border-gray-100 shadow-xl z-50 overflow-hidden">
+                <div className="px-4 py-3 border-b border-gray-100">
+                  <p className="text-sm font-semibold text-gray-900">Your Businesses</p>
+                </div>
+                <div className="max-h-64 overflow-y-auto p-2">
+                  {businesses?.map((biz: any) => (
+                    <button
+                      key={biz.business_id}
+                      onClick={() => {
+                        setShowBusinessDropdown(false)
+                        router.push(`/business/${biz.business_id}/dashboard`)
+                      }}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors ${
+                        currentBusiness?.business_id === biz.business_id
+                          ? 'bg-primary/10 text-primary'
+                          : 'hover:bg-gray-50 text-gray-900'
+                      }`}
+                    >
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 ${
+                        currentBusiness?.business_id === biz.business_id
+                          ? 'bg-primary text-white'
+                          : 'bg-gray-100 text-gray-600'
+                      }`}>
+                        {biz.name?.charAt(0)?.toUpperCase() || 'B'}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{biz.name}</p>
+                        {currentBusiness?.business_id === biz.business_id && (
+                          <p className="text-[10px] font-medium text-primary/70">Current</p>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
           <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm p-3 sm:p-4 flex items-center gap-2.5 sm:gap-3">
             <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 ${isVerified_ ? 'bg-emerald-50' : 'bg-amber-50'}`}>
               {isVerified_ ? (
@@ -512,6 +601,32 @@ export default function ProfilePage() {
         )}
 
       </div>
+
+      {/* Photo Upload Toast */}
+      {showPhotoToast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] animate-in slide-in-from-bottom-4 fade-in duration-300">
+          <div className="bg-gray-900 text-white px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 max-w-sm">
+            <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
+              <svg className="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+              </svg>
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold">Feature Under Development</p>
+              <p className="text-xs text-gray-300 mt-0.5">Profile picture upload coming soon. Sorry for the inconvenience!</p>
+            </div>
+            <button
+              onClick={() => setShowPhotoToast(false)}
+              className="ml-2 p-1 rounded-lg hover:bg-white/10 transition-colors shrink-0"
+            >
+              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
+
     </DashboardLayout>
   )
 }

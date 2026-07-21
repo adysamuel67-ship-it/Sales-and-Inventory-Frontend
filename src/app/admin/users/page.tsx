@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
 import { useAuth } from '@/lib/auth'
 import { adminAPI } from '@/lib/api'
-import { extractArray } from '@/lib/utils'
+import { extractArray, isSuperAdminUser } from '@/lib/utils'
 
 interface UserRecord {
   user_id: number
@@ -18,7 +18,7 @@ interface UserRecord {
 }
 
 export default function AdminUsersPage() {
-  const { isAuthenticated, isLoading, user } = useAuth()
+  const { isAuthenticated, isLoading, profileLoaded, user } = useAuth()
   const router = useRouter()
   const [users, setUsers] = useState<UserRecord[]>([])
   const [loading, setLoading] = useState(true)
@@ -28,27 +28,33 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) router.replace('/login')
-    if (!isLoading && isAuthenticated && user && user.role !== 'super_admin') {
+    if (profileLoaded && isAuthenticated && user && !isSuperAdminUser(user)) {
       router.replace('/dashboard')
     }
-  }, [isLoading, isAuthenticated, user, router])
+  }, [isLoading, isAuthenticated, profileLoaded, user, router])
 
   const loadUsers = async () => {
     setLoading(true)
     setError('')
     try {
-      const res = await adminAPI.listAllUsers()
+      let res
+      try {
+        res = await adminAPI.listAllUsers()
+      } catch {
+        res = await adminAPI.listUsers()
+      }
       setUsers(extractArray(res.data))
     } catch (err: any) {
-      setError('Failed to load users')
+      const detail = err.response?.data?.detail
+      setError(typeof detail === 'string' ? detail : Array.isArray(detail) ? detail.map((e: any) => e.msg).join(', ') : 'Failed to load users')
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
-    if (isAuthenticated && user?.role === 'super_admin') loadUsers()
-  }, [isAuthenticated, user?.role])
+    if (profileLoaded && isAuthenticated && isSuperAdminUser(user)) loadUsers()
+  }, [profileLoaded, isAuthenticated, user])
 
   const handleToggleActive = async (userId: number) => {
     try {
@@ -105,7 +111,7 @@ export default function AdminUsersPage() {
     [users, search]
   )
 
-  if (isLoading || !isAuthenticated || user?.role !== 'super_admin') {
+  if (isLoading || !isAuthenticated || !profileLoaded || !isSuperAdminUser(user)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />

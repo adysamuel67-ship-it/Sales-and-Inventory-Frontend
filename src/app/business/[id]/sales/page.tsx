@@ -22,9 +22,11 @@ const PAGE_SIZE = 20
 const datePresets = [
   { label: 'All', days: 0 },
   { label: 'Today', days: 1 },
+  { label: '3d', days: 3 },
+  { label: '5d', days: 5 },
   { label: '7d', days: 7 },
-  { label: '30d', days: 30 },
-  { label: '90d', days: 90 },
+  { label: '30d', days: 30, adminOnly: true },
+  { label: '90d', days: 90, adminOnly: true },
 ]
 
 export default function SalesPage() {
@@ -147,6 +149,15 @@ export default function SalesPage() {
   }
 
   const handleApplyCustomDate = () => {
+    if (isStaff && draftDateFilter.start && draftDateFilter.end) {
+      const start = new Date(draftDateFilter.start)
+      const end = new Date(draftDateFilter.end)
+      const diffDays = Math.ceil((end.getTime() - start.getTime()) / 86400000)
+      if (diffDays > 7) {
+        setError('Staff accounts can only filter up to 7 days at a time')
+        return
+      }
+    }
     setDateFilter(draftDateFilter)
     setActivePreset(0)
     setShowDatePicker(false)
@@ -500,7 +511,9 @@ export default function SalesPage() {
       <div className="bg-white rounded-xl border border-gray-100 p-3 sm:p-4 space-y-3">
         {/* Date presets */}
         <div className="flex flex-wrap items-center gap-1.5">
-          {datePresets.map((preset) => (
+          {datePresets
+            .filter((preset) => !preset.adminOnly || !isStaff)
+            .map((preset) => (
             <button
               key={preset.label}
               onClick={() => handlePreset(preset.days)}

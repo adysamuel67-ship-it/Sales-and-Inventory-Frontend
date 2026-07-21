@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
 import { useAuth } from '@/lib/auth'
 import { adminAPI, productAPI } from '@/lib/api'
-import { extractArray, isStaffRole } from '@/lib/utils'
+import { extractArray, isStaffRole, isSuperAdminUser } from '@/lib/utils'
 
 interface LowStockItem {
   name: string
@@ -27,7 +27,7 @@ export default function AdminLowStockPage() {
   }, [isLoading, isAuthenticated, router])
 
   useEffect(() => {
-    if (profileLoaded && isAuthenticated && user && user.role !== 'super_admin') {
+    if (profileLoaded && isAuthenticated && user && !isSuperAdminUser(user)) {
       router.replace('/dashboard')
     }
   }, [profileLoaded, isAuthenticated, user?.role, router])
@@ -79,10 +79,10 @@ export default function AdminLowStockPage() {
         setLoading(false)
       }
     }
-    if (isAuthenticated && user?.role === 'super_admin') loadLowStock()
+    if (isAuthenticated && isSuperAdminUser(user)) loadLowStock()
   }, [isAuthenticated, user?.role])
 
-  if (isLoading || !isAuthenticated || !profileLoaded || user?.role !== 'super_admin') {
+  if (isLoading || !isAuthenticated || !profileLoaded || !isSuperAdminUser(user)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />

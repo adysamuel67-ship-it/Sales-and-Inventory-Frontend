@@ -47,6 +47,7 @@ jest.mock('@/lib/auth', () => ({
     ],
     currentBusiness: { business_id: 1, name: 'Kwame Shop' },
     switchBusiness: jest.fn(),
+    profileLoaded: true,
   })),
 }))
 

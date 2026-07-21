@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
 import { adminAPI } from '@/lib/api'
+import { isSuperAdminUser } from '@/lib/utils'
 import DashboardLayout from '@/components/DashboardLayout'
 
 export default function BusinessLayout({
@@ -83,7 +84,7 @@ export default function BusinessLayout({
     )
   }
 
-  if (user && user.is_verified === false) {
+  if (user && !user.is_verified) {
     router.replace('/verify')
     return null
   }

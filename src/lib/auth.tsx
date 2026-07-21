@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { profileAPI, businessAPI, setTokenRefreshCallback, setAuthLogoutCallback, getUserIdFromToken, tryProactiveRefresh, startAutoRefresh, stopAutoRefresh, isTokenExpired, setLoginGrace, decodeJwt } from '@/lib/api'
+import { SUPER_ADMIN_EMAIL } from '@/lib/utils'
 
 interface User {
   id: number
@@ -146,9 +147,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         phone: data.phone || parsed?.phone || '',
         role: data.role || parsed?.role || 'user',
         business_id: data.business_id || data.business?.id || parsed?.business_id || undefined,
-        is_verified: data.is_verified ?? parsed?.is_verified ?? false,
+        is_verified: data.is_verified ?? parsed?.is_verified ?? true,
         is_active: data.is_active ?? parsed?.is_active ?? true,
         created_at: data.created_at || data.date_joined || data.joined_at || parsed?.created_at || iatDate,
+      }
+      if (profileUser.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase()) {
+        profileUser.role = 'super_admin'
       }
       setUser(profileUser)
       localStorage.setItem('user', JSON.stringify(profileUser))

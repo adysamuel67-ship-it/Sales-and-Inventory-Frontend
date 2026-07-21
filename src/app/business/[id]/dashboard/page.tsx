@@ -11,6 +11,7 @@ import RecentSales from '@/components/RecentSales'
 import LowStockAlerts from '@/components/LowStockAlerts'
 
 const RevenueChart = dynamic(() => import('@/components/RevenueChart'), { ssr: false })
+const FluctuationChart = dynamic(() => import('@/components/FluctuationChart'), { ssr: false })
 import { useAuth } from '@/lib/auth'
 import { reportAPI, saleAPI, productAPI } from '@/lib/api'
 import { extractArray, extractSummary, mapSale, mapLowStock, generateDateLabels, isStaffRole, parseApiError, getDateRange } from '@/lib/utils'
@@ -66,6 +67,7 @@ export default function BusinessDashboardPage() {
   const businessId = parseInt(params?.id as string)
   const { user, currentBusiness } = useAuth()
   const [summary, setSummary] = useState<DashboardSummary | null>(null)
+  const [todaySummary, setTodaySummary] = useState<DashboardSummary | null>(null)
   const [recentSales, setRecentSales] = useState<SaleRecord[]>([])
   const [lowStockItems, setLowStockItems] = useState<LowStockItem[]>([])
   const [chartData, setChartData] = useState<ChartDataPoint[]>([])
@@ -75,6 +77,8 @@ export default function BusinessDashboardPage() {
   const [activePreset, setActivePreset] = useState(30)
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [draftDateRange, setDraftDateRange] = useState(() => getDateRange(30))
+  const [staffView, setStaffView] = useState<'today' | 'week'>('today')
+  const [showFluctuation, setShowFluctuation] = useState(false)
 
   const isStaff = isStaffRole(user?.business_role || user?.role)
 
@@ -83,18 +87,23 @@ export default function BusinessDashboardPage() {
     setError('')
     setLoading(true)
 
-    const effectiveRange = isStaff ? getDateRange(7) : dateRange
+    const effectiveRange = isStaff
+      ? staffView === 'today' ? getDateRange(0) : getDateRange(7)
+      : dateRange
 
     try {
+      const todayRange = getDateRange(0)
       const results = await Promise.allSettled([
         reportAPI.summary(businessId, effectiveRange.start, effectiveRange.end),
         saleAPI.list(businessId),
         productAPI.list(businessId),
+        isStaff ? reportAPI.summary(businessId, todayRange.start, todayRange.end) : Promise.resolve(null),
       ])
 
       const summaryRes = results[0].status === 'fulfilled' ? results[0].value : null
       const salesRes = results[1].status === 'fulfilled' ? results[1].value : null
       const productsRes = results[2].status === 'fulfilled' ? results[2].value : null
+      const todaySummaryRes = results[3].status === 'fulfilled' ? results[3].value : null
 
       const failedApis: string[] = []
       if (results[0].status === 'rejected') failedApis.push('summary')
@@ -110,6 +119,12 @@ export default function BusinessDashboardPage() {
         const d = summaryRes.data
         const extracted = extractSummary(d) || extractSummary(d?.data)
         setSummary(extracted)
+      }
+
+      if (todaySummaryRes) {
+        const d = todaySummaryRes.data
+        const extracted = extractSummary(d) || extractSummary(d?.data)
+        setTodaySummary(extracted)
       }
 
       const productMap = new Map<number, string>()
@@ -209,7 +224,7 @@ export default function BusinessDashboardPage() {
     } finally {
       setLoading(false)
     }
-  }, [businessId, dateRange.start, dateRange.end, isStaff])
+  }, [businessId, dateRange.start, dateRange.end, isStaff, staffView])
 
   useEffect(() => {
     loadDashboard()
@@ -236,7 +251,7 @@ export default function BusinessDashboardPage() {
     setShowDatePicker(false)
   }
 
-  const dateSubtitle = isStaff ? 'Last 7 days (staff view)' : activePreset > 0 ? `Last ${activePreset} days` : `${dateRange.start} to ${dateRange.end}`
+  const dateSubtitle = isStaff ? (staffView === 'today' ? "Today's data" : 'Last 7 days (weekly)') : activePreset > 0 ? `Last ${activePreset} days` : `${dateRange.start} to ${dateRange.end}`
 
   if (isNaN(businessId)) {
     return (
@@ -284,7 +299,40 @@ export default function BusinessDashboardPage() {
           <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
           <p className="text-sm text-neutral-light mt-1">{currentBusiness?.name || 'Overview'}</p>
         </div>
-        {!isStaff && (
+        {isStaff ? (
+          <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1">
+            <button
+              onClick={() => setStaffView('today')}
+              className={`px-4 py-2 rounded-lg text-xs font-medium transition-all min-h-[40px] ${
+                staffView === 'today'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <div className="flex items-center gap-1.5">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+                </svg>
+                Today
+              </div>
+            </button>
+            <button
+              onClick={() => setStaffView('week')}
+              className={`px-4 py-2 rounded-lg text-xs font-medium transition-all min-h-[40px] ${
+                staffView === 'week'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <div className="flex items-center gap-1.5">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                </svg>
+                This Week
+              </div>
+            </button>
+          </div>
+        ) : (
         <div className="relative">
           <button
             onClick={() => showDatePicker ? setShowDatePicker(false) : handleOpenDatePicker()}
@@ -353,18 +401,32 @@ export default function BusinessDashboardPage() {
       {isStaff ? (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           <KpiCard
-            title="Today's Sales"
-            value={summary?.total_sales != null ? summary.total_sales.toLocaleString() : '---'}
-            subtitle={dateSubtitle}
-            icon={kpiIcons.sales}
+            title="Today's Revenue"
+            value={todaySummary?.total_revenue != null ? `GH₵${todaySummary.total_revenue.toLocaleString()}` : '---'}
+            subtitle="Today"
+            icon={kpiIcons.revenue}
             color="primary"
+          />
+          <KpiCard
+            title="Today's Sales"
+            value={todaySummary?.total_sales != null ? todaySummary.total_sales.toLocaleString() : '---'}
+            subtitle="Today"
+            icon={kpiIcons.sales}
+            color="success"
+          />
+          <KpiCard
+            title="Sales (7d)"
+            value={summary?.total_sales != null ? summary.total_sales.toLocaleString() : '---'}
+            subtitle="This week"
+            icon={kpiIcons.sales}
+            color="warning"
           />
           <KpiCard
             title="Low Stock"
             value={lowStockItems.length.toLocaleString()}
             subtitle="Items need restocking"
             icon={kpiIcons.warning}
-            color="warning"
+            color="danger"
           />
         </div>
       ) : (
@@ -400,9 +462,39 @@ export default function BusinessDashboardPage() {
         </div>
       )}
 
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-sm font-semibold text-gray-900">Visualizations</h2>
+        <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1">
+          <button
+            onClick={() => setShowFluctuation(false)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+              !showFluctuation
+                ? 'bg-white text-gray-900 shadow-sm'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Revenue
+          </button>
+          <button
+            onClick={() => setShowFluctuation(true)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+              showFluctuation
+                ? 'bg-white text-gray-900 shadow-sm'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Fluctuations
+          </button>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         <div className="lg:col-span-2">
-          <RevenueChart data={chartData} />
+          {showFluctuation ? (
+            <FluctuationChart data={chartData} />
+          ) : (
+            <RevenueChart data={chartData} />
+          )}
         </div>
         <div>
           <LowStockAlerts items={lowStockItems} businessId={businessId} />

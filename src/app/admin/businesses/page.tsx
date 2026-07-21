@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
 import { useAuth } from '@/lib/auth'
 import { businessAPI, adminAPI, productAPI, saleAPI, debtAPI } from '@/lib/api'
-import { extractArray } from '@/lib/utils'
+import { extractArray, isSuperAdminUser } from '@/lib/utils'
 
 interface BusinessRecord {
   business_id: number
@@ -26,7 +26,7 @@ interface MemberRecord {
 }
 
 export default function AdminBusinessesPage() {
-  const { isAuthenticated, isLoading, user } = useAuth()
+  const { isAuthenticated, isLoading, profileLoaded, user } = useAuth()
   const router = useRouter()
   const [businesses, setBusinesses] = useState<BusinessRecord[]>([])
   const [loading, setLoading] = useState(true)
@@ -45,10 +45,10 @@ export default function AdminBusinessesPage() {
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) router.replace('/login')
-    if (!isLoading && isAuthenticated && user && user.role !== 'super_admin') {
+    if (profileLoaded && isAuthenticated && user && !isSuperAdminUser(user)) {
       router.replace('/dashboard')
     }
-  }, [isLoading, isAuthenticated, user?.role, router])
+  }, [isLoading, isAuthenticated, profileLoaded, user, router])
 
   const loadBusinesses = async () => {
     setLoading(true)
@@ -79,8 +79,8 @@ export default function AdminBusinessesPage() {
   }
 
   useEffect(() => {
-    if (isAuthenticated && user?.role === 'super_admin') loadBusinesses()
-  }, [isAuthenticated, user?.role])
+    if (profileLoaded && isAuthenticated && isSuperAdminUser(user)) loadBusinesses()
+  }, [profileLoaded, isAuthenticated, user])
 
   const handleDelete = async (id: number) => {
     if (!confirm('Are you sure you want to delete this business?')) return
@@ -160,7 +160,7 @@ export default function AdminBusinessesPage() {
     [businesses, search]
   )
 
-  if (isLoading || !isAuthenticated || user?.role !== 'super_admin') {
+  if (isLoading || !isAuthenticated || !profileLoaded || !isSuperAdminUser(user)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
