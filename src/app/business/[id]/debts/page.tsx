@@ -110,7 +110,7 @@ export default function DebtsPage() {
 
   const [showTxnDetailModal, setShowTxnDetailModal] = useState(false)
   const [txnDetailData, setTxnDetailData] = useState<CustomerTransaction | null>(null)
-  const isAdmin = isAdminRole(user?.role)
+  const isAdmin = isAdminRole(user?.business_role || user?.role)
 
   const successTimer = useCallback(() => {
     const t = setTimeout(() => setSuccess(''), 4000)

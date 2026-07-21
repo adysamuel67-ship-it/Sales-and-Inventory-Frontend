@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
-import { useParams } from 'next/navigation'
+import { useEffect, useState, useMemo, useCallback } from 'react'
+import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
 import { saleAPI, productAPI, customerAPI } from '@/lib/api'
 import { extractArray, normalizeProduct, mapSale, parseApiError, isStaffRole, MappedSale } from '@/lib/utils'
@@ -29,6 +29,7 @@ const datePresets = [
 
 export default function SalesPage() {
   const params = useParams()
+  const router = useRouter()
   const businessId = parseInt(params?.id as string)
   const { user } = useAuth()
   const [allSales, setAllSales] = useState<SaleRecord[]>([])
@@ -56,7 +57,7 @@ export default function SalesPage() {
 
   const isStaff = isStaffRole(user?.business_role || user?.role)
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!businessId) return
     setLoading(true)
     setError('')
@@ -78,7 +79,7 @@ export default function SalesPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [businessId])
 
   const filteredSales = useMemo(() => {
     if (!dateFilter.start && !dateFilter.end) return allSales
@@ -107,7 +108,7 @@ export default function SalesPage() {
 
   useEffect(() => {
     if (businessId) loadData()
-  }, [businessId])
+  }, [businessId, loadData])
 
   const totalAmount = useMemo(() => filteredSales.reduce((sum, s) => sum + s.amount, 0), [filteredSales])
   const totalQty = useMemo(() => filteredSales.reduce((sum, s) => sum + s.qty, 0), [filteredSales])
@@ -198,7 +199,7 @@ export default function SalesPage() {
             product_id: first.product_id,
             quantity: first.quantity,
           })
-          window.location.href = `/business/${businessId}/customers?${params.toString()}`
+          router.push(`/business/${businessId}/customers?${params.toString()}`)
           return
         }
 

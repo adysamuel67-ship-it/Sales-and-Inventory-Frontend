@@ -124,7 +124,8 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
   const notificationsRef = useRef<HTMLDivElement>(null)
 
   const isSuperAdmin = user?.role === 'super_admin'
-  const isManager = isManagerRole(user?.business_role || user?.role)
+  const effectiveRole = user?.business_role || user?.role
+  const isManager = isManagerRole(effectiveRole)
   const bizBase = businessId ? `/business/${businessId}` : ''
 
   const normalNavItems = useMemo(() => [
@@ -415,7 +416,7 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
                 </div>
                 <div className="flex-1 min-w-0 text-left">
                   <p className="text-white text-[13px] font-medium truncate">{user?.name || 'User'}</p>
-                  <p className="text-white/30 text-[11px] capitalize">{user?.role?.replace('_', ' ') || 'user'}</p>
+                  <p className="text-white/30 text-[11px] capitalize">{(user?.business_role || user?.role || 'user').replace('_', ' ')}</p>
                 </div>
                 <svg className={`w-3.5 h-3.5 text-white/25 transition-transform duration-200 ${sidebarProfileOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -428,7 +429,7 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
                     <p className="text-[13px] font-semibold text-gray-900 truncate">{user?.name || 'User'}</p>
                     <div className="flex items-center gap-1.5 mt-1.5">
                       <span className="text-[10px] font-semibold uppercase tracking-wider bg-blue-50 text-primary px-2 py-0.5 rounded-md">
-                        {user?.role?.replace('_', ' ') || 'user'}
+                        {(user?.business_role || user?.role || 'user').replace('_', ' ')}
                       </span>
                       {user?.is_verified ? (
                         <span className="text-[10px] font-semibold uppercase tracking-wider bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-md flex items-center gap-1">
@@ -574,7 +575,7 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
                   </div>
                   <div className="hidden sm:block text-left">
                     <p className="text-[13px] font-medium text-gray-700 leading-tight">{user?.name || 'User'}</p>
-                    <p className="text-[10px] text-gray-400 capitalize leading-tight">{user?.role?.replace('_', ' ') || 'user'}</p>
+                    <p className="text-[10px] text-gray-400 capitalize leading-tight">{(user?.business_role || user?.role || 'user').replace('_', ' ')}</p>
                   </div>
                   <svg className="w-3.5 h-3.5 text-gray-400 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />

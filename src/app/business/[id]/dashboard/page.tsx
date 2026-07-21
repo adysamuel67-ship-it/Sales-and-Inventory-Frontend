@@ -83,9 +83,11 @@ export default function BusinessDashboardPage() {
     setError('')
     setLoading(true)
 
+    const effectiveRange = isStaff ? getDateRange(7) : dateRange
+
     try {
       const results = await Promise.allSettled([
-        reportAPI.summary(businessId, dateRange.start, dateRange.end),
+        reportAPI.summary(businessId, effectiveRange.start, effectiveRange.end),
         saleAPI.list(businessId),
         productAPI.list(businessId),
       ])
@@ -134,9 +136,9 @@ export default function BusinessDashboardPage() {
         const filtered = sales.filter((s: any) => {
           if (!s.created_at) return false
           const d = new Date(s.created_at)
-          const start = new Date(dateRange.start)
+          const start = new Date(effectiveRange.start)
           start.setHours(0, 0, 0, 0)
-          const end = new Date(dateRange.end)
+          const end = new Date(effectiveRange.end)
           end.setHours(23, 59, 59, 999)
           return d >= start && d <= end
         })
@@ -144,7 +146,7 @@ export default function BusinessDashboardPage() {
         setRecentSales(filtered.slice(0, 10).map((s: any) => mapSaleLocal(s, productMap)))
 
         const dailyMap: Record<string, { revenue: number; count: number }> = {}
-        const allDateLabels = generateDateLabels(dateRange.start, dateRange.end)
+        const allDateLabels = generateDateLabels(effectiveRange.start, effectiveRange.end)
         for (const label of allDateLabels) {
           dailyMap[label] = { revenue: 0, count: 0 }
         }
@@ -207,7 +209,7 @@ export default function BusinessDashboardPage() {
     } finally {
       setLoading(false)
     }
-  }, [businessId, dateRange.start, dateRange.end])
+  }, [businessId, dateRange.start, dateRange.end, isStaff])
 
   useEffect(() => {
     loadDashboard()
@@ -234,9 +236,8 @@ export default function BusinessDashboardPage() {
     setShowDatePicker(false)
   }
 
-  const dateSubtitle = activePreset > 0 ? `Last ${activePreset} days` : `${dateRange.start} to ${dateRange.end}`
+  const dateSubtitle = isStaff ? 'Last 7 days (staff view)' : activePreset > 0 ? `Last ${activePreset} days` : `${dateRange.start} to ${dateRange.end}`
 
-  if (loading) {
   if (isNaN(businessId)) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -246,7 +247,8 @@ export default function BusinessDashboardPage() {
     )
   }
 
-  return (
+  if (loading) {
+    return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -282,6 +284,7 @@ export default function BusinessDashboardPage() {
           <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
           <p className="text-sm text-neutral-light mt-1">{currentBusiness?.name || 'Overview'}</p>
         </div>
+        {!isStaff && (
         <div className="relative">
           <button
             onClick={() => showDatePicker ? setShowDatePicker(false) : handleOpenDatePicker()}
@@ -344,6 +347,7 @@ export default function BusinessDashboardPage() {
             </div>
           )}
         </div>
+        )}
       </div>
 
       {isStaff ? (

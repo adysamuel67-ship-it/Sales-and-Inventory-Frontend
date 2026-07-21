@@ -2,11 +2,10 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useParams } from 'next/navigation'
-import { useAuth } from '@/lib/auth'
 import { reportAPI, saleAPI, productAPI } from '@/lib/api'
 import dynamic from 'next/dynamic'
 const RevenueChart = dynamic(() => import('@/components/RevenueChart'), { ssr: false })
-import { extractArray, extractProfit, extractSummary, getDateRange, parseApiError, isStaffRole } from '@/lib/utils'
+import { extractArray, extractProfit, extractSummary, getDateRange, parseApiError } from '@/lib/utils'
 
 interface ProfitData {
   total_revenue: number
@@ -43,7 +42,6 @@ function extractSaleArray(data: any): any[] {
 export default function ReportsPage() {
   const params = useParams()
   const businessId = parseInt(params?.id as string)
-  const { user } = useAuth()
   const [profit, setProfit] = useState<ProfitData | null>(null)
   const [summary, setSummary] = useState<SummaryData | null>(null)
   const [chartData, setChartData] = useState<ChartDataPoint[]>([])

@@ -8,7 +8,7 @@ import { profileAPI } from '@/lib/api'
 import { parseApiError } from '@/lib/utils'
 
 export default function ProfilePage() {
-  const { isAuthenticated, isLoading, profileLoaded, isVerified, user, fetchProfile, businesses, logout } = useAuth()
+  const { isAuthenticated, isLoading, profileLoaded, isVerified, user, fetchProfile, businesses, currentBusiness, logout } = useAuth()
   const router = useRouter()
   const [editing, setEditing] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -105,6 +105,7 @@ export default function ProfilePage() {
   const displayName = user?.name || user?.email?.split('@')[0] || 'User'
   const displayEmail = user?.email || '---'
   const displayRole = user?.role || 'user'
+  const businessRole = user?.business_role || ''
   const displayPhone = user?.phone || ''
   const isVerified_ = user?.is_verified === true
   const businessCount = businesses?.length || 0
@@ -118,6 +119,7 @@ export default function ProfilePage() {
     admin: 'bg-purple-100 text-purple-700 border-purple-200',
     manager: 'bg-primary/10 text-primary border-primary/20',
     cashier: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+    viewer: 'bg-amber-100 text-amber-700 border-amber-200',
     user: 'bg-gray-100 text-gray-600 border-gray-200',
   }
   const roleLabelMap: Record<string, string> = {
@@ -125,6 +127,7 @@ export default function ProfilePage() {
     admin: 'Admin',
     manager: 'Manager',
     cashier: 'Cashier',
+    viewer: 'Viewer',
     user: 'User',
   }
 
@@ -265,6 +268,36 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
+
+        {/* Business Membership */}
+        {currentBusiness && (
+          <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6 mt-4">
+            <div className="mb-5">
+              <h3 className="text-base font-semibold text-gray-900">Business Membership</h3>
+              <p className="text-xs sm:text-sm text-neutral-light mt-0.5">Your role and membership details</p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5">
+              <div>
+                <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Business</p>
+                <p className="text-sm font-medium text-gray-900">{currentBusiness.name}</p>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Role in Business</p>
+                {businessRole ? (
+                  <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg border ${roleColorMap[businessRole] || roleColorMap.user}`}>
+                    {roleLabelMap[businessRole] || businessRole}
+                  </span>
+                ) : (
+                  <p className="text-sm text-gray-500">Not assigned to a business</p>
+                )}
+              </div>
+              <div>
+                <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Businesses Joined</p>
+                <p className="text-sm font-medium text-gray-900">{businessCount}</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Personal Information */}
         <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6 mt-4">

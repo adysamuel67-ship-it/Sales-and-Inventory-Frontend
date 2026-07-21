@@ -45,17 +45,32 @@ export default function BusinessLayout({
 
   // Fetch business-specific role for the current user
   useEffect(() => {
-    if (user?.id && isAuthenticated && profileLoaded) {
+    if (user?.id && isAuthenticated && profileLoaded && businessId) {
       adminAPI.getMemberByUser(user.id).then((res) => {
-        const memberRole = res.data?.role
+        const data = res.data
+        let memberRole: string | undefined
+        if (Array.isArray(data)) {
+          const bizMember = data.find((m: any) => String(m.business_id) === businessId)
+          if (bizMember) {
+            memberRole = bizMember.role
+          } else if (data.length > 0) {
+            memberRole = data[0].role
+          }
+        } else if (data && typeof data === 'object') {
+          memberRole = data.role
+        }
         if (memberRole) {
           setBusinessRole(memberRole)
+        } else if (currentBusiness?.role) {
+          setBusinessRole(currentBusiness.role)
         }
       }).catch(() => {
-        // Non-critical; fall back to global role
+        if (currentBusiness?.role) {
+          setBusinessRole(currentBusiness.role)
+        }
       })
     }
-  }, [user?.id, isAuthenticated, profileLoaded, setBusinessRole])
+  }, [user?.id, isAuthenticated, profileLoaded, businessId, setBusinessRole, currentBusiness?.role])
 
   if (isLoading || !isAuthenticated || !profileLoaded) {
     return (

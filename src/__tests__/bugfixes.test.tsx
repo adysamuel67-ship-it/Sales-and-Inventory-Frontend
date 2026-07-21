@@ -258,7 +258,7 @@ describe('Role checking consistency', () => {
       expect(isStaffRole('super_admin')).toBe(false)
       expect(isStaffRole('OWNER')).toBe(false)
       expect(isStaffRole('manager')).toBe(false)
-      expect(isStaffRole('cashier')).toBe(false)
+      expect(isStaffRole('cashier')).toBe(true)
     })
 
     it('handles undefined', () => {

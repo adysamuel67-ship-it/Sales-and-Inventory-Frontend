@@ -12,7 +12,7 @@ import LowStockAlerts from '@/components/LowStockAlerts'
 import { useAuth } from '@/lib/auth'
 import { reportAPI, saleAPI, productAPI } from '@/lib/api'
 import { useBusinessId } from '@/lib/useBusinessId'
-import { extractArray, mapLowStock } from '@/lib/utils'
+import { extractArray, mapLowStock, getDateRange } from '@/lib/utils'
 
 interface DashboardSummary {
   total_revenue: number
@@ -76,17 +76,6 @@ function extractSummary(data: any): DashboardSummary | null {
     total_profit: Number(profit ?? 0),
     total_sales: Number(sales ?? 0),
     total_products: Number(products ?? 0),
-  }
-}
-
-
-function getDateRange(daysAgo: number) {
-  const end = new Date()
-  const start = new Date(end)
-  start.setDate(start.getDate() - daysAgo)
-  return {
-    start: start.toISOString().split('T')[0],
-    end: end.toISOString().split('T')[0],
   }
 }
 

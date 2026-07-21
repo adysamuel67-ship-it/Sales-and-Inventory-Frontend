@@ -39,6 +39,8 @@ export function mapSale(raw: any, productMap?: Map<number, string>): MappedSale 
       const pid = i.product_id ?? i.productId
       if (pid != null && productMap && productMap.has(pid)) {
         resolvedName = productMap.get(pid)!
+      } else if (pid != null) {
+        resolvedName = `Product #${pid}`
       }
     }
     return { ...i, product_name: resolvedName || i.product_name || i.name }
@@ -162,5 +164,5 @@ export function isManagerRole(role?: string): boolean {
 }
 
 export function isStaffRole(role?: string): boolean {
-  return role === 'STAFF' || role === 'staff'
+  return role === 'cashier' || role === 'viewer' || role === 'STAFF' || role === 'staff'
 }

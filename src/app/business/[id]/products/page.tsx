@@ -24,21 +24,12 @@ export default function ProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState('')
   const [lowStockOnly, setLowStockOnly] = useState(false)
   const [detailProduct, setDetailProduct] = useState<any>(null)
-
-  if (isNaN(businessId)) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 text-center">
-        <h2 className="text-lg font-semibold text-gray-900 mb-2">Invalid business</h2>
-        <p className="text-sm text-gray-500">This business doesn&apos;t exist or the URL is invalid.</p>
-      </div>
-    )
-  }
-
-  // Add/Edit form state
   const [form, setForm] = useState({
     name: '', price: '', cost_price: '', quantity: '', unit: 'units', low_stock_threshold: '10', category: '', description: '', sku: '',
   })
   const [saving, setSaving] = useState(false)
+
+  const invalidBusiness = isNaN(businessId)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -152,6 +143,15 @@ export default function ProductsPage() {
   }
 
   const canEdit = isAdminRole(user?.business_role || user?.role)
+
+  if (invalidBusiness) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <h2 className="text-lg font-semibold text-gray-900 mb-2">Invalid business</h2>
+        <p className="text-sm text-gray-500">This business doesn&apos;t exist or the URL is invalid.</p>
+      </div>
+    )
+  }
 
   return (
     <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">

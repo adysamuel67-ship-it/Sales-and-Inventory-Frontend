@@ -48,7 +48,7 @@ export default function VerifyPage() {
     setSuccess('')
     try {
       await authAPI.sendVerification(email)
-      setSuccess('Verification code sent to your email.')
+      setSuccess('Verification code sent to your email. Check your spam or junk folder if you don\'t see it.')
       setResendTimer(120)
     } catch (err: any) {
       const detail = err.response?.data?.detail
@@ -167,19 +167,19 @@ export default function VerifyPage() {
           </div>
         )}
 
-        <div className="flex justify-center gap-3 auth-animate-fade-up auth-delay-1" onPaste={handlePaste}>
-          {code.map((digit, i) => (
+        <div className="flex justify-center gap-2 sm:gap-3 auth-animate-fade-up auth-delay-1" onPaste={handlePaste}>
+          {[0,1,2,3,4,5,6].map((i) => (
             <input
               key={i}
               ref={(el) => { inputRefs.current[i] = el }}
               type="text"
               inputMode="numeric"
               maxLength={1}
-              value={digit}
+              value={code[i] || ''}
               onChange={(e) => handleChange(i, e.target.value)}
               onKeyDown={(e) => handleKeyDown(i, e)}
-              className={`w-12 h-14 text-center text-xl font-bold rounded-xl border-2 outline-none transition-all ${
-                digit
+              className={`w-10 h-12 sm:w-12 sm:h-14 text-center text-lg sm:text-xl font-bold rounded-xl border-2 outline-none transition-all ${
+                code[i]
                   ? 'border-primary bg-primary-light text-primary'
                   : 'border-gray-200 bg-gray-50 focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/20'
               }`}

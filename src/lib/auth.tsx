@@ -9,8 +9,8 @@ interface User {
   email: string
   phone: string
   role: string
-  business_id?: number
   business_role?: string
+  business_id?: number
   is_verified?: boolean
   is_active?: boolean
   created_at?: string
@@ -21,6 +21,7 @@ interface Business {
   name: string
   is_active?: boolean
   members?: number
+  role?: string
 }
 
 interface AuthContextType {
@@ -92,6 +93,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           name: biz.name || 'Unnamed',
           is_active: biz.is_active,
           members: item.members,
+          role: item.role || biz.role || undefined,
         }
       })
       setBusinesses(mapped)
