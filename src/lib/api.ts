@@ -140,9 +140,8 @@ function attachToken(config: any) {
   if (typeof window !== 'undefined') {
     const url = config?.url || ''
     const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/refresh') ||
-      url.includes('/users/sign_up') || url.includes('/auth/verify_email') ||
-      url.includes('/auth/send_verification') || url.includes('/otp/get_code') ||
-      url.includes('/verify_user/')
+      url.includes('/users/sign_up') || url.includes('/auth/otp/get_code') ||
+      url.includes('/auth/otp/verification') || url.includes('/auth/verify_user/')
     if (!isAuthEndpoint) {
       const token = localStorage.getItem('token')
       if (token) {
@@ -165,9 +164,8 @@ function handle401Interceptor(instance: any) {
     const url = originalRequest?.url || ''
 
     const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/refresh') ||
-      url.includes('/users/sign_up') || url.includes('/auth/verify_email') ||
-      url.includes('/auth/send_verification') || url.includes('/otp/get_code') ||
-      url.includes('/verify_user/')
+      url.includes('/users/sign_up') || url.includes('/auth/otp/get_code') ||
+      url.includes('/auth/otp/verification') || url.includes('/auth/verify_user/')
 
     if (error.response?.status === 401 && typeof window !== 'undefined' && !isAuthEndpoint) {
       if (originalRequest._retry) {
@@ -231,8 +229,8 @@ function suppressAuthErrors(error: any): any {
   if (error.response?.status !== 401 && error.response?.status !== 403) return error
   const url = error.config?.url || ''
   if (url.includes('/auth/login') || url.includes('/auth/refresh') ||
-    url.includes('/users/sign_up') || url.includes('/auth/verify_email') ||
-    url.includes('/auth/send_verification') || url.includes('/otp/get_code') || url.includes('/verify_user/')) {
+    url.includes('/users/sign_up') || url.includes('/auth/otp/get_code') ||
+    url.includes('/auth/otp/verification') || url.includes('/auth/verify_user/')) {
     return error
   }
   const detail = error.response?.data?.detail
@@ -275,9 +273,9 @@ export const authAPI = {
       { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
     ),
   sendVerification: () =>
-    api.post('/otp/get_code'),
+    api.post('/auth/otp/get_code'),
   verifyEmail: (data: { user_id: number; code: string }) =>
-    api.post(`/verify_user/${data.user_id}`, { code: data.code }),
+    api.post(`/auth/verify_user/${data.user_id}`, { code: data.code }),
 }
 
 export const profileAPI = {
