@@ -3,8 +3,8 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
-import { businessAPI } from '@/lib/api'
-import { isAdminRole, parseApiError } from '@/lib/utils'
+import { businessAPI, adminAPI } from '@/lib/api'
+import { isAdminRole, parseApiError, extractArray } from '@/lib/utils'
 
 export default function SettingsPage() {
   const params = useParams()
@@ -24,7 +24,14 @@ export default function SettingsPage() {
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
   const [leaving, setLeaving] = useState(false)
 
-  const isOwner = isAdminRole(user?.role)
+  const [members, setMembers] = useState<any[]>([])
+  const [membersLoading, setMembersLoading] = useState(false)
+  const [editingMember, setEditingMember] = useState<number | null>(null)
+  const [editRole, setEditRole] = useState('')
+  const [editActive, setEditActive] = useState(true)
+  const [memberSaving, setMemberSaving] = useState(false)
+
+  const isOwner = isAdminRole(user?.business_role || user?.role)
 
   const loadSettings = useCallback(async () => {
     if (!businessId) return
@@ -57,6 +64,38 @@ export default function SettingsPage() {
   useEffect(() => {
     if (businessId) loadSettings()
   }, [businessId, loadSettings])
+
+  const loadMembers = useCallback(async () => {
+    if (!businessId) return
+    setMembersLoading(true)
+    try {
+      const res = await adminAPI.listMembers()
+      setMembers(extractArray(res.data))
+    } catch {
+    } finally {
+      setMembersLoading(false)
+    }
+  }, [businessId])
+
+  useEffect(() => {
+    if (businessId && isOwner) loadMembers()
+  }, [businessId, isOwner, loadMembers])
+
+  const handleUpdateMember = async (memberId: number) => {
+    setMemberSaving(true)
+    setError('')
+    setSuccess('')
+    try {
+      await businessAPI.updateMember(businessId, memberId, { role: editRole, is_active: editActive })
+      setSuccess('Member updated!')
+      setEditingMember(null)
+      loadMembers()
+    } catch (err: any) {
+      setError(parseApiError(err))
+    } finally {
+      setMemberSaving(false)
+    }
+  }
 
   if (isNaN(businessId)) {
     return (
@@ -242,6 +281,109 @@ export default function SettingsPage() {
                   </button>
                 )}
               </div>
+            </div>
+          )}
+
+          {isOwner && (
+            <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6 mb-4">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="font-semibold text-gray-900">Team Members</h3>
+                  <p className="text-xs text-neutral-light mt-0.5">Manage roles and access for team members</p>
+                </div>
+              </div>
+              {membersLoading ? (
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="skeleton h-16 rounded-xl" />
+                  ))}
+                </div>
+              ) : members.length > 0 ? (
+                <div className="space-y-2">
+                  {members.map((m: any) => (
+                    <div key={m.member_id} className="flex items-center justify-between py-3 px-4 bg-surfaceAlt rounded-xl">
+                      {editingMember === m.member_id ? (
+                        <div className="flex-1 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900">{m.name}</p>
+                            <p className="text-xs text-neutral-light">{m.email}</p>
+                          </div>
+                          <select
+                            value={editRole}
+                            onChange={(e) => setEditRole(e.target.value)}
+                            className="px-3 py-2 rounded-lg border border-gray-200 text-sm min-h-[40px]"
+                          >
+                            <option value="admin">Admin</option>
+                            <option value="manager">Manager</option>
+                            <option value="cashier">Cashier</option>
+                            <option value="viewer">Viewer</option>
+                          </select>
+                          <label className="flex items-center gap-2 text-sm text-gray-700">
+                            <input
+                              type="checkbox"
+                              checked={editActive}
+                              onChange={(e) => setEditActive(e.target.checked)}
+                              className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                            />
+                            Active
+                          </label>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleUpdateMember(m.member_id)}
+                              disabled={memberSaving}
+                              className="px-3 py-2 bg-primary text-white rounded-lg text-xs font-medium hover:bg-primary-dark transition-colors disabled:opacity-60 min-h-[40px]"
+                            >
+                              {memberSaving ? '...' : 'Save'}
+                            </button>
+                            <button
+                              onClick={() => setEditingMember(null)}
+                              className="px-3 py-2 bg-gray-100 text-gray-600 rounded-lg text-xs font-medium hover:bg-gray-200 transition-colors min-h-[40px]"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                            <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold shrink-0 ${m.role === 'admin' ? 'bg-purple-100 text-purple-700' : m.role === 'manager' ? 'bg-primary/10 text-primary' : 'bg-gray-100 text-gray-600'}`}>
+                              {m.name?.charAt(0)?.toUpperCase() || '?'}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate">{m.name}</p>
+                              <p className="text-xs text-neutral-light truncate">{m.email}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3 shrink-0">
+                            <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
+                              m.role === 'admin' ? 'bg-purple-100 text-purple-700' :
+                              m.role === 'manager' ? 'bg-primary/10 text-primary' :
+                              m.role === 'cashier' ? 'bg-emerald-100 text-emerald-700' :
+                              'bg-gray-100 text-gray-600'
+                            }`}>
+                              {m.role}
+                            </span>
+                            {m.member_id !== user?.id && (
+                              <button
+                                onClick={() => {
+                                  setEditingMember(m.member_id)
+                                  setEditRole(m.role || 'viewer')
+                                  setEditActive(m.is_active !== false)
+                                }}
+                                className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                              >
+                                Edit
+                              </button>
+                            )}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-neutral-light text-center py-4">No members found</p>
+              )}
             </div>
           )}
 

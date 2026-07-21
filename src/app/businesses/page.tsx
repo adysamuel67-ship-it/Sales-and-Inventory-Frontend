@@ -178,12 +178,12 @@ export default function BusinessesPage() {
     }
   }
 
-  const handleApprove = async (bizId: number, approvalId: number, dir: 0 | 1) => {
+  const handleApprove = async (bizId: number, approvalId: number, dir: 0 | 1, requestedRole?: string) => {
     setError('')
     setSuccess('')
     setProcessingApproval(approvalId)
     try {
-      await businessAPI.confirmApproval(bizId, { approval_id: approvalId, dir })
+      await businessAPI.confirmApproval(bizId, { approval_id: approvalId, dir, ...(dir === 1 && requestedRole ? { role: requestedRole } : {}) })
       setSuccess(dir === 1 ? 'Approved!' : 'Rejected')
       loadApprovals(bizId)
       if (dir === 1) {
@@ -480,7 +480,7 @@ export default function BusinessesPage() {
                               </div>
                               <div className="flex gap-2">
                                 <button
-                                  onClick={() => handleApprove(biz.business_id, approval.approval_id, 1)}
+                                  onClick={() => handleApprove(biz.business_id, approval.approval_id, 1, approval.approval_type)}
                                   disabled={processingApproval === approval.approval_id}
                                   className="px-3 py-1.5 text-xs font-medium text-success bg-success-light rounded-lg hover:bg-success/10 transition-colors min-h-[36px] disabled:opacity-50"
                                 >

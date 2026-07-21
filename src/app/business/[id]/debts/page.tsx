@@ -939,7 +939,7 @@ export default function DebtsPage() {
                 <div className="bg-success-light rounded-xl p-2.5 sm:p-4">
                   <p className="text-[10px] sm:text-xs text-neutral-light mb-0.5 sm:mb-1">Total Paid</p>
                   <p className="text-sm sm:text-lg font-bold text-success">
-                    {profileLoading ? '...' : formatCurrency(profileTransactions.reduce((sum, t) => sum + t.amount_paid, 0))}
+                    {profileLoading ? '...' : formatCurrency(profileTransactions.filter(t => t.amount_paid > 0).reduce((sum, t) => sum + t.amount_paid, 0))}
                   </p>
                 </div>
                 <div className="bg-surfaceAlt rounded-xl p-2.5 sm:p-4">
@@ -995,32 +995,65 @@ export default function DebtsPage() {
                 <div className="py-6 text-center">
                   <div className="w-6 h-6 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
                 </div>
-              ) : profileTransactions.length > 0 ? (
-                <div>
-                  <h5 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                    <span>Payments</span>
-                    <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-success-light text-success">{profileTransactions.length}</span>
-                  </h5>
-                  <div className="space-y-2">
-                    {profileTransactions.map((txn) => (
-                      <div key={txn.transaction_id} onClick={() => { setTxnDetailData(txn); setShowTxnDetailModal(true) }} className="flex items-center justify-between py-2.5 px-3 bg-surfaceAlt rounded-lg text-sm cursor-pointer hover:bg-gray-100 transition-colors">
-                        <div>
-                          <span className="font-medium text-success">{formatCurrency(txn.amount_paid)}</span>
-                          <p className="text-xs text-neutral-light mt-0.5">
-                            {new Date(txn.created_at).toLocaleDateString()} at {new Date(txn.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </p>
-                          {txn.note && (
-                            <p className="text-xs text-neutral-light mt-0.5">{txn.note}</p>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
               ) : (
-                <div className="text-center py-4">
-                  <p className="text-sm text-neutral-light">No payments yet</p>
-                </div>
+                <>
+                  {(() => {
+                    const borrows = profileTransactions.filter(t => t.amount_paid === 0)
+                    const payments = profileTransactions.filter(t => t.amount_paid > 0)
+                    return (
+                      <>
+                        {borrows.length > 0 && (
+                          <div className="mb-6">
+                            <h5 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                              <span>Borrowed</span>
+                              <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-warning-light text-warning">{borrows.length}</span>
+                            </h5>
+                            <div className="space-y-2">
+                              {borrows.map((txn) => (
+                                <div key={txn.transaction_id} onClick={() => { setTxnDetailData(txn); setShowTxnDetailModal(true) }} className="flex items-center justify-between py-2.5 px-3 bg-surfaceAlt rounded-lg text-sm cursor-pointer hover:bg-gray-100 transition-colors">
+                                  <div>
+                                    <span className="font-medium text-gray-900">{txn.note || 'Borrowed'}</span>
+                                    <p className="text-xs text-neutral-light mt-0.5">
+                                      {new Date(txn.created_at).toLocaleDateString()} at {new Date(txn.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {payments.length > 0 && (
+                          <div>
+                            <h5 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                              <span>Payments</span>
+                              <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-success-light text-success">{payments.length}</span>
+                            </h5>
+                            <div className="space-y-2">
+                              {payments.map((txn) => (
+                                <div key={txn.transaction_id} onClick={() => { setTxnDetailData(txn); setShowTxnDetailModal(true) }} className="flex items-center justify-between py-2.5 px-3 bg-surfaceAlt rounded-lg text-sm cursor-pointer hover:bg-gray-100 transition-colors">
+                                  <div>
+                                    <span className="font-medium text-success">{formatCurrency(txn.amount_paid)}</span>
+                                    <p className="text-xs text-neutral-light mt-0.5">
+                                      {new Date(txn.created_at).toLocaleDateString()} at {new Date(txn.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </p>
+                                    {txn.note && (
+                                      <p className="text-xs text-neutral-light mt-0.5">{txn.note}</p>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {profileTransactions.length === 0 && (
+                          <div className="text-center py-4">
+                            <p className="text-sm text-neutral-light">No transactions yet</p>
+                          </div>
+                        )}
+                      </>
+                    )
+                  })()}
+                </>
               )}
             </div>
 
@@ -1123,21 +1156,29 @@ export default function DebtsPage() {
           <div className="absolute inset-0 bg-black/40" />
           <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="sticky top-0 bg-white border-b border-gray-100 px-5 py-4 rounded-t-2xl flex items-center justify-between z-10">
-              <h3 className="font-semibold text-gray-900">Payment Details</h3>
+              <h3 className="font-semibold text-gray-900">{txnDetailData.amount_paid === 0 ? 'Borrow Details' : 'Payment Details'}</h3>
               <button onClick={() => setShowTxnDetailModal(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors">
                 <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
             <div className="px-5 py-5 space-y-5">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-success-light flex items-center justify-center shrink-0">
-                  <svg className="w-6 h-6 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${txnDetailData.amount_paid === 0 ? 'bg-warning-light' : 'bg-success-light'}`}>
+                  {txnDetailData.amount_paid === 0 ? (
+                    <svg className="w-6 h-6 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  ) : (
+                    <svg className="w-6 h-6 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  )}
                 </div>
                 <div>
-                  <p className="text-xs text-neutral-light">Amount Paid</p>
-                  <p className="text-xl font-bold text-success">{formatCurrency(txnDetailData.amount_paid)}</p>
+                  <p className="text-xs text-neutral-light">{txnDetailData.amount_paid === 0 ? 'Item Borrowed' : 'Amount Paid'}</p>
+                  <p className={`text-xl font-bold ${txnDetailData.amount_paid === 0 ? 'text-warning' : 'text-success'}`}>
+                    {txnDetailData.amount_paid === 0 ? (txnDetailData.note || 'Borrowed') : formatCurrency(txnDetailData.amount_paid)}
+                  </p>
                 </div>
               </div>
 

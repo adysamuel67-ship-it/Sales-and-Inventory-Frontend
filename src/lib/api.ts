@@ -304,8 +304,10 @@ export const businessAPI = {
     api.post('/businesses/approvals/send_approval', data),
   getApprovals: (businessId: number, status?: string) =>
     api.get(`/businesses/approvals/get_approvals/${businessId}`, { params: status ? { status } : {} }),
-  confirmApproval: (businessId: number, data: { approval_id: number; dir: 0 | 1 }) =>
+  confirmApproval: (businessId: number, data: { approval_id: number; dir: 0 | 1; role?: string }) =>
     api.post(`/businesses/approvals/confirm_approvals/${businessId}`, data),
+  updateMember: (businessId: number, memberId: number, data: { role?: string; is_active?: boolean }) =>
+    api.put(`/businesses/${businessId}/members/${memberId}`, data),
 }
 
 export const adminAPI = {
@@ -313,6 +315,7 @@ export const adminAPI = {
   listAllUsers: () => api.get('/users/all_users'),
   listMembers: () => api.get('/users/members'),
   getUser: (id: number) => api.get(`/users/${id}`),
+  getMemberByUser: (userId: number) => api.get(`/users/members/${userId}`),
   updateUser: (id: number, data: any) => api.put(`/users/${id}`, data),
   deleteUser: (id: number) => api.delete(`/users/${id}`),
   activateUser: (id: number) => api.put(`/users/${id}/activate`),

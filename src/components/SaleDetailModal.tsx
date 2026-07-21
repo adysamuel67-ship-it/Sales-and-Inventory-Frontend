@@ -52,7 +52,11 @@ export default function SaleDetailModal({ sale, onClose }: Props) {
             </div>
             <div>
               <p className="text-xs text-neutral-light">Sale #{sale.id}</p>
-              <p className="text-lg font-bold text-gray-900">GH₵{sale.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+              {isPartial ? (
+                <p className="text-lg font-bold text-danger">GH₵{balance.toLocaleString(undefined, { minimumFractionDigits: 2 })} <span className="text-sm font-medium text-neutral-light">remaining</span></p>
+              ) : (
+                <p className="text-lg font-bold text-gray-900">GH₵{sale.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+              )}
             </div>
           </div>
 
@@ -66,12 +70,28 @@ export default function SaleDetailModal({ sale, onClose }: Props) {
             <div className="bg-surfaceAlt rounded-xl p-4">
               <p className="text-xs text-neutral-light mb-1">Status</p>
               {isPartial ? (
-                <span className="inline-block px-2.5 py-1 rounded-full text-xs font-medium bg-warning-light text-warning">Partial</span>
+                <span className="inline-block px-2.5 py-1 rounded-full text-xs font-medium bg-warning-light text-warning">Partial Payment</span>
               ) : (
                 <span className="inline-block px-2.5 py-1 rounded-full text-xs font-medium bg-success-light text-success">Fully Paid</span>
               )}
             </div>
           </div>
+
+          {isPartial && (
+            <div className="bg-surfaceAlt rounded-xl p-4">
+              <p className="text-xs text-neutral-light uppercase tracking-wider mb-2">Payment Progress</p>
+              <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden mb-2">
+                <div
+                  className="h-full bg-success rounded-full transition-all"
+                  style={{ width: `${Math.min(100, ((sale.amount_paid ?? 0) / sale.amount) * 100)}%` }}
+                />
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-success font-medium">GH₵{(sale.amount_paid ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 })} paid</span>
+                <span className="text-danger font-medium">GH₵{balance.toLocaleString(undefined, { minimumFractionDigits: 2 })} remaining</span>
+              </div>
+            </div>
+          )}
 
           {sale.customer_name && (
             <div className="bg-surfaceAlt rounded-xl p-4">
@@ -82,13 +102,13 @@ export default function SaleDetailModal({ sale, onClose }: Props) {
 
           <div>
             <p className="text-xs text-neutral-light uppercase tracking-wider mb-2">Items</p>
-            <div className="space-y-2">
+            <div className="space-y-1">
               {sale.sales_items && sale.sales_items.length > 0 ? (
                 sale.sales_items.map((item: any, idx: number) => (
-                  <div key={idx} className="flex items-center justify-between py-2.5 px-3 bg-surfaceAlt rounded-lg text-sm">
-                    <div>
-                      <span className="font-medium text-gray-900">{item.product_name || item.name || `Product #${item.product_id}`}</span>
-                      <span className="text-neutral-light ml-2">× {item.quantity}</span>
+                  <div key={idx} className="flex items-center justify-between py-2 px-3 bg-surfaceAlt rounded-lg text-sm">
+                    <div className="flex flex-col">
+                      <span className="font-medium text-gray-900">{item.product_name || item.name || 'Unknown Product'}</span>
+                      <span className="text-neutral-light text-xs">× {item.quantity}</span>
                     </div>
                     {item.unit_price != null && (
                       <span className="font-medium text-gray-900">GH₵{(Number(item.unit_price) * item.quantity).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
@@ -96,7 +116,7 @@ export default function SaleDetailModal({ sale, onClose }: Props) {
                   </div>
                 ))
               ) : (
-                <div className="py-2.5 px-3 bg-surfaceAlt rounded-lg text-sm">
+                <div className="py-2 px-3 bg-surfaceAlt rounded-lg text-sm">
                   <span className="font-medium text-gray-900">{sale.product}</span>
                   <span className="text-neutral-light ml-2">× {sale.qty}</span>
                 </div>
@@ -106,7 +126,7 @@ export default function SaleDetailModal({ sale, onClose }: Props) {
 
           <div className="border-t border-gray-100 pt-4 space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-neutral-light">Total Amount</span>
+              <span className="text-neutral-light">Total Sale Amount</span>
               <span className="font-semibold text-gray-900">GH₵{sale.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
             </div>
             {sale.amount_paid != null && (
@@ -117,7 +137,7 @@ export default function SaleDetailModal({ sale, onClose }: Props) {
             )}
             {isPartial && (
               <div className="flex items-center justify-between text-sm">
-                <span className="text-neutral-light">Balance Due</span>
+                <span className="text-neutral-light">Outstanding Balance</span>
                 <span className="font-semibold text-danger">GH₵{balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
               </div>
             )}

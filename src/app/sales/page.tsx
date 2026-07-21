@@ -397,7 +397,10 @@ export default function SalesPage() {
       ) : filteredSales.length > 0 ? (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredSales.map((sale) => (
+            {filteredSales.map((sale) => {
+              const isPartial = sale.amount_paid != null && sale.amount_paid < sale.amount && sale.amount > 0
+              const balance = sale.amount - (sale.amount_paid ?? sale.amount)
+              return (
               <button
                 key={sale.id}
                 onClick={() => setDetailSale(sale)}
@@ -409,9 +412,12 @@ export default function SalesPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15a2.25 2.25 0 012.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
                     </svg>
                   </div>
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${paymentBadge(sale.payment)}`}>
-                    {sale.payment}
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    {isPartial && <span className="w-1.5 h-1.5 rounded-full bg-warning shrink-0" />}
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${paymentBadge(sale.payment)}`}>
+                      {sale.payment}
+                    </span>
+                  </div>
                 </div>
 
                 <h3 className="font-medium text-gray-900 text-sm mb-1 truncate group-hover:text-primary transition-colors">
@@ -419,12 +425,24 @@ export default function SalesPage() {
                 </h3>
 
                 <div className="flex items-baseline gap-1 mb-3">
-                  <span className="text-lg font-bold text-gray-900">GH₵{sale.amount.toFixed(2)}</span>
+                  {isPartial ? (
+                    <>
+                      <span className="text-lg font-bold text-danger">GH₵{balance.toFixed(2)}</span>
+                      <span className="text-xs text-neutral-light">left of GH₵{sale.amount.toFixed(2)}</span>
+                    </>
+                  ) : (
+                    <span className="text-lg font-bold text-gray-900">GH₵{sale.amount.toFixed(2)}</span>
+                  )}
                 </div>
 
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-neutral-light">Qty: {sale.qty}</span>
-                  {sale.customer_name && (
+                  {isPartial && (
+                    <span className="text-warning font-medium">
+                      GH₵{(sale.amount_paid ?? 0).toFixed(2)} paid
+                    </span>
+                  )}
+                  {!isPartial && sale.customer_name && (
                     <span className="text-primary font-medium truncate ml-2">{sale.customer_name}</span>
                   )}
                 </div>
@@ -436,7 +454,7 @@ export default function SalesPage() {
                   </svg>
                 </div>
               </button>
-            ))}
+            )})}
           </div>
           {filteredSales.length > 20 && (
             <div className="mt-6 text-center text-xs text-neutral-light">

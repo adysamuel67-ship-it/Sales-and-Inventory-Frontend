@@ -33,13 +33,17 @@ export interface MappedSale {
 }
 
 export function mapSale(raw: any, productMap?: Map<number, string>): MappedSale {
-  const items = raw.sales_items || []
-  const productNames = items.map((i: any) => {
-    if (i.product_name || i.name) return i.product_name || i.name
-    const pid = i.product_id ?? i.productId
-    if (pid != null && productMap && productMap.has(pid)) return productMap.get(pid)!
-    return pid != null ? `Product #${pid}` : 'Unknown'
-  }).join(', ')
+  const items = (raw.sales_items || []).map((i: any) => {
+    let resolvedName = i.product_name || i.name
+    if (!resolvedName) {
+      const pid = i.product_id ?? i.productId
+      if (pid != null && productMap && productMap.has(pid)) {
+        resolvedName = productMap.get(pid)!
+      }
+    }
+    return { ...i, product_name: resolvedName || i.product_name || i.name }
+  })
+  const productNames = items.map((i: any) => i.product_name || i.name).join(', ')
   const totalQty = items.reduce((sum: number, i: any) => sum + (i.quantity ?? 0), 0)
   return {
     id: raw.sale_id ?? raw.id,

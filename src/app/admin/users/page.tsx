@@ -181,6 +181,9 @@ export default function AdminUsersPage() {
                         className="text-xs font-medium rounded-lg border border-gray-200 px-2 py-1 focus:border-primary outline-none bg-white disabled:opacity-50"
                       >
                         <option value="user">User</option>
+                        <option value="cashier">Cashier</option>
+                        <option value="viewer">Viewer</option>
+                        <option value="manager">Manager</option>
                         <option value="admin">Admin</option>
                         <option value="super_admin">Super Admin</option>
                       </select>

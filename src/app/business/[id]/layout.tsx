@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
+import { adminAPI } from '@/lib/api'
 import DashboardLayout from '@/components/DashboardLayout'
 
 export default function BusinessLayout({
@@ -12,7 +13,7 @@ export default function BusinessLayout({
 }) {
   const router = useRouter()
   const params = useParams()
-  const { isAuthenticated, isLoading, profileLoaded, isVerified, user, currentBusiness, businesses, fetchBusinesses, switchBusiness } = useAuth()
+  const { isAuthenticated, isLoading, profileLoaded, isVerified, user, currentBusiness, businesses, fetchBusinesses, switchBusiness, setBusinessRole } = useAuth()
   const businessId = params?.id as string
 
   useEffect(() => {
@@ -41,6 +42,20 @@ export default function BusinessLayout({
       }
     }
   }, [businessId, businesses, currentBusiness, switchBusiness])
+
+  // Fetch business-specific role for the current user
+  useEffect(() => {
+    if (user?.id && isAuthenticated && profileLoaded) {
+      adminAPI.getMemberByUser(user.id).then((res) => {
+        const memberRole = res.data?.role
+        if (memberRole) {
+          setBusinessRole(memberRole)
+        }
+      }).catch(() => {
+        // Non-critical; fall back to global role
+      })
+    }
+  }, [user?.id, isAuthenticated, profileLoaded, setBusinessRole])
 
   if (isLoading || !isAuthenticated || !profileLoaded) {
     return (

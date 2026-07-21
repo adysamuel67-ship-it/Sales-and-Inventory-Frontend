@@ -35,11 +35,24 @@ export default function SignUpPage() {
       setError('Please agree to the Terms of Service and Privacy Policy to continue.')
       return
     }
+    if (form.password.length < 8) {
+      setError('Password must be at least 8 characters long.')
+      return
+    }
+    if (!/[A-Z]/.test(form.password)) {
+      setError('Password must contain at least one uppercase letter.')
+      return
+    }
+    if (!/[0-9]/.test(form.password)) {
+      setError('Password must contain at least one number.')
+      return
+    }
     setError('')
     setLoading(true)
     try {
       await authAPI.signUp(form)
-      router.push('/login?registered=1')
+      localStorage.setItem('pendingVerificationEmail', form.email)
+      router.push('/verify')
     } catch (err: any) {
       const detail = err.response?.data?.detail
       if (Array.isArray(detail)) {

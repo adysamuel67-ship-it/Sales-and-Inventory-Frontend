@@ -151,7 +151,7 @@ export default function ProductsPage() {
     }
   }
 
-  const canEdit = isAdminRole(user?.role)
+  const canEdit = isAdminRole(user?.business_role || user?.role)
 
   return (
     <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">

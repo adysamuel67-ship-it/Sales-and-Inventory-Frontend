@@ -76,7 +76,7 @@ export default function BusinessDashboardPage() {
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [draftDateRange, setDraftDateRange] = useState(() => getDateRange(30))
 
-  const isStaff = isStaffRole(user?.role)
+  const isStaff = isStaffRole(user?.business_role || user?.role)
 
   const loadDashboard = useCallback(async () => {
     if (!businessId || isNaN(businessId)) return

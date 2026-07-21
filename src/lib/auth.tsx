@@ -10,7 +10,9 @@ interface User {
   phone: string
   role: string
   business_id?: number
+  business_role?: string
   is_verified?: boolean
+  is_active?: boolean
   created_at?: string
 }
 
@@ -30,6 +32,7 @@ interface AuthContextType {
   login: (token: string, user: User | null, refreshToken?: string) => void
   logout: () => void
   fetchProfile: () => Promise<User | null>
+  setBusinessRole: (role: string) => void
   isAuthenticated: boolean
   isVerified: boolean
   businesses: Business[]
@@ -50,6 +53,7 @@ const AuthContext = createContext<AuthContextType>({
   login: () => {},
   logout: () => {},
   fetchProfile: async () => null,
+  setBusinessRole: () => {},
   isAuthenticated: false,
   isVerified: false,
   businesses: [],
@@ -141,6 +145,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         role: data.role || parsed?.role || 'user',
         business_id: data.business_id || data.business?.id || parsed?.business_id || undefined,
         is_verified: data.is_verified ?? parsed?.is_verified ?? false,
+        is_active: data.is_active ?? parsed?.is_active ?? true,
         created_at: data.created_at || data.date_joined || data.joined_at || parsed?.created_at || iatDate,
       }
       setUser(profileUser)
@@ -157,6 +162,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       return null
     }
+  }, [])
+
+  const setBusinessRole = useCallback((role: string) => {
+    setUser((prev) => {
+      if (!prev) return prev
+      const updated = { ...prev, business_role: role }
+      localStorage.setItem('user', JSON.stringify(updated))
+      return updated
+    })
   }, [])
 
   const logout = useCallback(() => {
@@ -258,6 +272,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         login,
         logout,
         fetchProfile,
+        setBusinessRole,
         isAuthenticated: !!token,
         isVerified: !!user?.is_verified,
         businesses,

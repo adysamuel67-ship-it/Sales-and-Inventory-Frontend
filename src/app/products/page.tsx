@@ -31,6 +31,16 @@ export default function ProductsPage() {
   const [form, setForm] = useState({ name: '', price: '', cost_price: '', quantity: '', unit: 'units' })
   const [creating, setCreating] = useState(false)
   const [detailProduct, setDetailProduct] = useState<Product | null>(null)
+  const [search, setSearch] = useState('')
+
+  const filteredProducts = products.filter((p) => {
+    if (!search) return true
+    const q = search.toLowerCase()
+    return (
+      p.name?.toLowerCase().includes(q) ||
+      p.unit?.toLowerCase().includes(q)
+    )
+  })
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) router.replace('/login')
@@ -137,6 +147,18 @@ export default function ProductsPage() {
         <div className="mb-4 bg-success-light text-success text-sm p-3 rounded-xl">{success}</div>
       )}
 
+      {products.length > 0 && (
+        <div className="mb-4">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search products..."
+            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+          />
+        </div>
+      )}
+
       {showForm && (
         <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
           <h3 className="font-semibold text-gray-900 mb-4">Add New Product</h3>
@@ -224,9 +246,9 @@ export default function ProductsPage() {
         <div className="flex items-center justify-center py-16">
           <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
-      ) : products.length > 0 ? (
+      ) : filteredProducts.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {products.map((product) => {
+          {filteredProducts.map((product) => {
             const isOutOfStock = product.quantity <= 0
             const isLowStock = product.quantity > 0 && product.quantity <= (product.low_stock_threshold ?? 10)
             const margin = product.price > 0 && product.cost_price > 0

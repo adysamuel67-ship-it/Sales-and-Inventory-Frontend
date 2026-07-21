@@ -124,7 +124,7 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
   const notificationsRef = useRef<HTMLDivElement>(null)
 
   const isSuperAdmin = user?.role === 'super_admin'
-  const isManager = isManagerRole(user?.role)
+  const isManager = isManagerRole(user?.business_role || user?.role)
   const bizBase = businessId ? `/business/${businessId}` : ''
 
   const normalNavItems = useMemo(() => [

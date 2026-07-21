@@ -101,8 +101,8 @@ function CustomersContent() {
   const [profileLoading, setProfileLoading] = useState(false)
   const [detailSale, setDetailSale] = useState<MappedSale | null>(null)
 
-  const isStaff = isStaffRole(user?.role)
-  const isAdmin = isAdminRole(user?.role)
+  const isStaff = isStaffRole(user?.business_role || user?.role)
+  const isAdmin = isAdminRole(user?.business_role || user?.role)
 
   const loadCustomers = useCallback(async () => {
     if (!businessId) return

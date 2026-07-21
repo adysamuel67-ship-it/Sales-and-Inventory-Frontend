@@ -54,7 +54,7 @@ export default function SalesPage() {
   const [customerName, setCustomerName] = useState('')
   const [customerPhone, setCustomerPhone] = useState('')
 
-  const isStaff = isStaffRole(user?.role)
+  const isStaff = isStaffRole(user?.business_role || user?.role)
 
   const loadData = async () => {
     if (!businessId) return
@@ -617,10 +617,13 @@ export default function SalesPage() {
                       </td>
                       <td className="px-5 py-3.5 text-center">
                         {isBorrow ? (
-                          <div className="flex items-center justify-center gap-1.5">
-                            <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-warning-light text-warning">Borrow</span>
+                          <div className="flex flex-col items-center gap-0.5">
+                            <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-warning-light text-warning">Partial</span>
+                            <span className="text-[10px] text-neutral-light">
+                              GH₵{(sale.amount_paid ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 })} of GH₵{sale.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })} paid
+                            </span>
                             {balance > 0 && (
-                              <span className="text-[10px] text-danger font-medium">GH₵{balance.toLocaleString(undefined, { minimumFractionDigits: 2 })} due</span>
+                              <span className="text-[10px] text-danger font-medium">GH₵{balance.toLocaleString(undefined, { minimumFractionDigits: 2 })} remaining</span>
                             )}
                           </div>
                         ) : sale.amount_paid != null && sale.amount_paid >= sale.amount ? (
@@ -684,13 +687,20 @@ export default function SalesPage() {
                         </div>
                         <p className="text-xs text-neutral-light mt-0.5">{sale.time}</p>
                       </div>
-                      <p className="font-bold text-gray-900 shrink-0">
-                        {sale.amount > 0 ? (
-                          `GH₵${sale.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
-                        ) : (
-                          <span className="text-neutral-light text-xs font-normal">No charge</span>
-                        )}
-                      </p>
+                      {isBorrow ? (
+                        <div className="text-right shrink-0">
+                          <p className="text-xs text-neutral-light line-through">GH₵{sale.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                          <p className="text-sm font-bold text-danger">GH₵{balance.toLocaleString(undefined, { minimumFractionDigits: 2 })} left</p>
+                        </div>
+                      ) : (
+                        <p className="font-bold text-gray-900 shrink-0">
+                          {sale.amount > 0 ? (
+                            `GH₵${sale.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+                          ) : (
+                            <span className="text-neutral-light text-xs font-normal">No charge</span>
+                          )}
+                        </p>
+                      )}
                     </div>
                     <div className="flex items-center justify-between mt-2">
                       <div className="flex items-center gap-2 flex-wrap">
@@ -704,7 +714,7 @@ export default function SalesPage() {
                         </span>
                         {isBorrow ? (
                           <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-warning-light text-warning">
-                            Borrow {balance > 0 && `· GH₵${balance.toLocaleString(undefined, { minimumFractionDigits: 2 })} due`}
+                            GH₵{(sale.amount_paid ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 })} of GH₵{sale.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })} paid
                           </span>
                         ) : sale.amount_paid != null && sale.amount_paid >= sale.amount ? (
                           <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-success-light text-success">Paid</span>

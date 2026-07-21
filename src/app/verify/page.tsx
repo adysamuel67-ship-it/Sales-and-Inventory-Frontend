@@ -10,15 +10,22 @@ import { useAuth } from '@/lib/auth'
 export default function VerifyPage() {
   const router = useRouter()
   const { user, fetchProfile, fetchBusinesses, logout } = useAuth()
-  const [code, setCode] = useState(['', '', '', '', '', ''])
+  const [code, setCode] = useState(['', '', '', '', '', '', ''])
   const [loading, setLoading] = useState(false)
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [resendTimer, setResendTimer] = useState(0)
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null)
 
-  const userEmail = user?.email
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setPendingEmail(localStorage.getItem('pendingVerificationEmail'))
+    }
+  }, [])
+
+  const userEmail = user?.email || pendingEmail
 
   useEffect(() => {
     if (!userEmail) {
@@ -34,21 +41,22 @@ export default function VerifyPage() {
   }, [resendTimer])
 
   const sendOtp = useCallback(async () => {
-    if (!user?.email) return
+    const email = user?.email || pendingEmail
+    if (!email) return
     setSending(true)
     setError('')
     setSuccess('')
     try {
-      await authAPI.sendVerification(user.email)
+      await authAPI.sendVerification(email)
       setSuccess('Verification code sent to your email.')
-      setResendTimer(60)
+      setResendTimer(120)
     } catch (err: any) {
       const detail = err.response?.data?.detail
       setError(typeof detail === 'string' ? detail : 'Failed to send verification code.')
     } finally {
       setSending(false)
     }
-  }, [user?.email])
+  }, [user?.email, pendingEmail])
 
   useEffect(() => {
     sendOtp()
@@ -60,7 +68,7 @@ export default function VerifyPage() {
     const newCode = [...code]
     newCode[index] = value
     setCode(newCode)
-    if (value && index < 5) {
+    if (value && index < 6) {
       inputRefs.current[index + 1]?.focus()
     }
   }
@@ -73,20 +81,20 @@ export default function VerifyPage() {
 
   const handlePaste = (e: React.ClipboardEvent) => {
     e.preventDefault()
-    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6)
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 7)
     if (pasted) {
-      const newCode = pasted.split('').concat(Array(6).fill('')).slice(0, 6)
+      const newCode = pasted.split('').concat(Array(7).fill('')).slice(0, 7)
       setCode(newCode)
       const nextEmpty = newCode.findIndex((c) => !c)
-      inputRefs.current[nextEmpty === -1 ? 5 : nextEmpty]?.focus()
+      inputRefs.current[nextEmpty === -1 ? 6 : nextEmpty]?.focus()
     }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const fullCode = code.join('')
-    if (fullCode.length !== 6) {
-      setError('Please enter the full 6-digit code.')
+    if (fullCode.length !== 7) {
+      setError('Please enter the full 7-digit code.')
       return
     }
     if (!userEmail) {
@@ -97,6 +105,7 @@ export default function VerifyPage() {
     setLoading(true)
     try {
       await authAPI.verifyEmail({ email: userEmail, code: fullCode })
+      localStorage.removeItem('pendingVerificationEmail')
       const profileUser = await fetchProfile()
       if (profileUser?.is_verified) {
         await fetchBusinesses()
@@ -128,7 +137,7 @@ export default function VerifyPage() {
   return (
     <AuthLayout
       title="Verify Your Email"
-      subtitle="Enter the 6-digit code sent to your email"
+      subtitle="Enter the 7-digit code sent to your email"
       mode="verify"
     >
       <div className="mb-5 p-3.5 bg-primary-light rounded-xl border border-primary/10 auth-animate-fade-up">
@@ -136,7 +145,7 @@ export default function VerifyPage() {
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
           </svg>
-          {user?.email || 'your email'}
+          {userEmail}
         </p>
       </div>
 
@@ -180,7 +189,7 @@ export default function VerifyPage() {
 
         <button
           type="submit"
-          disabled={loading || code.join('').length !== 6}
+          disabled={loading || code.join('').length !== 7}
           className="w-full py-3.5 bg-primary text-white rounded-xl font-semibold text-sm hover:bg-primary-dark transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 active:scale-[0.98] auth-animate-fade-up auth-delay-2"
         >
           {loading ? (
