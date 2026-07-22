@@ -56,6 +56,7 @@ export default function SalesPage() {
   const [amountPaid, setAmountPaid] = useState('')
   const [customerName, setCustomerName] = useState('')
   const [customerPhone, setCustomerPhone] = useState('')
+  const [customerEmail, setCustomerEmail] = useState('')
 
   const isStaff = isStaffRole(user?.business_role || user?.role)
 
@@ -200,18 +201,21 @@ export default function SalesPage() {
         }
 
         if (!customerId) {
-          const first = validLineItems[0]
-          const params = new URLSearchParams({
-            name: customerName.trim(),
-            phone: customerPhone.trim(),
-            return_sale: '1',
-            amount_paid: String(effectiveAmountPaid),
-            payment_method: paymentMethod,
-            product_id: first.product_id,
-            quantity: first.quantity,
-          })
-          router.push(`/business/${businessId}/customers?${params.toString()}`)
-          return
+          try {
+            const customerPayload: any = {
+              name: customerName.trim(),
+              phone: customerPhone.trim(),
+            }
+            if (customerEmail.trim()) {
+              customerPayload.email = customerEmail.trim()
+            }
+            const newCustomerRes = await customerAPI.create(businessId, customerPayload)
+            customerId = newCustomerRes.data?.customer_id ?? newCustomerRes.data?.id
+          } catch {
+            setError('Failed to create customer. Please check the details and try again.')
+            setCreating(false)
+            return
+          }
         }
 
         salePayload.customer_id = customerId
@@ -224,6 +228,7 @@ export default function SalesPage() {
       setAmountPaid('')
       setCustomerName('')
       setCustomerPhone('')
+      setCustomerEmail('')
       setShowForm(false)
       setSuccess('Sale recorded successfully!')
       loadData()
@@ -435,6 +440,16 @@ export default function SalesPage() {
                     onChange={(e) => setCustomerName(e.target.value)}
                     placeholder="Customer's full name"
                     required
+                    className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Customer Email</label>
+                  <input
+                    type="email"
+                    value={customerEmail}
+                    onChange={(e) => setCustomerEmail(e.target.value)}
+                    placeholder="customer@example.com"
                     className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                   />
                 </div>

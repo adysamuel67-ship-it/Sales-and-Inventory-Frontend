@@ -93,6 +93,10 @@ export default function DebtsPage() {
   const [addDebtNote, setAddDebtNote] = useState('')
   const [addingDebt, setAddingDebt] = useState(false)
   const [allCustomers, setAllCustomers] = useState<any[]>([])
+  const [addDebtNewCustomer, setAddDebtNewCustomer] = useState(false)
+  const [addDebtNewName, setAddDebtNewName] = useState('')
+  const [addDebtNewPhone, setAddDebtNewPhone] = useState('')
+  const [addDebtNewEmail, setAddDebtNewEmail] = useState('')
 
   const [showDetailModal, setShowDetailModal] = useState(false)
   const [detailCustomer, setDetailCustomer] = useState<CustomerWithDebt | null>(null)
@@ -312,12 +316,16 @@ export default function DebtsPage() {
     setAddDebtAmount('')
     setAddDebtDueDate('')
     setAddDebtNote('')
+    setAddDebtNewCustomer(false)
+    setAddDebtNewName('')
+    setAddDebtNewPhone('')
+    setAddDebtNewEmail('')
     setShowAddDebtModal(true)
   }
 
   const handleAddDebt = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!businessId || !addDebtCustomerId) return
+    if (!businessId) return
     setAddingDebt(true)
     setError('')
     try {
@@ -328,13 +336,51 @@ export default function DebtsPage() {
         return
       }
 
+      let customerId: number | null = null
+
+      if (addDebtNewCustomer) {
+        if (!addDebtNewName.trim() || !addDebtNewPhone.trim()) {
+          setError('Customer name and phone are required')
+          setAddingDebt(false)
+          return
+        }
+        try {
+          const customerPayload: any = {
+            name: addDebtNewName.trim(),
+            phone: addDebtNewPhone.trim(),
+          }
+          if (addDebtNewEmail.trim()) {
+            customerPayload.email = addDebtNewEmail.trim()
+          }
+          const newCustomerRes = await customerAPI.create(businessId, customerPayload)
+          customerId = newCustomerRes.data?.customer_id ?? newCustomerRes.data?.id
+        } catch {
+          setError('Failed to create customer. Please check the details and try again.')
+          setAddingDebt(false)
+          return
+        }
+      } else {
+        if (!addDebtCustomerId) {
+          setError('Please select a customer')
+          setAddingDebt(false)
+          return
+        }
+        customerId = parseInt(addDebtCustomerId)
+      }
+
+      if (!customerId) {
+        setError('Customer ID could not be determined')
+        setAddingDebt(false)
+        return
+      }
+
       const payload: any = {
         amount,
         due_date: addDebtDueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         note: addDebtNote.trim() || 'Debt recorded',
       }
 
-      await debtAPI.addDebt(businessId, parseInt(addDebtCustomerId), payload)
+      await debtAPI.addDebt(businessId, customerId, payload)
       setShowAddDebtModal(false)
       setSuccess('Debt added successfully!')
       successTimer()
@@ -719,21 +765,73 @@ export default function DebtsPage() {
             </div>
             <form onSubmit={handleAddDebt} className="px-6 py-5 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Customer *</label>
-                <select
-                  value={addDebtCustomerId}
-                  onChange={(e) => setAddDebtCustomerId(e.target.value)}
-                  required
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-white min-h-[44px]"
-                >
-                  <option value="">Select a customer</option>
-                  {allCustomers.map((c: any) => (
-                    <option key={c.customer_id ?? c.id} value={c.customer_id ?? c.id}>
-                      {c.name} {c.phone ? `(${c.phone})` : ''}
-                    </option>
-                  ))}
-                </select>
+                <label className="flex items-center gap-2 mb-3">
+                  <input
+                    type="checkbox"
+                    checked={addDebtNewCustomer}
+                    onChange={(e) => {
+                      setAddDebtNewCustomer(e.target.checked)
+                      setAddDebtCustomerId('')
+                    }}
+                    className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                  />
+                  <span className="text-sm font-medium text-gray-700">Create new customer</span>
+                </label>
               </div>
+
+              {addDebtNewCustomer ? (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Customer Name *</label>
+                    <input
+                      type="text"
+                      value={addDebtNewName}
+                      onChange={(e) => setAddDebtNewName(e.target.value)}
+                      placeholder="Customer's full name"
+                      required
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Customer Phone *</label>
+                    <input
+                      type="tel"
+                      value={addDebtNewPhone}
+                      onChange={(e) => setAddDebtNewPhone(e.target.value)}
+                      placeholder="024XXXXXXX"
+                      required
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Customer Email</label>
+                    <input
+                      type="email"
+                      value={addDebtNewEmail}
+                      onChange={(e) => setAddDebtNewEmail(e.target.value)}
+                      placeholder="customer@example.com"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                    />
+                  </div>
+                </>
+              ) : (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Customer *</label>
+                  <select
+                    value={addDebtCustomerId}
+                    onChange={(e) => setAddDebtCustomerId(e.target.value)}
+                    required
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-white min-h-[44px]"
+                  >
+                    <option value="">Select a customer</option>
+                    {allCustomers.map((c: any) => (
+                      <option key={c.customer_id ?? c.id} value={c.customer_id ?? c.id}>
+                        {c.name} {c.phone ? `(${c.phone})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Amount (GH\u20B5) *</label>

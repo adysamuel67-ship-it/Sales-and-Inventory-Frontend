@@ -1,7 +1,7 @@
 'use client'
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
-import { profileAPI, businessAPI, setTokenRefreshCallback, setAuthLogoutCallback, getUserIdFromToken, tryProactiveRefresh, startAutoRefresh, stopAutoRefresh, isTokenExpired, setLoginGrace, decodeJwt } from '@/lib/api'
+import { profileAPI, businessAPI, setTokenRefreshCallback, setAuthLogoutCallback, getUserIdFromToken, tryProactiveRefresh, startAutoRefresh, stopAutoRefresh, isTokenExpired, decodeJwt } from '@/lib/api'
 import { SUPER_ADMIN_EMAIL } from '@/lib/utils'
 
 interface User {
@@ -161,11 +161,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setPendingVerificationEmail(profileUser.email)
       }
       return profileUser
-    } catch (err: any) {
-      const isNetworkError = !err.response || err.code === 'ERR_NETWORK' || err.code === 'ECONNABORTED'
-      if (!isNetworkError) {
-        setProfileLoaded(true)
-      }
+    } catch {
+      setProfileLoaded(true)
       return null
     }
   }, [])
@@ -212,6 +209,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const storedRefreshToken = localStorage.getItem('refresh_token')
     const storedUser = localStorage.getItem('user')
 
+    const profileTimeout = setTimeout(() => {
+      if (!cancelled) setProfileLoaded(true)
+    }, 8000)
+
     if (storedToken && storedUser && storedUser !== 'undefined') {
       setToken(storedToken)
       if (storedRefreshToken) setRefreshTokenValue(storedRefreshToken)
@@ -223,7 +224,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       const init = () => {
-        setLoginGrace(120000)
         setIsLoading(false)
         startAutoRefresh(3 * 60 * 1000)
         fetchProfile()
@@ -242,6 +242,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     return () => {
       cancelled = true
+      clearTimeout(profileTimeout)
       stopAutoRefresh()
     }
   }, [])
@@ -258,7 +259,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     setToken(newToken)
     setUser(newUser)
-    setLoginGrace(60000)
     startAutoRefresh(3 * 60 * 1000)
     if (newUser && !newUser.is_verified) {
       setPendingVerificationEmail(newUser.email)

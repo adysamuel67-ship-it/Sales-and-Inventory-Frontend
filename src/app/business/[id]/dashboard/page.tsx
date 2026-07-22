@@ -83,7 +83,10 @@ export default function BusinessDashboardPage() {
   const isStaff = isStaffRole(user?.business_role || user?.role)
 
   const loadDashboard = useCallback(async () => {
-    if (!businessId || isNaN(businessId)) return
+    if (!businessId || isNaN(businessId)) {
+      setLoading(false)
+      return
+    }
     setError('')
     setLoading(true)
 

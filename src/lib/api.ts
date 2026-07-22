@@ -54,11 +54,6 @@ export function isTokenExpired(token: string, bufferSeconds = 60): boolean {
 let isRefreshing = false
 let refreshPromise: Promise<string> | null = null
 let failedQueue: { resolve: (token: string) => void; reject: (err: any) => void }[] = []
-let loginGraceUntil = 0
-
-export function setLoginGrace(durationMs = 60000) {
-  loginGraceUntil = Date.now() + durationMs
-}
 
 function processQueue(error: any, token: string | null) {
   failedQueue.forEach((prom) => {
@@ -102,6 +97,7 @@ async function performTokenRefresh(): Promise<string> {
       const newRefresh = data.refresh_token || refreshToken
       localStorage.setItem('token', newToken)
       localStorage.setItem('refresh_token', newRefresh)
+      loggedOut = false
       return newToken
     } catch (err: any) {
       lastError = err
@@ -117,7 +113,6 @@ function startRefresh(): Promise<string> {
     isRefreshing = true
     refreshPromise = performTokenRefresh()
       .then((newToken) => {
-        setLoginGrace()
         if (onTokenRefreshed) onTokenRefreshed(newToken)
         processQueue(null, newToken)
         return newToken
@@ -136,18 +131,22 @@ function startRefresh(): Promise<string> {
 
 export { startRefresh }
 
-function attachToken(config: any) {
+async function attachToken(config: any) {
   if (typeof window !== 'undefined') {
     const url = config?.url || ''
     const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/refresh') ||
       url.includes('/users/sign_up') || url.includes('/auth/otp/get_code') ||
-      url.includes('/auth/otp/verification') || url.includes('/auth/verify_user/')
+      url.includes('/auth/otp/verification') || url.includes('/auth/verify_user')
     if (!isAuthEndpoint) {
-      const token = localStorage.getItem('token')
-      if (token) {
-        if (isTokenExpired(token, 30) && !isRefreshing) {
-          startRefresh().catch(() => {})
+      let token = localStorage.getItem('token')
+      if (token && isTokenExpired(token, 30)) {
+        try {
+          token = await startRefresh()
+        } catch {
+          token = null
         }
+      }
+      if (token) {
         config.headers.Authorization = `Bearer ${token}`
       }
     }
@@ -165,17 +164,11 @@ function handle401Interceptor(instance: any) {
 
     const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/refresh') ||
       url.includes('/users/sign_up') || url.includes('/auth/otp/get_code') ||
-      url.includes('/auth/otp/verification') || url.includes('/auth/verify_user/')
+      url.includes('/auth/otp/verification') || url.includes('/auth/verify_user')
 
     if (error.response?.status === 401 && typeof window !== 'undefined' && !isAuthEndpoint) {
       if (originalRequest._retry) {
-        if (Date.now() >= loginGraceUntil) {
-          localStorage.removeItem('token')
-          localStorage.removeItem('refresh_token')
-          localStorage.removeItem('user')
-          localStorage.removeItem('current_business_id')
-          if (onAuthLogout) onAuthLogout()
-        }
+        doLogout()
         return Promise.reject(error)
       }
 
@@ -188,7 +181,10 @@ function handle401Interceptor(instance: any) {
           }).then((token) => {
             originalRequest.headers.Authorization = `Bearer ${token}`
             return instance(originalRequest)
-          }).catch(() => Promise.reject(error))
+          }).catch(() => {
+            doLogout()
+            return Promise.reject(error)
+          })
         }
 
         originalRequest._retry = true
@@ -197,51 +193,35 @@ function handle401Interceptor(instance: any) {
           const newToken = await startRefresh()
           originalRequest.headers.Authorization = `Bearer ${newToken}`
           return instance(originalRequest)
-        } catch (refreshError: any) {
-          if (Date.now() >= loginGraceUntil) {
-            localStorage.removeItem('token')
-            localStorage.removeItem('refresh_token')
-            localStorage.removeItem('user')
-            localStorage.removeItem('current_business_id')
-            if (onAuthLogout) onAuthLogout()
-          }
+        } catch {
+          doLogout()
           return Promise.reject(error)
         }
       }
 
-      if (Date.now() < loginGraceUntil) {
-        return Promise.reject(error)
-      }
-      localStorage.removeItem('token')
-      localStorage.removeItem('refresh_token')
-      localStorage.removeItem('user')
-      localStorage.removeItem('current_business_id')
-      if (onAuthLogout) onAuthLogout()
+      doLogout()
     }
     return Promise.reject(error)
   }
 }
 
-api.interceptors.response.use((response) => response, handle401Interceptor(api))
+let loggedOut = false
 
-function suppressAuthErrors(error: any): any {
-  if (!error || !error.response) return error
-  if (error.response?.status !== 401 && error.response?.status !== 403) return error
-  const url = error.config?.url || ''
-  if (url.includes('/auth/login') || url.includes('/auth/refresh') ||
-    url.includes('/users/sign_up') || url.includes('/auth/otp/get_code') ||
-    url.includes('/auth/otp/verification') || url.includes('/auth/verify_user/')) {
-    return error
-  }
-  const detail = error.response?.data?.detail
-  if (typeof detail === 'string' && /invalid|expired|token/i.test(detail)) {
-    error.response.data = { ...error.response.data, detail: '' }
-  }
-  return error
+function doLogout() {
+  if (loggedOut) return
+  loggedOut = true
+  localStorage.removeItem('token')
+  localStorage.removeItem('refresh_token')
+  localStorage.removeItem('user')
+  localStorage.removeItem('current_business_id')
+  if (onAuthLogout) onAuthLogout()
 }
 
-api.interceptors.response.use((r) => r, (e) => { suppressAuthErrors(e); return Promise.reject(e) })
-profileApi.interceptors.response.use((r) => r, (e) => { suppressAuthErrors(e); return Promise.reject(e) })
+export function resetLogoutGuard() {
+  loggedOut = false
+}
+
+api.interceptors.response.use((response) => response, handle401Interceptor(api))
 
 profileApi.interceptors.response.use(
   (response) => response,
@@ -256,7 +236,7 @@ profileApi.interceptors.response.use(
           originalRequest.headers.Authorization = `Bearer ${newToken}`
           return profileApi(originalRequest)
         } catch {
-          // Silently fail — profile call does NOT trigger redirect
+          // Profile failure should not force logout — the main api interceptor handles that
         }
       }
     }
@@ -321,7 +301,7 @@ export const adminAPI = {
   updateUser: (id: number, data: any) => api.put(`/users/${id}`, data),
   deleteUser: (id: number) => api.delete(`/users/${id}`),
   activateUser: (id: number) => api.put(`/users/${id}/activate`),
-  verifyUser: (userId: number) => api.post(`/auth/verify_user/${userId}`),
+  verifyUser: (email: string) => api.post('/auth/verify_user', { email }),
 }
 
 export const productAPI = {

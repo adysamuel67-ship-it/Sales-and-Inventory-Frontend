@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import AuthLayout from '@/components/AuthLayout'
-import { authAPI, tryProactiveRefresh, isTokenExpired, setLoginGrace } from '@/lib/api'
+import { authAPI, tryProactiveRefresh, isTokenExpired } from '@/lib/api'
 import { useAuth } from '@/lib/auth'
 
 function LoginForm() {
@@ -42,7 +42,6 @@ function LoginForm() {
         return
       }
       login(access_token, user, refreshToken)
-      setLoginGrace(60000)
 
       if (isTokenExpired(access_token, 60) && refreshToken) {
         const refreshed = await tryProactiveRefresh()
