@@ -139,7 +139,7 @@ async function attachToken(config: any) {
       url.includes('/auth/otp/verification') || url.includes('/auth/verify_user')
     if (!isAuthEndpoint) {
       let token = localStorage.getItem('token')
-      if (token && isTokenExpired(token, 30)) {
+      if (token && isTokenExpired(token, 120)) {
         try {
           token = await startRefresh()
         } catch {
@@ -167,7 +167,7 @@ function handle401Interceptor(instance: any) {
       url.includes('/auth/otp/verification') || url.includes('/auth/verify_user')
 
     if (error.response?.status === 401 && typeof window !== 'undefined' && !isAuthEndpoint) {
-      if (originalRequest._retry) {
+      if (originalRequest._retry === 'done') {
         doLogout()
         return Promise.reject(error)
       }
@@ -187,15 +187,22 @@ function handle401Interceptor(instance: any) {
           })
         }
 
-        originalRequest._retry = true
+        originalRequest._retry = 'done'
 
         try {
           const newToken = await startRefresh()
           originalRequest.headers.Authorization = `Bearer ${newToken}`
           return instance(originalRequest)
         } catch {
-          doLogout()
-          return Promise.reject(error)
+          try {
+            await new Promise((r) => setTimeout(r, 3000))
+            const newToken = await startRefresh()
+            originalRequest.headers.Authorization = `Bearer ${newToken}`
+            return instance(originalRequest)
+          } catch {
+            doLogout()
+            return Promise.reject(error)
+          }
         }
       }
 
@@ -375,7 +382,7 @@ export async function tryProactiveRefresh(): Promise<string | null> {
   const token = localStorage.getItem('token')
   const refreshToken = localStorage.getItem('refresh_token')
   if (!token || !refreshToken) return null
-  if (!isTokenExpired(token, 60)) return token
+  if (!isTokenExpired(token, 120)) return token
   try {
     return await startRefresh()
   } catch {
