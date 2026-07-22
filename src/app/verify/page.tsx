@@ -17,13 +17,12 @@ export default function VerifyPage() {
   const [success, setSuccess] = useState('')
   const [resendTimer, setResendTimer] = useState(0)
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
-  const [pendingEmail, setPendingEmail] = useState<string | null>(null)
-
-  useEffect(() => {
+  const [pendingEmail, setPendingEmail] = useState<string | null>(() => {
     if (typeof window !== 'undefined') {
-      setPendingEmail(localStorage.getItem('pendingVerificationEmail'))
+      return localStorage.getItem('pendingVerificationEmail')
     }
-  }, [])
+    return null
+  })
 
   const userEmail = user?.email || pendingEmail
 
@@ -106,6 +105,11 @@ export default function VerifyPage() {
     try {
       await authAPI.verifyEmail({ email: userEmail, code: fullCode })
       localStorage.removeItem('pendingVerificationEmail')
+      const token = localStorage.getItem('token')
+      if (!token) {
+        router.push('/login?registered=1')
+        return
+      }
       const profileUser = await fetchProfile()
       if (profileUser?.is_verified) {
         await fetchBusinesses()

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
-import { profileAPI, businessAPI, setTokenRefreshCallback, setAuthLogoutCallback, getUserIdFromToken, tryProactiveRefresh, startAutoRefresh, stopAutoRefresh, isTokenExpired, decodeJwt } from '@/lib/api'
+import { profileAPI, businessAPI, setTokenRefreshCallback, setAuthLogoutCallback, getUserIdFromToken, tryProactiveRefresh, startAutoRefresh, stopAutoRefresh, isTokenExpired, decodeJwt, resetLogoutGuard } from '@/lib/api'
 import { SUPER_ADMIN_EMAIL } from '@/lib/utils'
 
 interface User {
@@ -223,11 +223,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(null)
       }
 
-      const init = () => {
+      const init = async () => {
         setIsLoading(false)
         startAutoRefresh(3 * 60 * 1000)
-        fetchProfile()
-        fetchBusinesses()
+        await fetchProfile()
+        await fetchBusinesses()
         if (isTokenExpired(storedToken, 120) && storedRefreshToken) {
           tryProactiveRefresh().then((refreshed) => {
             if (cancelled) return
@@ -248,6 +248,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const login = useCallback((newToken: string, newUser: User | null, newRefreshToken?: string) => {
+    resetLogoutGuard()
     localStorage.setItem('token', newToken)
     localStorage.removeItem('current_business_id')
     if (newRefreshToken) {
