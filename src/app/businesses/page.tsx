@@ -520,6 +520,34 @@ export default function BusinessesPage() {
             </div>
             <p className="text-sm font-medium text-gray-900 mb-1">No businesses yet</p>
             <p className="text-xs text-neutral-light mb-4">Create one or join an existing business to get started</p>
+
+            <div className="max-w-sm mx-auto mb-6 bg-primary/5 border border-primary/10 rounded-2xl p-5 text-left">
+              <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-3">Getting Started</p>
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">1</div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Create a business</p>
+                    <p className="text-xs text-neutral-light">Set up your store, inventory, and team</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">2</div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Add products</p>
+                    <p className="text-xs text-neutral-light">Stock your inventory with items to sell</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">3</div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Record sales</p>
+                    <p className="text-xs text-neutral-light">Track every transaction and payment</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div className="flex justify-center gap-3">
               <button
                 onClick={() => setShowJoin(true)}

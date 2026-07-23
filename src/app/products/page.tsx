@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import DashboardLayout from '@/components/DashboardLayout'
 import ProductDetailModal from '@/components/ProductDetailModal'
 import { useAuth } from '@/lib/auth'
@@ -119,6 +120,30 @@ export default function ProductsPage() {
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
+    )
+  }
+
+  if (!businessId && !bizLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-4">
+            <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0022 16z" />
+              <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+              <line x1="12" y1="22.08" x2="12" y2="12" />
+            </svg>
+          </div>
+          <h2 className="text-lg font-semibold text-gray-900 mb-2">No business selected</h2>
+          <p className="text-sm text-neutral-light mb-4">Create or join a business to manage your products</p>
+          <Link
+            href="/businesses"
+            className="px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors"
+          >
+            Go to Businesses
+          </Link>
+        </div>
+      </DashboardLayout>
     )
   }
 

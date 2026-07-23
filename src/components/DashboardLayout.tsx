@@ -419,21 +419,35 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
 
           {/* Navigation */}
           <nav className="flex-1 px-3 py-3 space-y-4 overflow-y-auto">
+            {!businessId && (
+              <div className="mx-1 mb-1 p-3 rounded-xl bg-white/[0.06] border border-white/[0.08]">
+                <p className="text-[11px] text-white/50 leading-relaxed">
+                  <Link href="/businesses" onClick={() => setSidebarOpen(false)} className="text-white/80 font-medium hover:text-white transition-colors">Create or join a business</Link> to start managing your sales, products, and more.
+                </p>
+              </div>
+            )}
             {navGroups.map((group) => (
               <div key={group.label}>
                 <p className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-white/25">{group.label}</p>
                 <div className="space-y-0.5">
                 {group.items.map((item) => {
                   const isActive = isNavItemActive(item.href)
+                  const needsBusiness = item.href.startsWith('/business/')
+                  const disabled = needsBusiness && !businessId
                   return (
                     <Link
                       key={item.id}
-                      href={item.href}
-                      onClick={() => setSidebarOpen(false)}
+                      href={disabled ? '#' : item.href}
+                      onClick={(e) => {
+                        if (disabled) e.preventDefault()
+                        setSidebarOpen(false)
+                      }}
                       className={`relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] transition-all duration-200 min-h-[40px] group ${
-                        isActive
-                          ? 'bg-white/[0.13] text-white font-medium shadow-sm shadow-black/10'
-                          : 'text-white/50 hover:bg-white/[0.06] hover:text-white/80'
+                        disabled
+                          ? 'opacity-30 pointer-events-none'
+                          : isActive
+                            ? 'bg-white/[0.13] text-white font-medium shadow-sm shadow-black/10'
+                            : 'text-white/50 hover:bg-white/[0.06] hover:text-white/80'
                       }`}
                     >
                       {isActive && (
