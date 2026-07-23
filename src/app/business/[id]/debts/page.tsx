@@ -115,6 +115,7 @@ export default function DebtsPage() {
   const [showTxnDetailModal, setShowTxnDetailModal] = useState(false)
   const [txnDetailData, setTxnDetailData] = useState<CustomerTransaction | null>(null)
   const isAdmin = isAdminRole(user?.business_role || user?.role)
+  const canPayDebt = isAdmin || user?.business_role === 'cashier' || user?.role === 'cashier'
 
   const successTimer = useCallback(() => {
     const t = setTimeout(() => setSuccess(''), 4000)
@@ -619,7 +620,7 @@ export default function DebtsPage() {
                               >
                                 Details
                               </button>
-                              {customer.total_debt > 0 && isAdmin && (
+                              {customer.total_debt > 0 && canPayDebt && (
                                 <button
                                   onClick={() => openPayment(customer)}
                                   className="px-2.5 py-1 text-xs font-medium text-white bg-primary rounded-lg hover:bg-primary-dark transition-colors"
@@ -968,7 +969,7 @@ export default function DebtsPage() {
               )}
             </div>
             <div className="sticky bottom-0 bg-white border-t border-gray-100 px-4 sm:px-6 py-4 rounded-b-2xl flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-              {detailCustomer.total_debt > 0 && isAdmin && (
+              {detailCustomer.total_debt > 0 && canPayDebt && (
                 <button
                   onClick={() => {
                     setShowDetailModal(false)

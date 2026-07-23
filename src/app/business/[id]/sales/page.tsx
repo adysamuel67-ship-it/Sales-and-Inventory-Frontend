@@ -605,6 +605,7 @@ export default function SalesPage() {
                 <thead>
                   <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-gray-100">
                     <th className="text-left px-5 py-3 font-medium">Product</th>
+                    <th className="text-left px-5 py-3 font-medium">Customer</th>
                     <th className="text-center px-5 py-3 font-medium">Qty</th>
                     <th className="text-right px-5 py-3 font-medium">Amount</th>
                     <th className="text-center px-5 py-3 font-medium">Payment</th>
@@ -625,6 +626,9 @@ export default function SalesPage() {
                           {isBorrow && <span className="w-1.5 h-1.5 rounded-full bg-warning shrink-0" />}
                           {sale.product}
                         </div>
+                      </td>
+                      <td className="px-5 py-3.5 text-sm text-gray-600">
+                        {sale.customer_name || <span className="text-neutral-light text-xs">—</span>}
                       </td>
                       <td className="px-5 py-3.5 text-center text-neutral-light">{sale.qty}</td>
                       <td className="px-5 py-3.5 text-right font-semibold text-gray-900">
@@ -715,6 +719,9 @@ export default function SalesPage() {
                           <p className="font-medium text-gray-900 truncate text-sm">{sale.product}</p>
                         </div>
                         <p className="text-xs text-neutral-light mt-0.5">{sale.time}</p>
+                        {sale.customer_name && (
+                          <p className="text-xs text-primary font-medium mt-0.5">{sale.customer_name}</p>
+                        )}
                       </div>
                       {isBorrow ? (
                         <div className="text-right shrink-0">

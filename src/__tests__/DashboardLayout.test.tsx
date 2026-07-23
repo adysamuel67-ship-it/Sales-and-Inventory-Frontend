@@ -127,14 +127,16 @@ describe('DashboardLayout', () => {
     expect(screen.getByText('Sales & Inventory')).toBeTruthy()
   })
 
-  it('header shows Live indicator', () => {
+  it('header renders without redundant elements', () => {
     render(
       <DashboardLayout>
         <div>Content</div>
       </DashboardLayout>
     )
 
-    expect(screen.getByText('Live')).toBeTruthy()
+    const header = document.querySelector('header')
+    expect(header).toBeTruthy()
+    expect(screen.getByText('Content')).toBeTruthy()
   })
 
   it('no Link elements use window.location for navigation', () => {

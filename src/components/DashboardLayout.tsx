@@ -143,7 +143,8 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
     { label: 'Debts', icon: 'debts', href: `${bizBase}/debts`, id: 'debts', group: 'management' },
     { label: 'Approvals', icon: 'approvals', href: '/businesses', id: 'approvals', group: 'admin', ownerOnly: true },
     { label: 'Reports', icon: 'reports', href: `${bizBase}/reports`, id: 'reports', group: 'admin', ownerOnly: true },
-    { label: 'Settings', icon: 'settings', href: `${bizBase}/settings`, id: 'settings', group: 'admin', ownerOnly: true },
+    { label: 'Businesses', icon: 'admin-businesses', href: '/businesses', id: 'businesses-nav', group: 'account' },
+    { label: 'Settings', icon: 'settings', href: `${bizBase}/settings`, id: 'settings', group: 'account' },
   ], [bizBase])
 
   const visibleNavItems = useMemo(
@@ -160,9 +161,11 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
     const mainItems = visibleNavItems.filter(i => i.group === 'main')
     const mgmtItems = visibleNavItems.filter(i => i.group === 'management')
     const adminItems = visibleNavItems.filter(i => i.group === 'admin')
+    const acctItems = visibleNavItems.filter(i => i.group === 'account')
     if (mainItems.length) groups.push({ label: 'Overview', items: mainItems })
     if (mgmtItems.length) groups.push({ label: 'Manage', items: mgmtItems })
     if (adminItems.length) groups.push({ label: 'Administration', items: adminItems })
+    if (acctItems.length) groups.push({ label: 'Account', items: acctItems })
     return groups
   }, [visibleNavItems])
 
@@ -324,6 +327,89 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
                         </svg>
                         Create / Join Business
                       </Link>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Notification Bell */}
+          {isManager && (
+            <div className="px-3 pb-2">
+              <div ref={notificationsRef} className="relative">
+                <button
+                  onClick={() => setNotificationsOpen(!notificationsOpen)}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] transition-all duration-200 min-h-[40px] group text-white/50 hover:bg-white/[0.06] hover:text-white/80"
+                >
+                  <span className="text-white/35 group-hover:text-white/55">
+                    <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                  </span>
+                  <span className="flex-1 text-left">Notifications</span>
+                  {pendingApprovals.length > 0 && (
+                    <span className="min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full bg-primary text-white text-[10px] font-bold leading-none">
+                      {pendingApprovals.length}
+                    </span>
+                  )}
+                </button>
+
+                {notificationsOpen && (
+                  <div className="absolute left-0 right-0 mt-1 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden">
+                    <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+                      <h3 className="text-sm font-semibold text-gray-900">
+                        Requests {pendingApprovals.length > 0 && <span className="text-primary">({pendingApprovals.length})</span>}
+                      </h3>
+                      {pendingApprovals.length > 0 && (
+                        <Link
+                          href="/businesses"
+                          onClick={() => setNotificationsOpen(false)}
+                          className="text-xs text-primary font-medium hover:underline"
+                        >
+                          View all
+                        </Link>
+                      )}
+                    </div>
+                    <div className="max-h-72 overflow-y-auto">
+                      {pendingApprovals.length > 0 ? (
+                        pendingApprovals.map((approval: any, idx: number) => {
+                          const requesterName = approval.requester?.name || approval.requester_name || approval.name || 'Unknown'
+                          const requesterEmail = approval.requester?.email || approval.email || ''
+                          const role = approval.approval_type || approval.role || 'member'
+                          const reason = approval.reason || ''
+                          return (
+                            <button
+                              key={approval.approval_id || approval.id || idx}
+                              onClick={() => { setSelectedApproval(approval); setNotificationsOpen(false) }}
+                              className="w-full text-left px-4 py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors cursor-pointer"
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                                  <span className="text-xs font-semibold text-primary">{requesterName.charAt(0).toUpperCase()}</span>
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-sm font-medium text-gray-900 truncate">{requesterName}</p>
+                                  <p className="text-xs text-gray-400 truncate">{requesterEmail}</p>
+                                </div>
+                                <span className="text-[10px] font-medium uppercase tracking-wider bg-primary/10 text-primary px-2 py-0.5 rounded-full shrink-0">
+                                  {role}
+                                </span>
+                              </div>
+                              {reason && (
+                                <p className="text-xs text-gray-400 mt-1.5 ml-11 line-clamp-2">{reason}</p>
+                              )}
+                            </button>
+                          )
+                        })
+                      ) : (
+                        <div className="px-4 py-8 text-center">
+                          <svg className="w-8 h-8 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                          </svg>
+                          <p className="text-sm text-gray-500">No pending requests</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -502,134 +588,6 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
               <h1 className="text-[17px] font-bold text-gray-900 lg:hidden">
                 {visibleNavItems.find((item) => isNavItemActive(item.href))?.label || 'Dashboard'}
               </h1>
-            </div>
-
-            <div className="flex items-center gap-2.5">
-              <div className="hidden sm:flex items-center gap-1.5 bg-emerald-50 text-emerald-600 px-3 py-1.5 rounded-full text-[11px] font-semibold border border-emerald-100">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Live
-              </div>
-
-              <div ref={notificationsRef} className="relative">
-                <button
-                  onClick={() => setNotificationsOpen(!notificationsOpen)}
-                  className="relative p-2 rounded-lg hover:bg-gray-100 min-h-[40px] min-w-[40px] flex items-center justify-center"
-                >
-                  <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                  </svg>
-                  {pendingApprovals.length > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full bg-primary text-white text-[10px] font-bold leading-none ring-2 ring-white">
-                      {pendingApprovals.length}
-                    </span>
-                  )}
-                </button>
-
-                {notificationsOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-[calc(100vw-2rem)] sm:w-80 max-w-80 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden">
-                    <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-                      <h3 className="text-sm font-semibold text-gray-900">
-                        Requests {pendingApprovals.length > 0 && <span className="text-primary">({pendingApprovals.length})</span>}
-                      </h3>
-                      {pendingApprovals.length > 0 && (
-                        <Link
-                          href="/businesses"
-                          onClick={() => setNotificationsOpen(false)}
-                          className="text-xs text-primary font-medium hover:underline"
-                        >
-                          View all
-                        </Link>
-                      )}
-                    </div>
-                    <div className="max-h-72 overflow-y-auto">
-                      {pendingApprovals.length > 0 ? (
-                        pendingApprovals.map((approval: any, idx: number) => {
-                          const requesterName = approval.requester?.name || approval.requester_name || approval.name || 'Unknown'
-                          const requesterEmail = approval.requester?.email || approval.email || ''
-                          const role = approval.approval_type || approval.role || 'member'
-                          const reason = approval.reason || ''
-                          return (
-                            <button
-                              key={approval.approval_id || approval.id || idx}
-                              onClick={() => { setSelectedApproval(approval); setNotificationsOpen(false) }}
-                              className="w-full text-left px-4 py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors cursor-pointer"
-                            >
-                              <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                                  <span className="text-xs font-semibold text-primary">{requesterName.charAt(0).toUpperCase()}</span>
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                  <p className="text-sm font-medium text-gray-900 truncate">{requesterName}</p>
-                                  <p className="text-xs text-neutral-light truncate">{requesterEmail}</p>
-                                </div>
-                                <span className="text-[10px] font-medium uppercase tracking-wider bg-primary/10 text-primary px-2 py-0.5 rounded-full shrink-0">
-                                  {role}
-                                </span>
-                              </div>
-                              {reason && (
-                                <p className="text-xs text-neutral-light mt-1.5 ml-11 line-clamp-2">{reason}</p>
-                              )}
-                            </button>
-                          )
-                        })
-                      ) : (
-                        <div className="px-4 py-8 text-center">
-                          <svg className="w-8 h-8 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
-                          </svg>
-                          <p className="text-sm text-gray-500">No pending requests</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div ref={profileRef} className="relative">
-                <button
-                  onClick={() => setProfileOpen(!profileOpen)}
-                  className="flex items-center gap-2 p-1 pr-1.5 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
-                >
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-xs font-semibold">
-                    {user?.name?.charAt(0)?.toUpperCase() || 'U'}
-                  </div>
-                  <div className="hidden sm:block text-left">
-                    <p className="text-[13px] font-medium text-gray-700 leading-tight">{user?.name || 'User'}</p>
-                    <p className="text-[10px] text-gray-400 capitalize leading-tight">{(user?.business_role || user?.role || 'user').replace('_', ' ')}</p>
-                  </div>
-                  <svg className="w-3.5 h-3.5 text-gray-400 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-
-                {profileOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-1.5 z-50">
-                    <div className="px-3.5 py-2.5 border-b border-gray-100">
-                      <p className="text-[13px] font-semibold text-gray-900 truncate">{user?.name || 'User'}</p>
-                      <p className="text-[11px] text-gray-400 truncate">{user?.email || ''}</p>
-                    </div>
-                    <Link
-                      href="/profile"
-                      onClick={() => setProfileOpen(false)}
-                      className="flex items-center gap-2.5 px-3.5 py-2.5 text-[13px] text-gray-700 hover:bg-gray-50 transition-colors min-h-[40px]"
-                    >
-                      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                      My Profile
-                    </Link>
-                    <button
-                      onClick={() => { setProfileOpen(false); logout() }}
-                      className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-[13px] text-red-600 hover:bg-red-50 transition-colors min-h-[40px]"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                      </svg>
-                      Sign Out
-                    </button>
-                  </div>
-                )}
-              </div>
             </div>
           </div>
         </header>
