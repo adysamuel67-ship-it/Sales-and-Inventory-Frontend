@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
-import { saleAPI, productAPI, customerAPI } from '@/lib/api'
+import { saleAPI, productAPI, customerAPI, adminAPI } from '@/lib/api'
 import { extractArray, normalizeProduct, mapSale, parseApiError, isStaffRole, MappedSale } from '@/lib/utils'
 import SaleDetailModal from '@/components/SaleDetailModal'
 
@@ -65,9 +65,10 @@ export default function SalesPage() {
     setLoading(true)
     setError('')
     try {
-      const [salesRes, productsRes] = await Promise.allSettled([
+      const [salesRes, productsRes, membersRes] = await Promise.allSettled([
         saleAPI.list(businessId),
         productAPI.list(businessId),
+        adminAPI.listMembers(),
       ])
       const productsList = productsRes.status === 'fulfilled' ? extractArray(productsRes.value.data).map(normalizeProduct) : []
       if (productsRes.status === 'fulfilled') setProducts(productsList)
@@ -75,7 +76,17 @@ export default function SalesPage() {
       for (const p of productsList) {
         productMap.set(p.product_id, p.name)
       }
-      if (salesRes.status === 'fulfilled') setAllSales(extractArray(salesRes.value.data).map((s) => mapSale(s, productMap)))
+      const userMap = new Map<number, string>()
+      if (membersRes.status === 'fulfilled') {
+        const members = extractArray(membersRes.value.data)
+        for (const m of members) {
+          const uid = m.user_id ?? m.id
+          if (uid != null && m.name) {
+            userMap.set(Number(uid), m.name)
+          }
+        }
+      }
+      if (salesRes.status === 'fulfilled') setAllSales(extractArray(salesRes.value.data).map((s) => mapSale(s, productMap, userMap)))
     } catch (err: any) {
       const detail = err.response?.data?.detail
       setError(typeof detail === 'string' ? detail : 'Failed to load data')
@@ -606,6 +617,7 @@ export default function SalesPage() {
                   <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-gray-100">
                     <th className="text-left px-5 py-3 font-medium">Product</th>
                     <th className="text-left px-5 py-3 font-medium">Customer</th>
+                    <th className="text-left px-5 py-3 font-medium">Sold By</th>
                     <th className="text-center px-5 py-3 font-medium">Qty</th>
                     <th className="text-right px-5 py-3 font-medium">Amount</th>
                     <th className="text-center px-5 py-3 font-medium">Payment</th>
@@ -628,7 +640,28 @@ export default function SalesPage() {
                         </div>
                       </td>
                       <td className="px-5 py-3.5 text-sm text-gray-600">
-                        {sale.customer_name || <span className="text-neutral-light text-xs">—</span>}
+                        {sale.customer_name ? (
+                          <div className="flex flex-col">
+                            <span className="font-medium text-gray-900">{sale.customer_name}</span>
+                            {isBorrow && sale.customer_phone && (
+                              <span className="text-xs text-neutral-light">{sale.customer_phone}</span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-neutral-light text-xs">—</span>
+                        )}
+                      </td>
+                      <td className="px-5 py-3.5 text-sm text-gray-600">
+                        {sale.sold_by_name ? (
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-primary text-[10px] font-bold shrink-0">
+                              {sale.sold_by_name.charAt(0).toUpperCase()}
+                            </div>
+                            <span className="font-medium text-gray-900 truncate">{sale.sold_by_name}</span>
+                          </div>
+                        ) : (
+                          <span className="text-neutral-light text-xs">—</span>
+                        )}
                       </td>
                       <td className="px-5 py-3.5 text-center text-neutral-light">{sale.qty}</td>
                       <td className="px-5 py-3.5 text-right font-semibold text-gray-900">
@@ -719,8 +752,21 @@ export default function SalesPage() {
                           <p className="font-medium text-gray-900 truncate text-sm">{sale.product}</p>
                         </div>
                         <p className="text-xs text-neutral-light mt-0.5">{sale.time}</p>
-                        {sale.customer_name && (
-                          <p className="text-xs text-primary font-medium mt-0.5">{sale.customer_name}</p>
+                        {(sale.customer_name || sale.customer_phone) && (
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            {sale.customer_name && (
+                              <span className="text-xs text-primary font-medium truncate">{sale.customer_name}</span>
+                            )}
+                            {isBorrow && sale.customer_phone && (
+                              <span className="text-xs text-neutral-light truncate">· {sale.customer_phone}</span>
+                            )}
+                          </div>
+                        )}
+                        {sale.sold_by_name && (
+                          <div className="flex items-center gap-1 mt-0.5">
+                            <span className="text-[10px] text-neutral-light">by</span>
+                            <span className="text-xs text-gray-600 truncate">{sale.sold_by_name}</span>
+                          </div>
                         )}
                       </div>
                       {isBorrow ? (

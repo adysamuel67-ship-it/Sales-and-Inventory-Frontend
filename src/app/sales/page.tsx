@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
 import SaleDetailModal from '@/components/SaleDetailModal'
 import { useAuth } from '@/lib/auth'
-import { saleAPI, productAPI, customerAPI } from '@/lib/api'
+import { saleAPI, productAPI, customerAPI, adminAPI } from '@/lib/api'
 import { useBusinessId } from '@/lib/useBusinessId'
 import { extractArray, normalizeProduct, mapSale, MappedSale } from '@/lib/utils'
 
@@ -66,9 +66,10 @@ export default function SalesPage() {
     setLoading(true)
     setError('')
     try {
-      const [salesRes, productsRes] = await Promise.allSettled([
+      const [salesRes, productsRes, membersRes] = await Promise.allSettled([
         saleAPI.list(businessId),
         productAPI.list(businessId),
+        adminAPI.listMembers(),
       ])
       const productsList = productsRes.status === 'fulfilled' ? extractArray(productsRes.value.data).map(normalizeProduct) : []
       if (productsRes.status === 'fulfilled') setProducts(productsList)
@@ -76,7 +77,17 @@ export default function SalesPage() {
       for (const p of productsList) {
         productMap.set(p.product_id, p.name)
       }
-      if (salesRes.status === 'fulfilled') setAllSales(extractArray(salesRes.value.data).map((s) => mapSale(s, productMap)))
+      const userMap = new Map<number, string>()
+      if (membersRes.status === 'fulfilled') {
+        const members = extractArray(membersRes.value.data)
+        for (const m of members) {
+          const uid = m.user_id ?? m.id
+          if (uid != null && m.name) {
+            userMap.set(Number(uid), m.name)
+          }
+        }
+      }
+      if (salesRes.status === 'fulfilled') setAllSales(extractArray(salesRes.value.data).map((s) => mapSale(s, productMap, userMap)))
     } catch (err: any) {
       const detail = err.response?.data?.detail
       setError(typeof detail === 'string' ? detail : 'Failed to load data')
@@ -442,10 +453,28 @@ export default function SalesPage() {
                       GH₵{(sale.amount_paid ?? 0).toFixed(2)} paid
                     </span>
                   )}
-                  {!isPartial && sale.customer_name && (
-                    <span className="text-primary font-medium truncate ml-2">{sale.customer_name}</span>
-                  )}
                 </div>
+
+                {(sale.customer_name || sale.customer_phone) && (
+                  <div className="mt-2 flex items-center gap-1.5 text-xs">
+                    <svg className="w-3 h-3 text-primary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                    </svg>
+                    <span className="text-primary font-medium truncate">{sale.customer_name}</span>
+                    {sale.customer_phone && (
+                      <span className="text-neutral-light truncate">· {sale.customer_phone}</span>
+                    )}
+                  </div>
+                )}
+                {sale.sold_by_name && (
+                  <div className="mt-1.5 flex items-center gap-1.5 text-xs">
+                    <div className="w-4 h-4 rounded-full bg-primary/10 flex items-center justify-center text-primary text-[8px] font-bold shrink-0">
+                      {sale.sold_by_name.charAt(0).toUpperCase()}
+                    </div>
+                    <span className="text-neutral-light">Sold by</span>
+                    <span className="text-gray-700 font-medium truncate">{sale.sold_by_name}</span>
+                  </div>
+                )}
 
                 <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
                   <span className="text-xs text-neutral-light">{sale.time}</span>

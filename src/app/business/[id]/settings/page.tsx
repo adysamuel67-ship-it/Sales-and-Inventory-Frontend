@@ -74,7 +74,8 @@ export default function SettingsPage() {
       const res = await adminAPI.listMembers()
       const allMembers = extractArray(res.data)
       setMembers(allMembers.filter((m: any) => Number(m.business_id) === businessId))
-    } catch {
+    } catch (err: any) {
+      setError(parseApiError(err))
     } finally {
       setMembersLoading(false)
     }
@@ -382,20 +383,20 @@ export default function SettingsPage() {
                             }`}>
                               {m.role}
                             </span>
-                            {m.member_id !== user?.id && (
+                            {m.user_id !== user?.id && (
                               <>
-                                {confirmRemoveId === m.member_id ? (
+                                {confirmRemoveId === m.user_id ? (
                                   <div className="flex items-center gap-1.5">
                                     <button
-                                      onClick={() => handleRemoveMember(m.member_id)}
-                                      disabled={removingMemberId === m.member_id}
+                                      onClick={() => handleRemoveMember(m.user_id)}
+                                      disabled={removingMemberId === m.user_id}
                                       className="px-2.5 py-1.5 bg-red-600 text-white rounded-lg text-xs font-medium hover:bg-red-700 transition-colors disabled:opacity-60 min-h-[32px]"
                                     >
-                                      {removingMemberId === m.member_id ? '...' : 'Confirm'}
+                                      {removingMemberId === m.user_id ? '...' : 'Confirm'}
                                     </button>
                                     <button
                                       onClick={() => setConfirmRemoveId(null)}
-                                      disabled={removingMemberId === m.member_id}
+                                      disabled={removingMemberId === m.user_id}
                                       className="px-2.5 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-xs font-medium hover:bg-gray-200 transition-colors min-h-[32px]"
                                     >
                                       No
@@ -414,7 +415,7 @@ export default function SettingsPage() {
                                       Edit
                                     </button>
                                     <button
-                                      onClick={() => setConfirmRemoveId(m.member_id)}
+                                      onClick={() => setConfirmRemoveId(m.user_id)}
                                       className="px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
                                     >
                                       Remove

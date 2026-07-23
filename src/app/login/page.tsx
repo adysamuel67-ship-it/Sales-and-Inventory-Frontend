@@ -71,7 +71,13 @@ function LoginForm() {
       } catch {
         // Businesses fetch failed — continue anyway
       }
-      router.push('/dashboard')
+
+      const storedBizId = localStorage.getItem('current_business_id')
+      if (storedBizId) {
+        router.push(`/business/${storedBizId}/dashboard`)
+      } else {
+        router.push('/businesses')
+      }
     } catch (err: any) {
       const status = err.response?.status
       const detail = err.response?.data?.detail

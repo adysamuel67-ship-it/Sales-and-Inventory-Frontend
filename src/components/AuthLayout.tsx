@@ -57,7 +57,7 @@ export default function AuthLayout({
   return (
     <div className="min-h-screen auth-page flex flex-col lg:flex-row">
       {/* Marketing / Hero section — visible on ALL screens */}
-      <div className="auth-gradient relative overflow-hidden auth-animate-fade-in">
+      <div className="auth-gradient relative overflow-hidden auth-animate-fade-in lg:w-[55%] lg:shrink-0 lg:sticky lg:top-0 lg:h-screen">
         {/* Decorative shapes */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute -top-20 -right-20 w-72 h-72 bg-white/5 rounded-full blur-3xl" />

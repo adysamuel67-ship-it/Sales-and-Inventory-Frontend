@@ -27,12 +27,16 @@ export interface MappedSale {
   payment_status?: string
   customer_id?: number
   customer_name?: string
+  customer_phone?: string
+  customer_email?: string
+  user_id?: number
+  sold_by_name?: string
   note?: string
   sales_items?: any[]
   raw?: any
 }
 
-export function mapSale(raw: any, productMap?: Map<number, string>): MappedSale {
+export function mapSale(raw: any, productMap?: Map<number, string>, userMap?: Map<number, string>): MappedSale {
   const items = (raw.sales_items || []).map((i: any) => {
     let resolvedName = i.product_name || i.name
     if (!resolvedName) {
@@ -47,6 +51,7 @@ export function mapSale(raw: any, productMap?: Map<number, string>): MappedSale 
   })
   const productNames = items.map((i: any) => i.product_name || i.name).join(', ')
   const totalQty = items.reduce((sum: number, i: any) => sum + (i.quantity ?? 0), 0)
+  const userId = raw.user_id ?? raw.raw?.user_id
   return {
     id: raw.sale_id ?? raw.id,
     product: productNames || raw.product_name || raw.product || 'Unknown',
@@ -61,6 +66,10 @@ export function mapSale(raw: any, productMap?: Map<number, string>): MappedSale 
     payment_status: raw.payment_status || undefined,
     customer_id: raw.customer_id ?? raw.customer?.customer_id ?? undefined,
     customer_name: raw.customer_name ?? raw.customer?.name ?? undefined,
+    customer_phone: raw.customer_phone ?? raw.customer?.phone ?? raw.customer?.phone_number ?? undefined,
+    customer_email: raw.customer_email ?? raw.customer?.email ?? undefined,
+    user_id: userId != null ? Number(userId) : undefined,
+    sold_by_name: userId != null && userMap?.has(Number(userId)) ? userMap.get(Number(userId)) : undefined,
     note: raw.note || undefined,
     sales_items: items.length > 0 ? items : undefined,
     raw,
