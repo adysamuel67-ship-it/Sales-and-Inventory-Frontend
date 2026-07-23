@@ -72,7 +72,7 @@ describe('Shared mapSale', () => {
         { product_name: 'Beans', quantity: 3 },
       ],
       total_amount: 250,
-      payment_method: 'Cash',
+      payment_method: 'cash',
       created_at: '2024-01-15T10:30:00Z',
     }
     const sale = mapSale(raw)
@@ -80,7 +80,7 @@ describe('Shared mapSale', () => {
     expect(sale.product).toBe('Rice, Beans')
     expect(sale.qty).toBe(8)
     expect(sale.amount).toBe(250)
-    expect(sale.payment).toBe('Cash')
+    expect(sale.payment).toBe('cash')
     expect(sale.created_at).toBe('2024-01-15T10:30:00Z')
   })
 
@@ -89,7 +89,7 @@ describe('Shared mapSale', () => {
       sale_id: 2,
       sales_items: [{ product_id: 42, quantity: 2 }],
       total_amount: 100,
-      payment_method: 'MoMo',
+      payment_method: 'mobile_money',
     }
     const productMap = new Map([[42, 'Tomato Sauce']])
     const sale = mapSale(raw, productMap)

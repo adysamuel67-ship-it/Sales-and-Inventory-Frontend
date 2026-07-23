@@ -167,8 +167,8 @@ describe('RevenueChart', () => {
 
 describe('RecentSales', () => {
   const sales = [
-    { id: 1, product: 'Rice', qty: 5, amount: 250, payment: 'Cash', time: '10:30 AM' },
-    { id: 2, product: 'Beans', qty: 3, amount: 150, payment: 'MoMo', time: '11:00 AM' },
+    { id: 1, product: 'Rice', qty: 5, amount: 250, payment: 'cash', time: '10:30 AM' },
+    { id: 2, product: 'Beans', qty: 3, amount: 150, payment: 'mobile_money', time: '11:00 AM' },
   ]
 
   it('renders title', () => {
@@ -336,21 +336,21 @@ describe('LowStockAlerts', () => {
 
 describe('Payment color mapping', () => {
   const paymentColors: Record<string, string> = {
-    Cash: 'bg-success-light text-success',
-    MoMo: 'bg-primary-light text-primary',
-    Card: 'bg-warning-light text-warning',
+    cash: 'bg-success-light text-success',
+    mobile_money: 'bg-primary-light text-primary',
+    card: 'bg-warning-light text-warning',
   }
 
-  it('maps Cash to success color', () => {
-    expect(paymentColors['Cash']).toContain('success')
+  it('maps cash to success color', () => {
+    expect(paymentColors['cash']).toContain('success')
   })
 
-  it('maps MoMo to primary color', () => {
-    expect(paymentColors['MoMo']).toContain('primary')
+  it('maps mobile_money to primary color', () => {
+    expect(paymentColors['mobile_money']).toContain('primary')
   })
 
-  it('maps Card to warning color', () => {
-    expect(paymentColors['Card']).toContain('warning')
+  it('maps card to warning color', () => {
+    expect(paymentColors['card']).toContain('warning')
   })
 
   it('unknown payment falls back to gray', () => {

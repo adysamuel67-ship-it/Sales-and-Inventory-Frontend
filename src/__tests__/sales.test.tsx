@@ -48,7 +48,7 @@ function mapSale(raw: any, productMap: Map<number, string>) {
     product: productNames || raw.product_name || raw.product || 'Unknown',
     qty: totalQty,
     amount: raw.total_amount ?? raw.amount ?? 0,
-    payment: raw.payment_method || raw.payment || 'N/A',
+    payment: (raw.payment_method || raw.payment || 'N/A').toLowerCase(),
     time: raw.created_at
       ? new Date(raw.created_at).toLocaleString()
       : raw.time || '',
@@ -97,7 +97,7 @@ describe('Sales mapSale', () => {
         { product_id: 20, quantity: 2 },
       ],
       total_amount: 250,
-      payment_method: 'Cash',
+      payment_method: 'cash',
       created_at: '2024-01-15T10:30:00Z',
     }
     const productMap = new Map([[10, 'Rice'], [20, 'Beans']])
@@ -106,7 +106,7 @@ describe('Sales mapSale', () => {
     expect(sale.product).toBe('Rice, Beans')
     expect(sale.qty).toBe(5)
     expect(sale.amount).toBe(250)
-    expect(sale.payment).toBe('Cash')
+    expect(sale.payment).toBe('cash')
     expect(sale.created_at).toBe('2024-01-15T10:30:00Z')
   })
 
@@ -126,7 +126,7 @@ describe('Sales mapSale', () => {
       product_name: 'Fish',
       quantity: 10,
       total_amount: 200,
-      payment_method: 'MoMo',
+      payment_method: 'mobile_money',
     }
     const sale = mapSale(raw, new Map())
     expect(sale.product).toBe('Fish')
@@ -232,21 +232,21 @@ describe('Sales pagination', () => {
 
 describe('Payment method colors', () => {
   const paymentColors: Record<string, string> = {
-    Cash: 'bg-success-light text-success',
-    MoMo: 'bg-primary-light text-primary',
-    Card: 'bg-warning-light text-warning',
+    cash: 'bg-success-light text-success',
+    mobile_money: 'bg-primary-light text-primary',
+    card: 'bg-warning-light text-warning',
   }
 
-  it('Cash has green styling', () => {
-    expect(paymentColors['Cash']).toContain('success')
+  it('cash has green styling', () => {
+    expect(paymentColors['cash']).toContain('success')
   })
 
-  it('MoMo has primary styling', () => {
-    expect(paymentColors['MoMo']).toContain('primary')
+  it('mobile_money has primary styling', () => {
+    expect(paymentColors['mobile_money']).toContain('primary')
   })
 
-  it('Card has warning styling', () => {
-    expect(paymentColors['Card']).toContain('warning')
+  it('card has warning styling', () => {
+    expect(paymentColors['card']).toContain('warning')
   })
 
   it('unknown payment gets default styling', () => {
@@ -280,13 +280,13 @@ describe('Sale running totals', () => {
 
 describe('Sale record form', () => {
   it('requires product_id and quantity', () => {
-    const form = { product_id: '', quantity: '', payment_method: 'Cash' }
+    const form = { product_id: '', quantity: '', payment_method: 'cash' }
     const isValid = !!form.product_id && !!form.quantity
     expect(isValid).toBe(false)
   })
 
   it('is valid with product and quantity', () => {
-    const form = { product_id: '5', quantity: '3', payment_method: 'Cash' }
+    const form = { product_id: '5', quantity: '3', payment_method: 'cash' }
     const isValid = !!form.product_id && !!form.quantity
     expect(isValid).toBe(true)
   })
@@ -298,9 +298,9 @@ describe('Sale record form', () => {
     expect(total).toBe(150)
   })
 
-  it('defaults payment method to Cash', () => {
-    const form = { product_id: '', quantity: '', payment_method: 'Cash' }
-    expect(form.payment_method).toBe('Cash')
+  it('defaults payment method to cash', () => {
+    const form = { product_id: '', quantity: '', payment_method: 'cash' }
+    expect(form.payment_method).toBe('cash')
   })
 
   it('validates quantity does not exceed stock', () => {

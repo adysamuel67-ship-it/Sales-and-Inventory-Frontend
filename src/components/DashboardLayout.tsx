@@ -50,12 +50,7 @@ function NavIcon({ name }: { name: string }) {
         <line x1="1" y1="10" x2="23" y2="10" />
       </svg>
     ),
-    approvals: (
-      <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-        <path d="M9 11l3 3L22 4" />
-        <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
-      </svg>
-    ),
+
     reports: (
       <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
         <line x1="18" y1="20" x2="18" y2="10" />
@@ -141,7 +136,6 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
     { label: 'Products', icon: 'products', href: `${bizBase}/products`, id: 'products', group: 'main' },
     { label: 'Customers', icon: 'customers', href: `${bizBase}/customers`, id: 'customers', group: 'management' },
     { label: 'Debts', icon: 'debts', href: `${bizBase}/debts`, id: 'debts', group: 'management' },
-    { label: 'Approvals', icon: 'approvals', href: '/businesses', id: 'approvals', group: 'admin', ownerOnly: true },
     { label: 'Reports', icon: 'reports', href: `${bizBase}/reports`, id: 'reports', group: 'admin', ownerOnly: true },
     { label: 'Businesses', icon: 'admin-businesses', href: '/businesses', id: 'businesses-nav', group: 'account' },
     { label: 'Settings', icon: 'settings', href: `${bizBase}/settings`, id: 'settings', group: 'account' },

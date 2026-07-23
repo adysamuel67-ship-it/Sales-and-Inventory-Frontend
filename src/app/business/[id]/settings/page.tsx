@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
 import { businessAPI, adminAPI } from '@/lib/api'
 import { isAdminRole, parseApiError, extractArray } from '@/lib/utils'
+import NoBusinessGuide from '@/components/NoBusinessGuide'
 
 export default function SettingsPage() {
   const params = useParams()
@@ -118,12 +119,7 @@ export default function SettingsPage() {
   }
 
   if (isNaN(businessId)) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 text-center">
-        <h2 className="text-lg font-semibold text-gray-900 mb-2">Invalid business</h2>
-        <p className="text-sm text-gray-500">This business doesn&apos;t exist or the URL is invalid.</p>
-      </div>
-    )
+    return <NoBusinessGuide pageName="Settings" />
   }
 
   const handleSave = async (e: React.FormEvent) => {

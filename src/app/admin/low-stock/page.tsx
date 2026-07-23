@@ -56,7 +56,7 @@ export default function AdminLowStockPage() {
             const prods = extractArray(result.value.data)
             for (const p of prods) {
               const qty = p.quantity ?? p.stock ?? 0
-              const threshold = p.threshold ?? p.reorder_level ?? 10
+              const threshold = p.low_stock_threshold ?? p.threshold ?? p.reorder_level ?? 10
               if (qty <= threshold) {
                 allItems.push({
                   name: p.name || 'Unknown',

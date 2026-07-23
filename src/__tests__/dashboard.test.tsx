@@ -64,7 +64,7 @@ function mapSale(raw: any, productMap?: Map<number, string>) {
     product: productNames || raw.product_name || raw.product || 'Unknown',
     qty: totalQty || raw.quantity || raw.qty || 0,
     amount: raw.total_amount ?? raw.amount ?? 0,
-    payment: raw.payment_method || raw.payment || 'N/A',
+    payment: (raw.payment_method || raw.payment || 'N/A').toLowerCase(),
     time: raw.created_at
       ? new Date(raw.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       : raw.time || '',
@@ -75,7 +75,7 @@ function mapLowStock(raw: any) {
   return {
     name: raw.name || raw.product_name || 'Unknown',
     stock: raw.quantity ?? raw.stock ?? 0,
-    threshold: raw.threshold ?? raw.reorder_level ?? 10,
+    threshold: raw.low_stock_threshold ?? raw.threshold ?? raw.reorder_level ?? 10,
     unit: raw.unit || 'units',
   }
 }
@@ -185,7 +185,7 @@ describe('mapSale', () => {
         { product_name: 'Beans', quantity: 3 },
       ],
       total_amount: 250,
-      payment_method: 'Cash',
+      payment_method: 'cash',
       created_at: '2024-01-15T10:30:00Z',
     }
     const sale = mapSale(raw)
@@ -193,7 +193,7 @@ describe('mapSale', () => {
     expect(sale.product).toBe('Rice, Beans')
     expect(sale.qty).toBe(8)
     expect(sale.amount).toBe(250)
-    expect(sale.payment).toBe('Cash')
+    expect(sale.payment).toBe('cash')
   })
 
   it('maps sale with product_id referencing productMap', () => {
@@ -201,7 +201,7 @@ describe('mapSale', () => {
       sale_id: 2,
       sales_items: [{ product_id: 42, quantity: 2 }],
       total_amount: 100,
-      payment_method: 'MoMo',
+      payment_method: 'mobile_money',
     }
     const productMap = new Map([[42, 'Tomato Sauce']])
     const sale = mapSale(raw, productMap)
@@ -226,7 +226,7 @@ describe('mapSale', () => {
       product_name: 'Fish',
       quantity: 10,
       total_amount: 200,
-      payment_method: 'Card',
+      payment_method: 'card',
       created_at: '2024-01-16T14:00:00Z',
     }
     const sale = mapSale(raw)
