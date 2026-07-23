@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
 import { saleAPI, productAPI, customerAPI, adminAPI } from '@/lib/api'
-import { extractArray, normalizeProduct, mapSale, parseApiError, isStaffRole, MappedSale } from '@/lib/utils'
+import { extractArray, normalizeProduct, mapSale, parseApiError, isStaffRole, MappedSale, formatPayment } from '@/lib/utils'
 import SaleDetailModal from '@/components/SaleDetailModal'
 
 type SaleRecord = MappedSale
@@ -44,7 +44,7 @@ export default function SalesPage() {
   const [lineItems, setLineItems] = useState<{ product_id: string; quantity: string }[]>([
     { product_id: '', quantity: '' },
   ])
-  const [paymentMethod, setPaymentMethod] = useState('Cash')
+  const [paymentMethod, setPaymentMethod] = useState('cash')
   const [dateFilter, setDateFilter] = useState({ start: '', end: '' })
   const [draftDateFilter, setDraftDateFilter] = useState({ start: '', end: '' })
   const [activePreset, setActivePreset] = useState(0)
@@ -234,7 +234,7 @@ export default function SalesPage() {
 
       await saleAPI.record(businessId, salePayload)
       setLineItems([{ product_id: '', quantity: '' }])
-      setPaymentMethod('Cash')
+      setPaymentMethod('cash')
       setPaymentStatus('fully_paid')
       setAmountPaid('')
       setCustomerName('')
@@ -382,20 +382,24 @@ export default function SalesPage() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Payment Method</label>
               <div className="flex gap-2">
-                {['Cash', 'MoMo', 'Card'].map((method) => (
+                {[
+                  { value: 'cash', label: 'Cash' },
+                  { value: 'mobile_money', label: 'Mobile Money' },
+                  { value: 'card', label: 'Card' },
+                ].map(({ value, label }) => (
                   <button
-                    key={method}
+                    key={value}
                     type="button"
-                    onClick={() => setPaymentMethod(method)}
+                    onClick={() => setPaymentMethod(value)}
                     className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all min-h-[44px] ${
-                      paymentMethod === method
-                        ? method === 'Cash' ? 'bg-success text-white'
-                          : method === 'MoMo' ? 'bg-primary text-white'
+                      paymentMethod === value
+                        ? value === 'cash' ? 'bg-success text-white'
+                          : value === 'mobile_money' ? 'bg-primary text-white'
                           : 'bg-warning text-white'
                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                     }`}
                   >
-                    {method === 'MoMo' ? 'Mobile Money' : method}
+                    {label}
                   </button>
                 ))}
               </div>
@@ -673,12 +677,12 @@ export default function SalesPage() {
                       </td>
                       <td className="px-5 py-3.5 text-center">
                         <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
-                          sale.payment === 'Cash' ? 'bg-success-light text-success'
-                            : sale.payment === 'MoMo' ? 'bg-primary-light text-primary'
-                            : sale.payment === 'Card' ? 'bg-warning-light text-warning'
+                          sale.payment === 'cash' ? 'bg-success-light text-success'
+                            : sale.payment === 'mobile_money' ? 'bg-primary-light text-primary'
+                            : sale.payment === 'card' ? 'bg-warning-light text-warning'
                             : 'bg-gray-100 text-gray-600'
                         }`}>
-                          {sale.payment}
+                          {formatPayment(sale.payment)}
                         </span>
                       </td>
                       <td className="px-5 py-3.5 text-center">
@@ -787,12 +791,12 @@ export default function SalesPage() {
                     <div className="flex items-center justify-between mt-2">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
-                          sale.payment === 'Cash' ? 'bg-success-light text-success'
-                            : sale.payment === 'MoMo' ? 'bg-primary-light text-primary'
-                            : sale.payment === 'Card' ? 'bg-warning-light text-warning'
+                          sale.payment === 'cash' ? 'bg-success-light text-success'
+                            : sale.payment === 'mobile_money' ? 'bg-primary-light text-primary'
+                            : sale.payment === 'card' ? 'bg-warning-light text-warning'
                             : 'bg-gray-100 text-gray-600'
                         }`}>
-                          {sale.payment}
+                          {formatPayment(sale.payment)}
                         </span>
                         {isBorrow ? (
                           <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-warning-light text-warning">

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { MappedSale } from '@/lib/utils'
+import { MappedSale, formatPayment } from '@/lib/utils'
 
 interface Props {
   sale: MappedSale
@@ -9,9 +9,9 @@ interface Props {
 }
 
 const paymentColorMap: Record<string, string> = {
-  Cash: 'bg-success-light text-success',
-  MoMo: 'bg-primary-light text-primary',
-  Card: 'bg-warning-light text-warning',
+  cash: 'bg-success-light text-success',
+  mobile_money: 'bg-primary-light text-primary',
+  card: 'bg-warning-light text-warning',
 }
 
 export default function SaleDetailModal({ sale, onClose }: Props) {
@@ -64,7 +64,7 @@ export default function SaleDetailModal({ sale, onClose }: Props) {
             <div className="bg-surfaceAlt rounded-xl p-4">
               <p className="text-xs text-neutral-light mb-1">Payment Method</p>
               <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${paymentColorMap[sale.payment] || 'bg-gray-100 text-gray-600'}`}>
-                {sale.payment}
+                {formatPayment(sale.payment)}
               </span>
             </div>
             <div className="bg-surfaceAlt rounded-xl p-4">

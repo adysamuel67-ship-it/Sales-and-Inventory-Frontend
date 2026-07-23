@@ -3,7 +3,7 @@
 import { useState, useMemo, memo } from 'react'
 import Link from 'next/link'
 import SaleDetailModal from './SaleDetailModal'
-import { MappedSale } from '@/lib/utils'
+import { MappedSale, formatPayment } from '@/lib/utils'
 
 type SaleRecord = MappedSale
 
@@ -13,9 +13,9 @@ interface Props {
 }
 
 const paymentColors: Record<string, string> = {
-  Cash: 'bg-success-light text-success',
-  MoMo: 'bg-primary-light text-primary',
-  Card: 'bg-warning-light text-warning',
+  cash: 'bg-success-light text-success',
+  mobile_money: 'bg-primary-light text-primary',
+  card: 'bg-warning-light text-warning',
 }
 
 function isBorrow(sale: MappedSale): boolean {
@@ -109,7 +109,7 @@ export default memo(function RecentSales({ sales, businessId }: Props) {
                         <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
                           paymentColors[sale.payment] || 'bg-gray-100 text-gray-600'
                         }`}>
-                          {sale.payment}
+                          {formatPayment(sale.payment)}
                         </span>
                         {borrow && (
                           <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-warning-light text-warning">

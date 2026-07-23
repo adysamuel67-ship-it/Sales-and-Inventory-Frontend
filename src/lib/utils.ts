@@ -1,3 +1,14 @@
+export const paymentLabel: Record<string, string> = {
+  cash: 'Cash',
+  mobile_money: 'MoMo',
+  card: 'Card',
+}
+
+export function formatPayment(method: string): string {
+  const lower = (method || '').toLowerCase()
+  return paymentLabel[lower] || method
+}
+
 export function extractArray(data: any, depth = 0): any[] {
   if (depth > 3) return []
   if (Array.isArray(data)) return data
@@ -57,7 +68,7 @@ export function mapSale(raw: any, productMap?: Map<number, string>, userMap?: Ma
     product: productNames || raw.product_name || raw.product || 'Unknown',
     qty: totalQty || raw.quantity || raw.qty || 0,
     amount: raw.total_amount ?? raw.amount ?? 0,
-    payment: raw.payment_method || raw.payment || 'N/A',
+    payment: (raw.payment_method || raw.payment || 'N/A').toLowerCase(),
     time: raw.created_at
       ? new Date(raw.created_at).toLocaleString()
       : raw.time || '',
@@ -80,7 +91,7 @@ export function mapLowStock(raw: any) {
   return {
     name: raw.name || raw.product_name || 'Unknown',
     stock: raw.quantity ?? raw.stock ?? 0,
-    threshold: raw.threshold ?? raw.reorder_level ?? 10,
+    threshold: raw.low_stock_threshold ?? raw.threshold ?? raw.reorder_level ?? 10,
     unit: raw.unit || 'units',
   }
 }

@@ -420,10 +420,28 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
           {/* Navigation */}
           <nav className="flex-1 px-3 py-3 space-y-4 overflow-y-auto">
             {!businessId && (
-              <div className="mx-1 mb-1 p-3 rounded-xl bg-white/[0.06] border border-white/[0.08]">
-                <p className="text-[11px] text-white/50 leading-relaxed">
-                  <Link href="/businesses" onClick={() => setSidebarOpen(false)} className="text-white/80 font-medium hover:text-white transition-colors">Create or join a business</Link> to start managing your sales, products, and more.
+              <div className="mx-1 mb-1 p-3.5 rounded-xl bg-white/[0.08] border border-white/[0.1]">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-6 h-6 bg-white/10 rounded-lg flex items-center justify-center shrink-0">
+                    <svg className="w-3.5 h-3.5 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <p className="text-[11px] font-semibold text-white/70 uppercase tracking-wider">Welcome!</p>
+                </div>
+                <p className="text-[11px] text-white/45 leading-relaxed mb-2.5">
+                  You haven&apos;t set up a business yet. Create or join one to unlock all features.
                 </p>
+                <Link
+                  href="/businesses"
+                  onClick={() => setSidebarOpen(false)}
+                  className="flex items-center justify-center gap-1.5 w-full py-2 bg-white/10 hover:bg-white/15 rounded-lg text-[11px] font-medium text-white/80 hover:text-white transition-all"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                  </svg>
+                  Get Started
+                </Link>
               </div>
             )}
             {navGroups.map((group) => (

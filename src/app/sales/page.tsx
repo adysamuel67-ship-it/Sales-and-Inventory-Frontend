@@ -2,13 +2,13 @@
 
 import { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import DashboardLayout from '@/components/DashboardLayout'
+import NoBusinessGuide from '@/components/NoBusinessGuide'
 import SaleDetailModal from '@/components/SaleDetailModal'
 import { useAuth } from '@/lib/auth'
 import { saleAPI, productAPI, customerAPI, adminAPI } from '@/lib/api'
 import { useBusinessId } from '@/lib/useBusinessId'
-import { extractArray, normalizeProduct, mapSale, MappedSale } from '@/lib/utils'
+import { extractArray, normalizeProduct, mapSale, MappedSale, formatPayment } from '@/lib/utils'
 
 type SaleRecord = MappedSale
 
@@ -42,7 +42,7 @@ export default function SalesPage() {
   const [form, setForm] = useState({
     product_id: '',
     quantity: '',
-    payment_method: 'Cash',
+    payment_method: 'cash',
     customer_name: '',
     customer_phone: '',
   })
@@ -182,7 +182,7 @@ export default function SalesPage() {
         payment_method: form.payment_method,
         ...(customerId ? { customer_id: customerId } : {}),
       })
-      setForm({ product_id: '', quantity: '', payment_method: 'Cash', customer_name: '', customer_phone: '' })
+      setForm({ product_id: '', quantity: '', payment_method: 'cash', customer_name: '', customer_phone: '' })
       setShowForm(false)
       setSuccess('Sale recorded successfully!')
       loadData()
@@ -211,29 +211,15 @@ export default function SalesPage() {
   if (!businessId && !bizLoading) {
     return (
       <DashboardLayout>
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-4">
-            <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">No business selected</h2>
-          <p className="text-sm text-neutral-light mb-4">Create or join a business to record and view sales</p>
-          <Link
-            href="/businesses"
-            className="px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors"
-          >
-            Go to Businesses
-          </Link>
-        </div>
+        <NoBusinessGuide pageName="Sales" />
       </DashboardLayout>
     )
   }
 
   const paymentBadge = (method: string) =>
-    method === 'Cash' ? 'bg-success-light text-success'
-      : method === 'MoMo' ? 'bg-primary-light text-primary'
-      : method === 'Card' ? 'bg-warning-light text-warning'
+                method === 'cash' ? 'bg-success-light text-success'
+                  : method === 'mobile_money' ? 'bg-primary-light text-primary'
+                  : method === 'card' ? 'bg-warning-light text-warning'
       : 'bg-gray-100 text-gray-600'
 
   return (
@@ -304,9 +290,9 @@ export default function SalesPage() {
                 onChange={(e) => setForm({ ...form, payment_method: e.target.value })}
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-white"
               >
-                <option value="Cash">Cash</option>
-                <option value="MoMo">Mobile Money (MoMo)</option>
-                <option value="Card">Card</option>
+                <option value="cash">Cash</option>
+                <option value="mobile_money">Mobile Money (MoMo)</option>
+                <option value="card">Card</option>
               </select>
             </div>
             <div className="flex items-end">
@@ -449,7 +435,7 @@ export default function SalesPage() {
                   <div className="flex items-center gap-1.5">
                     {isPartial && <span className="w-1.5 h-1.5 rounded-full bg-warning shrink-0" />}
                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${paymentBadge(sale.payment)}`}>
-                      {sale.payment}
+                      {formatPayment(sale.payment)}
                     </span>
                   </div>
                 </div>

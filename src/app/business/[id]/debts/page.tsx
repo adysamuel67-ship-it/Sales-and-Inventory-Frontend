@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/auth'
 import { debtAPI, customerAPI, saleAPI } from '@/lib/api'
 import { extractArray, parseApiError, isAdminRole, MappedSale } from '@/lib/utils'
 import SaleDetailModal from '@/components/SaleDetailModal'
+import NoBusinessGuide from '@/components/NoBusinessGuide'
 
 interface DebtRecord {
   debt_id: number
@@ -223,12 +224,7 @@ export default function DebtsPage() {
   }, [businessId, loadDebts])
 
   if (isNaN(businessId)) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 text-center">
-        <h2 className="text-lg font-semibold text-gray-900 mb-2">Invalid business</h2>
-        <p className="text-sm text-gray-500">This business doesn&apos;t exist or the URL is invalid.</p>
-      </div>
-    )
+    return <NoBusinessGuide pageName="Debt Tracker" />
   }
 
   const debtCustomers = customers.filter((c) => c.total_debt > 0)

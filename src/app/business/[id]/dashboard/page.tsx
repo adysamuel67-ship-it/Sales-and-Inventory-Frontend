@@ -141,7 +141,7 @@ export default function BusinessDashboardPage() {
           products
             .filter((p: any) => {
               const qty = p.quantity ?? 0
-              const threshold = p.threshold ?? p.reorder_level ?? 10
+              const threshold = p.low_stock_threshold ?? p.threshold ?? p.reorder_level ?? 10
               return qty <= threshold
             })
             .map(mapLowStock)

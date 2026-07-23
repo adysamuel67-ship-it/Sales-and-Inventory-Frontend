@@ -6,6 +6,7 @@ import { reportAPI, saleAPI, productAPI } from '@/lib/api'
 import dynamic from 'next/dynamic'
 const RevenueChart = dynamic(() => import('@/components/RevenueChart'), { ssr: false })
 import { extractArray, extractProfit, extractSummary, getDateRange, parseApiError } from '@/lib/utils'
+import NoBusinessGuide from '@/components/NoBusinessGuide'
 
 interface ProfitData {
   total_revenue: number

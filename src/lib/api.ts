@@ -321,6 +321,12 @@ export const productAPI = {
     api.put(`/products/${businessId}/${productId}`, data),
   delete: (businessId: number, productId: number) =>
     api.delete(`/products/${businessId}/${productId}`),
+  restock: (businessId: number, productId: number, quantity: number) =>
+    api.post(`/products/${businessId}/${productId}/restock`, { quantity }),
+  deactivate: (businessId: number, productId: number) =>
+    api.patch(`/products/${businessId}/${productId}/deactivate`),
+  lowStock: (businessId: number) =>
+    api.get(`/products/${businessId}/low_stock`),
 }
 
 export const saleAPI = {
