@@ -252,6 +252,8 @@ export const authAPI = {
       new URLSearchParams({ username: data.email, password: data.password }),
       { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
     ),
+  logout: () =>
+    api.post('/auth/logout').catch(() => {}),
   sendVerification: (email: string) =>
     api.post('/auth/otp/get_code', { email }),
   verifyEmail: (data: { email: string; code: string }) =>

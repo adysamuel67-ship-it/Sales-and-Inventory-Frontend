@@ -1,7 +1,7 @@
 'use client'
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
-import { profileAPI, businessAPI, setTokenRefreshCallback, setAuthLogoutCallback, getUserIdFromToken, tryProactiveRefresh, startAutoRefresh, stopAutoRefresh, isTokenExpired, decodeJwt, resetLogoutGuard } from '@/lib/api'
+import { profileAPI, businessAPI, authAPI, setTokenRefreshCallback, setAuthLogoutCallback, getUserIdFromToken, tryProactiveRefresh, startAutoRefresh, stopAutoRefresh, isTokenExpired, decodeJwt, resetLogoutGuard } from '@/lib/api'
 import { SUPER_ADMIN_EMAIL } from '@/lib/utils'
 
 interface User {
@@ -178,6 +178,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(() => {
     stopAutoRefresh()
+    authAPI.logout().catch(() => {})
     localStorage.removeItem('token')
     localStorage.removeItem('refresh_token')
     localStorage.removeItem('user')
