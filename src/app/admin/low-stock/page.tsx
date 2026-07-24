@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
 import { useAuth } from '@/lib/auth'
 import { adminAPI, productAPI } from '@/lib/api'
-import { extractArray, isStaffRole, isSuperAdminUser } from '@/lib/utils'
+import { extractArray, isSuperAdminUser } from '@/lib/utils'
 
 interface LowStockItem {
   name: string

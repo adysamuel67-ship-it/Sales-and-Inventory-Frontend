@@ -36,15 +36,15 @@ export default function BusinessLayout({
   }, [isAuthenticated, businesses.length, fetchBusinesses])
 
   useEffect(() => {
-    if (businessId && businesses.length > 0) {
+    if (businessId && businesses.length > 0 && currentBusiness?.business_id !== parseInt(businessId)) {
       const biz = businesses.find((b) => b.business_id === parseInt(businessId))
-      if (biz && currentBusiness?.business_id !== biz.business_id) {
+      if (biz) {
         switchBusiness(biz)
-      } else if (!biz && isSuperAdminUser(user)) {
+      } else if (isSuperAdminUser(user) && currentBusiness?.business_id !== parseInt(businessId)) {
         switchBusiness({ business_id: parseInt(businessId), name: `Business #${businessId}`, role: 'admin' } as any)
       }
     }
-  }, [businessId, businesses, currentBusiness, switchBusiness, user])
+  }, [businessId, businesses, currentBusiness?.business_id, switchBusiness, user])
 
   // Fetch business-specific role for the current user
   useEffect(() => {
@@ -56,7 +56,7 @@ export default function BusinessLayout({
           const bizMember = data.find((m: any) => String(m.business_id) === businessId)
           if (bizMember) {
             memberRole = bizMember.role
-          } else if (data.length > 0) {
+          } else if (!isSuperAdminUser(user) && data.length > 0) {
             memberRole = data[0].role
           }
         } else if (data && typeof data === 'object') {

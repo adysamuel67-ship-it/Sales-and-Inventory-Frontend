@@ -234,6 +234,6 @@ describe('DashboardLayout', () => {
 
     const links = screen.getAllByTestId('next-link')
     const hrefs = links.map(l => l.getAttribute('href'))
-    expect(hrefs).toContain('/customers')
+    expect(hrefs).toContain('/business/1/customers')
   })
 })

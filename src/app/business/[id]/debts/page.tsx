@@ -8,6 +8,7 @@ import { extractArray, parseApiError, isAdminRole, MappedSale } from '@/lib/util
 import SaleDetailModal from '@/components/SaleDetailModal'
 interface DebtRecord {
   debt_id: number
+  sale_id?: number
   amount: number
   due_date: string
   is_paid: boolean
@@ -158,6 +159,7 @@ export default function DebtsPage() {
             if (debt.debt_id || debt.id) {
               existing.debts.push({
                 debt_id: debt.debt_id ?? debt.id,
+                sale_id: debt.sale_id ?? undefined,
                 amount: debtAmount,
                 due_date: debt.due_date || '',
                 is_paid: debt.is_paid ?? false,
@@ -173,6 +175,7 @@ export default function DebtsPage() {
               total_debt: debtAmount,
               debts: (debt.debt_id || debt.id) ? [{
                 debt_id: debt.debt_id ?? debt.id,
+                sale_id: debt.sale_id ?? undefined,
                 amount: debtAmount,
                 due_date: debt.due_date || '',
                 is_paid: debt.is_paid ?? false,
@@ -283,6 +286,11 @@ export default function DebtsPage() {
       }
       if (paymentNote.trim()) {
         payload.note = paymentNote.trim()
+      }
+
+      const oldestUnpaid = paymentCustomer.debts.find((d) => !d.is_paid && d.sale_id)
+      if (oldestUnpaid?.sale_id) {
+        payload.sale_id = oldestUnpaid.sale_id
       }
 
       try {

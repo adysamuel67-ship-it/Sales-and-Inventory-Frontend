@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
 import { businessAPI, adminAPI } from '@/lib/api'
-import { isAdminRole, parseApiError, extractArray } from '@/lib/utils'
+import { isAdminRole, isSuperAdminUser, parseApiError, extractArray } from '@/lib/utils'
 
 export default function SettingsPage() {
   const params = useParams()
@@ -33,7 +33,7 @@ export default function SettingsPage() {
   const [removingMemberId, setRemovingMemberId] = useState<number | null>(null)
   const [confirmRemoveId, setConfirmRemoveId] = useState<number | null>(null)
 
-  const isOwner = isAdminRole(user?.business_role || user?.role)
+  const isOwner = isSuperAdminUser(user) || isAdminRole(user?.business_role || user?.role)
 
   const loadSettings = useCallback(async () => {
     if (!businessId) return

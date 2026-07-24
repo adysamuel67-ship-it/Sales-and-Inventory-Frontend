@@ -698,13 +698,13 @@ export default function SalesPage() {
                           {deleteConfirm === sale.id ? (
                             <div className="flex items-center gap-1 justify-end">
                               <button
-                                onClick={() => handleDelete(sale.id)}
+                                onClick={(e) => { e.stopPropagation(); handleDelete(sale.id) }}
                                 className="px-2 py-1 text-xs font-medium text-white bg-danger rounded-lg"
                               >
                                 Confirm
                               </button>
                               <button
-                                onClick={() => setDeleteConfirm(null)}
+                                onClick={(e) => { e.stopPropagation(); setDeleteConfirm(null) }}
                                 className="px-2 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg"
                               >
                                 Cancel
@@ -712,7 +712,7 @@ export default function SalesPage() {
                             </div>
                           ) : (
                             <button
-                              onClick={() => setDeleteConfirm(sale.id)}
+                              onClick={(e) => { e.stopPropagation(); setDeleteConfirm(sale.id) }}
                               className="text-xs text-danger hover:underline font-medium"
                             >
                               Delete
