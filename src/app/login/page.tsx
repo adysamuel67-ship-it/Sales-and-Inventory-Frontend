@@ -44,10 +44,7 @@ function LoginForm() {
       login(access_token, user, refreshToken)
 
       if (isTokenExpired(access_token, 60) && refreshToken) {
-        const refreshed = await tryProactiveRefresh()
-        if (refreshed) {
-          login(refreshed, user, refreshToken)
-        }
+        await tryProactiveRefresh()
       }
 
       let profileUser: any = null

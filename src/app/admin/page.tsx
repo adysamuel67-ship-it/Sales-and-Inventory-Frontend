@@ -48,7 +48,7 @@ export default function AdminDashboardPage() {
         if (businessesRes.status === 'fulfilled') {
           const data = businessesRes.value.data
           const arr = Array.isArray(data) ? data : []
-          setBusinessCount(isSuperAdminUser(user) ? arr.length : arr.length)
+          setBusinessCount(arr.length)
         }
       } catch (err: any) {
         if (!cancelled) setError('Failed to load admin data')

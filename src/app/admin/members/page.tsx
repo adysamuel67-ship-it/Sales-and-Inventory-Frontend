@@ -54,7 +54,7 @@ export default function AdminMembersPage() {
         }))
       } catch {
         const usersRes = await adminAPI.listAllUsers()
-        allMembers = extractArray(usersRes.value?.data || usersRes.data).map((u: any) => ({
+        allMembers = extractArray(usersRes.data).map((u: any) => ({
           user_id: u.user_id ?? u.id,
           name: u.name,
           email: u.email,

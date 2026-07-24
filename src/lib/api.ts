@@ -143,7 +143,7 @@ async function attachToken(config: any) {
         try {
           token = await startRefresh()
         } catch {
-          token = null
+          return Promise.reject(new Error('Token refresh failed'))
         }
       }
       if (token) {
@@ -194,15 +194,8 @@ function handle401Interceptor(instance: any) {
           originalRequest.headers.Authorization = `Bearer ${newToken}`
           return instance(originalRequest)
         } catch {
-          try {
-            await new Promise((r) => setTimeout(r, 3000))
-            const newToken = await startRefresh()
-            originalRequest.headers.Authorization = `Bearer ${newToken}`
-            return instance(originalRequest)
-          } catch {
-            doLogout()
-            return Promise.reject(error)
-          }
+          doLogout()
+          return Promise.reject(error)
         }
       }
 

@@ -108,6 +108,7 @@ export default function SettingsPage() {
       }
 
       setMembers(memberList.map((m: any) => ({
+        member_id: m.member_id ?? m.user_id ?? m.id,
         user_id: m.user_id ?? m.id,
         name: m.name || m.user?.name || '',
         email: m.email || m.user?.email || '',
