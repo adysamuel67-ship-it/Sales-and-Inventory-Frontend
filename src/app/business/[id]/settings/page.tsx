@@ -71,9 +71,51 @@ export default function SettingsPage() {
     if (!businessId) return
     setMembersLoading(true)
     try {
-      const res = await adminAPI.listMembers()
-      const allMembers = extractArray(res.data)
-      setMembers(allMembers.filter((m: any) => Number(m.business_id) === businessId))
+      let memberList: any[] = []
+
+      try {
+        const bizRes = await businessAPI.get(businessId)
+        const bizData = bizRes.data?.data || bizRes.data
+        const bizObj = bizData?.data || bizData
+        if (Array.isArray(bizObj?.members)) {
+          memberList = bizObj.members
+        } else if (Array.isArray(bizObj?.users)) {
+          memberList = bizObj.users
+        } else if (Array.isArray(bizData?.members)) {
+          memberList = bizData.members
+        }
+      } catch {}
+
+      if (memberList.length === 0) {
+        try {
+          const allUsersRes = await adminAPI.listAllUsers()
+          const allUsers = extractArray(allUsersRes.data)
+          memberList = allUsers.filter((u: any) => {
+            const ubizId = u.business_id ?? u.business?.business_id
+            return ubizId != null && Number(ubizId) === businessId
+          })
+        } catch {
+          try {
+            const memberRes = await adminAPI.listMembers()
+            const allMembers = extractArray(memberRes.data)
+            memberList = allMembers.filter((m: any) => {
+              return m.business_id != null && Number(m.business_id) === businessId
+            })
+          } catch {
+            memberList = []
+          }
+        }
+      }
+
+      setMembers(memberList.map((m: any) => ({
+        user_id: m.user_id ?? m.id,
+        name: m.name || m.user?.name || '',
+        email: m.email || m.user?.email || '',
+        role: m.role || m.business_role || 'user',
+        is_verified: m.is_verified ?? m.user?.is_verified ?? false,
+        is_active: m.is_active ?? true,
+        business_id: m.business_id ?? businessId,
+      })))
     } catch (err: any) {
       setError(parseApiError(err))
     } finally {

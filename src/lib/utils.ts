@@ -194,3 +194,9 @@ export function isManagerRole(role?: string): boolean {
 export function isStaffRole(role?: string): boolean {
   return role === 'cashier' || role === 'viewer' || role === 'STAFF' || role === 'staff'
 }
+
+export function isPlatformAdmin(user?: { role?: string; email?: string } | null): boolean {
+  if (!user) return false
+  if (isSuperAdminUser(user)) return true
+  return user.role === 'admin' || user.role === 'ADMIN'
+}

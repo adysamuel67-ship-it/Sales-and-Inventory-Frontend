@@ -297,10 +297,11 @@ function CustomersContent() {
     setProfileTransactions([])
 
     try {
-      const [debtRes, salesRes, txnRes] = await Promise.allSettled([
+      const [debtRes, salesRes, txnRes, custRes] = await Promise.allSettled([
         debtAPI.getCustomerDebt(businessId, customer.customer_id),
         saleAPI.list(businessId),
         debtAPI.getCustomerTransactions(businessId, customer.customer_id),
+        customerAPI.get(businessId, customer.customer_id),
       ])
 
       if (debtRes.status === 'fulfilled') {
@@ -332,17 +333,35 @@ function CustomersContent() {
       if (salesRes.status === 'fulfilled') {
         const sales = extractArray(salesRes.value.data)
         const customerSales = sales.filter((s: any) => {
-          const saleCid = s.customer_id ?? s.customer?.customer_id ?? s.debt?.customer_id
-          return saleCid != null && Number(saleCid) === Number(customer.customer_id)
+          const saleCid = s.customer_id ?? s.customer?.customer_id ?? s.customer?.id ?? s.debt?.customer_id
+          if (saleCid != null && Number(saleCid) === Number(customer.customer_id)) return true
+          const items = s.sales_items || s.items || []
+          return items.some((item: any) => {
+            const itemCid = item.customer_id ?? item.customer?.customer_id
+            return itemCid != null && Number(itemCid) === Number(customer.customer_id)
+          })
         })
         setProfileSales(customerSales.map((s: any) => ({
           sale_id: s.sale_id ?? s.id,
-          total_amount: Number(s.total_amount ?? 0),
+          total_amount: Number(s.total_amount ?? s.amount ?? s.grand_total ?? 0),
           amount_paid: Number(s.amount_paid ?? 0),
           payment_method: s.payment_method || 'N/A',
           created_at: s.created_at || '',
           customer_id: s.customer_id,
         })))
+      }
+
+      if (custRes.status === 'fulfilled') {
+        const custData = custRes.value.data?.data || custRes.value.data
+        if (custData?.total_spent != null || custData?.total_amount != null || custData?.total_paid != null) {
+          const totalFromApi = Number(custData.total_spent ?? custData.total_amount ?? custData.total_paid ?? 0)
+          setProfileSales(prev => {
+            if (prev.length === 0 && totalFromApi > 0) {
+              return [{ sale_id: 0, total_amount: totalFromApi, amount_paid: totalFromApi, payment_method: 'all', created_at: '', customer_id: customer.customer_id }]
+            }
+            return prev
+          })
+        }
       }
 
       if (txnRes.status === 'fulfilled') {
@@ -373,7 +392,8 @@ function CustomersContent() {
   }
 
   const profileTotalDebt = profileDebt.filter((d) => !d.is_paid).reduce((sum, d) => sum + d.amount, 0)
-  const profileTotalSpent = profileSales.reduce((sum, s) => sum + s.total_amount, 0)
+  const profileTotalSpent = profileSales.reduce((sum, s) => sum + s.total_amount, 0) ||
+    profileTransactions.reduce((sum, t) => sum + (t.amount_paid || 0), 0)
 
   return (
     <div>

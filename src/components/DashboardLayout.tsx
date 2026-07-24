@@ -4,7 +4,7 @@ import { useAuth } from '@/lib/auth'
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { usePathname, useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { isManagerRole, isSuperAdminUser } from '@/lib/utils'
+import { isManagerRole, isPlatformAdmin, isSuperAdminUser } from '@/lib/utils'
 import { businessAPI } from '@/lib/api'
 import BusinessBotLogo from './BusinessBotLogo'
 
@@ -94,6 +94,11 @@ function NavIcon({ name }: { name: string }) {
         <polyline points="12 6 12 12 16 14" />
       </svg>
     ),
+    'admin-keys': (
+      <svg className="w-[16px] h-[16px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
+      </svg>
+    ),
     requests: (
       <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
         <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -131,6 +136,7 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
   }, [profileLoaded, user, router])
 
   const isSuperAdmin = isSuperAdminUser(user)
+  const isPlatformAdminUser = isPlatformAdmin(user)
   const effectiveRole = user?.business_role || user?.role
   const isManager = isManagerRole(effectiveRole)
   const bizBase = businessId ? `/business/${businessId}` : ''
@@ -168,13 +174,22 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
     return groups
   }, [visibleNavItems])
 
-  const adminSubItems = useMemo(() => [
-    { label: 'Overview', icon: 'admin', href: '/admin', id: 'admin' },
-    { label: 'Users', icon: 'admin-users', href: '/admin/users', id: 'admin-users' },
-    { label: 'Businesses', icon: 'admin-businesses', href: '/admin/businesses', id: 'admin-businesses' },
-    { label: 'Low Stock', icon: 'admin-low-stock', href: '/admin/low-stock', id: 'admin-low-stock' },
-    { label: 'Jobs', icon: 'admin-jobs', href: '/admin/jobs', id: 'admin-jobs' },
-  ], [])
+  const adminSubItems = useMemo(() => {
+    if (isSuperAdmin) {
+      return [
+        { label: 'Overview', icon: 'admin', href: '/admin', id: 'admin' },
+        { label: 'Users', icon: 'admin-users', href: '/admin/users', id: 'admin-users' },
+        { label: 'Businesses', icon: 'admin-businesses', href: '/admin/businesses', id: 'admin-businesses' },
+        { label: 'Business Keys', icon: 'admin-keys', href: '/admin/keys', id: 'admin-keys' },
+        { label: 'Low Stock', icon: 'admin-low-stock', href: '/admin/low-stock', id: 'admin-low-stock' },
+        { label: 'Jobs', icon: 'admin-jobs', href: '/admin/jobs', id: 'admin-jobs' },
+      ]
+    }
+    return [
+      { label: 'Overview', icon: 'admin', href: '/admin', id: 'admin' },
+      { label: 'Members', icon: 'admin-users', href: '/admin/members', id: 'admin-members' },
+    ]
+  }, [isSuperAdmin])
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -484,7 +499,7 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
               </div>
             ))}
 
-            {isSuperAdmin && (
+            {isPlatformAdminUser && (
               <div>
                 <p className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-white/25">Admin</p>
                 <button

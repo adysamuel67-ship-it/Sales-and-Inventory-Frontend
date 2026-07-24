@@ -7,7 +7,7 @@ import { useAuth } from '@/lib/auth'
 import { adminAPI, businessAPI } from '@/lib/api'
 import KpiCard from '@/components/KpiCard'
 import { kpiIcons } from '@/components/KpiIcons'
-import { isSuperAdminUser } from '@/lib/utils'
+import { isPlatformAdmin, isSuperAdminUser } from '@/lib/utils'
 
 export default function AdminDashboardPage() {
   const { isAuthenticated, isLoading, profileLoaded, user } = useAuth()
@@ -21,21 +21,21 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     if (!isLoading && !isAuthenticated) router.replace('/login')
     if (profileLoaded && isAuthenticated && user && user.is_verified === false) router.replace('/verify')
-    if (profileLoaded && isAuthenticated && user?.is_verified && !isSuperAdminUser(user)) {
+    if (profileLoaded && isAuthenticated && user?.is_verified && !isPlatformAdmin(user)) {
       router.replace('/dashboard')
     }
   }, [isLoading, isAuthenticated, profileLoaded, user, router])
 
   useEffect(() => {
-    if (!isAuthenticated || !isSuperAdminUser(user)) return
+    if (!isAuthenticated || !isPlatformAdmin(user)) return
     let cancelled = false
 
     const load = async () => {
       setLoading(true)
       try {
         const [usersRes, businessesRes] = await Promise.allSettled([
-          adminAPI.listAllUsers(),
-          businessAPI.listAll(),
+          isSuperAdminUser(user) ? adminAPI.listAllUsers() : adminAPI.listMembers(),
+          isSuperAdminUser(user) ? businessAPI.listAll() : businessAPI.myBusinesses(),
         ])
         if (cancelled) return
 
@@ -47,7 +47,8 @@ export default function AdminDashboardPage() {
 
         if (businessesRes.status === 'fulfilled') {
           const data = businessesRes.value.data
-          setBusinessCount(Array.isArray(data) ? data.length : 0)
+          const arr = Array.isArray(data) ? data : []
+          setBusinessCount(isSuperAdminUser(user) ? arr.length : arr.length)
         }
       } catch (err: any) {
         if (!cancelled) setError('Failed to load admin data')
@@ -60,7 +61,7 @@ export default function AdminDashboardPage() {
     return () => { cancelled = true }
   }, [isAuthenticated, user?.role])
 
-  if (isLoading || !isAuthenticated || !profileLoaded || !isSuperAdminUser(user)) {
+  if (isLoading || !isAuthenticated || !profileLoaded || !isPlatformAdmin(user)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
@@ -96,8 +97,8 @@ export default function AdminDashboardPage() {
         />
         <KpiCard
           title="Your Role"
-          value="Super Admin"
-          subtitle="Full platform access"
+          value={isSuperAdminUser(user) ? 'Super Admin' : 'Admin'}
+          subtitle="Platform administration access"
           icon={kpiIcons.shield}
           color="warning"
         />
