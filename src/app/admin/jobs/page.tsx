@@ -67,9 +67,9 @@ export default function AdminJobsPage() {
   }
 
   const cronJobs = [
-    { name: 'daily_summery', label: 'Daily Summary', description: 'Generate daily sales and revenue summary' },
-    { name: 'weekly_summery', label: 'Weekly Summary', description: 'Generate weekly analytics report' },
-    { name: 'monthly_summery', label: 'Monthly Summary', description: 'Generate monthly analytics report' },
+    { name: 'daily_summary', label: 'Daily Summary', description: 'Generate daily sales and revenue summary' },
+    { name: 'weekly_summary', label: 'Weekly Summary', description: 'Generate weekly analytics report' },
+    { name: 'monthly_summary', label: 'Monthly Summary', description: 'Generate monthly analytics report' },
   ]
 
   if (isLoading || !isAuthenticated || !profileLoaded || !isSuperAdminUser(user)) {

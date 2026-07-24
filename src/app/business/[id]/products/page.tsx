@@ -6,8 +6,6 @@ import { productAPI } from '@/lib/api'
 import { normalizeProduct, extractArray, parseApiError, isAdminRole } from '@/lib/utils'
 import { useAuth } from '@/lib/auth'
 import ProductDetailModal from '@/components/ProductDetailModal'
-import NoBusinessGuide from '@/components/NoBusinessGuide'
-
 export default function ProductsPage() {
   const params = useParams()
   const businessId = parseInt(params?.id as string)
@@ -30,12 +28,11 @@ export default function ProductsPage() {
   })
   const [saving, setSaving] = useState(false)
 
-  const invalidBusiness = isNaN(businessId)
-
   const load = useCallback(async () => {
+    if (!businessId || isNaN(businessId)) return
     setLoading(true)
     try {
-      const res = await productAPI.list(businessId!)
+      const res = await productAPI.list(businessId)
       const items = extractArray(res.data).map(normalizeProduct)
       setAllProducts(items)
       const cats = [...new Set(items.map((p: any) => p.category).filter(Boolean))] as string[]
@@ -144,10 +141,6 @@ export default function ProductsPage() {
   }
 
   const canEdit = isAdminRole(user?.business_role || user?.role)
-
-  if (invalidBusiness) {
-    return <NoBusinessGuide pageName="Products" />
-  }
 
   return (
     <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">

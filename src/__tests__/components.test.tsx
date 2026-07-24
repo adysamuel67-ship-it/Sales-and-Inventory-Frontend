@@ -194,7 +194,6 @@ describe('RecentSales', () => {
   })
 
   it('renders sale amounts with GH₵', () => {
-    render(<RecentSales sales={sales} />)
     // GH₵ may be split across elements, so check text content
     const { container } = render(<RecentSales sales={sales} />)
     expect(container.textContent).toContain('250.00')

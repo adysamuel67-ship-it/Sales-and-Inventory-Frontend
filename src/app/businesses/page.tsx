@@ -13,15 +13,6 @@ interface Business {
   members?: number
 }
 
-interface Approval {
-  approval_id: number
-  business_id: number
-  reason: string
-  approval_type: string
-  status: string
-  requester?: { user_id: number; name: string; email: string }
-}
-
 export default function BusinessesPage() {
   const { isAuthenticated, isLoading, profileLoaded, user, businesses, currentBusiness, switchBusiness, fetchBusinesses } = useAuth()
   const router = useRouter()
@@ -40,11 +31,6 @@ export default function BusinessesPage() {
   const [joining, setJoining] = useState(false)
 
   const [businessKeys, setBusinessKeys] = useState<Record<number, string>>({})
-  const [approvals, setApprovals] = useState<Record<number, Approval[]>>({})
-  const [loadingApprovals, setLoadingApprovals] = useState<Record<number, boolean>>({})
-  const [approvalErrors, setApprovalErrors] = useState<Record<number, string>>({})
-  const [showingApprovals, setShowingApprovals] = useState<Record<number, boolean>>({})
-  const [processingApproval, setProcessingApproval] = useState<number | null>(null)
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) router.replace('/login')
@@ -69,48 +55,6 @@ export default function BusinessesPage() {
       setBusinessKeys((prev) => ({ ...prev, [bizId]: res.data.business_key }))
     } catch {
       // Failed to load key
-    }
-  }
-
-  const extractApprovalArray = (data: any): Approval[] => {
-    if (Array.isArray(data)) return data
-    if (data && typeof data === 'object') {
-      for (const key of Object.keys(data)) {
-        if (Array.isArray(data[key])) return data[key]
-      }
-      if (data.data) {
-        if (Array.isArray(data.data)) return data.data
-        if (typeof data.data === 'object') {
-          for (const key of Object.keys(data.data)) {
-            if (Array.isArray(data.data[key])) return data.data[key]
-          }
-        }
-      }
-    }
-    return []
-  }
-
-  const loadApprovals = async (bizId: number) => {
-    setShowingApprovals((prev) => ({ ...prev, [bizId]: true }))
-    setLoadingApprovals((prev) => ({ ...prev, [bizId]: true }))
-    setApprovalErrors((prev) => ({ ...prev, [bizId]: '' }))
-    try {
-      let data: Approval[] = []
-      try {
-        const res = await businessAPI.getApprovals(bizId, 'pending')
-        data = extractApprovalArray(res.data)
-      } catch {
-        const res = await businessAPI.getApprovals(bizId)
-        data = extractApprovalArray(res.data)
-      }
-      setApprovals((prev) => ({ ...prev, [bizId]: data }))
-    } catch (err: any) {
-      const detail = err.response?.data?.detail
-      const msg = typeof detail === 'string' ? detail : err.message || 'Failed to load requests'
-      setApprovalErrors((prev) => ({ ...prev, [bizId]: msg }))
-      setApprovals((prev) => ({ ...prev, [bizId]: [] }))
-    } finally {
-      setLoadingApprovals((prev) => ({ ...prev, [bizId]: false }))
     }
   }
 
@@ -178,25 +122,6 @@ export default function BusinessesPage() {
     }
   }
 
-  const handleApprove = async (bizId: number, approvalId: number, dir: 0 | 1, requestedRole?: string) => {
-    setError('')
-    setSuccess('')
-    setProcessingApproval(approvalId)
-    try {
-      await businessAPI.confirmApproval(bizId, { approval_id: approvalId, dir, ...(dir === 1 && requestedRole ? { role: requestedRole } : {}) })
-      setSuccess(dir === 1 ? 'Approved!' : 'Rejected')
-      loadApprovals(bizId)
-      if (dir === 1) {
-        await fetchBusinesses()
-      }
-    } catch (err: any) {
-      const detail = err.response?.data?.detail
-      setError(typeof detail === 'string' ? detail : 'Failed to process approval')
-    } finally {
-      setProcessingApproval(null)
-    }
-  }
-
   const handleDelete = async (id: number) => {
     if (!confirm('Are you sure you want to delete this business?')) return
     try {
@@ -247,6 +172,15 @@ export default function BusinessesPage() {
           <p className="text-sm text-neutral-light mt-1">Manage your businesses and teams</p>
         </div>
         <div className="flex gap-2">
+          <button
+            onClick={() => router.push('/businesses/requests')}
+            className="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors flex items-center gap-2 min-h-[44px]"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Requests
+          </button>
           <button
             onClick={() => { setShowJoin(!showJoin); setShowCreate(false) }}
             className="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors flex items-center gap-2 min-h-[44px]"
@@ -418,17 +352,11 @@ export default function BusinessesPage() {
                         Get Key
                       </button>
                       <button
-                        onClick={() => {
-                          if (showingApprovals[biz.business_id]) {
-                            setShowingApprovals((prev) => ({ ...prev, [biz.business_id]: false }))
-                          } else {
-                            loadApprovals(biz.business_id)
-                          }
-                        }}
+                        onClick={() => router.push('/businesses/requests')}
                         className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors min-h-[36px]"
-                        title="View pending requests"
+                        title="View all requests"
                       >
-                        Requests {approvals[biz.business_id]?.length ? `(${approvals[biz.business_id].length})` : ''}
+                        Requests
                       </button>
                       <button
                         onClick={() => handleDelete(biz.business_id)}
@@ -456,57 +384,6 @@ export default function BusinessesPage() {
                     </div>
                   )}
 
-                  {showingApprovals[biz.business_id] && (
-                    <>
-                      {loadingApprovals[biz.business_id] ? (
-                        <div className="mt-3 flex items-center gap-2 text-xs text-neutral-light">
-                          <div className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                          Loading requests...
-                        </div>
-                      ) : approvalErrors[biz.business_id] ? (
-                        <div className="mt-3 text-xs text-danger bg-danger-light p-2 rounded-lg">
-                          {approvalErrors[biz.business_id]}
-                          <button
-                            onClick={() => loadApprovals(biz.business_id)}
-                            className="ml-2 underline hover:no-underline"
-                          >
-                            Retry
-                          </button>
-                        </div>
-                      ) : approvals[biz.business_id] && approvals[biz.business_id].length > 0 ? (
-                        <div className="mt-3 space-y-2">
-                          <p className="text-xs font-medium text-gray-500">Pending Requests</p>
-                          {approvals[biz.business_id].map((approval) => (
-                            <div key={approval.approval_id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-                              <div>
-                                <p className="text-sm font-medium text-gray-900">{approval.requester?.name || 'Unknown'}</p>
-                                <p className="text-xs text-neutral-light">{approval.requester?.email} — {approval.reason}</p>
-                                <p className="text-[10px] text-neutral-light mt-0.5">Role: {approval.approval_type}</p>
-                              </div>
-                              <div className="flex gap-2">
-                                <button
-                                  onClick={() => handleApprove(biz.business_id, approval.approval_id, 1, approval.approval_type)}
-                                  disabled={processingApproval === approval.approval_id}
-                                  className="px-3 py-1.5 text-xs font-medium text-success bg-success-light rounded-lg hover:bg-success/10 transition-colors min-h-[36px] disabled:opacity-50"
-                                >
-                                  {processingApproval === approval.approval_id ? '...' : 'Approve'}
-                                </button>
-                                <button
-                                  onClick={() => handleApprove(biz.business_id, approval.approval_id, 0)}
-                                  disabled={processingApproval === approval.approval_id}
-                                  className="px-3 py-1.5 text-xs font-medium text-danger bg-danger-light rounded-lg hover:bg-danger/10 transition-colors min-h-[36px] disabled:opacity-50"
-                                >
-                                  {processingApproval === approval.approval_id ? '...' : 'Reject'}
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="mt-3 text-xs text-neutral-light">No pending requests</div>
-                      )}
-                    </>
-                  )}
                 </div>
               )
             })}

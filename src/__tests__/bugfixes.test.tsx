@@ -112,7 +112,7 @@ describe('Shared mapSale', () => {
     expect(sale.product).toBe('Unknown')
     expect(sale.qty).toBe(0)
     expect(sale.amount).toBe(0)
-    expect(sale.payment).toBe('N/A')
+    expect(sale.payment).toBe('n/a')
   })
 })
 

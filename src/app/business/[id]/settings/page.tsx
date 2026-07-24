@@ -5,7 +5,6 @@ import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
 import { businessAPI, adminAPI } from '@/lib/api'
 import { isAdminRole, parseApiError, extractArray } from '@/lib/utils'
-import NoBusinessGuide from '@/components/NoBusinessGuide'
 
 export default function SettingsPage() {
   const params = useParams()
@@ -118,10 +117,6 @@ export default function SettingsPage() {
     }
   }
 
-  if (isNaN(businessId)) {
-    return <NoBusinessGuide pageName="Settings" />
-  }
-
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!businessId || !name.trim()) return
@@ -171,7 +166,7 @@ export default function SettingsPage() {
     try {
       await businessAPI.delete(businessId)
       localStorage.removeItem('current_business_id')
-      fetchBusinesses()
+      await fetchBusinesses()
       router.replace('/businesses')
     } catch (err: any) {
       const detail = err.response?.data?.detail

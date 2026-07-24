@@ -6,8 +6,6 @@ import { useAuth } from '@/lib/auth'
 import { customerAPI, saleAPI, debtAPI } from '@/lib/api'
 import { extractArray, parseApiError, isAdminRole, isStaffRole, MappedSale } from '@/lib/utils'
 import SaleDetailModal from '@/components/SaleDetailModal'
-import NoBusinessGuide from '@/components/NoBusinessGuide'
-
 interface Customer {
   customer_id: number
   name: string
@@ -178,10 +176,6 @@ function CustomersContent() {
     ),
     [displayedCustomers, search]
   )
-
-  if (isNaN(businessId)) {
-    return <NoBusinessGuide pageName="Customers" />
-  }
 
   const resetCreateForm = () => {
     setFormName('')

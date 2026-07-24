@@ -344,8 +344,17 @@ export default function AdminBusinessesPage() {
                           {profileBusinessKey}
                         </code>
                         <button
-                          onClick={() => {
-                            navigator.clipboard.writeText(profileBusinessKey)
+                          onClick={async () => {
+                            try {
+                              await navigator.clipboard.writeText(profileBusinessKey)
+                            } catch {
+                              const el = document.createElement('textarea')
+                              el.value = profileBusinessKey
+                              document.body.appendChild(el)
+                              el.select()
+                              document.execCommand('copy')
+                              document.body.removeChild(el)
+                            }
                             setSuccess('Key copied!')
                           }}
                           className="px-3 py-2 text-xs font-medium text-primary bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors shrink-0"

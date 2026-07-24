@@ -3,7 +3,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import NoBusinessGuide from '@/components/NoBusinessGuide'
 import dynamic from 'next/dynamic'
 import { useMemo } from 'react'
 import KpiCard from '@/components/KpiCard'
@@ -256,10 +255,6 @@ export default function BusinessDashboardPage() {
   }
 
   const dateSubtitle = isStaff ? (staffView === 'today' ? "Today's data" : 'Last 7 days (weekly)') : activePreset > 0 ? `Last ${activePreset} days` : `${dateRange.start} to ${dateRange.end}`
-
-  if (isNaN(businessId)) {
-    return <NoBusinessGuide pageName="Dashboard" />
-  }
 
   if (loading) {
     return (

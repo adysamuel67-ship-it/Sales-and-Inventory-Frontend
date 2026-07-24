@@ -1,13 +1,11 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
 import { debtAPI, customerAPI, saleAPI } from '@/lib/api'
 import { extractArray, parseApiError, isAdminRole, MappedSale } from '@/lib/utils'
 import SaleDetailModal from '@/components/SaleDetailModal'
-import NoBusinessGuide from '@/components/NoBusinessGuide'
-
 interface DebtRecord {
   debt_id: number
   amount: number
@@ -118,13 +116,22 @@ export default function DebtsPage() {
   const isAdmin = isAdminRole(user?.business_role || user?.role)
   const canPayDebt = isAdmin || user?.business_role === 'cashier' || user?.role === 'cashier'
 
-  const successTimer = useCallback(() => {
-    const t = setTimeout(() => setSuccess(''), 4000)
-    return () => clearTimeout(t)
+  const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (successTimerRef.current) clearTimeout(successTimerRef.current)
+    }
+  }, [])
+
+  const showSuccess = useCallback((msg: string) => {
+    if (successTimerRef.current) clearTimeout(successTimerRef.current)
+    setSuccess(msg)
+    successTimerRef.current = setTimeout(() => setSuccess(''), 4000)
   }, [])
 
   const loadDebts = useCallback(async () => {
-    if (!businessId) return
+    if (!businessId || isNaN(businessId)) return
     setLoading(true)
     setError('')
     try {
@@ -203,7 +210,7 @@ export default function DebtsPage() {
           overdue_amount: overdueAmount,
         })
       } else {
-        setError(parseApiError(debtRes.reason))
+        setError(parseApiError(debtRes.reason?.response ? debtRes.reason : { message: 'Failed to load debts' }))
       }
 
       try {
@@ -222,10 +229,6 @@ export default function DebtsPage() {
   useEffect(() => {
     if (businessId) loadDebts()
   }, [businessId, loadDebts])
-
-  if (isNaN(businessId)) {
-    return <NoBusinessGuide pageName="Debt Tracker" />
-  }
 
   const debtCustomers = customers.filter((c) => c.total_debt > 0)
   const paidCustomers = customers.filter((c) => c.total_debt <= 0 || c.debts.every((d) => d.is_paid))
@@ -285,15 +288,13 @@ export default function DebtsPage() {
       try {
         await debtAPI.updateDebt(businessId, paymentCustomer.customer_id, payload)
         setShowPaymentModal(false)
-        setSuccess('Payment recorded successfully!')
-        successTimer()
+        showSuccess('Payment recorded successfully!')
       } catch (apiErr: any) {
         const detail = apiErr?.response?.data?.detail
         const msg = typeof detail === 'string' ? detail : ''
         if (msg.includes('No outstanding debt')) {
           setShowPaymentModal(false)
-          setSuccess('Customer debt is fully settled!')
-          successTimer()
+          showSuccess('Customer debt is fully settled!')
         } else {
           throw apiErr
         }
@@ -379,8 +380,7 @@ export default function DebtsPage() {
 
       await debtAPI.addDebt(businessId, customerId, payload)
       setShowAddDebtModal(false)
-      setSuccess('Debt added successfully!')
-      successTimer()
+      showSuccess('Debt added successfully!')
       loadDebts()
     } catch (err: any) {
       setError(parseApiError(err))

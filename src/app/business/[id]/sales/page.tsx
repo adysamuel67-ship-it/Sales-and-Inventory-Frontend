@@ -6,8 +6,6 @@ import { useAuth } from '@/lib/auth'
 import { saleAPI, productAPI, customerAPI, adminAPI } from '@/lib/api'
 import { extractArray, normalizeProduct, mapSale, parseApiError, isStaffRole, MappedSale, formatPayment } from '@/lib/utils'
 import SaleDetailModal from '@/components/SaleDetailModal'
-import NoBusinessGuide from '@/components/NoBusinessGuide'
-
 type SaleRecord = MappedSale
 
 interface Product {
@@ -135,10 +133,6 @@ export default function SalesPage() {
     }, 0)
   }, [lineItems, products])
 
-  if (isNaN(businessId)) {
-    return <NoBusinessGuide pageName="Sales" />
-  }
-
   const handlePreset = (days: number) => {
     setActivePreset(days)
     if (days === 0) {
@@ -242,7 +236,7 @@ export default function SalesPage() {
     } catch (err: any) {
       const detail = err.response?.data?.detail
       if (Array.isArray(detail)) {
-        setError(detail.map((e: any) => e.msg).join(', '))
+        setError(detail.map((e: any) => e.msg || e.message || e.detail || String(e)).join(', '))
       } else if (typeof detail === 'string') {
         setError(detail)
       } else {

@@ -40,9 +40,11 @@ export default function BusinessLayout({
       const biz = businesses.find((b) => b.business_id === parseInt(businessId))
       if (biz && currentBusiness?.business_id !== biz.business_id) {
         switchBusiness(biz)
+      } else if (!biz && isSuperAdminUser(user)) {
+        switchBusiness({ business_id: parseInt(businessId), name: `Business #${businessId}`, role: 'admin' } as any)
       }
     }
-  }, [businessId, businesses, currentBusiness, switchBusiness])
+  }, [businessId, businesses, currentBusiness, switchBusiness, user])
 
   // Fetch business-specific role for the current user
   useEffect(() => {
@@ -94,7 +96,7 @@ export default function BusinessLayout({
     return null
   }
 
-  if (businesses.length > 0 && !businesses.find((b) => b.business_id === parseInt(businessId))) {
+  if (businesses.length > 0 && !businesses.find((b) => b.business_id === parseInt(businessId)) && !isSuperAdminUser(user)) {
     router.replace('/businesses')
     return null
   }
