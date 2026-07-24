@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
 import { useAuth } from '@/lib/auth'
@@ -38,6 +38,9 @@ export default function RequestsPage() {
   const [processingApproval, setProcessingApproval] = useState<number | null>(null)
   const [statusFilter, setStatusFilter] = useState<string>('all')
 
+  const businessesRef = useRef(businesses)
+  businessesRef.current = businesses
+
   useEffect(() => {
     if (!isLoading && !isAuthenticated) router.replace('/login')
   }, [isLoading, isAuthenticated, router])
@@ -52,7 +55,7 @@ export default function RequestsPage() {
     if (isAuthenticated) {
       loadAllApprovals()
     }
-  }, [isAuthenticated])
+  }, [isAuthenticated, businesses, fetchBusinesses])
 
   const extractApprovalArray = (data: any): Approval[] => {
     if (Array.isArray(data)) return data
@@ -76,10 +79,10 @@ export default function RequestsPage() {
     setLoading(true)
     setError('')
     try {
-      if (businesses.length === 0) {
+      if (businessesRef.current.length === 0) {
         await fetchBusinesses()
       }
-      const bizList = businesses.length > 0 ? businesses : await fetchBusinesses().then(() => businesses)
+      const bizList = businessesRef.current.length > 0 ? businessesRef.current : []
       const results: Approval[] = []
 
       await Promise.all(
