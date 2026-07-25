@@ -181,7 +181,7 @@ export default function AdminMembersScreen() {
       <Text style={styles.count}>{members.length} member{members.length !== 1 ? 's' : ''}</Text>
       <FlatList
         data={members}
-        keyExtractor={(item) => String(item.member_id ?? item.user_id ?? item.id)}
+        keyExtractor={(item: any) => String(item.member_id ?? item.user_id ?? item.id)}
         renderItem={renderItem}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />}
         contentContainerStyle={styles.list}

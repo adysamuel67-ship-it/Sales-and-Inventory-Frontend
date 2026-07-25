@@ -43,27 +43,37 @@ function extractAccessToken(data: any): string | null {
   return data.access_token || data.token || null
 }
 
-async function performTokenRefresh(): Promise<string> {
+async function performTokenRefresh(retries = 2): Promise<string> {
   const refreshToken = await AsyncStorage.getItem('refresh_token')
   const accessToken = await AsyncStorage.getItem('token')
   if (!refreshToken) throw new Error('No refresh token')
 
-  const { data } = await axios.post(`${API_BASE_URL}/auth/refresh`, {
-    access_token: accessToken,
-    refresh_token: refreshToken,
-    token_type: 'Bearer',
-  }, {
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${refreshToken}` },
-    timeout: 60000,
-  })
+  let lastErr: any
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const { data } = await axios.post(`${API_BASE_URL}/auth/refresh`, {
+        access_token: accessToken,
+        refresh_token: refreshToken,
+        token_type: 'Bearer',
+      }, {
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${refreshToken}` },
+        timeout: 60000,
+      })
 
-  const newToken = extractAccessToken(data)
-  if (!newToken) throw new Error('No access token in refresh response')
+      const newToken = extractAccessToken(data)
+      if (!newToken) throw new Error('No access token in refresh response')
 
-  const newRefresh = data.refresh_token || refreshToken
-  await AsyncStorage.setItem('token', newToken)
-  await AsyncStorage.setItem('refresh_token', newRefresh)
-  return newToken
+      const newRefresh = data.refresh_token || refreshToken
+      await AsyncStorage.setItem('token', newToken)
+      await AsyncStorage.setItem('refresh_token', newRefresh)
+      return newToken
+    } catch (err: any) {
+      lastErr = err
+      if (err.response?.status === 401 || err.response?.status === 403) throw err
+      if (attempt < retries) await new Promise(r => setTimeout(r, 1000 * (attempt + 1)))
+    }
+  }
+  throw lastErr
 }
 
 function startRefresh(): Promise<string> {
@@ -78,7 +88,7 @@ function startRefresh(): Promise<string> {
 async function attachToken(config: any) {
   const url = config?.url || ''
   const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/refresh') ||
-    url.includes('/users/sign_up') || url.includes('/auth/otp/get_code') ||
+    url.includes('/auth/logout') || url.includes('/users/sign_up') || url.includes('/auth/otp/get_code') ||
     url.includes('/auth/otp/verification') || url.includes('/auth/verify_user')
   if (!isAuthEndpoint) {
     let token = await AsyncStorage.getItem('token')
@@ -99,7 +109,7 @@ api.interceptors.response.use(
     const originalRequest = error.config
     const url = originalRequest?.url || ''
     const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/refresh') ||
-      url.includes('/users/sign_up') || url.includes('/auth/otp/get_code') ||
+      url.includes('/auth/logout') || url.includes('/users/sign_up') || url.includes('/auth/otp/get_code') ||
       url.includes('/auth/otp/verification') || url.includes('/auth/verify_user')
 
     if (error.response?.status === 401 && !isAuthEndpoint) {
@@ -168,7 +178,7 @@ export const authAPI = {
       const refreshToken = await AsyncStorage.getItem('refresh_token')
       const accessToken = await AsyncStorage.getItem('token')
       if (refreshToken && accessToken) {
-        await api.post('/auth/logout', { access_token: accessToken, refresh_token: refreshToken, token_type: 'Bearer' })
+        await api.post('/auth/logout', { access_token: accessToken, refresh_token: refreshToken, token_type: 'Bearer' }, { timeout: 10000 })
       }
     } catch {}
   },
@@ -223,7 +233,7 @@ export const cronAPI = {
 }
 
 export const productAPI = {
-  list: (businessId: number) => api.get(`/products/${businessId}`),
+  list: (businessId: number, params?: any) => api.get(`/products/${businessId}`, { params }),
   get: (businessId: number, productId: number) => api.get(`/products/${businessId}/${productId}`),
   create: (businessId: number, data: any) => api.post(`/products/${businessId}`, data),
   update: (businessId: number, productId: number, data: any) => api.put(`/products/${businessId}/${productId}`, data),

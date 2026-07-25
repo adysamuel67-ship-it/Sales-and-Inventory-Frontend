@@ -1,6 +1,6 @@
 import React from 'react'
 import { View, TextInput, Text, StyleSheet, TextInputProps, ViewStyle } from 'react-native'
-import { Colors } from '@/lib/constants'
+import { Colors, BORDER_RADIUS } from '@/lib/constants'
 
 interface InputProps extends TextInputProps {
   label?: string
@@ -29,7 +29,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surfaceAlt,
     borderWidth: 1,
     borderColor: Colors.border,
-    borderRadius: 10,
+    borderRadius: BORDER_RADIUS.lg,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 16,

@@ -124,7 +124,7 @@ export default function AdminKeysScreen() {
       <Text style={styles.count}>{businesses.length} business{businesses.length !== 1 ? 'es' : ''}</Text>
       <FlatList
         data={businesses}
-        keyExtractor={(item) => String(item.business_id ?? item.id)}
+        keyExtractor={(item: any) => String(item.business_id ?? item.id)}
         renderItem={renderItem}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />}
         contentContainerStyle={styles.list}

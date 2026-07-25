@@ -173,11 +173,8 @@ export function parseApiError(err: any): string {
   return err?.message || 'An error occurred'
 }
 
-export const SUPER_ADMIN_EMAIL = 'adysamuel68@gmail.com'
-
 export function isSuperAdminUser(user?: { role?: string; email?: string } | null): boolean {
   if (!user) return false
-  if (user.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase()) return true
   return user.role === 'super_admin'
 }
 
@@ -223,4 +220,30 @@ export function formatDateTime(dateStr: string): string {
   } catch {
     return dateStr
   }
+}
+
+export const ROLE_COLORS: Record<string, { bg: string; text: string }> = {
+  super_admin: { bg: '#FEE2E2', text: '#DC2626' },
+  admin: { bg: '#F3E8FF', text: '#7C3AED' },
+  manager: { bg: '#EFF4FF', text: '#2563EB' },
+  cashier: { bg: '#ECFDF5', text: '#059669' },
+  viewer: { bg: '#FEF3C7', text: '#D97706' },
+  user: { bg: '#F1F5F9', text: '#475569' },
+}
+
+export const ROLE_LABELS: Record<string, string> = {
+  super_admin: 'Super Admin',
+  admin: 'Admin',
+  manager: 'Manager',
+  cashier: 'Cashier',
+  viewer: 'Viewer',
+  user: 'User',
+}
+
+export function getRoleColor(role: string): { bg: string; text: string } {
+  return ROLE_COLORS[role] || ROLE_COLORS.user
+}
+
+export function getRoleLabel(role: string): string {
+  return ROLE_LABELS[role] || role
 }

@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl, Modal,
-  TextInput, FlatList, Alert, KeyboardAvoidingView, Platform,
+  TextInput, FlatList, KeyboardAvoidingView, Platform,
 } from 'react-native'
 import { useRouter, useLocalSearchParams } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { debtAPI, customerAPI } from '@/lib/api'
 import { extractArray, formatCurrency, parseApiError, isAdminRole } from '@/lib/utils'
-import { Colors } from '@/lib/constants'
+import { Colors, BORDER_RADIUS } from '@/lib/constants'
 import { useAuth } from '@/lib/auth'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
@@ -21,9 +21,9 @@ type SortType = 'highest' | 'lowest' | 'oldest'
 
 export default function DebtsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
-  const businessId = Number(id)
+  const { user, currentBusiness } = useAuth()
+  const businessId = Number(id) || currentBusiness?.business_id || 0
   const router = useRouter()
-  const { user } = useAuth()
   const isAdmin = isAdminRole(user?.business_role) || isAdminRole(user?.role)
 
   const [loading, setLoading] = useState(true)
@@ -55,6 +55,8 @@ export default function DebtsScreen() {
   const [showProfileModal, setShowProfileModal] = useState(false)
   const [profileDebt, setProfileDebt] = useState<any>(null)
   const [profileLoading, setProfileLoading] = useState(false)
+  const [txDetailItem, setTxDetailItem] = useState<any>(null)
+  const [actionError, setActionError] = useState('')
 
   const fetchData = useCallback(async () => {
     if (!businessId) return
@@ -65,7 +67,20 @@ export default function DebtsScreen() {
         debtAPI.getTotalDebt(businessId),
         customerAPI.list(businessId),
       ])
-      if (debtsRes.status === 'fulfilled') setDebts(extractArray(debtsRes.value.data))
+      if (debtsRes.status === 'fulfilled') {
+        const raw = extractArray(debtsRes.value.data)
+        setDebts(raw.map((d: any) => ({
+          customer_id: d.debt?.customer_id || d.customer_id,
+          name: d.customer_name || d.name || 'Unknown',
+          phone: d.customer_phone || d.phone || '',
+          email: d.customer_email || d.email || '',
+          amount: d.debt?.amount || d.amount || 0,
+          debt_id: d.debt?.debt_id || d.debt_id,
+          is_paid: d.debt?.is_paid ?? d.is_paid ?? false,
+          due_date: d.debt?.due_date || d.due_date,
+          status: (d.debt?.is_paid ?? false) ? 'paid' : 'pending',
+        })))
+      }
       if (totalRes.status === 'fulfilled') {
         const data = totalRes.value.data?.data || totalRes.value.data
         setTotalDebt(Number(data?.total_debt || data?.total || 0))
@@ -140,12 +155,24 @@ export default function DebtsScreen() {
   const openProfile = async (d: any) => {
     setProfileLoading(true); setShowProfileModal(true); setProfileDebt(null)
     try {
-      const res = await debtAPI.getCustomerDebt(businessId, d.customer_id || d.id)
-      setProfileDebt(res.data)
+      const [debtRes, txRes] = await Promise.allSettled([
+        debtAPI.getCustomerDebt(businessId, d.customer_id || d.id),
+        debtAPI.getCustomerTransactions(businessId, d.customer_id || d.id),
+      ])
+      const result: any = { debt: null, transactions: [] }
+      if (debtRes.status === 'fulfilled') {
+        const raw = debtRes.value.data
+        result.debt = raw?.debt || raw
+      }
+      if (txRes.status === 'fulfilled') {
+        result.transactions = extractArray(txRes.value.data)
+      }
+      setProfileDebt(result)
     } catch {} finally { setProfileLoading(false) }
   }
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string, isPaid?: boolean) => {
+    if (isPaid) return Colors.success
     const s = (status || '').toLowerCase()
     if (s === 'paid') return Colors.success
     if (s === 'overdue' || s === 'pending') return Colors.danger
@@ -166,8 +193,8 @@ export default function DebtsScreen() {
             <Text style={styles.debtName}>{item.name || item.customer_name || 'Unknown'}</Text>
             {item.phone || item.customer_phone ? <Text style={styles.debtPhone}>{item.phone || item.customer_phone}</Text> : null}
           </View>
-          <View style={[styles.statusBadge, { backgroundColor: getStatusColor(status) + '20' }]}>
-            <Text style={[styles.statusText, { color: getStatusColor(status) }]}>{status}</Text>
+          <View style={[styles.statusBadge, { backgroundColor: getStatusColor(status, item.is_paid) + '20' }]}>
+            <Text style={[styles.statusText, { color: getStatusColor(status, item.is_paid) }]}>{status}</Text>
           </View>
         </View>
         <View style={styles.debtAmount}>
@@ -178,7 +205,7 @@ export default function DebtsScreen() {
           <TouchableOpacity style={styles.detailBtn} onPress={() => openProfile(item)}>
             <Text style={styles.detailBtnText}>Details</Text>
           </TouchableOpacity>
-          {status !== 'paid' && (
+          {!item.is_paid && status !== 'paid' && (
             <TouchableOpacity style={styles.payBtn} onPress={() => { setPayTarget(item); setPayAmount(''); setPayFullyPaid(true); setPayNote(''); setShowPayModal(true) }}>
               <Text style={styles.payBtnText}>Record Payment</Text>
             </TouchableOpacity>
@@ -193,9 +220,7 @@ export default function DebtsScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.topBar}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={24} color={Colors.text} />
-        </TouchableOpacity>
+        <View style={{ width: 32 }} />
         <Text style={styles.headerTitle}>Debts</Text>
         {isAdmin && (
           <TouchableOpacity style={styles.addBtn} onPress={() => { setIsNewCustomer(false); setAddForm({ customer_id: '', amount: '', due_date: '', note: '', new_customer_name: '', new_customer_phone: '' }); setShowAddModal(true); setAddError('') }}>
@@ -205,8 +230,8 @@ export default function DebtsScreen() {
       </View>
 
       <View style={styles.kpiRow}>
-        <KpiCard title="Outstanding" value={formatCurrency(totalDebt)} icon="wallet" color={Colors.danger} />
-        <KpiCard title="Overdue" value={String(overdueCount)} icon="alert-circle" color={Colors.warning} />
+        <KpiCard title="Outstanding" value={formatCurrency(totalDebt)} icon="wallet" color="danger" />
+        <KpiCard title="Overdue" value={String(overdueCount)} icon="alert-circle" color="warning" />
       </View>
 
       <View style={styles.tabRow}>
@@ -232,10 +257,11 @@ export default function DebtsScreen() {
       </View>
 
       {error ? <AlertBadge message={error} type="error" /> : null}
+      {actionError ? <AlertBadge message={actionError} type="error" /> : null}
 
       <FlatList
         data={filtered}
-        keyExtractor={(item, i) => String(item.customer_id || item.id || i)}
+        keyExtractor={(item: any, i: number) => String(item.customer_id || item.id || i)}
         renderItem={renderDebt}
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[Colors.primary]} />}
@@ -296,9 +322,9 @@ export default function DebtsScreen() {
             {isNewCustomer ? (
               <>
                 <Text style={styles.fieldLabel}>Customer Name *</Text>
-                <TextInput style={styles.textInput} value={addForm.new_customer_name} onChangeText={(v) => setAddForm({ ...addForm, new_customer_name: v })} placeholder="Customer name" placeholderTextColor={Colors.textLight} />
+                <TextInput style={styles.textInput} value={addForm.new_customer_name} onChangeText={(v: string) => setAddForm({ ...addForm, new_customer_name: v })} placeholder="Customer name" placeholderTextColor={Colors.textLight} />
                 <Text style={styles.fieldLabel}>Phone</Text>
-                <TextInput style={styles.textInput} value={addForm.new_customer_phone} onChangeText={(v) => setAddForm({ ...addForm, new_customer_phone: v })} keyboardType="phone-pad" placeholder="Phone number" placeholderTextColor={Colors.textLight} />
+                <TextInput style={styles.textInput} value={addForm.new_customer_phone} onChangeText={(v: string) => setAddForm({ ...addForm, new_customer_phone: v })} keyboardType="phone-pad" placeholder="Phone number" placeholderTextColor={Colors.textLight} />
               </>
             ) : (
               <>
@@ -313,11 +339,11 @@ export default function DebtsScreen() {
               </>
             )}
             <Text style={styles.fieldLabel}>Amount *</Text>
-            <TextInput style={styles.textInput} value={addForm.amount} onChangeText={(v) => setAddForm({ ...addForm, amount: v })} keyboardType="decimal-pad" placeholder="0.00" placeholderTextColor={Colors.textLight} />
+            <TextInput style={styles.textInput} value={addForm.amount} onChangeText={(v: string) => setAddForm({ ...addForm, amount: v })} keyboardType="decimal-pad" placeholder="0.00" placeholderTextColor={Colors.textLight} />
             <Text style={styles.fieldLabel}>Due Date</Text>
-            <TextInput style={styles.textInput} value={addForm.due_date} onChangeText={(v) => setAddForm({ ...addForm, due_date: v })} placeholder="YYYY-MM-DD" placeholderTextColor={Colors.textLight} />
+            <TextInput style={styles.textInput} value={addForm.due_date} onChangeText={(v: string) => setAddForm({ ...addForm, due_date: v })} placeholder="YYYY-MM-DD" placeholderTextColor={Colors.textLight} />
             <Text style={styles.fieldLabel}>Note</Text>
-            <TextInput style={styles.textInput} value={addForm.note} onChangeText={(v) => setAddForm({ ...addForm, note: v })} placeholder="Note" placeholderTextColor={Colors.textLight} />
+            <TextInput style={styles.textInput} value={addForm.note} onChangeText={(v: string) => setAddForm({ ...addForm, note: v })} placeholder="Note" placeholderTextColor={Colors.textLight} />
             <View style={{ marginTop: 20, marginBottom: 40 }}>
               <Button title="Add Debt" onPress={handleAddDebt} loading={addLoading} disabled={addLoading} size="lg" />
             </View>
@@ -334,29 +360,89 @@ export default function DebtsScreen() {
         <ScrollView style={styles.modalBody}>
           {profileLoading ? <LoadingSpinner message="Loading..." /> : profileDebt && (
             <>
-              <Card style={{ marginBottom: 12 }}>
-                <Text style={styles.infoLabel}>Outstanding Debt</Text>
-                <Text style={[styles.infoValue, { color: Colors.danger, fontSize: 22, fontWeight: '700' }]}>
-                  {formatCurrency(Number(profileDebt.outstanding_debt || profileDebt.total_debt || 0))}
-                </Text>
-              </Card>
-              {Array.isArray(profileDebt.transactions) && profileDebt.transactions.length > 0 && (
-                <Card>
-                  <Text style={styles.infoLabel}>Transactions</Text>
-                  {profileDebt.transactions.map((t: any, i: number) => (
-                    <View key={i} style={styles.txRow}>
-                      <Text style={styles.txAmount}>{formatCurrency(t.amount || 0)}</Text>
-                      <Text style={[styles.txStatus, { color: (t.status || '').toLowerCase() === 'paid' ? Colors.success : Colors.danger }]}>
-                        {(t.status || 'pending').toLowerCase()}
-                      </Text>
-                      <Text style={styles.txDate}>{t.date || t.created_at || ''}</Text>
+              {profileDebt.debt && (
+                <Card style={{ marginBottom: 12 }}>
+                  <Text style={styles.infoLabel}>Debt Details</Text>
+                  <View style={styles.debtDetailRow}>
+                    <Text style={styles.debtDetailLabel}>Amount</Text>
+                    <Text style={[styles.debtDetailValue, { color: Colors.danger, fontSize: 22, fontWeight: '700' }]}>
+                      {formatCurrency(Number(profileDebt.debt.amount || 0))}
+                    </Text>
+                  </View>
+                  {profileDebt.debt.due_date && (
+                    <View style={styles.debtDetailRow}>
+                      <Text style={styles.debtDetailLabel}>Due Date</Text>
+                      <Text style={styles.debtDetailValue}>{new Date(profileDebt.debt.due_date).toLocaleDateString()}</Text>
                     </View>
-                  ))}
+                  )}
+                  <View style={[styles.debtDetailRow, { borderBottomWidth: 0 }]}>
+                    <Text style={styles.debtDetailLabel}>Status</Text>
+                    <View style={[styles.debtStatusBadge, { backgroundColor: profileDebt.debt.is_paid ? Colors.successLight : Colors.dangerLight }]}>
+                      <Text style={[styles.debtStatusText, { color: profileDebt.debt.is_paid ? Colors.success : Colors.danger }]}>
+                        {profileDebt.debt.is_paid ? 'Paid' : 'Unpaid'}
+                      </Text>
+                    </View>
+                  </View>
                 </Card>
               )}
+
+              <Card>
+                <Text style={styles.infoLabel}>Transaction History ({profileDebt.transactions?.length || 0})</Text>
+                {profileDebt.transactions && profileDebt.transactions.length > 0 ? (
+                  profileDebt.transactions.map((t: any, i: number) => {
+                    const tx = t.transactions || t
+                    return (
+                      <TouchableOpacity
+                        key={i}
+                        style={[styles.txRow, i < profileDebt.transactions.length - 1 && styles.txBorder]}
+                        onPress={() => setTxDetailItem(tx)}
+                        activeOpacity={0.7}
+                      >
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.txAmount}>{formatCurrency(tx.amount_paid || 0)}</Text>
+                          {tx.note && <Text style={styles.txNote}>{tx.note}</Text>}
+                        </View>
+                        <View style={{ alignItems: 'flex-end' }}>
+                          <Text style={styles.txDate}>{tx.created_at ? new Date(tx.created_at).toLocaleDateString() : ''}</Text>
+                          <Text style={styles.txTime}>{tx.created_at ? new Date(tx.created_at).toLocaleTimeString() : ''}</Text>
+                        </View>
+                      </TouchableOpacity>
+                    )
+                  })
+                ) : (
+                  <Text style={[styles.infoValue, { textAlign: 'center', paddingVertical: 16 }]}>No transactions recorded</Text>
+                )}
+              </Card>
             </>
           )}
         </ScrollView>
+      </Modal>
+
+      <Modal visible={!!txDetailItem} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.confirmModal}>
+            <Text style={styles.confirmTitle}>Transaction Details</Text>
+            {txDetailItem && (
+              <>
+                <View style={styles.debtDetailRow}>
+                  <Text style={styles.debtDetailLabel}>Amount Paid</Text>
+                  <Text style={[styles.debtDetailValue, { color: Colors.success, fontWeight: '700' }]}>{formatCurrency(txDetailItem.amount_paid || 0)}</Text>
+                </View>
+                <View style={styles.debtDetailRow}>
+                  <Text style={styles.debtDetailLabel}>Note</Text>
+                  <Text style={styles.debtDetailValue}>{txDetailItem.note || 'N/A'}</Text>
+                </View>
+                <View style={[styles.debtDetailRow, { borderBottomWidth: 0 }]}>
+                  <Text style={styles.debtDetailLabel}>Date</Text>
+                  <Text style={styles.debtDetailValue}>{txDetailItem.created_at ? new Date(txDetailItem.created_at).toLocaleString() : 'N/A'}</Text>
+                </View>
+              </>
+            )}
+            <View style={{ marginTop: 16 }}>
+              <Button title="Close" variant="outline" onPress={() => setTxDetailItem(null)} />
+            </View>
+          </View>
+        </View>
       </Modal>
     </View>
   )
@@ -368,15 +454,15 @@ const styles = StyleSheet.create({
   topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 60, paddingHorizontal: 16, paddingBottom: 12, backgroundColor: Colors.surface },
   backBtn: { padding: 4 },
   headerTitle: { fontSize: 20, fontWeight: '700', color: Colors.text },
-  addBtn: { backgroundColor: Colors.primary, borderRadius: 10, padding: 8 },
+  addBtn: { backgroundColor: Colors.primary, borderRadius: BORDER_RADIUS.lg, padding: 8 },
   kpiRow: { flexDirection: 'row', gap: 12, paddingHorizontal: 16, paddingTop: 16 },
-  tabRow: { flexDirection: 'row', backgroundColor: Colors.surface, marginHorizontal: 16, marginTop: 12, borderRadius: 10, overflow: 'hidden' },
+  tabRow: { flexDirection: 'row', backgroundColor: Colors.surface, marginHorizontal: 16, marginTop: 12, borderRadius: BORDER_RADIUS.lg, overflow: 'hidden' },
   tabBtn: { flex: 1, paddingVertical: 10, alignItems: 'center' },
   tabActive: { backgroundColor: Colors.primary },
   tabText: { fontSize: 13, fontWeight: '600', color: Colors.textLight },
   tabTextActive: { color: '#FFF' },
   filterRow: { paddingHorizontal: 16, paddingTop: 12 },
-  searchRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.surface, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: Colors.border, gap: 8 },
+  searchRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.surface, borderRadius: BORDER_RADIUS.lg, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: Colors.border, gap: 8 },
   searchInput: { flex: 1, fontSize: 14, color: Colors.text, paddingVertical: 4 },
   sortRow: { marginTop: 8, maxHeight: 36 },
   sortBtn: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: 16, backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.border, marginRight: 8 },
@@ -395,21 +481,21 @@ const styles = StyleSheet.create({
   amountLabel: { fontSize: 13, color: Colors.textLight },
   amountValue: { fontSize: 18, fontWeight: '700', color: Colors.danger },
   debtActions: { flexDirection: 'row', gap: 12, marginTop: 4 },
-  detailBtn: { flex: 1, paddingVertical: 10, borderRadius: 10, borderWidth: 1, borderColor: Colors.border, alignItems: 'center' },
+  detailBtn: { flex: 1, paddingVertical: 10, borderRadius: BORDER_RADIUS.lg, borderWidth: 1, borderColor: Colors.border, alignItems: 'center' },
   detailBtnText: { fontSize: 13, fontWeight: '600', color: Colors.text },
-  payBtn: { flex: 1, paddingVertical: 10, borderRadius: 10, backgroundColor: Colors.primary, alignItems: 'center' },
+  payBtn: { flex: 1, paddingVertical: 10, borderRadius: BORDER_RADIUS.lg, backgroundColor: Colors.primary, alignItems: 'center' },
   payBtnText: { fontSize: 13, fontWeight: '600', color: '#FFF' },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 60, paddingHorizontal: 20, paddingBottom: 12, backgroundColor: Colors.surface, borderBottomWidth: 1, borderBottomColor: Colors.border },
   modalCancel: { fontSize: 16, color: Colors.primary },
   modalTitle: { fontSize: 18, fontWeight: '700', color: Colors.text },
   modalBody: { flex: 1, padding: 20 },
   fieldLabel: { fontSize: 14, fontWeight: '600', color: Colors.text, marginBottom: 6, marginTop: 14 },
-  textInput: { backgroundColor: Colors.surfaceAlt, borderWidth: 1, borderColor: Colors.border, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, color: Colors.text },
+  textInput: { backgroundColor: Colors.surfaceAlt, borderWidth: 1, borderColor: Colors.border, borderRadius: BORDER_RADIUS.lg, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, color: Colors.text },
   checkboxRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 },
   checkLabel: { fontSize: 15, color: Colors.text, fontWeight: '500' },
   payCustomer: { fontSize: 16, fontWeight: '600', color: Colors.text },
   payDebt: { fontSize: 14, color: Colors.danger, marginTop: 4 },
-  tabRowInner: { flexDirection: 'row', backgroundColor: Colors.surfaceAlt, borderRadius: 10, overflow: 'hidden', marginTop: 8 },
+  tabRowInner: { flexDirection: 'row', backgroundColor: Colors.surfaceAlt, borderRadius: BORDER_RADIUS.lg, overflow: 'hidden', marginTop: 8 },
   tabBtnInner: { flex: 1, paddingVertical: 10, alignItems: 'center' },
   tabActiveInner: { backgroundColor: Colors.primary },
   tabTextInner: { fontSize: 13, fontWeight: '600', color: Colors.textLight },
@@ -423,4 +509,12 @@ const styles = StyleSheet.create({
   txAmount: { fontSize: 14, fontWeight: '600', color: Colors.text, flex: 1 },
   txStatus: { fontSize: 12, fontWeight: '600', textTransform: 'capitalize', flex: 1, textAlign: 'center' },
   txDate: { fontSize: 12, color: Colors.textLight, flex: 1, textAlign: 'right' },
+  debtDetailRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: Colors.border },
+  debtDetailLabel: { fontSize: 14, color: Colors.textLight },
+  debtDetailValue: { fontSize: 14, fontWeight: '500', color: Colors.text },
+  debtStatusBadge: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 9999 },
+  debtStatusText: { fontSize: 12, fontWeight: '700' },
+  txBorder: { borderBottomWidth: 1, borderBottomColor: Colors.border },
+  txNote: { fontSize: 12, color: Colors.textLight, marginTop: 2 },
+  txTime: { fontSize: 11, color: Colors.textLight, marginTop: 2 },
 })

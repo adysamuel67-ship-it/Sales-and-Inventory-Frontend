@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl, Modal,
-  TextInput, FlatList, Alert, KeyboardAvoidingView, Platform, Dimensions,
+  View, Text, TouchableOpacity, StyleSheet, RefreshControl,
+  TextInput, FlatList, KeyboardAvoidingView, Platform, Dimensions,
+  Modal as RNModal, ScrollView,
 } from 'react-native'
-import { useRouter, useLocalSearchParams } from 'expo-router'
+import { useLocalSearchParams } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { saleAPI, productAPI, customerAPI } from '@/lib/api'
 import { extractArray, mapSale, formatCurrency, formatPayment, parseApiError } from '@/lib/utils'
-import { Colors } from '@/lib/constants'
+import { Colors, BORDER_RADIUS } from '@/lib/constants'
+import { useAuth } from '@/lib/auth'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
@@ -35,8 +37,8 @@ interface SaleItem {
 
 export default function SalesScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
-  const businessId = Number(id)
-  const router = useRouter()
+  const { currentBusiness } = useAuth()
+  const businessId = Number(id) || currentBusiness?.business_id || 0
 
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -67,6 +69,7 @@ export default function SalesScreen() {
   const [productSearch, setProductSearch] = useState('')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null)
+  const [actionError, setActionError] = useState('')
 
   const fetchData = useCallback(async (reset = false) => {
     if (!businessId) return
@@ -81,12 +84,22 @@ export default function SalesScreen() {
       }
       const [salesRes, productsRes, customersRes] = await Promise.allSettled([
         saleAPI.list(businessId, params),
-        productAPI.list(businessId),
+        productAPI.list(businessId, { limit: 500 }),
         customerAPI.list(businessId),
       ])
+
+      const productMap = new Map<number, string>()
+      if (productsRes.status === 'fulfilled') {
+        const prods = extractArray(productsRes.value.data)
+        prods.forEach((p: any) => {
+          const pid = p.product_id ?? p.id
+          if (pid != null) productMap.set(pid, p.name || p.product_name || `Product #${pid}`)
+        })
+      }
+
       if (salesRes.status === 'fulfilled') {
         const items = extractArray(salesRes.value.data)
-        const mapped = items.map((item) => mapSale(item))
+        const mapped = items.map((item) => mapSale(item, productMap))
         if (reset) { setSales(mapped); setPage(1) }
         else {
           setSales((prev) => [...prev, ...mapped])
@@ -200,7 +213,7 @@ export default function SalesScreen() {
       setDeleteTarget(null)
       await fetchData(true)
     } catch (err: any) {
-      Alert.alert('Error', parseApiError(err))
+      setActionError(parseApiError(err)); setTimeout(() => setActionError(''), 4000)
     }
   }
 
@@ -208,78 +221,156 @@ export default function SalesScreen() {
     switch (method) {
       case 'cash': return Colors.success
       case 'mobile_money': return Colors.primary
-      case 'card': return '#8B5CF6'
+      case 'card': return Colors.warning
       default: return Colors.textLight
     }
   }
 
-  const getStatusBadgeColor = (status?: string) => {
-    if (status === 'fully_paid' || status === 'paid') return Colors.success
-    if (status === 'partial') return Colors.warning
-    return Colors.textLight
-  }
+  const renderSale = ({ item }: { item: any }) => {
+    const isPartial = item.payment_status === 'partial'
+    const itemCount = item.sales_items?.length || 0
+    const displayTime = item.created_at ? new Date(item.created_at) : null
+    const timeLabel = displayTime
+      ? displayTime.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' · ' + displayTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+      : item.time?.split(',')[0] || ''
 
-  const renderSale = ({ item }: { item: any }) => (
-    <TouchableOpacity style={styles.saleCard} onPress={() => { setSelectedSale(item); setShowDetailModal(true) }}>
-      <View style={styles.saleHeader}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.saleProduct} numberOfLines={1}>{item.product}</Text>
-          <Text style={styles.saleSub}>{item.customer_name || 'Walk-in'} · {item.sold_by_name || `User #${item.user_id || ''}`}</Text>
-        </View>
-        <Text style={styles.saleAmount}>{formatCurrency(item.amount)}</Text>
-      </View>
-      <View style={styles.saleFooter}>
-        <Text style={styles.saleQty}>{item.qty} items</Text>
-        <View style={[styles.badge, { backgroundColor: getPaymentBadgeColor(item.payment) + '20' }]}>
-          <Text style={[styles.badgeText, { color: getPaymentBadgeColor(item.payment) }]}>{formatPayment(item.payment)}</Text>
-        </View>
-        {item.payment_status && (
-          <View style={[styles.badge, { backgroundColor: getStatusBadgeColor(item.payment_status) + '20' }]}>
-            <Text style={[styles.badgeText, { color: getStatusBadgeColor(item.payment_status) }]}>
-              {item.payment_status === 'fully_paid' ? 'Paid' : 'Partial'}
+    return (
+      <TouchableOpacity style={s.card} onPress={() => { setSelectedSale(item); setShowDetailModal(true) }} activeOpacity={0.7}>
+        <View style={s.cardHeader}>
+          <View style={s.cardHeaderLeft}>
+            <Text style={s.cardId}>#{item.id}</Text>
+            <View style={[s.statusDot, { backgroundColor: isPartial ? Colors.warning : Colors.success }]} />
+            <Text style={[s.statusText, { color: isPartial ? Colors.warning : Colors.success }]}>
+              {isPartial ? 'Partial' : 'Paid'}
             </Text>
           </View>
+          <Text style={s.cardTime}>{timeLabel}</Text>
+        </View>
+
+        {item.sales_items && itemCount > 0 ? (
+          <View style={s.itemsList}>
+            {item.sales_items.slice(0, 3).map((si: any, idx: number) => (
+              <View key={idx} style={s.itemRow}>
+                <View style={s.itemDot} />
+                <Text style={s.itemName} numberOfLines={1}>{si.product_name || `Product #${si.product_id}`}</Text>
+                <Text style={s.itemQty}>×{si.quantity}</Text>
+                <Text style={s.itemPrice}>{formatCurrency(si.unit_price || 0)}</Text>
+              </View>
+            ))}
+            {itemCount > 3 && (
+              <Text style={s.itemMore}>+{itemCount - 3} more</Text>
+            )}
+          </View>
+        ) : (
+          <Text style={s.itemFallback} numberOfLines={1}>{item.product}</Text>
         )}
-        <Text style={styles.saleTime}>{item.time?.split(',')[0] || ''}</Text>
-      </View>
-    </TouchableOpacity>
-  )
+
+        <View style={s.cardDivider} />
+
+        <View style={s.cardFooter}>
+          <View style={s.footerLeft}>
+            <View style={s.footerMeta}>
+              <Ionicons name="person-outline" size={12} color={item.customer_name ? Colors.neutralLight : Colors.textLight} />
+              <Text style={[s.footerMetaText, !item.customer_name && { color: Colors.textLight }]} numberOfLines={1}>
+                {item.customer_name || 'Walk-in'}
+              </Text>
+            </View>
+            {item.sold_by_name && (
+              <View style={s.footerMeta}>
+                <Ionicons name="briefcase-outline" size={12} color={Colors.neutralLight} />
+                <Text style={s.footerMetaText} numberOfLines={1}>{item.sold_by_name}</Text>
+              </View>
+            )}
+          </View>
+
+          <View style={s.footerRight}>
+            {isPartial && item.amount_paid != null && (
+              <Text style={s.paidSmall}>Paid {formatCurrency(item.amount_paid)}</Text>
+            )}
+            <Text style={s.amount}>{formatCurrency(item.amount)}</Text>
+          </View>
+        </View>
+
+        <View style={s.badgeRow}>
+          <View style={[s.badge, { backgroundColor: getPaymentBadgeColor(item.payment) + '15' }]}>
+            <Ionicons
+              name={item.payment === 'cash' ? 'cash-outline' : item.payment === 'mobile_money' ? 'phone-portrait-outline' : 'card-outline'}
+              size={11} color={getPaymentBadgeColor(item.payment)}
+            />
+            <Text style={[s.badgeText, { color: getPaymentBadgeColor(item.payment) }]}>{formatPayment(item.payment)}</Text>
+          </View>
+          {item.qty > 0 && (
+            <View style={[s.badge, { backgroundColor: Colors.surfaceAlt }]}>
+              <Ionicons name="cube-outline" size={11} color={Colors.textLight} />
+              <Text style={[s.badgeText, { color: Colors.textLight }]}>{item.qty} item{item.qty !== 1 ? 's' : ''}</Text>
+            </View>
+          )}
+          {item.note && (
+            <View style={[s.badge, { backgroundColor: Colors.purpleLight }]}>
+              <Ionicons name="document-text-outline" size={11} color={Colors.purple} />
+              <Text style={[s.badgeText, { color: Colors.purple }]}>Note</Text>
+            </View>
+          )}
+        </View>
+      </TouchableOpacity>
+    )
+  }
 
   if (loading) return <LoadingSpinner fullScreen message="Loading sales..." />
 
   return (
-    <View style={styles.container}>
-      <View style={styles.topBar}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={24} color={Colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Sales</Text>
-        <TouchableOpacity style={styles.recordBtn} onPress={() => setShowRecordModal(true)}>
-          <Ionicons name="add" size={20} color="#FFF" />
-        </TouchableOpacity>
+    <View style={s.root}>
+      <View style={s.heroBanner}>
+        <View style={s.heroCircle1} />
+        <View style={s.heroCircle2} />
+        <View style={s.heroContent}>
+          <View style={s.heroTop}>
+            <View>
+              <Text style={s.heroTitle}>Sales</Text>
+              <Text style={s.heroSubtitle}>{sales.length} transactions recorded</Text>
+            </View>
+            <TouchableOpacity style={s.addBtn} onPress={() => setShowRecordModal(true)}>
+              <Ionicons name="add" size={22} color="#FFF" />
+            </TouchableOpacity>
+          </View>
+          <View style={s.heroQuickStats}>
+            <View style={s.heroStat}>
+              <Text style={s.heroStatValue}>{sales.length}</Text>
+              <Text style={s.heroStatLabel}>Sales</Text>
+            </View>
+            <View style={s.heroStatDivider} />
+            <View style={s.heroStat}>
+              <Text style={s.heroStatValue}>{totalItems}</Text>
+              <Text style={s.heroStatLabel}>Items</Text>
+            </View>
+            <View style={s.heroStatDivider} />
+            <View style={s.heroStat}>
+              <Text style={s.heroStatValue}>{formatCurrency(totalAmount).replace('GH₵ ', '₵')}</Text>
+              <Text style={s.heroStatLabel}>Total</Text>
+            </View>
+          </View>
+        </View>
       </View>
 
-      {error ? <AlertBadge message={error} type="error" /> : null}
+      <View style={s.stickySection}>
+        {error ? <AlertBadge message={error} type="error" /> : null}
+        {actionError ? <AlertBadge message={actionError} type="error" /> : null}
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterRow} contentContainerStyle={styles.filterContent}>
-        {DATE_FILTERS.map((f) => (
-          <TouchableOpacity key={f.label} style={[styles.filterBtn, activeFilter === f.days && styles.filterActive]} onPress={() => setActiveFilter(f.days)}>
-            <Text style={[styles.filterText, activeFilter === f.days && styles.filterTextActive]}>{f.label}</Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-
-      <View style={styles.summaryBar}>
-        <Text style={styles.summaryText}>{sales.length} sales</Text>
-        <Text style={styles.summaryText}>{totalItems} items</Text>
-        <Text style={styles.summaryAmount}>{formatCurrency(totalAmount)}</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.filterBar} contentContainerStyle={s.filterContent}>
+          {DATE_FILTERS.map((f) => (
+            <TouchableOpacity key={f.label} style={[s.filterBtn, activeFilter === f.days && s.filterActive]} onPress={() => setActiveFilter(f.days)}>
+              <Text style={[s.filterText, activeFilter === f.days && s.filterTextActive]}>{f.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
       </View>
 
       <FlatList
         data={sales}
-        keyExtractor={(item) => String(item.id)}
+        keyExtractor={(item: any) => String(item.id)}
         renderItem={renderSale}
-        contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
+        style={s.list}
+        contentContainerStyle={s.listContent}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[Colors.primary]} />}
         onEndReached={loadMore}
         onEndReachedThreshold={0.3}
@@ -287,103 +378,103 @@ export default function SalesScreen() {
         ListFooterComponent={loadingMore ? <LoadingSpinner message="Loading more..." /> : null}
       />
 
-      <Modal visible={showRecordModal} animationType="slide" presentationStyle="pageSheet">
-        <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-          <View style={styles.modalHeader}>
+      <RNModal visible={showRecordModal} animationType="slide" presentationStyle="pageSheet">
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <View style={s.modalNav}>
             <TouchableOpacity onPress={() => { setShowRecordModal(false); resetForm() }}>
-              <Text style={styles.modalCancel}>Cancel</Text>
+              <Text style={s.modalAction}>Cancel</Text>
             </TouchableOpacity>
-            <Text style={styles.modalTitle}>Record Sale</Text>
+            <Text style={s.modalNavTitle}>Record Sale</Text>
             <View style={{ width: 60 }} />
           </View>
-          <ScrollView style={styles.modalBody} keyboardShouldPersistTaps="handled">
+          <ScrollView style={s.modalScroll} keyboardShouldPersistTaps="handled">
             {recordError ? <AlertBadge message={recordError} type="error" /> : null}
 
-            <Text style={styles.fieldLabel}>Add Products</Text>
-            <TouchableOpacity style={styles.dropdown} onPress={() => setShowProductDropdown(!showProductDropdown)}>
-              <Text style={selectedProduct ? styles.dropdownText : styles.dropdownPlaceholder}>
+            <Text style={s.fieldLabel}>Add Products</Text>
+            <TouchableOpacity style={s.dropdown} onPress={() => setShowProductDropdown(!showProductDropdown)}>
+              <Text style={selectedProduct ? s.dropdownVal : s.dropdownPh}>
                 {selectedProduct ? `${selectedProduct.name || selectedProduct.product_name} - ${formatCurrency(selectedProduct.price || 0)}` : 'Select a product'}
               </Text>
               <Ionicons name="chevron-down" size={20} color={Colors.textLight} />
             </TouchableOpacity>
 
             {showProductDropdown && (
-              <View style={styles.dropdownList}>
-                <TextInput style={styles.searchInput} placeholder="Search products..." placeholderTextColor={Colors.textLight} value={productSearch} onChangeText={setProductSearch} />
+              <View style={s.dropdownList}>
+                <TextInput style={s.dropdownSearch} placeholder="Search..." placeholderTextColor={Colors.textLight} value={productSearch} onChangeText={setProductSearch} />
                 <ScrollView style={{ maxHeight: 200 }}>
                   {filteredProducts.map((p) => {
                     const stock = p.quantity ?? p.stock ?? 0
                     return (
-                      <TouchableOpacity key={p.product_id || p.id} style={styles.dropdownItem} onPress={() => { setSelectedProduct(p); setShowProductDropdown(false); setProductSearch('') }}>
-                        <Text style={styles.dropdownItemText}>{p.name || p.product_name}</Text>
-                        <Text style={styles.dropdownItemMeta}>{formatCurrency(p.price || 0)} · {stock} in stock</Text>
+                      <TouchableOpacity key={p.product_id || p.id} style={s.dropdownItem} onPress={() => { setSelectedProduct(p); setShowProductDropdown(false); setProductSearch('') }}>
+                        <Text style={s.dropdownItemText}>{p.name || p.product_name}</Text>
+                        <Text style={s.dropdownItemMeta}>{formatCurrency(p.price || 0)} · {stock} in stock</Text>
                       </TouchableOpacity>
                     )
                   })}
-                  {filteredProducts.length === 0 && <Text style={styles.emptyText}>No products found</Text>}
+                  {filteredProducts.length === 0 && <Text style={{ fontSize: 13, color: Colors.textLight, textAlign: 'center', padding: 12 }}>No products found</Text>}
                 </ScrollView>
               </View>
             )}
 
-            <View style={styles.qtyRow}>
+            <View style={s.qtyRow}>
               <View style={{ flex: 1 }}>
-                <Text style={styles.fieldLabel}>Quantity</Text>
-                <TextInput style={styles.qtyInput} value={quantity} onChangeText={setQuantity} keyboardType="number-pad" />
+                <Text style={s.fieldLabel}>Quantity</Text>
+                <TextInput style={s.qtyInput} value={quantity} onChangeText={setQuantity} keyboardType="number-pad" />
               </View>
               <Button title="Add" onPress={addItem} size="sm" style={{ marginTop: 22 }} />
             </View>
 
             {saleItems.length > 0 && (
-              <View style={styles.itemsSection}>
-                <Text style={styles.fieldLabel}>Order Items</Text>
+              <View style={{ marginTop: 8 }}>
+                <Text style={s.fieldLabel}>Order Items</Text>
                 {saleItems.map((item, idx) => (
-                  <View key={idx} style={styles.orderItem}>
+                  <View key={idx} style={s.orderItem}>
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.orderItemName}>{item.product_name}</Text>
-                      <Text style={styles.orderItemDetail}>{item.quantity} × {formatCurrency(item.unit_price)}</Text>
+                      <Text style={s.orderItemName}>{item.product_name}</Text>
+                      <Text style={s.orderItemDetail}>{item.quantity} × {formatCurrency(item.unit_price)}</Text>
                     </View>
-                    <Text style={styles.orderItemTotal}>{formatCurrency(item.quantity * item.unit_price)}</Text>
-                    <TouchableOpacity onPress={() => removeItem(idx)} style={styles.removeBtn}>
+                    <Text style={s.orderItemTotal}>{formatCurrency(item.quantity * item.unit_price)}</Text>
+                    <TouchableOpacity onPress={() => removeItem(idx)} style={{ padding: 4 }}>
                       <Ionicons name="close-circle" size={22} color={Colors.danger} />
                     </TouchableOpacity>
                   </View>
                 ))}
-                <View style={styles.totalRow}>
-                  <Text style={styles.totalLabel}>Total</Text>
-                  <Text style={styles.totalValue}>{formatCurrency(orderTotal)}</Text>
+                <View style={s.totalRow}>
+                  <Text style={s.totalLabel}>Total</Text>
+                  <Text style={s.totalValue}>{formatCurrency(orderTotal)}</Text>
                 </View>
               </View>
             )}
 
-            <Text style={styles.fieldLabel}>Payment Method</Text>
-            <View style={styles.paymentRow}>
+            <Text style={s.fieldLabel}>Payment Method</Text>
+            <View style={s.payRow}>
               {(['cash', 'mobile_money', 'card'] as const).map((m) => (
-                <TouchableOpacity key={m} style={[styles.payBtn, paymentMethod === m && styles.payBtnActive]} onPress={() => setPaymentMethod(m)}>
-                  <Text style={[styles.payBtnText, paymentMethod === m && styles.payBtnTextActive]}>
+                <TouchableOpacity key={m} style={[s.payBtn, paymentMethod === m && s.payBtnActive]} onPress={() => setPaymentMethod(m)}>
+                  <Text style={[s.payBtnText, paymentMethod === m && s.payBtnTextActive]}>
                     {m === 'cash' ? 'Cash' : m === 'mobile_money' ? 'MoMo' : 'Card'}
                   </Text>
                 </TouchableOpacity>
               ))}
             </View>
 
-            <Text style={styles.fieldLabel}>Payment Status</Text>
-            <View style={styles.paymentRow}>
-              <TouchableOpacity style={[styles.payBtn, paymentStatus === 'fully_paid' && styles.payBtnActive]} onPress={() => setPaymentStatus('fully_paid')}>
-                <Text style={[styles.payBtnText, paymentStatus === 'fully_paid' && styles.payBtnTextActive]}>Fully Paid</Text>
+            <Text style={s.fieldLabel}>Payment Status</Text>
+            <View style={s.payRow}>
+              <TouchableOpacity style={[s.payBtn, paymentStatus === 'fully_paid' && s.payBtnActive]} onPress={() => setPaymentStatus('fully_paid')}>
+                <Text style={[s.payBtnText, paymentStatus === 'fully_paid' && s.payBtnTextActive]}>Fully Paid</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.payBtn, paymentStatus === 'partial' && styles.payBtnActive]} onPress={() => setPaymentStatus('partial')}>
-                <Text style={[styles.payBtnText, paymentStatus === 'partial' && styles.payBtnTextActive]}>Partial Payment</Text>
+              <TouchableOpacity style={[s.payBtn, paymentStatus === 'partial' && s.payBtnActive]} onPress={() => setPaymentStatus('partial')}>
+                <Text style={[s.payBtnText, paymentStatus === 'partial' && s.payBtnTextActive]}>Partial Payment</Text>
               </TouchableOpacity>
             </View>
 
             {paymentStatus === 'partial' && (
-              <View style={styles.partialSection}>
-                <Text style={styles.fieldLabel}>Amount Paid</Text>
-                <TextInput style={styles.textInput} value={amountPaid} onChangeText={setAmountPaid} keyboardType="decimal-pad" placeholder="0.00" placeholderTextColor={Colors.textLight} />
-                <Text style={styles.fieldLabel}>Customer Name (optional)</Text>
-                <TextInput style={styles.textInput} value={customerName} onChangeText={setCustomerName} placeholder="Customer name" placeholderTextColor={Colors.textLight} />
-                <Text style={styles.fieldLabel}>Phone (optional)</Text>
-                <TextInput style={styles.textInput} value={customerPhone} onChangeText={setCustomerPhone} keyboardType="phone-pad" placeholder="Phone number" placeholderTextColor={Colors.textLight} />
+              <View style={{ marginTop: 8 }}>
+                <Text style={s.fieldLabel}>Amount Paid</Text>
+                <TextInput style={s.textInput} value={amountPaid} onChangeText={setAmountPaid} keyboardType="decimal-pad" placeholder="0.00" placeholderTextColor={Colors.textLight} />
+                <Text style={s.fieldLabel}>Customer Name (optional)</Text>
+                <TextInput style={s.textInput} value={customerName} onChangeText={setCustomerName} placeholder="Customer name" placeholderTextColor={Colors.textLight} />
+                <Text style={s.fieldLabel}>Phone (optional)</Text>
+                <TextInput style={s.textInput} value={customerPhone} onChangeText={setCustomerPhone} keyboardType="phone-pad" placeholder="Phone number" placeholderTextColor={Colors.textLight} />
               </View>
             )}
 
@@ -392,14 +483,14 @@ export default function SalesScreen() {
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
-      </Modal>
+      </RNModal>
 
-      <Modal visible={showDetailModal} animationType="slide" presentationStyle="pageSheet">
-        <View style={styles.modalHeader}>
+      <RNModal visible={showDetailModal} animationType="slide" presentationStyle="pageSheet">
+        <View style={s.modalNav}>
           <TouchableOpacity onPress={() => setShowDetailModal(false)}>
-            <Text style={styles.modalCancel}>Close</Text>
+            <Text style={s.modalAction}>Close</Text>
           </TouchableOpacity>
-          <Text style={styles.modalTitle}>Sale Details</Text>
+          <Text style={s.modalNavTitle}>Sale Details</Text>
           <TouchableOpacity onPress={() => {
             if (selectedSale) { setDeleteTarget(selectedSale.id); setShowDeleteConfirm(true); setShowDetailModal(false) }
           }}>
@@ -407,120 +498,261 @@ export default function SalesScreen() {
           </TouchableOpacity>
         </View>
         {selectedSale && (
-          <ScrollView style={styles.modalBody}>
+          <ScrollView style={s.modalScroll}>
+            <View style={s.detailTopBar}>
+              <View style={[s.detailBadge, { backgroundColor: (selectedSale.payment_status === 'fully_paid' ? Colors.success : Colors.warning) + '20' }]}>
+                <Text style={[s.detailBadgeText, { color: selectedSale.payment_status === 'fully_paid' ? Colors.success : Colors.warning }]}>
+                  {selectedSale.payment_status === 'fully_paid' ? 'Paid' : 'Partial'}
+                </Text>
+              </View>
+              <Text style={s.detailDate}>{selectedSale.time}</Text>
+            </View>
+
             <Card style={{ marginBottom: 12 }}>
-              <Text style={styles.detailLabel}>Product</Text>
-              <Text style={styles.detailValue}>{selectedSale.product}</Text>
-              <Text style={styles.detailLabel}>Amount</Text>
-              <Text style={[styles.detailValue, { color: Colors.primary }]}>{formatCurrency(selectedSale.amount)}</Text>
-              <Text style={styles.detailLabel}>Quantity</Text>
-              <Text style={styles.detailValue}>{selectedSale.qty} items</Text>
-              <Text style={styles.detailLabel}>Payment Method</Text>
-              <Text style={styles.detailValue}>{formatPayment(selectedSale.payment)}</Text>
-              {selectedSale.payment_status && (
+              <View style={s.detailRow}>
+                <Text style={s.detailRowLabel}>Total Amount</Text>
+                <Text style={s.detailRowValue}>{formatCurrency(selectedSale.amount)}</Text>
+              </View>
+              {selectedSale.amount_paid != null && selectedSale.amount_paid < selectedSale.amount && (
                 <>
-                  <Text style={styles.detailLabel}>Payment Status</Text>
-                  <Text style={styles.detailValue}>{selectedSale.payment_status === 'fully_paid' ? 'Fully Paid' : 'Partial Payment'}</Text>
+                  <View style={s.detailRow}>
+                    <Text style={s.detailRowLabel}>Amount Paid</Text>
+                    <Text style={[s.detailRowValue, { color: Colors.success }]}>{formatCurrency(selectedSale.amount_paid)}</Text>
+                  </View>
+                  <View style={s.detailRow}>
+                    <Text style={s.detailRowLabel}>Remaining</Text>
+                    <Text style={[s.detailRowValue, { color: Colors.danger }]}>{formatCurrency(selectedSale.amount - selectedSale.amount_paid)}</Text>
+                  </View>
                 </>
               )}
+            </Card>
+
+            {selectedSale.sales_items && selectedSale.sales_items.length > 0 && (
+              <Card style={{ marginBottom: 12 }}>
+                <Text style={s.detailSectionTitle}>Items ({selectedSale.sales_items.length})</Text>
+                {selectedSale.sales_items.map((item: any, i: number) => (
+                  <View key={i} style={[s.detailItemRow, i < selectedSale.sales_items.length - 1 && s.detailItemBorder]}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={s.detailItemName}>{item.product_name || `Product #${item.product_id}`}</Text>
+                      <Text style={s.detailItemMeta}>{item.quantity} × {formatCurrency(item.unit_price || 0)}</Text>
+                    </View>
+                    <Text style={s.detailItemTotal}>{formatCurrency(item.subtotal || item.quantity * (item.unit_price || 0))}</Text>
+                  </View>
+                ))}
+              </Card>
+            )}
+
+            <Card style={{ marginBottom: 12 }}>
+              <Text style={s.detailSectionTitle}>Payment Info</Text>
+              <View style={s.detailInfoRow}>
+                <Text style={s.detailInfoLabel}>Method</Text>
+                <Text style={s.detailInfoValue}>{formatPayment(selectedSale.payment)}</Text>
+              </View>
               {selectedSale.customer_name && (
-                <>
-                  <Text style={styles.detailLabel}>Customer</Text>
-                  <Text style={styles.detailValue}>{selectedSale.customer_name}</Text>
-                </>
+                <View style={s.detailInfoRow}>
+                  <Text style={s.detailInfoLabel}>Customer</Text>
+                  <Text style={s.detailInfoValue}>{selectedSale.customer_name}</Text>
+                </View>
               )}
               {selectedSale.sold_by_name && (
-                <>
-                  <Text style={styles.detailLabel}>Sold By</Text>
-                  <Text style={styles.detailValue}>{selectedSale.sold_by_name}</Text>
-                </>
+                <View style={s.detailInfoRow}>
+                  <Text style={s.detailInfoLabel}>Sold By</Text>
+                  <Text style={s.detailInfoValue}>{selectedSale.sold_by_name}</Text>
+                </View>
               )}
-              <Text style={styles.detailLabel}>Date</Text>
-              <Text style={styles.detailValue}>{selectedSale.time}</Text>
+              {selectedSale.note && (
+                <View style={s.detailInfoRow}>
+                  <Text style={s.detailInfoLabel}>Note</Text>
+                  <Text style={s.detailInfoValue}>{selectedSale.note}</Text>
+                </View>
+              )}
             </Card>
           </ScrollView>
         )}
-      </Modal>
+      </RNModal>
 
-      <Modal visible={showDeleteConfirm} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View style={styles.confirmModal}>
-            <Text style={styles.confirmTitle}>Delete Sale</Text>
-            <Text style={styles.confirmMessage}>Are you sure you want to delete this sale? This action cannot be undone.</Text>
-            <View style={styles.confirmBtns}>
+      <RNModal visible={showDeleteConfirm} transparent animationType="fade">
+        <View style={s.overlay}>
+          <View style={s.confirmCard}>
+            <Text style={s.confirmTitle}>Delete Sale</Text>
+            <Text style={s.confirmMsg}>Are you sure? This cannot be undone.</Text>
+            <View style={s.confirmActions}>
               <Button title="Cancel" variant="outline" onPress={() => { setShowDeleteConfirm(false); setDeleteTarget(null) }} style={{ flex: 1 }} />
               <Button title="Delete" variant="danger" onPress={handleDelete} style={{ flex: 1 }} />
             </View>
           </View>
         </View>
-      </Modal>
+      </RNModal>
     </View>
   )
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
-  flex: { flex: 1 },
-  topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 60, paddingHorizontal: 16, paddingBottom: 12, backgroundColor: Colors.surface },
-  backBtn: { padding: 4 },
-  headerTitle: { fontSize: 20, fontWeight: '700', color: Colors.text },
-  recordBtn: { backgroundColor: Colors.primary, borderRadius: 10, padding: 8 },
-  filterRow: { maxHeight: 50, backgroundColor: Colors.surface },
+const s = StyleSheet.create({
+  root: { flex: 1, backgroundColor: Colors.background },
+
+  heroBanner: {
+    backgroundColor: Colors.navy,
+    paddingTop: 56, paddingBottom: 20, paddingHorizontal: 20,
+    position: 'relative', overflow: 'hidden',
+  },
+  heroCircle1: { position: 'absolute', top: -60, right: -40, width: 160, height: 160, borderRadius: 80, backgroundColor: 'rgba(37,99,235,0.3)' },
+  heroCircle2: { position: 'absolute', bottom: -20, left: -40, width: 120, height: 120, borderRadius: 60, backgroundColor: 'rgba(37,99,235,0.2)' },
+  heroContent: { position: 'relative', zIndex: 1 },
+  heroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  heroTitle: { fontSize: 22, fontWeight: '800', color: '#FFFFFF' },
+  heroSubtitle: { fontSize: 13, color: 'rgba(255,255,255,0.5)', marginTop: 4 },
+  addBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' },
+
+  heroQuickStats: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around',
+    backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: BORDER_RADIUS.xl,
+    marginTop: 16, paddingVertical: 14, paddingHorizontal: 12,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)',
+  },
+  heroStat: { alignItems: 'center', flex: 1 },
+  heroStatValue: { fontSize: 15, fontWeight: '800', color: '#FFFFFF' },
+  heroStatLabel: { fontSize: 10, color: 'rgba(255,255,255,0.5)', marginTop: 2, fontWeight: '500' },
+  heroStatDivider: { width: 1, height: 24, backgroundColor: 'rgba(255,255,255,0.1)' },
+
+  stickySection: { backgroundColor: Colors.surface, borderBottomWidth: 1, borderBottomColor: Colors.border },
+
+  filterBar: { maxHeight: 48 },
   filterContent: { paddingHorizontal: 16, paddingVertical: 8, gap: 8 },
-  filterBtn: { paddingVertical: 6, paddingHorizontal: 14, borderRadius: 16, backgroundColor: Colors.surfaceAlt, borderWidth: 1, borderColor: Colors.border },
+  filterBtn: {
+    paddingVertical: 6, paddingHorizontal: 14, borderRadius: 100,
+    backgroundColor: Colors.surfaceAlt, borderWidth: 1, borderColor: Colors.border,
+  },
   filterActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
   filterText: { fontSize: 13, fontWeight: '600', color: Colors.textLight },
   filterTextActive: { color: '#FFF' },
-  summaryBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, backgroundColor: Colors.primaryLight },
-  summaryText: { fontSize: 13, color: Colors.primaryDark, fontWeight: '500' },
-  summaryAmount: { fontSize: 14, color: Colors.primaryDark, fontWeight: '700' },
-  saleCard: { backgroundColor: Colors.surface, borderRadius: 12, padding: 14, marginBottom: 10, elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2 },
-  saleHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 },
-  saleProduct: { fontSize: 15, fontWeight: '600', color: Colors.text },
-  saleSub: { fontSize: 12, color: Colors.textLight, marginTop: 2 },
-  saleAmount: { fontSize: 16, fontWeight: '700', color: Colors.primary },
-  saleFooter: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
-  saleQty: { fontSize: 12, color: Colors.textLight },
-  saleTime: { fontSize: 12, color: Colors.textLight, marginLeft: 'auto' },
-  badge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 },
+
+  list: { flex: 1 },
+  listContent: { padding: 16, paddingBottom: 100 },
+
+  card: {
+    backgroundColor: Colors.surface, borderRadius: BORDER_RADIUS.lg, padding: 14,
+    marginBottom: 10, borderWidth: 1, borderColor: '#F1F5F9',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 2,
+  },
+  cardHeader: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10,
+  },
+  cardHeaderLeft: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  cardId: { fontSize: 12, fontWeight: '700', color: Colors.textLight, fontFamily: 'monospace' },
+  statusDot: { width: 7, height: 7, borderRadius: 3.5 },
+  statusText: { fontSize: 11, fontWeight: '700' },
+  cardTime: { fontSize: 11, color: Colors.textLight },
+
+  itemsList: { marginBottom: 10 },
+  itemRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 3, gap: 6 },
+  itemDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: Colors.primary, opacity: 0.4 },
+  itemName: { flex: 1, fontSize: 13, fontWeight: '500', color: Colors.text },
+  itemQty: { fontSize: 12, color: Colors.textLight, fontWeight: '600' },
+  itemPrice: { fontSize: 12, fontWeight: '600', color: Colors.neutralLight, minWidth: 55, textAlign: 'right' },
+  itemMore: { fontSize: 11, color: Colors.textLight, fontStyle: 'italic', marginTop: 2, marginLeft: 10 },
+  itemFallback: { fontSize: 14, fontWeight: '500', color: Colors.text, marginBottom: 10 },
+
+  cardDivider: { height: 1, backgroundColor: '#F1F5F9', marginBottom: 10 },
+
+  cardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 10 },
+  footerLeft: { flex: 1, gap: 4, marginRight: 12 },
+  footerMeta: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  footerMetaText: { fontSize: 12, color: Colors.neutralLight },
+  footerRight: { alignItems: 'flex-end' },
+  paidSmall: { fontSize: 10, color: Colors.success, fontWeight: '600', marginBottom: 1 },
+  amount: { fontSize: 16, fontWeight: '700', color: Colors.primary },
+
+  badgeRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
+  badge: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingHorizontal: 8, paddingVertical: 3, borderRadius: BORDER_RADIUS.md,
+  },
   badgeText: { fontSize: 11, fontWeight: '600' },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 60, paddingHorizontal: 20, paddingBottom: 12, backgroundColor: Colors.surface, borderBottomWidth: 1, borderBottomColor: Colors.border },
-  modalCancel: { fontSize: 16, color: Colors.primary },
-  modalTitle: { fontSize: 18, fontWeight: '700', color: Colors.text },
-  modalBody: { flex: 1, padding: 20 },
-  fieldLabel: { fontSize: 14, fontWeight: '600', color: Colors.text, marginBottom: 8, marginTop: 12 },
-  textInput: { backgroundColor: Colors.surfaceAlt, borderWidth: 1, borderColor: Colors.border, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, color: Colors.text },
-  dropdown: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: Colors.surfaceAlt, borderWidth: 1, borderColor: Colors.border, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12 },
-  dropdownText: { fontSize: 14, color: Colors.text },
-  dropdownPlaceholder: { fontSize: 14, color: Colors.textLight },
-  dropdownList: { backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.border, borderRadius: 10, marginTop: 4, padding: 8 },
-  searchInput: { backgroundColor: Colors.surfaceAlt, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, fontSize: 14, color: Colors.text, marginBottom: 8 },
+
+  modalNav: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    paddingTop: 56, paddingHorizontal: 20, paddingBottom: 12,
+    backgroundColor: Colors.surface, borderBottomWidth: 1, borderBottomColor: Colors.border,
+  },
+  modalAction: { fontSize: 16, color: Colors.primary },
+  modalNavTitle: { fontSize: 17, fontWeight: '700', color: Colors.text },
+  modalScroll: { flex: 1, padding: 20 },
+
+  fieldLabel: { fontSize: 13, fontWeight: '600', color: Colors.text, marginBottom: 6, marginTop: 14 },
+  textInput: {
+    backgroundColor: Colors.surfaceAlt, borderWidth: 1, borderColor: Colors.border,
+    borderRadius: BORDER_RADIUS.lg, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, color: Colors.text,
+  },
+  dropdown: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: Colors.surfaceAlt, borderWidth: 1, borderColor: Colors.border,
+    borderRadius: BORDER_RADIUS.lg, paddingHorizontal: 14, paddingVertical: 12,
+  },
+  dropdownVal: { fontSize: 14, color: Colors.text, flex: 1 },
+  dropdownPh: { fontSize: 14, color: Colors.textLight, flex: 1 },
+  dropdownList: {
+    backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.border,
+    borderRadius: BORDER_RADIUS.lg, marginTop: 4, padding: 8,
+  },
+  dropdownSearch: {
+    backgroundColor: Colors.surfaceAlt, borderRadius: 8, paddingHorizontal: 12,
+    paddingVertical: 8, fontSize: 14, color: Colors.text, marginBottom: 8,
+  },
   dropdownItem: { paddingVertical: 10, paddingHorizontal: 8, borderBottomWidth: 1, borderBottomColor: Colors.border },
   dropdownItemText: { fontSize: 14, fontWeight: '500', color: Colors.text },
   dropdownItemMeta: { fontSize: 12, color: Colors.textLight, marginTop: 2 },
-  emptyText: { fontSize: 13, color: Colors.textLight, textAlign: 'center', padding: 12 },
+
   qtyRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 12 },
-  qtyInput: { backgroundColor: Colors.surfaceAlt, borderWidth: 1, borderColor: Colors.border, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, color: Colors.text },
-  itemsSection: { marginTop: 8 },
-  orderItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: Colors.border },
+  qtyInput: {
+    backgroundColor: Colors.surfaceAlt, borderWidth: 1, borderColor: Colors.border,
+    borderRadius: BORDER_RADIUS.lg, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, color: Colors.text,
+  },
+  orderItem: {
+    flexDirection: 'row', alignItems: 'center', paddingVertical: 10,
+    borderBottomWidth: 1, borderBottomColor: Colors.border,
+  },
   orderItemName: { fontSize: 14, fontWeight: '500', color: Colors.text },
   orderItemDetail: { fontSize: 12, color: Colors.textLight, marginTop: 2 },
   orderItemTotal: { fontSize: 14, fontWeight: '600', color: Colors.text, marginRight: 8 },
-  removeBtn: { padding: 4 },
   totalRow: { flexDirection: 'row', justifyContent: 'space-between', paddingTop: 12 },
   totalLabel: { fontSize: 16, fontWeight: '700', color: Colors.text },
   totalValue: { fontSize: 16, fontWeight: '700', color: Colors.primary },
-  paymentRow: { flexDirection: 'row', gap: 8 },
-  payBtn: { flex: 1, paddingVertical: 10, borderRadius: 10, borderWidth: 1, borderColor: Colors.border, alignItems: 'center', backgroundColor: Colors.surfaceAlt },
+
+  payRow: { flexDirection: 'row', gap: 8 },
+  payBtn: {
+    flex: 1, paddingVertical: 10, borderRadius: BORDER_RADIUS.lg,
+    borderWidth: 1, borderColor: Colors.border, alignItems: 'center', backgroundColor: Colors.surfaceAlt,
+  },
   payBtnActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
   payBtnText: { fontSize: 13, fontWeight: '600', color: Colors.textLight },
   payBtnTextActive: { color: '#FFF' },
-  partialSection: { marginTop: 8 },
-  detailLabel: { fontSize: 12, color: Colors.textLight, marginTop: 10 },
-  detailValue: { fontSize: 15, fontWeight: '500', color: Colors.text, marginTop: 2 },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center', padding: 24 },
-  confirmModal: { backgroundColor: Colors.surface, borderRadius: 16, padding: 24, width: '100%', maxWidth: 360 },
+
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center', padding: 24 },
+  confirmCard: { backgroundColor: Colors.surface, borderRadius: 16, padding: 24, width: '100%', maxWidth: 360 },
   confirmTitle: { fontSize: 18, fontWeight: '700', color: Colors.text, marginBottom: 8 },
-  confirmMessage: { fontSize: 14, color: Colors.textLight, marginBottom: 20, lineHeight: 20 },
-  confirmBtns: { flexDirection: 'row', gap: 12 },
+  confirmMsg: { fontSize: 14, color: Colors.textLight, marginBottom: 20, lineHeight: 20 },
+  confirmActions: { flexDirection: 'row', gap: 12 },
+
+  detailTopBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  detailBadge: { paddingHorizontal: 12, paddingVertical: 4, borderRadius: 100 },
+  detailBadgeText: { fontSize: 13, fontWeight: '700' },
+  detailDate: { fontSize: 12, color: Colors.textLight },
+  detailRow: {
+    flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8,
+    borderBottomWidth: 1, borderBottomColor: Colors.border,
+  },
+  detailRowLabel: { fontSize: 14, color: Colors.textLight },
+  detailRowValue: { fontSize: 16, fontWeight: '700', color: Colors.text },
+  detailSectionTitle: { fontSize: 14, fontWeight: '600', color: Colors.text, marginBottom: 12 },
+  detailItemRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10 },
+  detailItemBorder: { borderBottomWidth: 1, borderBottomColor: Colors.border },
+  detailItemName: { fontSize: 14, fontWeight: '500', color: Colors.text },
+  detailItemMeta: { fontSize: 12, color: Colors.textLight, marginTop: 2 },
+  detailItemTotal: { fontSize: 14, fontWeight: '600', color: Colors.primary },
+  detailInfoRow: {
+    flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8,
+    borderBottomWidth: 1, borderBottomColor: '#F8FAFC',
+  },
+  detailInfoLabel: { fontSize: 13, color: Colors.textLight },
+  detailInfoValue: { fontSize: 14, fontWeight: '500', color: Colors.text },
 })

@@ -7,7 +7,7 @@ import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { authAPI } from '@/lib/api'
 import { parseApiError } from '@/lib/utils'
-import { Colors } from '@/lib/constants'
+import { Colors, BORDER_RADIUS } from '@/lib/constants'
 import { useAuth } from '@/lib/auth'
 import Button from '@/components/ui/Button'
 import AlertBadge from '@/components/ui/AlertBadge'
@@ -118,7 +118,7 @@ export default function VerifyScreen() {
               ref={(ref: any) => { inputs.current[index] = ref }}
               style={[styles.otpInput, digit ? styles.otpFilled : null]}
               value={digit}
-              onChangeText={(t) => handleOtpChange(t, index)}
+              onChangeText={(t: string) => handleOtpChange(t, index)}
               onKeyPress={({ nativeEvent }: any) => handleKeyPress(nativeEvent.key, index)}
               keyboardType="number-pad"
               maxLength={1}
@@ -149,14 +149,14 @@ const styles = StyleSheet.create({
   header: { alignItems: 'center', marginBottom: 32 },
   backBtn: { position: 'absolute', left: 0, top: 0 },
   iconContainer: {
-    width: 80, height: 80, borderRadius: 20, backgroundColor: Colors.primaryLight,
+    width: 80, height: 80, borderRadius: BORDER_RADIUS.xxl, backgroundColor: Colors.primaryLight,
     alignItems: 'center', justifyContent: 'center', marginBottom: 20,
   },
   title: { fontSize: 24, fontWeight: '700', color: Colors.text },
   subtitle: { fontSize: 15, color: Colors.textLight, marginTop: 8, textAlign: 'center', lineHeight: 22 },
   otpRow: { flexDirection: 'row', justifyContent: 'center', gap: 10, marginBottom: 24 },
   otpInput: {
-    width: 48, height: 56, borderWidth: 2, borderColor: Colors.border, borderRadius: 12,
+    width: 48, height: 56, borderWidth: 2, borderColor: Colors.border, borderRadius: BORDER_RADIUS.lg,
     textAlign: 'center', fontSize: 22, fontWeight: '700', color: Colors.text,
     backgroundColor: Colors.surface,
   },

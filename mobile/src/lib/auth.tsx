@@ -1,28 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { profileAPI, businessAPI, authAPI, decodeJwt, isTokenExpired, setAuthLogoutCallback } from './api'
-import { SUPER_ADMIN_EMAIL } from './utils'
-
-interface User {
-  id: number
-  name: string
-  email: string
-  phone: string
-  role: string
-  business_role?: string
-  business_id?: number
-  is_verified?: boolean
-  is_active?: boolean
-  created_at?: string
-}
-
-interface Business {
-  business_id: number
-  name: string
-  is_active?: boolean
-  members?: number
-  role?: string
-}
+import type { User, Business } from '@/types'
 
 interface AuthContextType {
   user: User | null
@@ -145,9 +124,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         is_verified: data.is_verified ?? parsed?.is_verified ?? true,
         is_active: data.is_active ?? parsed?.is_active ?? true,
         created_at: data.created_at || data.date_joined || data.joined_at || parsed?.created_at || iatDate,
-      }
-      if (profileUser.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase()) {
-        profileUser.role = 'super_admin'
       }
       setUser(profileUser)
       await AsyncStorage.setItem('user', JSON.stringify(profileUser))

@@ -1,5 +1,6 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'expo-router'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useAuth } from '@/lib/auth'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 
@@ -13,13 +14,19 @@ export default function IndexScreen() {
     navigated.current = true
 
     if (!isAuthenticated) {
-      router.replace('/(auth)/login')
+      AsyncStorage.getItem('has_seen_onboarding').then((seen) => {
+        if (seen === 'true') {
+          router.replace('/(auth)/login')
+        } else {
+          router.replace('/(auth)/onboarding')
+        }
+      })
     } else if (!isVerified) {
       router.replace('/(auth)/verify')
     } else if (currentBusiness) {
       router.replace('/(tabs)/dashboard')
     } else {
-      router.replace('/(tabs)/more')
+      router.replace('/more')
     }
   }, [isAuthenticated, isLoading, isVerified, currentBusiness])
 

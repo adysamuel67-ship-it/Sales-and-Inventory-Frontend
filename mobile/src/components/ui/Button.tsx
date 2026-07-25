@@ -1,6 +1,6 @@
 import React from 'react'
 import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, StyleProp, ViewStyle, TextStyle } from 'react-native'
-import { Colors } from '@/lib/constants'
+import { Colors, BORDER_RADIUS } from '@/lib/constants'
 
 interface ButtonProps {
   title: string
@@ -29,6 +29,14 @@ export default function Button({
     : Colors.primary
   const borderColor =
     variant === 'outline' ? Colors.primary : 'transparent'
+  const shadow =
+    variant === 'primary' ? {
+      shadowColor: Colors.primary,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.25,
+      shadowRadius: 8,
+      elevation: 4,
+    } : {}
 
   return (
     <TouchableOpacity
@@ -41,6 +49,7 @@ export default function Button({
         size === 'md' && styles.md,
         size === 'lg' && styles.lg,
         { backgroundColor: bgColor, borderColor, borderWidth: variant === 'outline' ? 1 : 0 },
+        shadow,
         disabled && styles.disabled,
         style,
       ]}
@@ -64,12 +73,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 10,
+    borderRadius: 100,
     gap: 8,
   },
-  sm: { paddingVertical: 8, paddingHorizontal: 16 },
-  md: { paddingVertical: 12, paddingHorizontal: 20 },
-  lg: { paddingVertical: 16, paddingHorizontal: 24 },
+  sm: { paddingVertical: 10, paddingHorizontal: 20 },
+  md: { paddingVertical: 14, paddingHorizontal: 24 },
+  lg: { paddingVertical: 18, paddingHorizontal: 28 },
   text: { fontSize: 16, fontWeight: '600' },
   textSm: { fontSize: 14 },
   disabled: { opacity: 0.5 },

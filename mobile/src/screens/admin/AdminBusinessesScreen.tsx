@@ -54,7 +54,7 @@ export default function AdminBusinessesScreen() {
     return (
       <TouchableOpacity
         style={styles.card}
-        onPress={() => router.push(`/business/${bizId}`)}
+        onPress={() => router.push(`/business/${String(bizId)}` as any)}
         activeOpacity={0.7}
       >
         <View style={styles.cardIcon}>
@@ -92,7 +92,7 @@ export default function AdminBusinessesScreen() {
       <Text style={styles.count}>{businesses.length} business{businesses.length !== 1 ? 'es' : ''}</Text>
       <FlatList
         data={businesses}
-        keyExtractor={(item) => String(item.business_id ?? item.id)}
+        keyExtractor={(item: any) => String(item.business_id ?? item.id)}
         renderItem={renderItem}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />}
         contentContainerStyle={styles.list}

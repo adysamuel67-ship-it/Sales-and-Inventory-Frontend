@@ -216,7 +216,7 @@ export default function AdminPanelScreen() {
             users.slice(0, 5).map((u) => {
               const uid = u.user_id ?? u.id
               return (
-                <View key={uid} style={styles.userCard}>
+                <TouchableOpacity key={uid} style={styles.userCard} onPress={() => router.push('/admin/users')} activeOpacity={0.7}>
                   <View style={styles.userAvatar}>
                     <Text style={styles.userAvatarText}>{(u.name || 'U').charAt(0).toUpperCase()}</Text>
                   </View>
@@ -235,7 +235,7 @@ export default function AdminPanelScreen() {
                   <TouchableOpacity onPress={() => handleDeleteUser(uid, u.name)} style={styles.iconBtn}>
                     <Ionicons name="trash-outline" size={18} color={Colors.danger} />
                   </TouchableOpacity>
-                </View>
+                </TouchableOpacity>
               )
             })
           )}
@@ -256,7 +256,7 @@ export default function AdminPanelScreen() {
             <Text style={styles.emptyText}>No businesses found</Text>
           ) : (
             businesses.slice(0, 5).map((b: any) => (
-              <View key={b.business_id ?? b.id} style={styles.bizCard}>
+              <TouchableOpacity key={b.business_id ?? b.id} style={styles.bizCard} onPress={() => router.push(`/business/${String(b.business_id ?? b.id)}/dashboard` as any)} activeOpacity={0.7}>
                 <View style={[styles.bizIcon, { backgroundColor: Colors.primaryLight }]}>
                   <Ionicons name="business" size={18} color={Colors.primary} />
                 </View>
@@ -264,7 +264,7 @@ export default function AdminPanelScreen() {
                   <Text style={styles.bizName} numberOfLines={1}>{b.name || 'Unnamed'}</Text>
                   <Text style={styles.bizMeta}>{b.members ?? 0} members</Text>
                 </View>
-              </View>
+              </TouchableOpacity>
             ))
           )}
 
@@ -325,7 +325,7 @@ export default function AdminPanelScreen() {
 
           <TouchableOpacity
             style={styles.sectionHeader}
-            onPress={() => router.push('/business/' + currentBusiness?.business_id + '/requests')}
+            onPress={() => currentBusiness?.business_id && router.push(`/business/${String(currentBusiness.business_id)}/requests` as any)}
           >
             <Text style={styles.sectionTitle}>Pending Approvals</Text>
             {pendingApprovals.length > 0 && (

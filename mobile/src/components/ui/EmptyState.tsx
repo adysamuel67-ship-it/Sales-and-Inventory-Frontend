@@ -1,7 +1,7 @@
 import React from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { Colors } from '@/lib/constants'
+import { Colors, BORDER_RADIUS } from '@/lib/constants'
 
 interface EmptyStateProps {
   icon?: keyof typeof Ionicons.glyphMap
@@ -12,7 +12,9 @@ interface EmptyStateProps {
 export default function EmptyState({ icon = 'folder-open-outline', title, message }: EmptyStateProps) {
   return (
     <View style={styles.container}>
-      <Ionicons name={icon} size={56} color={Colors.border} />
+      <View style={styles.iconCircle}>
+        <Ionicons name={icon} size={24} color={Colors.primary} />
+      </View>
       <Text style={styles.title}>{title}</Text>
       {message && <Text style={styles.message}>{message}</Text>}
     </View>
@@ -27,11 +29,19 @@ const styles = StyleSheet.create({
     padding: 32,
     minHeight: 200,
   },
+  iconCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: BORDER_RADIUS.xl,
+    backgroundColor: Colors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
   title: {
     fontSize: 18,
     fontWeight: '600',
     color: Colors.text,
-    marginTop: 12,
   },
   message: {
     fontSize: 14,

@@ -138,7 +138,7 @@ export default function AdminLowStockScreen() {
       </View>
       <FlatList
         data={items}
-        keyExtractor={(item, index) => String(item.product_id ?? item.id ?? index)}
+        keyExtractor={(item: any, index: number) => String(item.product_id ?? item.id ?? index)}
         renderItem={renderItem}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />}
         contentContainerStyle={styles.list}

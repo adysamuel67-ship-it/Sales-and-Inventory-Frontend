@@ -172,7 +172,7 @@ export default function AdminJobsScreen() {
       <Text style={styles.count}>{jobs.length} scheduled job{jobs.length !== 1 ? 's' : ''}</Text>
       <FlatList
         data={jobs}
-        keyExtractor={(item) => item.key}
+        keyExtractor={(item: any) => item.key}
         renderItem={renderItem}
         contentContainerStyle={styles.list}
         ListEmptyComponent={

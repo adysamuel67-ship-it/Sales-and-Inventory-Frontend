@@ -255,7 +255,7 @@ export default function AdminUsersScreen() {
       <Text style={styles.count}>{filtered.length} user{filtered.length !== 1 ? 's' : ''}</Text>
       <FlatList
         data={filtered}
-        keyExtractor={(item) => String(item.user_id ?? item.id)}
+        keyExtractor={(item: any) => String(item.user_id ?? item.id)}
         renderItem={renderItem}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />}
         contentContainerStyle={styles.list}

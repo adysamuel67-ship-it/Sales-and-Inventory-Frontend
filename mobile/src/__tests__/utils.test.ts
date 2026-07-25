@@ -14,7 +14,6 @@ import {
   isManagerRole,
   isStaffRole,
   isPlatformAdmin,
-  SUPER_ADMIN_EMAIL,
 } from '../lib/utils'
 
 describe('formatPayment', () => {
@@ -259,9 +258,6 @@ describe('parseApiError', () => {
 })
 
 describe('isSuperAdminUser', () => {
-  it('returns true for super admin email', () => {
-    expect(isSuperAdminUser({ email: SUPER_ADMIN_EMAIL })).toBe(true)
-  })
   it('returns true for super_admin role', () => {
     expect(isSuperAdminUser({ role: 'super_admin' })).toBe(true)
   })
@@ -269,9 +265,6 @@ describe('isSuperAdminUser', () => {
   it('returns false for undefined user', () => expect(isSuperAdminUser(undefined)).toBe(false))
   it('returns false for regular user', () => {
     expect(isSuperAdminUser({ role: 'user', email: 'test@test.com' })).toBe(false)
-  })
-  it('is case insensitive for email', () => {
-    expect(isSuperAdminUser({ email: 'ADYSAMUEL68@GMAIL.COM' })).toBe(true)
   })
 })
 
@@ -304,7 +297,7 @@ describe('isStaffRole', () => {
 
 describe('isPlatformAdmin', () => {
   it('returns true for super admin', () => {
-    expect(isPlatformAdmin({ email: SUPER_ADMIN_EMAIL, role: 'super_admin' })).toBe(true)
+    expect(isPlatformAdmin({ role: 'super_admin' })).toBe(true)
   })
   it('returns true for admin role', () => {
     expect(isPlatformAdmin({ role: 'admin', email: 'other@test.com' })).toBe(true)

@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  RefreshControl, Alert, Modal,
+  RefreshControl, Modal,
 } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { adminAPI, businessAPI, cronAPI } from '@/lib/api'
 import { extractArray, parseApiError, isAdminRole, isSuperAdminUser } from '@/lib/utils'
-import { Colors } from '@/lib/constants'
+import { Colors, BORDER_RADIUS } from '@/lib/constants'
 import { useAuth } from '@/lib/auth'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
@@ -20,7 +20,7 @@ type AdminTab = 'businesses' | 'users' | 'jobs'
 
 export default function AdminPanelScreen() {
   const router = useRouter()
-  const { user } = useAuth()
+  const { user, switchBusiness } = useAuth()
   const isSuperAdmin = isSuperAdminUser(user)
   const canManageUsers = isAdminRole(user?.role) || isSuperAdmin
 
@@ -36,6 +36,10 @@ export default function AdminPanelScreen() {
   const [showUserModal, setShowUserModal] = useState(false)
   const [selectedUser, setSelectedUser] = useState<any>(null)
   const [userAction, setUserAction] = useState<'activate' | 'deactivate' | 'delete'>('activate')
+  const [deleteTarget, setDeleteTarget] = useState<any>(null)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [actionMessage, setActionMessage] = useState('')
+  const [actionError, setActionError] = useState('')
 
   const fetchData = useCallback(async () => {
     if (!user) return
@@ -48,7 +52,17 @@ export default function AdminPanelScreen() {
       ])
 
       if (results[0].status === 'fulfilled') {
-        setBusinesses(extractArray(results[0].value.data))
+        const raw = extractArray(results[0].value.data)
+        const mapped = raw.map((item: any) => {
+          const biz = item.business || item
+          return {
+            ...biz,
+            business_id: biz.business_id ?? biz.id,
+            name: biz.name || 'Unnamed',
+            members: item.members ?? biz.members ?? 0,
+          }
+        })
+        setBusinesses(mapped)
       }
       if (results[1].status === 'fulfilled') {
         setUsers(extractArray(results[1].value.data))
@@ -80,20 +94,7 @@ export default function AdminPanelScreen() {
   const handleUserAction = async (action: 'activate' | 'deactivate' | 'delete', u: any) => {
     const userId = u.user_id || u.id
     if (action === 'delete') {
-      Alert.alert('Delete User', `Delete ${u.name || u.email}?`, [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete', style: 'destructive',
-          onPress: async () => {
-            try {
-              await adminAPI.deleteUser(userId)
-              setUsers((prev) => prev.filter((x) => (x.user_id || x.id) !== userId))
-            } catch (err: any) {
-              Alert.alert('Error', parseApiError(err))
-            }
-          },
-        },
-      ])
+      setDeleteTarget(u)
       return
     }
 
@@ -111,43 +112,74 @@ export default function AdminPanelScreen() {
         )
       )
     } catch (err: any) {
-      Alert.alert('Error', parseApiError(err))
+      setActionError(parseApiError(err))
+      setTimeout(() => setActionError(''), 4000)
     }
+  }
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return
+    const userId = deleteTarget.user_id || deleteTarget.id
+    setDeleteLoading(true)
+    try {
+      await adminAPI.deleteUser(userId)
+      setUsers((prev) => prev.filter((x) => (x.user_id || x.id) !== userId))
+      setDeleteTarget(null)
+    } catch (err: any) {
+      setActionError(parseApiError(err))
+      setTimeout(() => setActionError(''), 4000)
+    } finally { setDeleteLoading(false) }
   }
 
   const handleTriggerJob = async (jobKey: string) => {
     try {
       await cronAPI.triggerJob(jobKey)
-      Alert.alert('Success', `Job "${jobKey}" triggered`)
+      setActionMessage(`Job "${jobKey}" triggered`)
+      setTimeout(() => setActionMessage(''), 4000)
     } catch (err: any) {
-      Alert.alert('Error', parseApiError(err))
+      setActionError(parseApiError(err))
+      setTimeout(() => setActionError(''), 4000)
     }
   }
 
   const renderBusinesses = () => (
     <View>
       <View style={styles.kpiRow}>
-        <KpiCard title="Total Businesses" value={String(businesses.length)} icon="business-outline" color={Colors.primary} />
-        <KpiCard title="Total Users" value={String(users.length)} icon="people-outline" color={Colors.success} />
+        <KpiCard title="Total Businesses" value={String(businesses.length)} icon="business-outline" color="primary" />
+        <KpiCard title="Total Users" value={String(users.length)} icon="people-outline" color="success" />
       </View>
-      {businesses.map((biz) => (
-        <Card key={biz.business_id || biz.id} style={styles.itemCard}>
-          <View style={styles.itemHeader}>
-            <View style={styles.itemAvatar}>
-              <Text style={styles.itemAvatarText}>{(biz.name || '?')[0]?.toUpperCase()}</Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.itemName}>{biz.name || 'Unnamed'}</Text>
-              <Text style={styles.itemSub}>{biz.members || 0} members</Text>
-            </View>
-            <View style={[styles.statusBadge, { backgroundColor: biz.is_active ? Colors.successLight : Colors.dangerLight }]}>
-              <Text style={[styles.statusText, { color: biz.is_active ? Colors.success : Colors.danger }]}>
-                {biz.is_active ? 'Active' : 'Inactive'}
-              </Text>
-            </View>
-          </View>
-        </Card>
-      ))}
+      {businesses.map((biz) => {
+        const bizId = biz.business_id || biz.id
+        const members = biz.members ?? 0
+        return (
+          <TouchableOpacity
+            key={bizId}
+            activeOpacity={0.7}
+            onPress={() => {
+              switchBusiness({ business_id: bizId, name: biz.name || 'Business', is_active: biz.is_active, members, role: biz.role })
+              router.push(`/business/${bizId}/dashboard`)
+            }}
+          >
+            <Card style={styles.itemCard}>
+              <View style={styles.itemHeader}>
+                <View style={styles.itemAvatar}>
+                  <Text style={styles.itemAvatarText}>{(biz.name || '?')[0]?.toUpperCase()}</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.itemName}>{biz.name || 'Unnamed'}</Text>
+                  <Text style={styles.itemSub}>{members} member{members !== 1 ? 's' : ''}</Text>
+                </View>
+                <View style={[styles.statusBadge, { backgroundColor: biz.is_active !== false ? Colors.successLight : Colors.dangerLight }]}>
+                  <Text style={[styles.statusText, { color: biz.is_active !== false ? Colors.success : Colors.danger }]}>
+                    {biz.is_active !== false ? 'Active' : 'Inactive'}
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={Colors.textLight} style={{ marginLeft: 4 }} />
+              </View>
+            </Card>
+          </TouchableOpacity>
+        )
+      })}
       {businesses.length === 0 && (
         <EmptyState icon="business-outline" title="No businesses" message="No businesses found" />
       )}
@@ -248,6 +280,8 @@ export default function AdminPanelScreen() {
       </View>
 
       {error ? <AlertBadge message={error} type="error" /> : null}
+      {actionError ? <AlertBadge message={actionError} type="error" /> : null}
+      {actionMessage ? <AlertBadge message={actionMessage} type="success" /> : null}
 
       <View style={styles.tabRow}>
         {(['businesses', 'users', 'jobs'] as AdminTab[]).map((tab) => (
@@ -288,6 +322,19 @@ export default function AdminPanelScreen() {
           </View>
         </View>
       </Modal>
+
+      <Modal visible={!!deleteTarget} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Delete User</Text>
+            <Text style={styles.modalMessage}>Delete {deleteTarget?.name || deleteTarget?.email}?</Text>
+            <View style={styles.modalBtns}>
+              <Button title="Cancel" variant="outline" onPress={() => setDeleteTarget(null)} style={{ flex: 1 }} />
+              <Button title="Delete" variant="danger" onPress={confirmDelete} loading={deleteLoading} style={{ flex: 1 }} />
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   )
 }
@@ -322,11 +369,11 @@ const styles = StyleSheet.create({
   itemAvatarText: { fontSize: 16, fontWeight: '700', color: Colors.primary },
   itemName: { fontSize: 15, fontWeight: '600', color: Colors.text },
   itemSub: { fontSize: 12, color: Colors.textLight, marginTop: 2 },
-  statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
+  statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: BORDER_RADIUS.xl },
   statusText: { fontSize: 11, fontWeight: '700', textTransform: 'capitalize' },
   userActions: { flexDirection: 'row', gap: 8, marginTop: 12 },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center', padding: 24 },
-  modalCard: { backgroundColor: Colors.surface, borderRadius: 16, padding: 24, width: '100%', maxWidth: 360 },
+  modalCard: { backgroundColor: Colors.surface, borderRadius: BORDER_RADIUS.xl, padding: 24, width: '100%', maxWidth: 360 },
   modalTitle: { fontSize: 18, fontWeight: '700', color: Colors.text, marginBottom: 8 },
   modalMessage: { fontSize: 14, color: Colors.textLight, marginBottom: 16, lineHeight: 20 },
   modalBtns: { flexDirection: 'row', gap: 12 },

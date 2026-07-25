@@ -7,7 +7,7 @@ import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { authAPI } from '@/lib/api'
 import { parseApiError } from '@/lib/utils'
-import { Colors } from '@/lib/constants'
+import { Colors, BORDER_RADIUS } from '@/lib/constants'
 import Button from '@/components/ui/Button'
 import AlertBadge from '@/components/ui/AlertBadge'
 
@@ -82,7 +82,7 @@ export default function ForgotPasswordScreen() {
             </View>
 
             <Button
-              title="Send Reset Link"
+              title="Send Reset Code"
               onPress={handleSend}
               loading={loading}
               disabled={loading}
@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
   header: { alignItems: 'center', marginBottom: 32 },
   backBtn: { position: 'absolute', left: 0, top: 0 },
   iconContainer: {
-    width: 80, height: 80, borderRadius: 20, backgroundColor: Colors.primaryLight,
+    width: 80, height: 80, borderRadius: BORDER_RADIUS.xxl, backgroundColor: Colors.primaryLight,
     alignItems: 'center', justifyContent: 'center', marginBottom: 20,
   },
   title: { fontSize: 24, fontWeight: '700', color: Colors.text },
@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
   label: { fontSize: 14, fontWeight: '600', color: Colors.text, marginBottom: 6 },
   input: {
     backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.border,
-    borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12,
+    borderRadius: BORDER_RADIUS.lg, paddingHorizontal: 14, paddingVertical: 12,
     fontSize: 16, color: Colors.text,
   },
   successBox: { alignItems: 'center', padding: 20 },
