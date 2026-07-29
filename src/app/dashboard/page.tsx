@@ -101,6 +101,7 @@ export default function DashboardPage() {
   const [draftDateRange, setDraftDateRange] = useState(() => getDateRange(30))
   const [chartLoading, setChartLoading] = useState(false)
   const businessesFetched = useRef(false)
+  const isUnverified = user?.is_verified === false
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -109,10 +110,10 @@ export default function DashboardPage() {
   }, [isLoading, isAuthenticated, router])
 
   useEffect(() => {
-    if (profileLoaded && isAuthenticated && user && user.is_verified === false) {
+    if (profileLoaded && isAuthenticated && isUnverified) {
       router.replace('/verify')
     }
-  }, [profileLoaded, isAuthenticated, user?.is_verified, router])
+  }, [profileLoaded, isAuthenticated, isUnverified, router])
 
   useEffect(() => {
     if (!isAuthenticated || !profileLoaded || businessesLoading || businessesFetched.current) return

@@ -11,16 +11,17 @@ export default function CustomersTopPage() {
   const { isAuthenticated, isLoading, profileLoaded, user } = useAuth()
   const router = useRouter()
   const { businessId, loading: bizLoading } = useBusinessId()
+  const isUnverified = user?.is_verified === false
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) router.replace('/login')
   }, [isLoading, isAuthenticated, router])
 
   useEffect(() => {
-    if (profileLoaded && isAuthenticated && user && user.is_verified === false) {
+    if (profileLoaded && isAuthenticated && isUnverified) {
       router.replace('/verify')
     }
-  }, [profileLoaded, isAuthenticated, user?.is_verified, router])
+  }, [profileLoaded, isAuthenticated, isUnverified, router])
 
   if (isLoading || !isAuthenticated || !profileLoaded) {
     return (

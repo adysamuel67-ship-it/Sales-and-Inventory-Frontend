@@ -19,14 +19,15 @@ export default function ProfilePage() {
   const [deleting, setDeleting] = useState(false)
   const [showBusinessDropdown, setShowBusinessDropdown] = useState(false)
   const [showPhotoToast, setShowPhotoToast] = useState(false)
+  const isUnverified = user?.is_verified === false
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) router.replace('/login')
   }, [isLoading, isAuthenticated, router])
 
   useEffect(() => {
-    if (profileLoaded && isAuthenticated && user && user.is_verified === false) router.replace('/verify')
-  }, [profileLoaded, isAuthenticated, user, isVerified, router])
+    if (profileLoaded && isAuthenticated && isUnverified) router.replace('/verify')
+  }, [profileLoaded, isAuthenticated, isUnverified, router])
 
   useEffect(() => {
     if (showPhotoToast) {

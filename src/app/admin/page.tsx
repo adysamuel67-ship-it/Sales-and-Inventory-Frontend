@@ -17,25 +17,28 @@ export default function AdminDashboardPage() {
   const [recentUsers, setRecentUsers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const isUnverified = user?.is_verified === false
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) router.replace('/login')
-    if (profileLoaded && isAuthenticated && user && user.is_verified === false) router.replace('/verify')
+    if (profileLoaded && isAuthenticated && isUnverified) router.replace('/verify')
     if (profileLoaded && isAuthenticated && user?.is_verified && !isPlatformAdmin(user)) {
       router.replace('/dashboard')
     }
-  }, [isLoading, isAuthenticated, profileLoaded, user, router])
+  }, [isLoading, isAuthenticated, profileLoaded, isUnverified, user, router])
 
+  const isPlatformAdminUser = isPlatformAdmin(user)
+  const isSuperAdmin = isSuperAdminUser(user)
   useEffect(() => {
-    if (!isAuthenticated || !isPlatformAdmin(user)) return
+    if (!isAuthenticated || !isPlatformAdminUser) return
     let cancelled = false
 
     const load = async () => {
       setLoading(true)
       try {
         const [usersRes, businessesRes] = await Promise.allSettled([
-          isSuperAdminUser(user) ? adminAPI.listAllUsers() : adminAPI.listMembers(),
-          isSuperAdminUser(user) ? businessAPI.listAll() : businessAPI.myBusinesses(),
+          isSuperAdmin ? adminAPI.listAllUsers() : adminAPI.listMembers(),
+          isSuperAdmin ? businessAPI.listAll() : businessAPI.myBusinesses(),
         ])
         if (cancelled) return
 
@@ -59,7 +62,7 @@ export default function AdminDashboardPage() {
 
     load()
     return () => { cancelled = true }
-  }, [isAuthenticated, user?.role])
+  }, [isAuthenticated, isPlatformAdminUser, isSuperAdmin])
 
   if (isLoading || !isAuthenticated || !profileLoaded || !isPlatformAdmin(user)) {
     return (

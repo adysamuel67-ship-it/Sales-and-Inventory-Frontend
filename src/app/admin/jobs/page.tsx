@@ -28,11 +28,12 @@ export default function AdminJobsPage() {
     if (!isLoading && !isAuthenticated) router.replace('/login')
   }, [isLoading, isAuthenticated, router])
 
+  const isNotSuperAdmin = user && !isSuperAdminUser(user)
   useEffect(() => {
-    if (profileLoaded && isAuthenticated && user && !isSuperAdminUser(user)) {
+    if (profileLoaded && isAuthenticated && isNotSuperAdmin) {
       router.replace('/dashboard')
     }
-  }, [profileLoaded, isAuthenticated, user?.role, router])
+  }, [profileLoaded, isAuthenticated, isNotSuperAdmin, router])
 
   const loadJobs = async () => {
     setLoading(true)
@@ -48,9 +49,10 @@ export default function AdminJobsPage() {
     }
   }
 
+  const isSuperAdmin = isSuperAdminUser(user)
   useEffect(() => {
-    if (isAuthenticated && isSuperAdminUser(user)) loadJobs()
-  }, [isAuthenticated, user?.role])
+    if (isAuthenticated && isSuperAdmin) loadJobs()
+  }, [isAuthenticated, isSuperAdmin])
 
   const handleTrigger = async (jobName: string) => {
     setTriggering(jobName)

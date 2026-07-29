@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
 import { useAuth } from '@/lib/auth'
@@ -45,17 +45,12 @@ export default function RequestsPage() {
     if (!isLoading && !isAuthenticated) router.replace('/login')
   }, [isLoading, isAuthenticated, router])
 
+  const isUnverified = user?.is_verified === false
   useEffect(() => {
-    if (profileLoaded && isAuthenticated && user && user.is_verified === false) {
+    if (profileLoaded && isAuthenticated && isUnverified) {
       router.replace('/verify')
     }
-  }, [profileLoaded, isAuthenticated, user?.is_verified, router])
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      loadAllApprovals()
-    }
-  }, [isAuthenticated, businesses, fetchBusinesses])
+  }, [profileLoaded, isAuthenticated, isUnverified, router])
 
   const extractApprovalArray = (data: any): Approval[] => {
     if (Array.isArray(data)) return data
@@ -75,7 +70,7 @@ export default function RequestsPage() {
     return []
   }
 
-  const loadAllApprovals = async () => {
+  const loadAllApprovals = useCallback(async () => {
     setLoading(true)
     setError('')
     try {
@@ -103,7 +98,13 @@ export default function RequestsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [fetchBusinesses])
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadAllApprovals()
+    }
+  }, [isAuthenticated, loadAllApprovals])
 
   const handleApprove = async (bizId: number, approvalId: number, dir: 0 | 1, requestedRole?: string) => {
     setError('')

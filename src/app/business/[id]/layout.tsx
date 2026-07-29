@@ -16,6 +16,7 @@ export default function BusinessLayout({
   const params = useParams()
   const { isAuthenticated, isLoading, profileLoaded, isVerified, user, currentBusiness, businesses, fetchBusinesses, switchBusiness, setBusinessRole } = useAuth()
   const businessId = params?.id as string
+  const isUnverified = user?.is_verified === false
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -24,10 +25,10 @@ export default function BusinessLayout({
   }, [isLoading, isAuthenticated, router])
 
   useEffect(() => {
-    if (profileLoaded && isAuthenticated && user && user.is_verified === false) {
+    if (profileLoaded && isAuthenticated && isUnverified) {
       router.replace('/verify')
     }
-  }, [profileLoaded, isAuthenticated, user, router])
+  }, [profileLoaded, isAuthenticated, isUnverified, router])
 
   useEffect(() => {
     if (isAuthenticated && businesses.length === 0) {
@@ -47,6 +48,7 @@ export default function BusinessLayout({
   }, [businessId, businesses, currentBusiness?.business_id, switchBusiness, user])
 
   // Fetch business-specific role for the current user
+  const isSuperAdmin = isSuperAdminUser(user)
   useEffect(() => {
     if (user?.id && isAuthenticated && profileLoaded && businessId) {
       adminAPI.getMemberByUser(user.id).then((res) => {
@@ -56,7 +58,7 @@ export default function BusinessLayout({
           const bizMember = data.find((m: any) => String(m.business_id) === businessId)
           if (bizMember) {
             memberRole = bizMember.role
-          } else if (!isSuperAdminUser(user) && data.length > 0) {
+          } else if (!isSuperAdmin && data.length > 0) {
             memberRole = data[0].role
           }
         } else if (data && typeof data === 'object') {
@@ -73,7 +75,7 @@ export default function BusinessLayout({
         }
       })
     }
-  }, [user?.id, isAuthenticated, profileLoaded, businessId, setBusinessRole, currentBusiness?.role])
+  }, [user?.id, isAuthenticated, profileLoaded, businessId, setBusinessRole, currentBusiness?.role, isSuperAdmin])
 
   if (isLoading || !isAuthenticated || !profileLoaded) {
     return (

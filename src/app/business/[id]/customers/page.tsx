@@ -150,7 +150,7 @@ function CustomersContent() {
 
   useEffect(() => {
     if (businessId) loadCustomers()
-  }, [businessId])
+  }, [businessId, loadCustomers])
 
   useEffect(() => {
     if (presetName || presetPhone) {

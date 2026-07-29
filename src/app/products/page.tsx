@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
 import NoBusinessGuide from '@/components/NoBusinessGuide'
@@ -47,13 +47,14 @@ export default function ProductsPage() {
     if (!isLoading && !isAuthenticated) router.replace('/login')
   }, [isLoading, isAuthenticated, router])
 
+  const isUnverified = user?.is_verified === false
   useEffect(() => {
-    if (profileLoaded && isAuthenticated && user && user.is_verified === false) {
+    if (profileLoaded && isAuthenticated && isUnverified) {
       router.replace('/verify')
     }
-  }, [profileLoaded, isAuthenticated, user?.is_verified, router])
+  }, [profileLoaded, isAuthenticated, isUnverified, router])
 
-  const loadProducts = async () => {
+  const loadProducts = useCallback(async () => {
     if (!businessId) return
     setLoading(true)
     setError('')
@@ -66,11 +67,11 @@ export default function ProductsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [businessId])
 
   useEffect(() => {
     if (businessId) loadProducts()
-  }, [businessId])
+  }, [businessId, loadProducts])
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()

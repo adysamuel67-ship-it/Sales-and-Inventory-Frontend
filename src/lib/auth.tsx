@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
 import { profileAPI, businessAPI, authAPI, setTokenRefreshCallback, setAuthLogoutCallback, getUserIdFromToken, tryProactiveRefresh, startAutoRefresh, stopAutoRefresh, isTokenExpired, decodeJwt, resetLogoutGuard } from '@/lib/api'
 import { SUPER_ADMIN_EMAIL } from '@/lib/utils'
 
@@ -204,6 +204,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [logout])
 
+  const fetchProfileRef = useRef(fetchProfile)
+  const fetchBusinessesRef = useRef(fetchBusinesses)
+  fetchProfileRef.current = fetchProfile
+  fetchBusinessesRef.current = fetchBusinesses
+
   useEffect(() => {
     let cancelled = false
     const storedToken = localStorage.getItem('token')
@@ -227,8 +232,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const init = async () => {
         setIsLoading(false)
         startAutoRefresh(3 * 60 * 1000)
-        await fetchProfile()
-        await fetchBusinesses()
+        await fetchProfileRef.current()
+        await fetchBusinessesRef.current()
         if (isTokenExpired(storedToken, 120) && storedRefreshToken) {
           tryProactiveRefresh().then((refreshed) => {
             if (cancelled) return

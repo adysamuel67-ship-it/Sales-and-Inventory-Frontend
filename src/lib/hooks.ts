@@ -21,11 +21,11 @@ export function useDebouncedCallback<T extends (...args: any[]) => any>(
   const callbackRef = useRef(callback)
   callbackRef.current = callback
 
-  return useCallback(
-    ((...args: any[]) => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current)
-      timeoutRef.current = setTimeout(() => callbackRef.current(...args), delay)
-    }) as T,
-    [delay]
-  )
+  const debouncedFn = (...args: any[]) => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current)
+    timeoutRef.current = setTimeout(() => callbackRef.current(...args), delay)
+  }
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  return useCallback(debouncedFn as T, [delay])
 }

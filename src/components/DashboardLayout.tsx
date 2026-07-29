@@ -128,12 +128,13 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
   const sidebarProfileRef = useRef<HTMLDivElement>(null)
   const bizSwitcherRef = useRef<HTMLDivElement>(null)
   const notificationsRef = useRef<HTMLDivElement>(null)
+  const isUnverified = user?.is_verified === false
 
   useEffect(() => {
-    if (profileLoaded && user && user.is_verified === false) {
+    if (profileLoaded && isUnverified) {
       router.replace('/verify')
     }
-  }, [profileLoaded, user, router])
+  }, [profileLoaded, isUnverified, router])
 
   const isSuperAdmin = isSuperAdminUser(user)
   const isPlatformAdminUser = isPlatformAdmin(user)

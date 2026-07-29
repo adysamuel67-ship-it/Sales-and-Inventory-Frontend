@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
 import NoBusinessGuide from '@/components/NoBusinessGuide'
@@ -56,13 +56,14 @@ export default function SalesPage() {
     if (!isLoading && !isAuthenticated) router.replace('/login')
   }, [isLoading, isAuthenticated, router])
 
+  const isUnverified = user?.is_verified === false
   useEffect(() => {
-    if (profileLoaded && isAuthenticated && user && user.is_verified === false) {
+    if (profileLoaded && isAuthenticated && isUnverified) {
       router.replace('/verify')
     }
-  }, [profileLoaded, isAuthenticated, user?.is_verified, router])
+  }, [profileLoaded, isAuthenticated, isUnverified, router])
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!businessId) return
     setLoading(true)
     setError('')
@@ -95,7 +96,7 @@ export default function SalesPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [businessId])
 
   const filteredSales = useMemo(() => {
     if (!dateFilter.start && !dateFilter.end) return allSales
@@ -114,7 +115,7 @@ export default function SalesPage() {
 
   useEffect(() => {
     loadData()
-  }, [businessId])
+  }, [loadData])
 
   const totalAmount = useMemo(() => filteredSales.reduce((sum, s) => sum + s.amount, 0), [filteredSales])
   const totalQty = useMemo(() => filteredSales.reduce((sum, s) => sum + s.qty, 0), [filteredSales])

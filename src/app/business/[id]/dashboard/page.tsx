@@ -227,7 +227,7 @@ export default function BusinessDashboardPage() {
     } finally {
       setLoading(false)
     }
-  }, [businessId, dateRange.start, dateRange.end, isStaff, staffView])
+  }, [businessId, dateRange, isStaff, staffView])
 
   useEffect(() => {
     loadDashboard()

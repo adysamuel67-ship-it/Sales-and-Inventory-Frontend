@@ -31,16 +31,17 @@ export default function BusinessesPage() {
   const [joining, setJoining] = useState(false)
 
   const [businessKeys, setBusinessKeys] = useState<Record<number, string>>({})
+  const isUnverified = user?.is_verified === false
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) router.replace('/login')
   }, [isLoading, isAuthenticated, router])
 
   useEffect(() => {
-    if (profileLoaded && isAuthenticated && user && user.is_verified === false) {
+    if (profileLoaded && isAuthenticated && isUnverified) {
       router.replace('/verify')
     }
-  }, [profileLoaded, isAuthenticated, user?.is_verified, router])
+  }, [profileLoaded, isAuthenticated, isUnverified, router])
 
   useEffect(() => {
     if (isAuthenticated) {

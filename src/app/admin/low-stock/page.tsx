@@ -26,12 +26,14 @@ export default function AdminLowStockPage() {
     if (!isLoading && !isAuthenticated) router.replace('/login')
   }, [isLoading, isAuthenticated, router])
 
+  const isNotSuperAdmin = user && !isSuperAdminUser(user)
   useEffect(() => {
-    if (profileLoaded && isAuthenticated && user && !isSuperAdminUser(user)) {
+    if (profileLoaded && isAuthenticated && isNotSuperAdmin) {
       router.replace('/dashboard')
     }
-  }, [profileLoaded, isAuthenticated, user?.role, router])
+  }, [profileLoaded, isAuthenticated, isNotSuperAdmin, router])
 
+  const isSuperAdmin = isSuperAdminUser(user)
   useEffect(() => {
     const loadLowStock = async () => {
       setLoading(true)
@@ -79,8 +81,8 @@ export default function AdminLowStockPage() {
         setLoading(false)
       }
     }
-    if (isAuthenticated && isSuperAdminUser(user)) loadLowStock()
-  }, [isAuthenticated, user?.role])
+    if (isAuthenticated && isSuperAdmin) loadLowStock()
+  }, [isAuthenticated, isSuperAdmin])
 
   if (isLoading || !isAuthenticated || !profileLoaded || !isSuperAdminUser(user)) {
     return (
