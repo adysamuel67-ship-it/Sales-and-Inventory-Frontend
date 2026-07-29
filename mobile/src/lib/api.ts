@@ -89,7 +89,8 @@ async function attachToken(config: any) {
   const url = config?.url || ''
   const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/refresh') ||
     url.includes('/auth/logout') || url.includes('/users/sign_up') || url.includes('/auth/otp/get_code') ||
-    url.includes('/auth/otp/verification') || url.includes('/auth/verify_user')
+    url.includes('/auth/otp/verification') || url.includes('/auth/verify_user') ||
+    url.includes('/auth/forgot_password') || url.includes('/auth/verify/forgot_password')
   if (!isAuthEndpoint) {
     let token = await AsyncStorage.getItem('token')
     if (!token) return Promise.reject(new Error('No auth token'))
@@ -110,7 +111,8 @@ api.interceptors.response.use(
     const url = originalRequest?.url || ''
     const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/refresh') ||
       url.includes('/auth/logout') || url.includes('/users/sign_up') || url.includes('/auth/otp/get_code') ||
-      url.includes('/auth/otp/verification') || url.includes('/auth/verify_user')
+      url.includes('/auth/otp/verification') || url.includes('/auth/verify_user') ||
+      url.includes('/auth/forgot_password') || url.includes('/auth/verify/forgot_password')
 
     if (error.response?.status === 401 && !isAuthEndpoint) {
       if (originalRequest._retry) {
@@ -185,6 +187,10 @@ export const authAPI = {
   sendVerification: (email: string) => api.post('/auth/otp/get_code', { email }),
   verifyEmail: (data: { email: string; code: string }) =>
     api.post('/auth/otp/verification', { email: data.email, otp: data.code }),
+  forgotPassword: (email: string) =>
+    api.post('/auth/forgot_password', { email }),
+  verifyForgotPassword: (data: { email: string; otp: string; password: string }) =>
+    api.post('/auth/verify/forgot_password', data),
 }
 
 export const profileAPI = {

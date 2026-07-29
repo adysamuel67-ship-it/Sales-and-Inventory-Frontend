@@ -73,7 +73,6 @@ function extractAccessToken(data: any): string | null {
 
 async function performTokenRefresh(): Promise<string> {
   const refreshToken = localStorage.getItem('refresh_token')
-  const accessToken = localStorage.getItem('token')
   if (!refreshToken) throw new Error('No refresh token')
 
   let lastError: any = null
@@ -134,7 +133,8 @@ async function attachToken(config: any) {
     const url = config?.url || ''
     const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/refresh') ||
       url.includes('/users/sign_up') || url.includes('/auth/otp/get_code') ||
-      url.includes('/auth/otp/verification') || url.includes('/auth/verify_user')
+      url.includes('/auth/otp/verification') || url.includes('/auth/verify_user') ||
+      url.includes('/auth/forgot_password') || url.includes('/auth/verify/forgot_password')
     if (!isAuthEndpoint) {
       let token = localStorage.getItem('token')
       if (token && isTokenExpired(token, 120)) {
@@ -162,7 +162,8 @@ function handle401Interceptor(instance: any) {
 
     const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/refresh') ||
       url.includes('/users/sign_up') || url.includes('/auth/otp/get_code') ||
-      url.includes('/auth/otp/verification') || url.includes('/auth/verify_user')
+      url.includes('/auth/otp/verification') || url.includes('/auth/verify_user') ||
+      url.includes('/auth/forgot_password') || url.includes('/auth/verify/forgot_password')
 
     if (error.response?.status === 401 && typeof window !== 'undefined' && !isAuthEndpoint) {
       if (originalRequest._retry === 'done') {
@@ -256,6 +257,10 @@ export const authAPI = {
     api.post('/auth/otp/get_code', { email }),
   verifyEmail: (data: { email: string; code: string }) =>
     api.post('/auth/otp/verification', { email: data.email, otp: data.code }),
+  forgotPassword: (email: string) =>
+    api.post('/auth/forgot_password', { email }),
+  verifyForgotPassword: (data: { email: string; otp: string; password: string }) =>
+    api.post('/auth/verify/forgot_password', data),
 }
 
 export const profileAPI = {
