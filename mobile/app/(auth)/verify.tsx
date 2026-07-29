@@ -16,7 +16,7 @@ const OTP_LENGTH = 6
 
 export default function VerifyScreen() {
   const router = useRouter()
-  const { pendingVerificationEmail, fetchProfile, fetchBusinesses } = useAuth()
+  const { pendingVerificationEmail, login, fetchProfile, fetchBusinesses } = useAuth()
   const email = pendingVerificationEmail || ''
   const [otp, setOtp] = useState<string[]>(new Array(OTP_LENGTH).fill(''))
   const [loading, setLoading] = useState(false)
@@ -64,8 +64,17 @@ export default function VerifyScreen() {
     setLoading(true)
     setError('')
     try {
-      await authAPI.verifyEmail({ email, code })
+      const verifyRes = await authAPI.verifyEmail({ email, code })
       setSuccess('Email verified successfully!')
+
+      const responseToken = verifyRes.data?.access_token || verifyRes.data?.token
+      const responseRefreshToken = verifyRes.data?.refresh_token
+      const userFromResponse = verifyRes.data?.user || null
+
+      if (responseToken) {
+        await login(responseToken, userFromResponse, responseRefreshToken)
+      }
+
       await fetchProfile()
       await fetchBusinesses()
       router.replace('/(tabs)/dashboard')

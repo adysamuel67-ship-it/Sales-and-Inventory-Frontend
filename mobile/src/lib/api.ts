@@ -45,18 +45,15 @@ function extractAccessToken(data: any): string | null {
 
 async function performTokenRefresh(retries = 2): Promise<string> {
   const refreshToken = await AsyncStorage.getItem('refresh_token')
-  const accessToken = await AsyncStorage.getItem('token')
   if (!refreshToken) throw new Error('No refresh token')
 
   let lastErr: any
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
       const { data } = await axios.post(`${API_BASE_URL}/auth/refresh`, {
-        access_token: accessToken,
         refresh_token: refreshToken,
-        token_type: 'Bearer',
       }, {
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${refreshToken}` },
+        headers: { 'Content-Type': 'application/json' },
         timeout: 60000,
       })
 
@@ -69,7 +66,10 @@ async function performTokenRefresh(retries = 2): Promise<string> {
       return newToken
     } catch (err: any) {
       lastErr = err
-      if (err.response?.status === 401 || err.response?.status === 403) throw err
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        await doLogout()
+        throw err
+      }
       if (attempt < retries) await new Promise(r => setTimeout(r, 1000 * (attempt + 1)))
     }
   }

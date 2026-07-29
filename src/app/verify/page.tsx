@@ -9,7 +9,7 @@ import { useAuth } from '@/lib/auth'
 
 export default function VerifyPage() {
   const router = useRouter()
-  const { user, fetchProfile, fetchBusinesses, logout } = useAuth()
+  const { user, login, fetchProfile, fetchBusinesses, logout } = useAuth()
   const [code, setCode] = useState(['', '', '', '', '', '', ''])
   const [loading, setLoading] = useState(false)
   const [sending, setSending] = useState(false)
@@ -17,6 +17,7 @@ export default function VerifyPage() {
   const [success, setSuccess] = useState('')
   const [resendTimer, setResendTimer] = useState(0)
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
+  const otpSentRef = useRef(false)
   const [pendingEmail, setPendingEmail] = useState<string | null>(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('pendingVerificationEmail')
@@ -58,7 +59,10 @@ export default function VerifyPage() {
   }, [user?.email, pendingEmail])
 
   useEffect(() => {
-    sendOtp()
+    if (!otpSentRef.current) {
+      otpSentRef.current = true
+      sendOtp()
+    }
   }, [sendOtp])
 
   const handleChange = (index: number, value: string) => {
@@ -103,19 +107,29 @@ export default function VerifyPage() {
     setError('')
     setLoading(true)
     try {
-      await authAPI.verifyEmail({ email: userEmail, code: fullCode })
+      const verifyRes = await authAPI.verifyEmail({ email: userEmail, code: fullCode })
       localStorage.removeItem('pendingVerificationEmail')
-      const token = localStorage.getItem('token')
-      if (!token) {
-        router.push('/login?registered=1')
-        return
+
+      const responseToken = verifyRes.data?.access_token || verifyRes.data?.token
+      const responseRefreshToken = verifyRes.data?.refresh_token
+      let storedToken = localStorage.getItem('token')
+
+      if (responseToken) {
+        storedToken = responseToken
+        const userFromResponse = verifyRes.data?.user || null
+        login(responseToken, userFromResponse, responseRefreshToken)
       }
-      const profileUser = await fetchProfile()
-      if (profileUser?.is_verified) {
-        await fetchBusinesses()
-        router.push('/dashboard')
+
+      if (storedToken) {
+        const profileUser = await fetchProfile()
+        if (profileUser?.is_verified) {
+          await fetchBusinesses()
+          router.push('/dashboard')
+        } else {
+          setError('Verification failed. Please try again.')
+        }
       } else {
-        setError('Verification failed. Please try again.')
+        router.push('/login?registered=1')
       }
     } catch (err: any) {
       const detail = err.response?.data?.detail
