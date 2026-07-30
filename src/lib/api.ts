@@ -73,13 +73,16 @@ function extractAccessToken(data: any): string | null {
 
 async function performTokenRefresh(): Promise<string> {
   const refreshToken = localStorage.getItem('refresh_token')
+  const accessToken = localStorage.getItem('token')
   if (!refreshToken) throw new Error('No refresh token')
 
   let lastError: any = null
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       const { data } = await axios.post(`${API_BASE_URL}/auth/refresh`, {
+        access_token: accessToken,
         refresh_token: refreshToken,
+        token_type: 'bearer',
       }, {
         headers: { 'Content-Type': 'application/json' },
         timeout: 60000,
