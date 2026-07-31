@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/auth'
 import { customerAPI, saleAPI, debtAPI } from '@/lib/api'
 import { extractArray, parseApiError, isAdminRole, isStaffRole, MappedSale } from '@/lib/utils'
 import SaleDetailModal from '@/components/SaleDetailModal'
+import ScheduleReminderModal, { ReminderCustomer } from '@/components/ScheduleReminderModal'
 interface Customer {
   customer_id: number
   name: string
@@ -99,6 +100,30 @@ function CustomersContent() {
   const [profileTransactions, setProfileTransactions] = useState<CustomerTransaction[]>([])
   const [profileLoading, setProfileLoading] = useState(false)
   const [detailSale, setDetailSale] = useState<MappedSale | null>(null)
+
+  const [showReminderModal, setShowReminderModal] = useState(false)
+  const [reminderCustomer, setReminderCustomer] = useState<ReminderCustomer | null>(null)
+  const [reminderDefaultDebtId, setReminderDefaultDebtId] = useState<number | undefined>()
+
+  const openReminderFromProfile = (debtKey: string) => {
+    if (!profileCustomer) return
+    const debtId = Number(debtKey.replace('debt-', ''))
+    const debt = profileDebt.find((d) => d.debt_id === debtId)
+    if (!debt) return
+    setReminderCustomer({
+      customer_id: profileCustomer.customer_id,
+      customer_name: profileCustomer.name || `Customer #${profileCustomer.customer_id}`,
+      customer_phone: profileCustomer.phone,
+      debts: profileDebt.map((d) => ({
+        debt_id: d.debt_id,
+        amount: d.amount,
+        due_date: d.due_date,
+        is_paid: d.is_paid,
+      })),
+    })
+    setReminderDefaultDebtId(debtId)
+    setShowReminderModal(true)
+  }
 
   const isStaff = isStaffRole(user?.business_role || user?.role)
   const isAdmin = isAdminRole(user?.business_role || user?.role)
@@ -947,6 +972,19 @@ function CustomersContent() {
                                       </p>
                                     )}
                                   </div>
+                                  {item.source === 'debt' && (
+                                    <div className="mt-2 sm:mt-0 sm:pl-3 shrink-0">
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          openReminderFromProfile(item.key)
+                                        }}
+                                        className="px-2.5 py-1 text-xs font-medium text-primary bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors"
+                                      >
+                                        Remind
+                                      </button>
+                                    </div>
+                                  )}
                                 </div>
                               ))}
                             </div>
@@ -1032,6 +1070,16 @@ function CustomersContent() {
         </div>
       )}
       {detailSale && <SaleDetailModal sale={detailSale} onClose={() => setDetailSale(null)} />}
+
+      {showReminderModal && reminderCustomer && (
+        <ScheduleReminderModal
+          businessId={businessId}
+          customer={reminderCustomer}
+          defaultDebtId={reminderDefaultDebtId}
+          onClose={() => setShowReminderModal(false)}
+          onScheduled={(name) => setSuccess(`Reminder scheduled for ${name}`)}
+        />
+      )}
     </div>
   )
 }

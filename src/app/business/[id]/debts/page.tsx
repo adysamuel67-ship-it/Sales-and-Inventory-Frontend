@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/auth'
 import { debtAPI, customerAPI, saleAPI } from '@/lib/api'
 import { extractArray, parseApiError, isAdminRole, MappedSale } from '@/lib/utils'
 import SaleDetailModal from '@/components/SaleDetailModal'
+import ScheduleReminderModal from '@/components/ScheduleReminderModal'
 interface DebtRecord {
   debt_id: number
   sale_id?: number
@@ -116,6 +117,17 @@ export default function DebtsPage() {
   const [txnDetailData, setTxnDetailData] = useState<CustomerTransaction | null>(null)
   const isAdmin = isAdminRole(user?.business_role || user?.role)
   const canPayDebt = isAdmin || user?.business_role === 'cashier' || user?.role === 'cashier'
+  const canRemind = canPayDebt
+
+  const [showReminderModal, setShowReminderModal] = useState(false)
+  const [reminderCustomer, setReminderCustomer] = useState<CustomerWithDebt | null>(null)
+  const [reminderDefaultDebtId, setReminderDefaultDebtId] = useState<number | undefined>()
+
+  const openReminder = (customer: CustomerWithDebt, debtId?: number) => {
+    setReminderCustomer(customer)
+    setReminderDefaultDebtId(debtId)
+    setShowReminderModal(true)
+  }
 
   const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -624,6 +636,24 @@ export default function DebtsPage() {
                               >
                                 Details
                               </button>
+                              {canRemind && (
+                                customer.total_debt > 0 ? (
+                                  <button
+                                    onClick={() => openReminder(customer)}
+                                    className="px-2.5 py-1 text-xs font-medium text-primary bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors"
+                                  >
+                                    Remind
+                                  </button>
+                                ) : (
+                                  <button
+                                    disabled
+                                    title="Debt settled"
+                                    className="px-2.5 py-1 text-xs font-medium text-gray-400 bg-gray-100 rounded-lg cursor-not-allowed"
+                                  >
+                                    Debt settled
+                                  </button>
+                                )
+                              )}
                               {customer.total_debt > 0 && canPayDebt && (
                                 <button
                                   onClick={() => openPayment(customer)}
@@ -1081,11 +1111,24 @@ export default function DebtsPage() {
                                 </span>
                               )}
                             </div>
-                            {overdue ? (
-                              <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-danger-light text-danger">Overdue</span>
-                            ) : daysLeft != null ? (
-                              <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-warning-light text-warning">{daysLeft}d left</span>
-                            ) : null}
+                            <div className="flex items-center gap-2">
+                              {overdue ? (
+                                <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-danger-light text-danger">Overdue</span>
+                              ) : daysLeft != null ? (
+                                <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-warning-light text-warning">{daysLeft}d left</span>
+                              ) : null}
+                              {canRemind && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    openReminder(profileCustomer, debt.debt_id)
+                                  }}
+                                  className="px-2.5 py-1 text-xs font-medium text-primary bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors"
+                                >
+                                  Remind
+                                </button>
+                              )}
+                            </div>
                           </div>
                         )
                       })}
@@ -1183,6 +1226,16 @@ export default function DebtsPage() {
         </div>
       )}
       {detailSale && <SaleDetailModal sale={detailSale} onClose={() => setDetailSale(null)} />}
+
+      {showReminderModal && reminderCustomer && (
+        <ScheduleReminderModal
+          businessId={businessId}
+          customer={reminderCustomer}
+          defaultDebtId={reminderDefaultDebtId}
+          onClose={() => setShowReminderModal(false)}
+          onScheduled={(name) => showSuccess(`Reminder scheduled for ${name}`)}
+        />
+      )}
 
       {showDebtDetailModal && debtDetailData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowDebtDetailModal(false)}>

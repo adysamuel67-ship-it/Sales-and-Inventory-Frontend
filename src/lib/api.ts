@@ -377,6 +377,30 @@ export const debtAPI = {
     api.get(`/debts/customer_transactions/${businessId}/${customerId}`),
 }
 
+export interface ReminderPayload {
+  debt_id: number
+  customer_id: number
+  start_date?: string
+  end_date?: string
+  time_of_day?: string
+  note?: string
+}
+
+export const reminderAPI = {
+  create: (businessId: number, data: ReminderPayload) =>
+    api.post(`/debts/reminders/${businessId}`, data),
+  // ── Backend gap: the endpoints below are planned but not implemented yet.
+  // The API team must add them before the reminders list/edit/delete UI is wired up.
+  list: (businessId: number, params?: any) =>
+    api.get(`/debts/reminders/${businessId}`, { params }),
+  update: (businessId: number, reminderId: number, data: any) =>
+    api.put(`/debts/reminders/${businessId}/${reminderId}`, data),
+  delete: (businessId: number, reminderId: number) =>
+    api.delete(`/debts/reminders/${businessId}/${reminderId}`),
+  toggleActive: (businessId: number, reminderId: number, isActive: boolean) =>
+    api.patch(`/debts/reminders/${businessId}/${reminderId}`, { is_active: isActive }),
+}
+
 export const reportAPI = {
   profit: (businessId: number, date: string, endDate: string) =>
     api.get(`/reports/profit/${businessId}`, { params: { date, end_date: endDate } }),
