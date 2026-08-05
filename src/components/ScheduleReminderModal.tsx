@@ -184,7 +184,7 @@ export default function ScheduleReminderModal({ businessId, customer, defaultDeb
         start_date: startDate,
         end_date: endDate,
         time_of_day: timeOfDay,
-        note: note.trim() || undefined,
+        note: note.trim(),
       })
       onScheduled?.(customer.customer_name)
       resetForm()

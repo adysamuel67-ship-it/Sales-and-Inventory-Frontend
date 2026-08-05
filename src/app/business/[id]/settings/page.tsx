@@ -32,6 +32,8 @@ export default function SettingsPage() {
   const [memberSaving, setMemberSaving] = useState(false)
   const [removingMemberId, setRemovingMemberId] = useState<number | null>(null)
   const [confirmRemoveId, setConfirmRemoveId] = useState<number | null>(null)
+  const [togglingActiveId, setTogglingActiveId] = useState<number | null>(null)
+  const [confirmToggleId, setConfirmToggleId] = useState<number | null>(null)
 
   const isOwner = isSuperAdminUser(user) || isAdminRole(user?.business_role || user?.role)
 
@@ -157,6 +159,22 @@ export default function SettingsPage() {
       setError(parseApiError(err))
     } finally {
       setRemovingMemberId(null)
+    }
+  }
+
+  const handleToggleMemberActive = async (memberId: number, isActive: boolean) => {
+    setTogglingActiveId(memberId)
+    setError('')
+    setSuccess('')
+    try {
+      await businessAPI.updateMember(businessId, memberId, { is_active: !isActive })
+      setSuccess(!isActive ? 'Member deactivated' : 'Member activated')
+      setConfirmToggleId(null)
+      loadMembers()
+    } catch (err: any) {
+      setError(parseApiError(err))
+    } finally {
+      setTogglingActiveId(null)
     }
   }
 
@@ -417,6 +435,11 @@ export default function SettingsPage() {
                             }`}>
                               {m.role}
                             </span>
+                            {m.is_active === false && (
+                              <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-600">
+                                Inactive
+                              </span>
+                            )}
                             {m.user_id !== user?.id && (
                               <>
                                 {confirmRemoveId === m.user_id ? (
@@ -436,6 +459,25 @@ export default function SettingsPage() {
                                       No
                                     </button>
                                   </div>
+                                ) : confirmToggleId === m.member_id ? (
+                                  <div className="flex items-center gap-1.5">
+                                    <button
+                                      onClick={() => handleToggleMemberActive(m.member_id, m.is_active !== false)}
+                                      disabled={togglingActiveId === m.member_id}
+                                      className={`px-2.5 py-1.5 text-white rounded-lg text-xs font-medium transition-colors disabled:opacity-60 min-h-[32px] ${
+                                        m.is_active === false ? 'bg-success hover:bg-green-700' : 'bg-warning hover:bg-amber-700'
+                                      }`}
+                                    >
+                                      {togglingActiveId === m.member_id ? '...' : m.is_active === false ? 'Yes, Activate' : 'Yes, Deactivate'}
+                                    </button>
+                                    <button
+                                      onClick={() => setConfirmToggleId(null)}
+                                      disabled={togglingActiveId === m.member_id}
+                                      className="px-2.5 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-xs font-medium hover:bg-gray-200 transition-colors min-h-[32px]"
+                                    >
+                                      No
+                                    </button>
+                                  </div>
                                 ) : (
                                   <>
                                     <button
@@ -447,6 +489,17 @@ export default function SettingsPage() {
                                       className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
                                     >
                                       Edit
+                                    </button>
+                                    <button
+                                      onClick={() => setConfirmToggleId(m.member_id)}
+                                      title={m.is_active === false ? 'Activate this member' : 'Deactivate this member'}
+                                      className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                                        m.is_active === false
+                                          ? 'text-success bg-success-light hover:bg-success/10'
+                                          : 'text-warning bg-warning-light hover:bg-warning/10'
+                                      }`}
+                                    >
+                                      {m.is_active === false ? 'Activate' : 'Deactivate'}
                                     </button>
                                     <button
                                       onClick={() => setConfirmRemoveId(m.user_id)}

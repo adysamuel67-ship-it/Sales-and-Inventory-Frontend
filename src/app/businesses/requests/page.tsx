@@ -37,6 +37,8 @@ export default function RequestsPage() {
   const [success, setSuccess] = useState('')
   const [processingApproval, setProcessingApproval] = useState<number | null>(null)
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null)
+  const [deletingApproval, setDeletingApproval] = useState(false)
 
   const businessesRef = useRef(businesses)
   businessesRef.current = businesses
@@ -119,6 +121,27 @@ export default function RequestsPage() {
       setError(typeof detail === 'string' ? detail : 'Failed to process request')
     } finally {
       setProcessingApproval(null)
+    }
+  }
+
+  const handleDeleteApproval = async () => {
+    if (deleteConfirmId === null) return
+    const approval = allApprovals.find((a) => a.approval_id === deleteConfirmId)
+    if (!approval) return
+    setDeletingApproval(true)
+    setError('')
+    setSuccess('')
+    try {
+      await businessAPI.deleteApproval(approval.business_id, deleteConfirmId)
+      setSuccess('Request deleted')
+      setDeleteConfirmId(null)
+      loadAllApprovals()
+    } catch (err: any) {
+      const detail = err.response?.data?.detail
+      setError(typeof detail === 'string' ? detail : 'Failed to delete request')
+      setDeleteConfirmId(null)
+    } finally {
+      setDeletingApproval(false)
     }
   }
 
@@ -265,6 +288,16 @@ export default function RequestsPage() {
                       </button>
                     </div>
                   )}
+                  <button
+                    onClick={() => setDeleteConfirmId(approval.approval_id)}
+                    disabled={processingApproval === approval.approval_id}
+                    title="Delete this request"
+                    className="flex items-center justify-center w-8 h-8 shrink-0 text-xs font-medium text-danger bg-danger-light rounded-lg hover:bg-danger/10 transition-colors disabled:opacity-50"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
                 </div>
               </div>
             ))}
@@ -283,6 +316,49 @@ export default function RequestsPage() {
           </div>
         )}
       </div>
+
+      {deleteConfirmId !== null && (() => {
+        const approval = allApprovals.find((a) => a.approval_id === deleteConfirmId)
+        if (!approval) return null
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => { if (!deletingApproval) setDeleteConfirmId(null) }}>
+            <div className="absolute inset-0 bg-black/40" />
+            <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-sm p-6" onClick={(e) => e.stopPropagation()}>
+              <div className="w-12 h-12 bg-danger-light rounded-2xl flex items-center justify-center mx-auto mb-3">
+                <svg className="w-6 h-6 text-danger" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                </svg>
+              </div>
+              <h3 className="text-base font-semibold text-gray-900 text-center mb-1">Delete this request?</h3>
+              <p className="text-sm text-neutral-light text-center mb-5">
+                The join request from <strong>{approval.requester?.name || 'Unknown'}</strong> to{' '}
+                <strong>{getBusinessName(approval.business_id)}</strong> will be permanently removed. This cannot be undone.
+              </p>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setDeleteConfirmId(null)}
+                  disabled={deletingApproval}
+                  className="flex-1 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors min-h-[44px] disabled:opacity-60"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteApproval}
+                  disabled={deletingApproval}
+                  className="flex-1 py-2.5 bg-danger text-white rounded-xl text-sm font-semibold hover:bg-red-700 transition-colors min-h-[44px] disabled:opacity-60 flex items-center justify-center gap-2"
+                >
+                  {deletingApproval ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Deleting...
+                    </>
+                  ) : 'Delete'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
     </DashboardLayout>
   )
 }

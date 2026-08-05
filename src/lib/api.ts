@@ -294,6 +294,8 @@ export const businessAPI = {
     api.get(`/businesses/approvals/get_approvals/${businessId}`, { params: status ? { status } : {} }),
   confirmApproval: (businessId: number, data: { approval_id: number; dir: 0 | 1; role?: string }) =>
     api.post(`/businesses/approvals/confirm_approvals/${businessId}`, data),
+  deleteApproval: (businessId: number, approvalId: number) =>
+    api.delete(`/businesses/approvals/delete_approval/${businessId}/${approvalId}`),
   updateMember: (businessId: number, memberId: number, data: { role?: string; is_active?: boolean }) =>
     api.put(`/businesses/${businessId}/members/${memberId}`, data),
   removeMember: (businessId: number, memberId: number) =>
@@ -389,16 +391,17 @@ export interface ReminderPayload {
 export const reminderAPI = {
   create: (businessId: number, data: ReminderPayload) =>
     api.post(`/debts/reminders/${businessId}`, data),
-  // ── Backend gap: the endpoints below are planned but not implemented yet.
-  // The API team must add them before the reminders list/edit/delete UI is wired up.
+  // The backend GET route reads its filters from the request body (GetReminders schema),
+  // so filters are sent as JSON data alongside the GET request. A body is REQUIRED,
+  // otherwise FastAPI returns 422 — so default to an empty object.
   list: (businessId: number, params?: any) =>
-    api.get(`/debts/reminders/${businessId}`, { params }),
+    api.get(`/debts/reminders/${businessId}`, { data: params ?? {} }),
   update: (businessId: number, reminderId: number, data: any) =>
     api.put(`/debts/reminders/${businessId}/${reminderId}`, data),
   delete: (businessId: number, reminderId: number) =>
     api.delete(`/debts/reminders/${businessId}/${reminderId}`),
   toggleActive: (businessId: number, reminderId: number, isActive: boolean) =>
-    api.patch(`/debts/reminders/${businessId}/${reminderId}`, { is_active: isActive }),
+    api.put(`/debts/reminders/${businessId}/${reminderId}`, { is_active: isActive }),
 }
 
 export const reportAPI = {

@@ -23,6 +23,13 @@ import {
 } from '@/components/ScheduleReminderModal'
 import { isAdminRole } from '@/lib/utils'
 
+function toDateStr(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
 // ──────────────────────────────────────────────────
 // buildSmsPreview
 // ──────────────────────────────────────────────────
@@ -178,7 +185,11 @@ describe('validateReminderWindow', () => {
   })
 
   it('no warning or error for a sane 5-day window', () => {
-    const v = validateReminderWindow('2026-07-26', '2026-07-31', today)
+    const start = new Date()
+    const end = new Date()
+    start.setDate(start.getDate() - 2)
+    end.setDate(end.getDate() + 3)
+    const v = validateReminderWindow(toDateStr(start), toDateStr(end), today)
     expect(v.error).toBeUndefined()
     expect(v.warning).toBeUndefined()
     expect(v.ended).toBe(false)
