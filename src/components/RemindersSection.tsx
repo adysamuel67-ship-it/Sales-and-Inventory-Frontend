@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '@/lib/auth'
-import { reminderAPI, customerAPI, debtAPI } from '@/lib/api'
+import { reminderAPI, customerAPI, debtAPI, adminAPI } from '@/lib/api'
 import { extractArray, parseApiError, isAdminRole } from '@/lib/utils'
 import ScheduleReminderModal, { ReminderCustomer, todayDateString, validateReminderWindow } from '@/components/ScheduleReminderModal'
 
@@ -32,6 +32,15 @@ interface DebtInfo {
   amount: number
   due_date?: string
   is_paid?: boolean
+}
+
+interface CustomerTransaction {
+  transaction_id: number
+  debt_id: number
+  performer_id: number
+  amount_paid: number
+  note?: string
+  created_at: string
 }
 
 type Tab = 'all' | 'active' | 'paused'
@@ -91,6 +100,11 @@ export default function RemindersSection({ businessId }: Props) {
 
   const [showPicker, setShowPicker] = useState(false)
   const [scheduleCustomer, setScheduleCustomer] = useState<ReminderCustomer | null>(null)
+
+  const [memberMap, setMemberMap] = useState<Map<number, string>>(new Map())
+  const [detailReminder, setDetailReminder] = useState<Reminder | null>(null)
+  const [detailData, setDetailData] = useState<CustomerTransaction[] | null>(null)
+  const [detailLoading, setDetailLoading] = useState(false)
 
   const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -171,6 +185,20 @@ export default function RemindersSection({ businessId }: Props) {
   useEffect(() => {
     if (businessId) loadAll()
   }, [businessId, loadAll])
+
+  useEffect(() => {
+    if (!businessId || isNaN(businessId)) return
+    adminAPI.listMembers()
+      .then((res) => {
+        const map = new Map<number, string>()
+        for (const m of extractArray(res.data)) {
+          const uid = Number(m.user_id ?? m.id)
+          if (uid) map.set(uid, m.name || `Staff #${uid}`)
+        }
+        setMemberMap(map)
+      })
+      .catch(() => {})
+  }, [businessId])
 
   const customerMap = useMemo(() => {
     const map = new Map<number, CustomerInfo>()
@@ -303,6 +331,51 @@ export default function RemindersSection({ businessId }: Props) {
     setShowPicker(false)
     setScheduleCustomer(customer)
   }
+
+  const openDetail = async (reminder: Reminder) => {
+    setDetailReminder(reminder)
+    setDetailData(null)
+    setDetailLoading(true)
+    try {
+      const res = await debtAPI.getCustomerTransactions(businessId, reminder.customer_id)
+      const txns = extractArray(res.data).map((item: any) => {
+        const t = item.transactions || item
+        return {
+          transaction_id: t.transaction_id ?? item.transaction_id,
+          debt_id: t.debt_id ?? item.debt_id,
+          performer_id: t.performer_id ?? item.performer_id,
+          amount_paid: Number(t.amount_paid ?? item.amount_paid ?? 0),
+          note: t.note || item.note || '',
+          created_at: t.created_at || item.created_at || '',
+        }
+      })
+      setDetailData(txns)
+    } catch {
+      setDetailData([])
+    } finally {
+      setDetailLoading(false)
+    }
+  }
+
+  const detailDebt = detailReminder ? debtMap.get(detailReminder.debt_id) : null
+  const detailCustomer = detailReminder ? getCustomer(detailReminder) : null
+  const detailDebtStatus = (() => {
+    if (!detailDebt) return null
+    if (detailDebt.is_paid) return { label: 'Paid', cls: 'bg-success-light text-success' }
+    const days = daysUntil(detailDebt.due_date)
+    if (days != null && days < 0) return { label: 'Overdue', cls: 'bg-danger-light text-danger' }
+    return { label: 'Pending', cls: 'bg-warning-light text-warning' }
+  })()
+  const detailCreator = (() => {
+    if (!detailReminder || !detailData) return null
+    const debtTxns = detailData.filter((t) => t.debt_id === detailReminder.debt_id)
+    const created = debtTxns.find((t) => t.amount_paid === 0) || debtTxns[0]
+    if (!created || created.performer_id == null) return null
+    return {
+      name: memberMap.get(created.performer_id) || `Staff #${created.performer_id}`,
+      created_at: created.created_at,
+    }
+  })()
 
   const editValidation = useMemo(
     () => validateReminderWindow(editStart, editEnd, todayDateString()),
@@ -458,7 +531,11 @@ export default function RemindersSection({ businessId }: Props) {
                       const debt = debtMap.get(reminder.debt_id)
                       const endDays = daysUntil(reminder.end_date)
                       return (
-                        <tr key={reminder.reminder_id} className="border-t border-gray-50 table-row-hover">
+                        <tr
+                          key={reminder.reminder_id}
+                          onClick={() => openDetail(reminder)}
+                          className="border-t border-gray-50 table-row-hover cursor-pointer"
+                        >
                           <td className="px-5 py-3.5">
                             <div className="flex items-center gap-3">
                               <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold shrink-0 ${
@@ -503,7 +580,7 @@ export default function RemindersSection({ businessId }: Props) {
                             </span>
                           </td>
                           <td className="px-5 py-3.5 text-right">
-                            <div className="flex items-center gap-2 justify-end">
+                            <div className="flex items-center gap-2 justify-end" onClick={(e) => e.stopPropagation()}>
                               {canManage && (
                                 <>
                                   <button
@@ -766,6 +843,117 @@ export default function RemindersSection({ businessId }: Props) {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {detailReminder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setDetailReminder(null)}>
+          <div className="absolute inset-0 bg-black/40" />
+          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 bg-white border-b border-gray-100 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
+              <h3 className="font-semibold text-gray-900">Reminder Details</h3>
+              <button onClick={() => setDetailReminder(null)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors">
+                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="px-4 sm:px-6 py-5 space-y-5">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-base font-semibold text-primary shrink-0">
+                  {detailCustomer?.name?.charAt(0)?.toUpperCase() || '?'}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs text-neutral-light">Borrower</p>
+                  <p className="text-lg font-semibold text-gray-900 truncate">{detailCustomer?.name || 'Unknown'}</p>
+                  {detailCustomer?.phone && <p className="text-xs text-neutral-light mt-0.5">{detailCustomer.phone}</p>}
+                </div>
+              </div>
+
+              <div>
+                <h4 className="text-xs font-semibold text-neutral-light uppercase tracking-wider mb-3">Debt</h4>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-surfaceAlt rounded-xl p-4">
+                    <p className="text-xs text-neutral-light mb-1">Amount</p>
+                    <p className="text-lg font-bold text-gray-900">{detailDebt ? formatCurrency(detailDebt.amount) : '—'}</p>
+                  </div>
+                  <div className="bg-surfaceAlt rounded-xl p-4">
+                    <p className="text-xs text-neutral-light mb-1">Status</p>
+                    {detailDebtStatus ? (
+                      <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${detailDebtStatus.cls}`}>
+                        {detailDebtStatus.label}
+                      </span>
+                    ) : '—'}
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3 mt-3">
+                  <div className="bg-surfaceAlt rounded-xl p-4">
+                    <p className="text-xs text-neutral-light mb-1">Due Date</p>
+                    <p className="text-sm font-medium text-gray-900">{detailDebt?.due_date ? dateOnly(detailDebt.due_date) : '—'}</p>
+                  </div>
+                  <div className="bg-surfaceAlt rounded-xl p-4">
+                    <p className="text-xs text-neutral-light mb-1">Debt ID</p>
+                    <p className="text-sm font-medium text-gray-900">#{detailReminder.debt_id}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="text-xs font-semibold text-neutral-light uppercase tracking-wider mb-3">Added By</h4>
+                <div className="bg-surfaceAlt rounded-xl p-4">
+                  {detailLoading ? (
+                    <div className="flex items-center gap-2 text-sm text-neutral-light">
+                      <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                      Loading...
+                    </div>
+                  ) : detailCreator ? (
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">{detailCreator.name}</p>
+                      {detailCreator.created_at && (
+                        <p className="text-xs text-neutral-light mt-0.5">
+                          Added {new Date(detailCreator.created_at).toLocaleDateString()} at{' '}
+                          {new Date(detailCreator.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-neutral-light">Not available for this debt</p>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <h4 className="text-xs font-semibold text-neutral-light uppercase tracking-wider mb-3">Reminder</h4>
+                <div className="bg-surfaceAlt rounded-xl p-4 space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-neutral-light">Window</span>
+                    <span className="text-gray-900 font-medium">{dateOnly(detailReminder.start_date) || '—'} → {dateOnly(detailReminder.end_date) || '—'}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-neutral-light">Time</span>
+                    <span className="text-gray-900 font-medium">Daily {formatTime(detailReminder.time_of_day)}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-neutral-light">Status</span>
+                    <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${detailReminder.is_active ? 'bg-success-light text-success' : 'bg-gray-200 text-gray-600'}`}>
+                      {detailReminder.is_active ? 'Active' : 'Paused'}
+                    </span>
+                  </div>
+                  {detailReminder.note && (
+                    <div className="text-sm">
+                      <span className="text-neutral-light block mb-0.5">Note</span>
+                      <p className="text-gray-700">{detailReminder.note}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="sticky bottom-0 bg-white border-t border-gray-100 px-4 sm:px-6 py-4 rounded-b-2xl">
+              <button onClick={() => setDetailReminder(null)} className="w-full py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors">
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
