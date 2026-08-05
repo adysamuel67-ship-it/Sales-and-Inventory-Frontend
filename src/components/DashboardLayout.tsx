@@ -153,7 +153,6 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
     { label: 'Products', icon: 'products', href: `${bizBase}/products`, id: 'products', group: 'main' },
     { label: 'Customers', icon: 'customers', href: `${bizBase}/customers`, id: 'customers', group: 'management' },
     { label: 'Debts', icon: 'debts', href: `${bizBase}/debts`, id: 'debts', group: 'management' },
-    { label: 'Reminders', icon: 'reminders', href: `${bizBase}/reminders`, id: 'reminders', group: 'management' },
     { label: 'Reports', icon: 'reports', href: `${bizBase}/reports`, id: 'reports', group: 'admin', ownerOnly: true },
     { label: 'Businesses', icon: 'admin-businesses', href: '/businesses', id: 'businesses-nav', group: 'account' },
     { label: 'Settings', icon: 'settings', href: `${bizBase}/settings`, id: 'settings', group: 'account' },

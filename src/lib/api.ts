@@ -393,9 +393,19 @@ export const reminderAPI = {
     api.post(`/debts/reminders/${businessId}`, data),
   // The backend GET route reads its filters from the request body (GetReminders schema),
   // so filters are sent as JSON data alongside the GET request. A body is REQUIRED,
-  // otherwise FastAPI returns 422 — so default to an empty object.
-  list: (businessId: number, params?: any) =>
-    api.get(`/debts/reminders/${businessId}`, { data: params ?? {} }),
+  // otherwise FastAPI returns 422 — so always send a window (start/end) with the request.
+  list: (businessId: number, params?: any) => {
+    const end = new Date()
+    end.setFullYear(end.getFullYear() + 10)
+    const endDate = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, '0')}-${String(end.getDate()).padStart(2, '0')}`
+    return api.get(`/debts/reminders/${businessId}`, {
+      data: {
+        start_date: '2000-01-01',
+        end_date: endDate,
+        ...params,
+      },
+    })
+  },
   update: (businessId: number, reminderId: number, data: any) =>
     api.put(`/debts/reminders/${businessId}/${reminderId}`, data),
   delete: (businessId: number, reminderId: number) =>

@@ -1,7 +1,6 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useParams } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
 import { reminderAPI, customerAPI, debtAPI } from '@/lib/api'
 import { extractArray, parseApiError, isAdminRole } from '@/lib/utils'
@@ -37,6 +36,10 @@ interface DebtInfo {
 
 type Tab = 'all' | 'active' | 'paused'
 
+interface Props {
+  businessId: number
+}
+
 function dateOnly(value?: string): string {
   const part = (value || '').slice(0, 10)
   return /^\d{4}-\d{2}-\d{2}$/.test(part) ? part : ''
@@ -61,9 +64,7 @@ function formatCurrency(amount: number) {
   return `GH\u20B5${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
-export default function RemindersPage() {
-  const params = useParams()
-  const businessId = parseInt(params?.id as string)
+export default function RemindersSection({ businessId }: Props) {
   const { user } = useAuth()
 
   const [reminders, setReminders] = useState<Reminder[]>([])
@@ -310,10 +311,10 @@ export default function RemindersPage() {
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Reminders</h1>
-          <p className="text-xs sm:text-sm text-neutral-light mt-1">Track and manage debt payment reminders</p>
+          <h2 className="text-lg font-bold text-gray-900">Payment Reminders</h2>
+          <p className="text-xs sm:text-sm text-neutral-light mt-0.5">Automated SMS reminders for customer debt payments</p>
         </div>
         {canManage && (
           <button
@@ -347,7 +348,7 @@ export default function RemindersPage() {
 
       {loading ? (
         <div className="space-y-6">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className="skeleton h-24 rounded-2xl" />
             ))}

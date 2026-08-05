@@ -7,6 +7,7 @@ import { debtAPI, customerAPI, saleAPI } from '@/lib/api'
 import { extractArray, parseApiError, isAdminRole, MappedSale } from '@/lib/utils'
 import SaleDetailModal from '@/components/SaleDetailModal'
 import ScheduleReminderModal from '@/components/ScheduleReminderModal'
+import RemindersSection from '@/components/RemindersSection'
 interface DebtRecord {
   debt_id: number
   sale_id?: number
@@ -47,7 +48,7 @@ interface CustomerTransaction {
   customer_address?: string
 }
 
-type Tab = 'all' | 'overdue' | 'paid'
+type Tab = 'all' | 'overdue' | 'paid' | 'reminders'
 
 function isOverdue(dueDate: string): boolean {
   const today = new Date()
@@ -534,6 +535,7 @@ export default function DebtsPage() {
               { key: 'all' as Tab, label: `In Debt (${debtCustomers.length})` },
               { key: 'overdue' as Tab, label: `Overdue (${overdueCustomers.length})` },
               { key: 'paid' as Tab, label: `Paid (${paidCustomers.length})` },
+              { key: 'reminders' as Tab, label: 'Reminders' },
             ]).map((tab) => (
               <button
                 key={tab.key}
@@ -549,146 +551,152 @@ export default function DebtsPage() {
             ))}
           </div>
 
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+          {activeTab === 'reminders' ? (
+            <RemindersSection businessId={businessId} />
+          ) : (
+            <>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
             <div className="relative flex-1 w-full sm:w-auto">
-              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-light" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by name, phone, or email..."
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
-              />
+                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-light" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search by name, phone, or email..."
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                />
+              </div>
+              <select
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value as typeof sortOrder)}
+                className="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-primary outline-none min-h-[44px]"
+              >
+                <option value="highest">Highest Debt</option>
+                <option value="lowest">Lowest Debt</option>
+                <option value="oldest">Oldest First</option>
+              </select>
             </div>
-            <select
-              value={sortOrder}
-              onChange={(e) => setSortOrder(e.target.value as typeof sortOrder)}
-              className="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-primary outline-none min-h-[44px]"
-            >
-              <option value="highest">Highest Debt</option>
-              <option value="lowest">Lowest Debt</option>
-              <option value="oldest">Oldest First</option>
-            </select>
-          </div>
-
-          <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm">
-            {filtered.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-gray-100">
-                      <th className="text-left px-5 py-3 font-medium">Customer</th>
-                      <th className="text-right px-5 py-3 font-medium">Debt</th>
-                      <th className="text-center px-5 py-3 font-medium hidden sm:table-cell">Status</th>
-                      <th className="text-right px-5 py-3 font-medium">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filtered.map((customer) => {
-                      const hasOverdue = customer.debts.some((d) => !d.is_paid && d.due_date && isOverdue(d.due_date))
-                      return (
-                        <tr key={customer.customer_id} className="border-t border-gray-50 table-row-hover">
-                          <td className="px-5 py-3.5">
-                            <button
-                              onClick={() => openProfile(customer)}
-                              className="flex items-center gap-3 text-left hover:opacity-80 transition-opacity"
-                            >
-                              <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold shrink-0 ${
-                                hasOverdue ? 'bg-danger-light text-danger' : 'bg-warning-light text-warning'
-                              }`}>
-                                {customer.customer_name?.charAt(0)?.toUpperCase() || '?'}
-                              </div>
-                              <div>
-                                <div className="font-medium text-gray-900 underline decoration-dotted underline-offset-2 cursor-pointer">{customer.customer_name}</div>
-                                {customer.customer_phone && (
-                                  <div className="text-xs text-neutral-light mt-0.5">{customer.customer_phone}</div>
-                                )}
-                              </div>
-                            </button>
-                          </td>
-                          <td className="px-5 py-3.5 text-right">
-                            <span className={`font-semibold ${customer.total_debt >= 100 ? 'text-danger' : 'text-warning'}`}>
-                              {formatCurrency(customer.total_debt)}
-                            </span>
-                          </td>
-                          <td className="px-5 py-3.5 text-center hidden sm:table-cell">
-                            {hasOverdue ? (
-                              <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-danger-light text-danger">
-                                Overdue
-                              </span>
-                            ) : customer.total_debt > 0 ? (
-                              <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-warning-light text-warning">
-                                Pending
-                              </span>
-                            ) : (
-                              <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-success-light text-success">
-                                Paid
-                              </span>
-                            )}
-                          </td>
-                          <td className="px-5 py-3.5 text-right">
-                            <div className="flex items-center gap-2 justify-end">
+  
+            <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm">
+              {filtered.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-gray-100">
+                        <th className="text-left px-5 py-3 font-medium">Customer</th>
+                        <th className="text-right px-5 py-3 font-medium">Debt</th>
+                        <th className="text-center px-5 py-3 font-medium hidden sm:table-cell">Status</th>
+                        <th className="text-right px-5 py-3 font-medium">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filtered.map((customer) => {
+                        const hasOverdue = customer.debts.some((d) => !d.is_paid && d.due_date && isOverdue(d.due_date))
+                        return (
+                          <tr key={customer.customer_id} className="border-t border-gray-50 table-row-hover">
+                            <td className="px-5 py-3.5">
                               <button
                                 onClick={() => openProfile(customer)}
-                                className="px-2.5 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                                className="flex items-center gap-3 text-left hover:opacity-80 transition-opacity"
                               >
-                                Details
+                                <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold shrink-0 ${
+                                  hasOverdue ? 'bg-danger-light text-danger' : 'bg-warning-light text-warning'
+                                }`}>
+                                  {customer.customer_name?.charAt(0)?.toUpperCase() || '?'}
+                                </div>
+                                <div>
+                                  <div className="font-medium text-gray-900 underline decoration-dotted underline-offset-2 cursor-pointer">{customer.customer_name}</div>
+                                  {customer.customer_phone && (
+                                    <div className="text-xs text-neutral-light mt-0.5">{customer.customer_phone}</div>
+                                  )}
+                                </div>
                               </button>
-                              {canRemind && (
-                                customer.total_debt > 0 ? (
-                                  <button
-                                    onClick={() => openReminder(customer)}
-                                    className="px-2.5 py-1 text-xs font-medium text-primary bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors"
-                                  >
-                                    Remind
-                                  </button>
-                                ) : (
-                                  <button
-                                    disabled
-                                    title="Debt settled"
-                                    className="px-2.5 py-1 text-xs font-medium text-gray-400 bg-gray-100 rounded-lg cursor-not-allowed"
-                                  >
-                                    Debt settled
-                                  </button>
-                                )
+                            </td>
+                            <td className="px-5 py-3.5 text-right">
+                              <span className={`font-semibold ${customer.total_debt >= 100 ? 'text-danger' : 'text-warning'}`}>
+                                {formatCurrency(customer.total_debt)}
+                              </span>
+                            </td>
+                            <td className="px-5 py-3.5 text-center hidden sm:table-cell">
+                              {hasOverdue ? (
+                                <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-danger-light text-danger">
+                                  Overdue
+                                </span>
+                              ) : customer.total_debt > 0 ? (
+                                <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-warning-light text-warning">
+                                  Pending
+                                </span>
+                              ) : (
+                                <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-success-light text-success">
+                                  Paid
+                                </span>
                               )}
-                              {customer.total_debt > 0 && canPayDebt && (
+                            </td>
+                            <td className="px-5 py-3.5 text-right">
+                              <div className="flex items-center gap-2 justify-end">
                                 <button
-                                  onClick={() => openPayment(customer)}
-                                  className="px-2.5 py-1 text-xs font-medium text-white bg-primary rounded-lg hover:bg-primary-dark transition-colors"
+                                  onClick={() => openProfile(customer)}
+                                  className="px-2.5 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
                                 >
-                                  Pay
+                                  Details
                                 </button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="px-5 py-12 text-center">
-                <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                  <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+                                {canRemind && (
+                                  customer.total_debt > 0 ? (
+                                    <button
+                                      onClick={() => openReminder(customer)}
+                                      className="px-2.5 py-1 text-xs font-medium text-primary bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors"
+                                    >
+                                      Remind
+                                    </button>
+                                  ) : (
+                                    <button
+                                      disabled
+                                      title="Debt settled"
+                                      className="px-2.5 py-1 text-xs font-medium text-gray-400 bg-gray-100 rounded-lg cursor-not-allowed"
+                                    >
+                                      Debt settled
+                                    </button>
+                                  )
+                                )}
+                                {customer.total_debt > 0 && canPayDebt && (
+                                  <button
+                                    onClick={() => openPayment(customer)}
+                                    className="px-2.5 py-1 text-xs font-medium text-white bg-primary rounded-lg hover:bg-primary-dark transition-colors"
+                                  >
+                                    Pay
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
                 </div>
-                <p className="text-sm font-medium text-gray-900 mb-1">
-                  {search ? 'No customers match your search' :
-                    activeTab === 'overdue' ? 'No overdue debts' :
-                    activeTab === 'paid' ? 'No paid debts yet' :
-                    'No outstanding debts'}
-                </p>
-                <p className="text-xs text-neutral-light">
-                  {search ? 'Try a different search term' : 'All customers are up to date'}
-                </p>
-              </div>
-            )}
-          </div>
+              ) : (
+                <div className="px-5 py-12 text-center">
+                  <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                    <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <p className="text-sm font-medium text-gray-900 mb-1">
+                    {search ? 'No customers match your search' :
+                      activeTab === 'overdue' ? 'No overdue debts' :
+                      activeTab === 'paid' ? 'No paid debts yet' :
+                      'No outstanding debts'}
+                  </p>
+                  <p className="text-xs text-neutral-light">
+                    {search ? 'Try a different search term' : 'All customers are up to date'}
+                  </p>
+                </div>
+              )}
+            </div>
+            </>
+          )}
         </>
       )}
 
