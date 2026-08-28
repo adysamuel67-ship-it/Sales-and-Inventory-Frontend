@@ -32,6 +32,7 @@ export default function ChangePasswordPage() {
   const [step, setStep] = useState<1 | 2 | 3>(1)
   const [codeSent, setCodeSent] = useState(false)
   const [otpVerified, setOtpVerified] = useState(false)
+  const [completed, setCompleted] = useState(false)
 
   const [oldPassword, setOldPassword] = useState('')
   const [otp, setOtp] = useState(['', '', '', '', '', '', ''])
@@ -172,6 +173,7 @@ export default function ChangePasswordPage() {
         conf_password: confirmPassword,
         otp: otp.join(''),
       })
+      setCompleted(true)
       setSuccess('Password changed successfully. Signing you out...')
       successTimerRef.current = setTimeout(() => {
         logout()
@@ -419,7 +421,7 @@ export default function ChangePasswordPage() {
                 <button
                   type="button"
                   onClick={handleUpdatePassword}
-                  disabled={updating || success !== ''}
+                  disabled={updating || completed}
                   className="w-full py-3 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-60 flex items-center justify-center gap-2 min-h-[48px]"
                 >
                   {updating ? (
