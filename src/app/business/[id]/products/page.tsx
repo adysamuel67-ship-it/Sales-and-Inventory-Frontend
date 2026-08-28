@@ -3,9 +3,14 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { productAPI } from '@/lib/api'
-import { normalizeProduct, extractArray, parseApiError, isAdminRole } from '@/lib/utils'
+import { normalizeProduct, extractArray, parseApiError, isAdminRole, formatCedi } from '@/lib/utils'
 import { useAuth } from '@/lib/auth'
 import ProductDetailModal from '@/components/ProductDetailModal'
+import PageHeader from '@/components/ui/PageHeader'
+import Alert from '@/components/ui/Alert'
+import Button from '@/components/ui/Button'
+import EmptyState from '@/components/ui/EmptyState'
+import { PlusIcon, BoxIcon } from '@/components/ui/Icons'
 export default function ProductsPage() {
   const params = useParams()
   const businessId = parseInt(params?.id as string)
@@ -144,18 +149,16 @@ export default function ProductsPage() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Products</h1>
-          <p className="text-sm text-neutral-light mt-0.5">{stats.total} products · {stats.lowStock} low stock · {stats.outOfStock} out of stock</p>
-        </div>
-        {canEdit && (
-          <button onClick={openAdd} className="bg-primary text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors">
-            + Add Product
-          </button>
+      <PageHeader
+        eyebrow="Inventory"
+        title="Products"
+        subtitle={`${stats.total} products · ${stats.lowStock} low stock · ${stats.outOfStock} out of stock`}
+        actions={canEdit && (
+          <Button onClick={openAdd} leftIcon={<PlusIcon className="w-4 h-4" />}>
+            Add Product
+          </Button>
         )}
-      </div>
+      />
 
       {/* Stats cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -163,28 +166,28 @@ export default function ProductsPage() {
           { label: 'Total Products', value: stats.total, color: 'text-gray-900' },
           { label: 'Low Stock', value: stats.lowStock, color: stats.lowStock > 0 ? 'text-warning' : 'text-gray-900' },
           { label: 'Out of Stock', value: stats.outOfStock, color: stats.outOfStock > 0 ? 'text-danger' : 'text-gray-900' },
-          { label: 'Inventory Value', value: `GH₵${stats.totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, color: 'text-primary' },
+          { label: 'Inventory Value', value: formatCedi(stats.totalValue), color: 'text-primary' },
         ].map((s, i) => (
-          <div key={i} className="bg-white rounded-xl border border-gray-100 p-3 sm:p-4">
-            <p className="text-xs text-neutral-light">{s.label}</p>
-            <p className={`text-lg sm:text-xl font-bold mt-0.5 ${s.color}`}>{s.value}</p>
+          <div key={i} className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-5">
+            <p className="text-xs font-medium text-neutral-light">{s.label}</p>
+            <p className={`text-xl sm:text-2xl font-bold mt-1 ${s.color}`}>{s.value}</p>
           </div>
         ))}
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl border border-gray-100 p-3 sm:p-4">
+      <div className="bg-white rounded-xl border border-gray-200 p-3 sm:p-4">
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search products..."
-            className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
           />
           <select
             value={selectedCategory}
             onChange={e => setSelectedCategory(e.target.value)}
-            className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
           >
             <option value="">All Categories</option>
             {categories.map(c => <option key={c} value={c}>{c}</option>)}
@@ -200,7 +203,7 @@ export default function ProductsPage() {
 
       {/* Error */}
       {error && (
-        <div className="bg-danger-light border border-danger/20 rounded-xl p-4 text-sm text-danger">{error}</div>
+        <Alert kind="error">{error}</Alert>
       )}
 
       {/* Loading */}
@@ -212,20 +215,24 @@ export default function ProductsPage() {
 
       {/* Empty */}
       {!loading && displayed.length === 0 && (
-        <div className="text-center py-16 text-neutral-light">
-          <svg className="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
-          </svg>
-          <p className="text-sm font-medium">No products found</p>
-        </div>
+        <EmptyState
+          icon={<BoxIcon className="w-6 h-6 text-primary" />}
+          title="No products found"
+          description={allProducts.length === 0 ? 'Add your first product to start selling' : 'Try adjusting your filters'}
+          action={canEdit && allProducts.length === 0 ? (
+            <Button size="sm" onClick={openAdd} leftIcon={<PlusIcon className="w-3.5 h-3.5" />}>
+              Add Product
+            </Button>
+          ) : undefined}
+        />
       )}
 
       {/* Desktop table (md+) */}
       {!loading && displayed.length > 0 && (
-        <div className="hidden md:block bg-white rounded-xl border border-gray-100 overflow-hidden">
+        <div className="hidden md:block bg-white rounded-xl border border-gray-200 overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-100 text-left text-xs text-neutral-light uppercase tracking-wider">
+              <tr className="border-b border-gray-200 text-left text-xs text-neutral-light uppercase tracking-wider">
                 {[
                   { key: 'name', label: 'Product' },
                   { key: 'price', label: 'Price' },
@@ -258,8 +265,8 @@ export default function ProductsPage() {
                       <div className="font-medium text-gray-900">{p.name}</div>
                       {p.sku && <div className="text-xs text-neutral-light font-mono mt-0.5">SKU: {p.sku}</div>}
                     </td>
-                    <td className="px-4 py-3 font-medium text-gray-900">GH₵{Number(p.price).toFixed(2)}</td>
-                    <td className="px-4 py-3 text-gray-600">GH₵{Number(p.cost_price).toFixed(2)}</td>
+                    <td className="px-4 py-3 font-medium text-gray-900">{formatCedi(p.price)}</td>
+                    <td className="px-4 py-3 text-gray-600">{formatCedi(p.cost_price)}</td>
                     <td className="px-4 py-3">
                       <span className={`font-medium ${isOut ? 'text-danger' : isLow ? 'text-warning' : 'text-gray-900'}`}>
                         {p.quantity}
@@ -301,7 +308,7 @@ export default function ProductsPage() {
             return (
               <div
                 key={p.product_id}
-                className="bg-white rounded-xl border border-gray-100 p-4 cursor-pointer hover:shadow-sm transition-shadow"
+                className="bg-white rounded-xl border border-gray-200 p-4 cursor-pointer hover:shadow-sm transition-shadow"
                 onClick={() => setDetailProduct(p)}
               >
                 <div className="flex items-start justify-between gap-2">
@@ -318,7 +325,7 @@ export default function ProductsPage() {
                 <div className="mt-3 grid grid-cols-3 gap-2 text-sm">
                   <div>
                     <p className="text-xs text-neutral-light">Price</p>
-                    <p className="font-medium text-gray-900">GH₵{Number(p.price).toFixed(2)}</p>
+                    <p className="font-medium text-gray-900">{formatCedi(p.price)}</p>
                   </div>
                   <div>
                     <p className="text-xs text-neutral-light">Stock</p>
@@ -332,7 +339,7 @@ export default function ProductsPage() {
                   </div>
                 </div>
                 {canEdit && (
-                  <div className="mt-3 pt-3 border-t border-gray-100 flex gap-2">
+                  <div className="mt-3 pt-3 border-t border-gray-200 flex gap-2">
                     <button onClick={(e) => openEdit(p, e)} className="flex-1 py-2 text-xs font-medium text-primary bg-primary-light rounded-lg hover:bg-primary/15 transition-colors">Edit</button>
                     <button onClick={(e) => { e.stopPropagation(); setDeleteConfirm({ open: true, product: p }) }} className="flex-1 py-2 text-xs font-medium text-danger bg-danger-light rounded-lg hover:bg-danger/15 transition-colors">Delete</button>
                   </div>
@@ -353,7 +360,7 @@ export default function ProductsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowAdd(false)}>
           <div className="absolute inset-0 bg-black/40" />
           <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-            <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
               <h3 className="font-semibold text-gray-900">{editProduct ? 'Edit Product' : 'Add Product'}</h3>
               <button onClick={() => setShowAdd(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors">
                 <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
@@ -362,26 +369,26 @@ export default function ProductsPage() {
             <form onSubmit={saveProduct} className="px-6 py-5 space-y-4">
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Name *</label>
-                <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+                <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Selling Price *</label>
-                  <input type="number" step="0.01" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} required className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+                  <input type="number" step="0.01" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} required className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Cost Price *</label>
-                  <input type="number" step="0.01" value={form.cost_price} onChange={e => setForm({ ...form, cost_price: e.target.value })} required className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+                  <input type="number" step="0.01" value={form.cost_price} onChange={e => setForm({ ...form, cost_price: e.target.value })} required className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Quantity *</label>
-                  <input type="number" value={form.quantity} onChange={e => setForm({ ...form, quantity: e.target.value })} required className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+                  <input type="number" value={form.quantity} onChange={e => setForm({ ...form, quantity: e.target.value })} required className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Unit</label>
-                  <select value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+                  <select value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
                     <option value="units">Units</option>
                     <option value="kg">Kilograms</option>
                     <option value="g">Grams</option>
@@ -395,20 +402,20 @@ export default function ProductsPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Low Stock Threshold</label>
-                  <input type="number" value={form.low_stock_threshold} onChange={e => setForm({ ...form, low_stock_threshold: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+                  <input type="number" value={form.low_stock_threshold} onChange={e => setForm({ ...form, low_stock_threshold: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Category</label>
-                  <input value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} placeholder="e.g. Beverages" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+                  <input value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} placeholder="e.g. Beverages" className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
                 </div>
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">SKU</label>
-                <input value={form.sku} onChange={e => setForm({ ...form, sku: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+                <input value={form.sku} onChange={e => setForm({ ...form, sku: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Description</label>
-                <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} rows={3} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none" />
+                <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} rows={3} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none" />
               </div>
               <div className="flex gap-2 pt-2">
                 <button type="button" onClick={() => setShowAdd(false)} className="flex-1 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors">Cancel</button>

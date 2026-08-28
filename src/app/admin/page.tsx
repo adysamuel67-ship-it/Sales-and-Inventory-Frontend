@@ -107,8 +107,8 @@ export default function AdminDashboardPage() {
         />
       </div>
 
-      <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm">
-        <div className="px-5 py-4 border-b border-gray-100">
+      <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm">
+        <div className="px-5 py-4 border-b border-gray-200">
           <h2 className="font-semibold text-gray-900">Recent Users</h2>
         </div>
         {loading ? (
@@ -119,7 +119,7 @@ export default function AdminDashboardPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-gray-100">
+                <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-gray-200">
                   <th className="text-left px-5 py-3 font-medium">Name</th>
                   <th className="text-left px-5 py-3 font-medium">Email</th>
                   <th className="text-center px-5 py-3 font-medium">Role</th>

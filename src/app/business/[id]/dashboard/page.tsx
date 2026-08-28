@@ -14,7 +14,10 @@ const RevenueChart = dynamic(() => import('@/components/RevenueChart'), { ssr: f
 const FluctuationChart = dynamic(() => import('@/components/FluctuationChart'), { ssr: false })
 import { useAuth } from '@/lib/auth'
 import { reportAPI, saleAPI, productAPI } from '@/lib/api'
-import { extractArray, extractSummary, mapSale, mapLowStock, generateDateLabels, isStaffRole, parseApiError, getDateRange } from '@/lib/utils'
+import { extractArray, extractSummary, mapSale, mapLowStock, generateDateLabels, isStaffRole, parseApiError, getDateRange, formatCedi, formatNumber } from '@/lib/utils'
+import PageHeader from '@/components/ui/PageHeader'
+import Alert from '@/components/ui/Alert'
+import Skeleton from '@/components/ui/Skeleton'
 
 interface DashboardSummary {
   total_revenue: number
@@ -259,18 +262,20 @@ export default function BusinessDashboardPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="skeleton h-8 w-48 mb-2" />
-            <div className="skeleton h-4 w-32" />
-          </div>
+        <div className="flex flex-col gap-1 mb-6">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-72" />
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="skeleton h-24 rounded-2xl" />
+            <Skeleton key={i} className="h-28 rounded-2xl" />
           ))}
         </div>
-        <div className="skeleton h-72 rounded-2xl" />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+          <Skeleton className="lg:col-span-2 h-80 rounded-2xl" />
+          <Skeleton className="h-80 rounded-2xl" />
+        </div>
+        <Skeleton className="h-40 rounded-2xl" />
       </div>
     )
   }
@@ -278,22 +283,16 @@ export default function BusinessDashboardPage() {
   return (
     <div>
       {error && (
-        <div className={`mb-6 text-sm p-3 rounded-xl flex items-center gap-2 ${
-          error.startsWith('Warning') ? 'bg-warning-light text-warning' : 'bg-danger-light text-danger'
-        }`}>
-          <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-          </svg>
-          {error}
+        <div className="mb-6">
+          <Alert kind={error.startsWith('Warning') ? 'warning' : 'error'}>{error}</Alert>
         </div>
       )}
 
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-sm text-neutral-light mt-1">{currentBusiness?.name || 'Overview'}</p>
-        </div>
-        {isStaff ? (
+      <PageHeader
+        eyebrow="Overview"
+        title="Dashboard"
+        subtitle={currentBusiness?.name || 'Business performance at a glance'}
+        actions={isStaff ? (
           <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1">
             <button
               onClick={() => setStaffView('today')}
@@ -342,7 +341,7 @@ export default function BusinessDashboardPage() {
           </button>
 
           {showDatePicker && (
-            <div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-xl shadow-lg border border-gray-100 p-4 z-50">
+            <div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-xl shadow-lg border border-gray-200 p-4 z-50">
               <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">Quick Select</p>
               <div className="flex flex-wrap gap-2 mb-4">
                 {datePresets.map((preset) => (
@@ -367,7 +366,7 @@ export default function BusinessDashboardPage() {
                     type="date"
                     value={draftDateRange.start}
                     onChange={(e) => handleCustomDateChange('start', e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs focus:border-primary outline-none"
+                    className="w-full px-3 py-2 rounded-lg border border-gray-300 text-xs focus:border-primary outline-none"
                   />
                 </div>
                 <div>
@@ -376,7 +375,7 @@ export default function BusinessDashboardPage() {
                     type="date"
                     value={draftDateRange.end}
                     onChange={(e) => handleCustomDateChange('end', e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs focus:border-primary outline-none"
+                    className="w-full px-3 py-2 rounded-lg border border-gray-300 text-xs focus:border-primary outline-none"
                   />
                 </div>
               </div>
@@ -390,34 +389,34 @@ export default function BusinessDashboardPage() {
           )}
         </div>
         )}
-      </div>
+      />
 
       {isStaff ? (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           <KpiCard
             title="Today's Revenue"
-            value={todaySummary?.total_revenue != null ? `GH₵${todaySummary.total_revenue.toLocaleString()}` : '---'}
+            value={todaySummary?.total_revenue != null ? formatCedi(todaySummary.total_revenue) : '---'}
             subtitle="Today"
             icon={kpiIcons.revenue}
             color="primary"
           />
           <KpiCard
             title="Today's Sales"
-            value={todaySummary?.total_sales != null ? todaySummary.total_sales.toLocaleString() : '---'}
+            value={todaySummary?.total_sales != null ? formatNumber(todaySummary.total_sales) : '---'}
             subtitle="Today"
             icon={kpiIcons.sales}
             color="success"
           />
           <KpiCard
             title="Sales (7d)"
-            value={summary?.total_sales != null ? summary.total_sales.toLocaleString() : '---'}
+            value={summary?.total_sales != null ? formatNumber(summary.total_sales) : '---'}
             subtitle="This week"
             icon={kpiIcons.sales}
             color="warning"
           />
           <KpiCard
             title="Low Stock"
-            value={lowStockItems.length.toLocaleString()}
+            value={formatNumber(lowStockItems.length)}
             subtitle="Items need restocking"
             icon={kpiIcons.warning}
             color="danger"
@@ -427,28 +426,28 @@ export default function BusinessDashboardPage() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           <KpiCard
             title="Revenue"
-            value={summary?.total_revenue != null ? `GH₵${summary.total_revenue.toLocaleString()}` : '---'}
+            value={summary?.total_revenue != null ? formatCedi(summary.total_revenue) : '---'}
             subtitle={dateSubtitle}
             icon={kpiIcons.revenue}
             color="primary"
           />
           <KpiCard
             title="Profit"
-            value={summary?.total_profit != null ? `GH₵${summary.total_profit.toLocaleString()}` : '---'}
+            value={summary?.total_profit != null ? formatCedi(summary.total_profit) : '---'}
             subtitle={dateSubtitle}
             icon={kpiIcons.profit}
             color="success"
           />
           <KpiCard
             title="Sales"
-            value={summary?.total_sales != null ? summary.total_sales.toLocaleString() : '---'}
+            value={summary?.total_sales != null ? formatNumber(summary.total_sales) : '---'}
             subtitle={dateSubtitle}
             icon={kpiIcons.sales}
             color="warning"
           />
           <KpiCard
             title="Products"
-            value={summary?.total_products != null ? summary.total_products.toLocaleString() : '---'}
+            value={summary?.total_products != null ? formatNumber(summary.total_products) : '---'}
             subtitle="In inventory"
             icon={kpiIcons.products}
             color="danger"

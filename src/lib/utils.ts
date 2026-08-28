@@ -173,6 +173,21 @@ export function parseApiError(err: any): string {
   return err?.message || 'An error occurred'
 }
 
+export function formatNumber(value: number | string | null | undefined): string {
+  const num = Number(value ?? 0)
+  return isNaN(num) ? '0' : num.toLocaleString()
+}
+
+export function formatCedi(value: number | string | null | undefined, fractionDigits = 2): string {
+  const num = Number(value ?? 0)
+  return isNaN(num)
+    ? `GH₵${(0).toFixed(fractionDigits)}`
+    : `GH₵${num.toLocaleString(undefined, {
+        minimumFractionDigits: fractionDigits,
+        maximumFractionDigits: fractionDigits,
+      })}`
+}
+
 export const SUPER_ADMIN_EMAIL = 'adysamuel68@gmail.com'
 
 export function isSuperAdminUser(user?: { role?: string; email?: string } | null): boolean {

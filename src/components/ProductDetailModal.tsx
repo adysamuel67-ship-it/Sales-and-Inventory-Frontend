@@ -43,7 +43,7 @@ export default function ProductDetailModal({ product, onClose }: Props) {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
+        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
           <h3 className="font-semibold text-gray-900">Product Details</h3>
           <button
             onClick={onClose}
@@ -144,7 +144,7 @@ export default function ProductDetailModal({ product, onClose }: Props) {
         </div>
 
         {/* Close button */}
-        <div className="sticky bottom-0 bg-white border-t border-gray-100 px-6 py-4 rounded-b-2xl">
+        <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 rounded-b-2xl">
           <button
             onClick={onClose}
             className="w-full py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors"

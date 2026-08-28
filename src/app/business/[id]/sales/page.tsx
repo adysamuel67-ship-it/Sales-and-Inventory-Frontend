@@ -4,8 +4,13 @@ import { useEffect, useState, useMemo, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
 import { saleAPI, productAPI, customerAPI, adminAPI } from '@/lib/api'
-import { extractArray, normalizeProduct, mapSale, parseApiError, isStaffRole, MappedSale, formatPayment } from '@/lib/utils'
+import { extractArray, normalizeProduct, mapSale, parseApiError, isStaffRole, MappedSale, formatPayment, formatCedi } from '@/lib/utils'
 import SaleDetailModal from '@/components/SaleDetailModal'
+import PageHeader from '@/components/ui/PageHeader'
+import Alert from '@/components/ui/Alert'
+import Button from '@/components/ui/Button'
+import EmptyState from '@/components/ui/EmptyState'
+import { PlusIcon, ChartIcon } from '@/components/ui/Icons'
 type SaleRecord = MappedSale
 
 interface Product {
@@ -261,44 +266,28 @@ export default function SalesPage() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Sales</h1>
-          <p className="text-sm text-neutral-light mt-0.5">Record and view your sales</p>
-        </div>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors flex items-center gap-2 min-h-[44px] w-full sm:w-auto justify-center"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Record Sale
-        </button>
-      </div>
+      <PageHeader
+        eyebrow="Transactions"
+        title="Sales"
+        subtitle="Record and view your sales"
+        actions={
+          <Button onClick={() => setShowForm(!showForm)} leftIcon={<PlusIcon className="w-4 h-4" />}>
+            Record Sale
+          </Button>
+        }
+      />
 
       {/* Alerts */}
       {error && (
-        <div className="bg-danger-light text-danger text-sm p-3 rounded-xl flex items-center gap-2">
-          <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-          </svg>
-          {error}
-        </div>
+        <Alert kind="error">{error}</Alert>
       )}
       {success && (
-        <div className="bg-success-light text-success text-sm p-3 rounded-xl flex items-center gap-2">
-          <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-          </svg>
-          {success}
-        </div>
+        <Alert kind="success">{success}</Alert>
       )}
 
       {/* Record Sale Form */}
       {showForm && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-6">
           <h3 className="font-semibold text-gray-900 mb-4">Record New Sale</h3>
           <form onSubmit={handleCreate} className="space-y-4">
             <div className="space-y-3">
@@ -316,12 +305,12 @@ export default function SalesPage() {
                         updated[idx] = { ...updated[idx], product_id: e.target.value }
                         setLineItems(updated)
                       }}
-                      className="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-white min-h-[44px]"
+                      className="flex-1 px-3 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-white min-h-[44px]"
                     >
                       <option value="">Select a product</option>
                       {availableProducts.map((p) => (
                         <option key={p.product_id} value={p.product_id}>
-                          {p.name} — GH₵{(p.price ?? 0).toFixed(2)} ({p.quantity ?? 0} in stock)
+                          {p.name} — {formatCedi(p.price ?? 0)} ({p.quantity ?? 0} in stock)
                         </option>
                       ))}
                     </select>
@@ -336,7 +325,7 @@ export default function SalesPage() {
                         setLineItems(updated)
                       }}
                       placeholder="Qty"
-                      className="w-20 px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                      className="w-20 px-3 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                     />
                     {lineItems.length > 1 && (
                       <button
@@ -434,7 +423,7 @@ export default function SalesPage() {
                     onChange={(e) => setAmountPaid(e.target.value)}
                     placeholder="0.00"
                     required
-                    className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                    className="w-full px-3 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                   />
                 </div>
                 <div>
@@ -445,7 +434,7 @@ export default function SalesPage() {
                     onChange={(e) => setCustomerName(e.target.value)}
                     placeholder="Customer's full name"
                     required
-                    className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                    className="w-full px-3 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                   />
                 </div>
                 <div>
@@ -455,7 +444,7 @@ export default function SalesPage() {
                     value={customerEmail}
                     onChange={(e) => setCustomerEmail(e.target.value)}
                     placeholder="customer@example.com"
-                    className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                    className="w-full px-3 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                   />
                 </div>
                 <div>
@@ -466,13 +455,13 @@ export default function SalesPage() {
                     onChange={(e) => setCustomerPhone(e.target.value)}
                     placeholder="024XXXXXXX"
                     required
-                    className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                    className="w-full px-3 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                   />
                 </div>
                 {isPartialPayment && (
                   <div className="px-4 py-3 rounded-xl bg-warning-light border border-warning/20">
                     <p className="text-xs text-warning font-medium">
-                      Balance: GH₵{(formTotal - effectiveAmountPaid).toFixed(2)} remaining
+                      Balance: {formatCedi(formTotal - effectiveAmountPaid)} remaining
                     </p>
                   </div>
                 )}
@@ -488,19 +477,19 @@ export default function SalesPage() {
                   return (
                     <div key={idx} className="flex items-center justify-between text-sm">
                       <span className="text-gray-600">{product.name} × {qty}</span>
-                      <span className="font-medium text-gray-900">GH₵{(product.price * qty).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                      <span className="font-medium text-gray-900">{formatCedi(product.price * qty)}</span>
                     </div>
                   )
                 })}
               </div>
               <div className="border-t border-gray-200 mt-2 pt-2">
                 <p className="text-xs text-neutral-light uppercase tracking-wider">Total Amount</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">GH₵{formTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                <p className="text-2xl font-bold text-gray-900 mt-1">{formatCedi(formTotal)}</p>
               </div>
               {paymentStatus === 'partial' && effectiveAmountPaid > 0 && (
                 <div className="flex items-center justify-between mt-2">
                   <p className="text-xs text-neutral-light">Amount Paid</p>
-                  <p className="text-sm font-semibold text-success">GH₵{effectiveAmountPaid.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                  <p className="text-sm font-semibold text-success">{formatCedi(effectiveAmountPaid)}</p>
                 </div>
               )}
             </div>
@@ -528,7 +517,7 @@ export default function SalesPage() {
       )}
 
       {/* Filters + Summary */}
-      <div className="bg-white rounded-xl border border-gray-100 p-3 sm:p-4 space-y-3">
+      <div className="bg-white rounded-xl border border-gray-200 p-3 sm:p-4 space-y-3">
         {/* Date presets */}
         <div className="flex flex-wrap items-center gap-1.5">
           {datePresets
@@ -557,7 +546,7 @@ export default function SalesPage() {
               Custom
             </button>
             {showDatePicker && (
-              <div className="absolute left-0 top-full mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-100 p-4 z-50">
+              <div className="absolute left-0 top-full mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-200 p-4 z-50">
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className="block text-[10px] text-gray-400 mb-1">From</label>
@@ -565,7 +554,7 @@ export default function SalesPage() {
                       type="date"
                       value={draftDateFilter.start}
                       onChange={(e) => setDraftDateFilter((prev) => ({ ...prev, start: e.target.value }))}
-                      className="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs focus:border-primary outline-none"
+                      className="w-full px-3 py-2 rounded-lg border border-gray-300 text-xs focus:border-primary outline-none"
                     />
                   </div>
                   <div>
@@ -574,7 +563,7 @@ export default function SalesPage() {
                       type="date"
                       value={draftDateFilter.end}
                       onChange={(e) => setDraftDateFilter((prev) => ({ ...prev, end: e.target.value }))}
-                      className="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs focus:border-primary outline-none"
+                      className="w-full px-3 py-2 rounded-lg border border-gray-300 text-xs focus:border-primary outline-none"
                     />
                   </div>
                 </div>
@@ -592,12 +581,12 @@ export default function SalesPage() {
         <div className="flex items-center gap-4 text-xs text-neutral-light pt-1 border-t border-gray-50">
           <span>{filteredSales.length} sales</span>
           <span>{totalQty} items</span>
-          <span className="font-semibold text-gray-900">GH₵{totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+          <span className="font-semibold text-gray-900">{formatCedi(totalAmount)}</span>
         </div>
       </div>
 
       {/* Sales list */}
-      <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         {loading ? (
           <div className="px-5 py-12 text-center">
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
@@ -608,7 +597,7 @@ export default function SalesPage() {
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-gray-100">
+                  <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-gray-200">
                     <th className="text-left px-5 py-3 font-medium">Product</th>
                     <th className="text-left px-5 py-3 font-medium">Customer</th>
                     <th className="text-left px-5 py-3 font-medium">Sold By</th>
@@ -660,7 +649,7 @@ export default function SalesPage() {
                       <td className="px-5 py-3.5 text-center text-neutral-light">{sale.qty}</td>
                       <td className="px-5 py-3.5 text-right font-semibold text-gray-900">
                         {sale.amount > 0 ? (
-                          `GH₵${sale.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+                          formatCedi(sale.amount)
                         ) : (
                           <span className="text-neutral-light text-xs">No charge</span>
                         )}
@@ -680,10 +669,10 @@ export default function SalesPage() {
                           <div className="flex flex-col items-center gap-0.5">
                             <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-warning-light text-warning">Partial</span>
                             <span className="text-[10px] text-neutral-light">
-                              GH₵{(sale.amount_paid ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 })} of GH₵{sale.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })} paid
-                            </span>
+                            {formatCedi(sale.amount_paid ?? 0)} of {formatCedi(sale.amount)} paid
+                          </span>
                             {balance > 0 && (
-                              <span className="text-[10px] text-danger font-medium">GH₵{balance.toLocaleString(undefined, { minimumFractionDigits: 2 })} remaining</span>
+                              <span className="text-[10px] text-danger font-medium">{formatCedi(balance)} remaining</span>
                             )}
                           </div>
                         ) : sale.amount_paid != null && sale.amount_paid >= sale.amount ? (
@@ -765,13 +754,13 @@ export default function SalesPage() {
                       </div>
                       {isBorrow ? (
                         <div className="text-right shrink-0">
-                          <p className="text-xs text-neutral-light line-through">GH₵{sale.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
-                          <p className="text-sm font-bold text-danger">GH₵{balance.toLocaleString(undefined, { minimumFractionDigits: 2 })} left</p>
+                          <p className="text-xs text-neutral-light line-through">{formatCedi(sale.amount)}</p>
+                          <p className="text-sm font-bold text-danger">{formatCedi(balance)} left</p>
                         </div>
                       ) : (
                         <p className="font-bold text-gray-900 shrink-0">
                           {sale.amount > 0 ? (
-                            `GH₵${sale.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+                            formatCedi(sale.amount)
                           ) : (
                             <span className="text-neutral-light text-xs font-normal">No charge</span>
                           )}
@@ -790,7 +779,7 @@ export default function SalesPage() {
                         </span>
                         {isBorrow ? (
                           <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-warning-light text-warning">
-                            GH₵{(sale.amount_paid ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 })} of GH₵{sale.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })} paid
+                            {formatCedi(sale.amount_paid ?? 0)} of {formatCedi(sale.amount)} paid
                           </span>
                         ) : sale.amount_paid != null && sale.amount_paid >= sale.amount ? (
                           <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-success-light text-success">Paid</span>
@@ -832,7 +821,7 @@ export default function SalesPage() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="px-4 py-3 border-t border-gray-100 flex items-center justify-between">
+              <div className="px-4 py-3 border-t border-gray-200 flex items-center justify-between">
                 <p className="text-xs text-neutral-light">
                   Page {currentPage} of {totalPages}
                 </p>
@@ -856,34 +845,16 @@ export default function SalesPage() {
             )}
           </>
         ) : (
-          <div className="px-5 py-12 text-center">
-            <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-3">
-              <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-            </div>
-            <p className="text-sm font-medium text-gray-900 mb-1">
-              {dateFilter.start || dateFilter.end
-                ? 'No sales found for the selected date range'
-                : 'No sales recorded yet'}
-            </p>
-            <p className="text-xs text-neutral-light mb-3">
-              {dateFilter.start || dateFilter.end
-                ? 'Try adjusting your date filters'
-                : 'Record your first sale to get started'}
-            </p>
-            {!dateFilter.start && !dateFilter.end && (
-              <button
-                onClick={() => setShowForm(true)}
-                className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-white rounded-xl text-xs font-medium hover:bg-primary-dark transition-colors"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
+          <EmptyState
+            icon={<ChartIcon className="w-6 h-6 text-primary" />}
+            title={dateFilter.start || dateFilter.end ? 'No sales found for the selected date range' : 'No sales recorded yet'}
+            description={dateFilter.start || dateFilter.end ? 'Try adjusting your date filters' : 'Record your first sale to get started'}
+            action={!dateFilter.start && !dateFilter.end && (
+              <Button size="sm" onClick={() => setShowForm(true)} leftIcon={<PlusIcon className="w-3.5 h-3.5" />}>
                 Add Sale
-              </button>
+              </Button>
             )}
-          </div>
+          />
         )}
       </div>
 

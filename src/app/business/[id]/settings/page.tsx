@@ -1,16 +1,20 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
-import { businessAPI, adminAPI } from '@/lib/api'
+import { businessAPI, adminAPI, authAPI } from '@/lib/api'
 import { isAdminRole, isSuperAdminUser, parseApiError, extractArray } from '@/lib/utils'
+import PageHeader from '@/components/ui/PageHeader'
+import Alert from '@/components/ui/Alert'
+import EmptyState from '@/components/ui/EmptyState'
+import { UsersIcon } from '@/components/ui/Icons'
 
 export default function SettingsPage() {
   const params = useParams()
   const router = useRouter()
   const businessId = parseInt(params?.id as string)
-  const { user, currentBusiness, fetchBusinesses } = useAuth()
+  const { user, currentBusiness, fetchBusinesses, logout } = useAuth()
   const [name, setName] = useState('')
   const [businessKey, setBusinessKey] = useState('')
   const [loading, setLoading] = useState(true)
@@ -263,29 +267,139 @@ export default function SettingsPage() {
     }
   }
 
+  const [oldPassword, setOldPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showPwOtp, setShowPwOtp] = useState(false)
+  const [pwOtp, setPwOtp] = useState(['', '', '', '', '', '', ''])
+  const [sendingOtp, setSendingOtp] = useState(false)
+  const [changingPassword, setChangingPassword] = useState(false)
+  const [pwOtpError, setPwOtpError] = useState('')
+  const [pwOtpSuccess, setPwOtpSuccess] = useState('')
+  const [resendTimer, setResendTimer] = useState(0)
+  const pwOtpRefs = useRef<(HTMLInputElement | null)[]>([])
+  const pwSuccessTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const validateNewPassword = (pw: string): string => {
+    if (pw.length < 8) return 'Password must be at least 8 characters'
+    if (!/\d/.test(pw)) return 'Password must contain at least one number'
+    if (!/[A-Z]/.test(pw)) return 'Password must contain at least one uppercase letter'
+    return ''
+  }
+
+  const handleSendChangePasswordCode = async () => {
+    setError('')
+    setPwOtpError('')
+    setPwOtpSuccess('')
+    if (!oldPassword) { setPwOtpError('Please enter your current password'); return }
+    const invalid = validateNewPassword(newPassword)
+    if (invalid) { setPwOtpError(invalid); return }
+    if (newPassword !== confirmPassword) { setPwOtpError('Passwords do not match'); return }
+    if (!user?.email) { setPwOtpError('Unable to identify your account. Please log in again.'); return }
+    setSendingOtp(true)
+    try {
+      await authAPI.sendChangePasswordCode(user.email)
+      setShowPwOtp(true)
+      setPwOtpSuccess('A 7-digit verification code has been sent to your email.')
+      setResendTimer(120)
+    } catch (err: any) {
+      const detail = err.response?.data?.detail
+      setPwOtpError(typeof detail === 'string' ? detail : 'Failed to send verification code')
+    } finally {
+      setSendingOtp(false)
+    }
+  }
+
+  useEffect(() => {
+    if (resendTimer > 0) {
+      const t = setTimeout(() => setResendTimer(resendTimer - 1), 1000)
+      return () => clearTimeout(t)
+    }
+  }, [resendTimer])
+
+  useEffect(() => {
+    return () => {
+      if (pwSuccessTimerRef.current) clearTimeout(pwSuccessTimerRef.current)
+    }
+  }, [])
+
+  const handlePwOtpChange = (index: number, value: string) => {
+    if (value.length > 1) value = value.slice(-1)
+    if (!/^\d*$/.test(value)) return
+    const next = [...pwOtp]
+    next[index] = value
+    setPwOtp(next)
+    if (value && index < 6) pwOtpRefs.current[index + 1]?.focus()
+  }
+
+  const handlePwOtpKeyDown = (index: number, e: React.KeyboardEvent) => {
+    if (e.key === 'Backspace' && !pwOtp[index] && index > 0) pwOtpRefs.current[index - 1]?.focus()
+  }
+
+  const handlePwOtpPaste = (e: React.ClipboardEvent) => {
+    e.preventDefault()
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 7)
+    if (pasted) {
+      const next = pasted.split('').concat(Array(7).fill('')).slice(0, 7)
+      setPwOtp(next)
+      const nextEmpty = next.findIndex((c) => !c)
+      pwOtpRefs.current[nextEmpty === -1 ? 6 : nextEmpty]?.focus()
+    }
+  }
+
+  const handleChangePassword = async () => {
+    setError('')
+    setPwOtpError('')
+    const fullCode = pwOtp.join('')
+    if (fullCode.length !== 7) { setPwOtpError('Please enter the full 7-digit code'); return }
+    const invalid = validateNewPassword(newPassword)
+    if (invalid) { setPwOtpError(invalid); return }
+    if (newPassword !== confirmPassword) { setPwOtpError('Passwords do not match'); return }
+    setChangingPassword(true)
+    try {
+      await authAPI.changePassword({
+        old_password: oldPassword,
+        new_password: newPassword,
+        conf_password: confirmPassword,
+        otp: fullCode,
+      })
+      setPwOtpSuccess('Password changed successfully. Signing you out...')
+      pwSuccessTimerRef.current = setTimeout(() => {
+        logout()
+        router.replace('/login')
+      }, 1500)
+    } catch (err: any) {
+      const detail = err.response?.data?.detail
+      let msg = ''
+      if (Array.isArray(detail)) {
+        msg = detail.map((d: any) => d.msg || String(d)).join(', ')
+      } else if (typeof detail === 'string') {
+        msg = detail
+      } else {
+        msg = 'Failed to update password'
+      }
+      setPwOtpError(msg)
+    } finally {
+      setChangingPassword(false)
+    }
+  }
+
   return (
     <div>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-3">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Settings</h1>
-          <p className="text-xs sm:text-sm text-neutral-light mt-1">Manage your business settings</p>
-        </div>
-      </div>
+      <PageHeader
+        eyebrow="Configuration"
+        title="Settings"
+        subtitle="Manage your business settings"
+      />
 
       {error && (
-        <div className="mb-4 bg-danger-light text-danger text-sm p-3 rounded-xl flex items-center gap-2">
-          <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-          </svg>
-          {error}
+        <div className="mb-4">
+          <Alert kind="error">{error}</Alert>
         </div>
       )}
       {success && (
-        <div className="mb-4 bg-success-light text-success text-sm p-3 rounded-xl flex items-center gap-2">
-          <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-          </svg>
-          {success}
+        <div className="mb-4">
+          <Alert kind="success">{success}</Alert>
         </div>
       )}
 
@@ -297,7 +411,7 @@ export default function SettingsPage() {
       ) : (
         <>
           {isOwner && (
-            <form onSubmit={handleSave} className="bg-surface rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6 mb-4">
+            <form onSubmit={handleSave} className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-6 mb-4">
               <h3 className="font-semibold text-gray-900 mb-4">Business Name</h3>
               <div className="flex flex-col sm:flex-row items-end gap-3">
                 <div className="flex-1 w-full">
@@ -308,7 +422,7 @@ export default function SettingsPage() {
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Business name"
                     required
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                    className="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                   />
                 </div>
                 <button
@@ -323,7 +437,7 @@ export default function SettingsPage() {
           )}
 
           {isOwner && (
-            <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6 mb-4">
+            <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-6 mb-4">
               <h3 className="font-semibold text-gray-900 mb-1">Business Key</h3>
               <p className="text-xs text-neutral-light mb-4">Share this key with team members so they can request to join.</p>
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
@@ -357,7 +471,7 @@ export default function SettingsPage() {
           )}
 
           {isOwner && (
-            <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6 mb-4">
+            <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-6 mb-4">
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h3 className="font-semibold text-gray-900">Team Members</h3>
@@ -383,7 +497,7 @@ export default function SettingsPage() {
                           <select
                             value={editRole}
                             onChange={(e) => setEditRole(e.target.value)}
-                            className="px-3 py-2 rounded-lg border border-gray-200 text-sm min-h-[40px]"
+                            className="px-3 py-2 rounded-lg border border-gray-300 text-sm min-h-[40px]"
                           >
                             <option value="admin">Admin</option>
                             <option value="manager">Manager</option>
@@ -518,10 +632,130 @@ export default function SettingsPage() {
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-neutral-light text-center py-4">No members found</p>
+                <EmptyState
+                  icon={<UsersIcon className="w-6 h-6 text-primary" />}
+                  title="No members found"
+                  description="Invite team members using your business key"
+                />
               )}
             </div>
           )}
+
+          {/* Change Password — all members */}
+          <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-6 mb-4">
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="font-semibold text-gray-900">Change Password</h3>
+            </div>
+            <p className="text-xs text-neutral-light mb-4">
+              Update your account password. We&apos;ll send a one-time verification code to your email to confirm the change.
+            </p>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Current Password</label>
+                <input
+                  type="password"
+                  value={oldPassword}
+                  onChange={(e) => setOldPassword(e.target.value)}
+                  placeholder="Enter current password"
+                  autoComplete="current-password"
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">New Password</label>
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Min 8 chars, 1 number, 1 uppercase"
+                    autoComplete="new-password"
+                    className="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Confirm New Password</label>
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Re-enter new password"
+                    autoComplete="new-password"
+                    className="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                  />
+                </div>
+              </div>
+
+              {pwOtpError && <Alert kind="error">{pwOtpError}</Alert>}
+              {pwOtpSuccess && <Alert kind="success">{pwOtpSuccess}</Alert>}
+
+              {!showPwOtp ? (
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleSendChangePasswordCode}
+                    disabled={sendingOtp}
+                    className="px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed min-h-[44px] shrink-0"
+                  >
+                    {sendingOtp ? 'Sending...' : 'Send Verification Code'}
+                  </button>
+                  <p className="text-xs text-neutral-light">
+                    A 7-digit code will be sent to {user?.email || 'your email'}
+                  </p>
+                </div>
+              ) : (
+                <div className="bg-surfaceAlt rounded-xl p-4 space-y-4">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900 mb-1.5">Verification Code</p>
+                    <p className="text-xs text-neutral-light mb-3">
+                      Enter the 7-digit code sent to {user?.email || 'your email'}
+                      {resendTimer > 0 && (
+                        <> (resend in {Math.floor(resendTimer / 60)}:{String(resendTimer % 60).padStart(2, '0')})</>
+                      )}
+                    </p>
+                    <div className="flex gap-2">
+                      {pwOtp.map((digit, i) => (
+                        <input
+                          key={i}
+                          ref={(el) => { pwOtpRefs.current[i] = el }}
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={1}
+                          value={digit}
+                          onChange={(e) => handlePwOtpChange(i, e.target.value)}
+                          onKeyDown={(e) => handlePwOtpKeyDown(i, e)}
+                          onPaste={handlePwOtpPaste}
+                          className="w-10 h-10 text-center text-lg font-semibold text-gray-900 border border-gray-300 rounded-lg focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={handleChangePassword}
+                      disabled={changingPassword || pwOtpSuccess !== ''}
+                      className="px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed min-h-[44px]"
+                    >
+                      {changingPassword ? 'Updating...' : 'Update Password'}
+                    </button>
+                    {resendTimer === 0 && (
+                      <button
+                        type="button"
+                        onClick={handleSendChangePasswordCode}
+                        disabled={sendingOtp}
+                        className="px-4 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors disabled:opacity-60 min-h-[44px]"
+                      >
+                        Resend Code
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
 
           {/* Leave Business — visible to ALL members */}
           <div className="bg-surface rounded-2xl border border-amber-200 shadow-sm p-4 sm:p-6 mb-4">

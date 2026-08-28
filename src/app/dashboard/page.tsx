@@ -292,7 +292,7 @@ export default function DashboardPage() {
           </button>
 
           {showDatePicker && (
-            <div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-xl shadow-lg border border-gray-100 p-4 z-50">
+            <div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-xl shadow-lg border border-gray-200 p-4 z-50">
               <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">Quick Select</p>
               <div className="flex flex-wrap gap-2 mb-4">
                 {datePresets.map((preset) => (
@@ -317,7 +317,7 @@ export default function DashboardPage() {
                     type="date"
                     value={draftDateRange.start}
                     onChange={(e) => handleCustomDateChange('start', e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs focus:border-primary outline-none"
+                    className="w-full px-3 py-2 rounded-lg border border-gray-300 text-xs focus:border-primary outline-none"
                   />
                 </div>
                 <div>
@@ -326,7 +326,7 @@ export default function DashboardPage() {
                     type="date"
                     value={draftDateRange.end}
                     onChange={(e) => handleCustomDateChange('end', e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs focus:border-primary outline-none"
+                    className="w-full px-3 py-2 rounded-lg border border-gray-300 text-xs focus:border-primary outline-none"
                   />
                 </div>
               </div>

@@ -4,10 +4,15 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
 import { debtAPI, customerAPI, saleAPI } from '@/lib/api'
-import { extractArray, parseApiError, isAdminRole, MappedSale } from '@/lib/utils'
+import { extractArray, parseApiError, isAdminRole, MappedSale, formatCedi } from '@/lib/utils'
 import SaleDetailModal from '@/components/SaleDetailModal'
 import ScheduleReminderModal from '@/components/ScheduleReminderModal'
 import RemindersSection from '@/components/RemindersSection'
+import PageHeader from '@/components/ui/PageHeader'
+import Alert from '@/components/ui/Alert'
+import Button from '@/components/ui/Button'
+import EmptyState from '@/components/ui/EmptyState'
+import { PlusIcon, CashIcon } from '@/components/ui/Icons'
 interface DebtRecord {
   debt_id: number
   sale_id?: number
@@ -464,43 +469,29 @@ export default function DebtsPage() {
     }
   }
 
-  const formatCurrency = (amount: number) =>
-    `GH\u20B5${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  const formatCurrency = (amount: number) => formatCedi(amount)
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 gap-3">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Debt Tracker</h1>
-          <p className="text-xs sm:text-sm text-neutral-light mt-1">Track and manage customer debts</p>
-        </div>
-        {isAdmin && (
-          <button
-            onClick={openAddDebt}
-            className="px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors flex items-center gap-2 min-h-[44px]"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
+      <PageHeader
+        eyebrow="Credit & Collections"
+        title="Debt Tracker"
+        subtitle="Track and manage customer debts"
+        actions={isAdmin && (
+          <Button onClick={openAddDebt} leftIcon={<PlusIcon className="w-4 h-4" />}>
             Add Debt
-          </button>
+          </Button>
         )}
-      </div>
+      />
 
       {error && (
-        <div className="mb-4 bg-danger-light text-danger text-sm p-3 rounded-xl flex items-center gap-2">
-          <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-          </svg>
-          {error}
+        <div className="mb-4">
+          <Alert kind="error">{error}</Alert>
         </div>
       )}
       {success && (
-        <div className="mb-4 bg-success-light text-success text-sm p-3 rounded-xl flex items-center gap-2">
-          <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-          </svg>
-          {success}
+        <div className="mb-4">
+          <Alert kind="success">{success}</Alert>
         </div>
       )}
 
@@ -517,12 +508,12 @@ export default function DebtsPage() {
         <>
           {summary && (
             <div className="grid grid-cols-2 gap-3 mb-6">
-              <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm p-5">
+              <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-5">
                 <p className="text-xs text-neutral-light uppercase tracking-wider">Outstanding</p>
                 <p className="text-2xl font-bold text-danger mt-1">{formatCurrency(summary.total_outstanding)}</p>
                 <p className="text-[10px] text-neutral-light mt-1">{summary.total_customers} customer{summary.total_customers !== 1 ? 's' : ''}</p>
               </div>
-              <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm p-5">
+              <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-5">
                 <p className="text-xs text-neutral-light uppercase tracking-wider">Overdue</p>
                 <p className="text-2xl font-bold text-warning mt-1">{summary.total_overdue}</p>
                 <p className="text-[10px] text-neutral-light mt-1">{formatCurrency(summary.overdue_amount)} overdue</p>
@@ -565,13 +556,13 @@ export default function DebtsPage() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search by name, phone, or email..."
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                 />
               </div>
               <select
                 value={sortOrder}
                 onChange={(e) => setSortOrder(e.target.value as typeof sortOrder)}
-                className="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-primary outline-none min-h-[44px]"
+                className="px-3 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary outline-none min-h-[44px]"
               >
                 <option value="highest">Highest Debt</option>
                 <option value="lowest">Lowest Debt</option>
@@ -579,12 +570,12 @@ export default function DebtsPage() {
               </select>
             </div>
   
-            <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm">
+            <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm">
               {filtered.length > 0 ? (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-gray-100">
+                      <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-gray-200">
                         <th className="text-left px-5 py-3 font-medium">Customer</th>
                         <th className="text-right px-5 py-3 font-medium">Debt</th>
                         <th className="text-center px-5 py-3 font-medium hidden sm:table-cell">Status</th>
@@ -677,22 +668,14 @@ export default function DebtsPage() {
                   </table>
                 </div>
               ) : (
-                <div className="px-5 py-12 text-center">
-                  <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                    <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                  <p className="text-sm font-medium text-gray-900 mb-1">
-                    {search ? 'No customers match your search' :
-                      activeTab === 'overdue' ? 'No overdue debts' :
-                      activeTab === 'paid' ? 'No paid debts yet' :
-                      'No outstanding debts'}
-                  </p>
-                  <p className="text-xs text-neutral-light">
-                    {search ? 'Try a different search term' : 'All customers are up to date'}
-                  </p>
-                </div>
+                <EmptyState
+                  icon={<CashIcon className="w-6 h-6 text-primary" />}
+                  title={search ? 'No customers match your search' :
+                    activeTab === 'overdue' ? 'No overdue debts' :
+                    activeTab === 'paid' ? 'No paid debts yet' :
+                    'No outstanding debts'}
+                  description={search ? 'Try a different search term' : 'All customers are up to date'}
+                />
               )}
             </div>
             </>
@@ -707,7 +690,7 @@ export default function DebtsPage() {
             className="relative bg-white rounded-2xl shadow-xl w-full max-w-md"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-6 py-4 border-b border-gray-100 rounded-t-2xl flex items-center justify-between">
+            <div className="px-6 py-4 border-b border-gray-200 rounded-t-2xl flex items-center justify-between">
               <h3 className="font-semibold text-gray-900">Record Payment</h3>
               <button
                 onClick={() => setShowPaymentModal(false)}
@@ -751,7 +734,7 @@ export default function DebtsPage() {
                     onChange={(e) => setPaymentAmount(e.target.value)}
                     placeholder="0.00"
                     required
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                    className="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                   />
                 </div>
               )}
@@ -763,7 +746,7 @@ export default function DebtsPage() {
                   value={paymentNote}
                   onChange={(e) => setPaymentNote(e.target.value)}
                   placeholder="e.g. Partial payment via MoMo"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                 />
               </div>
 
@@ -795,7 +778,7 @@ export default function DebtsPage() {
             className="relative bg-white rounded-2xl shadow-xl w-full max-w-md"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-6 py-4 border-b border-gray-100 rounded-t-2xl flex items-center justify-between">
+            <div className="px-6 py-4 border-b border-gray-200 rounded-t-2xl flex items-center justify-between">
               <h3 className="font-semibold text-gray-900">Add New Debt</h3>
               <button
                 onClick={() => setShowAddDebtModal(false)}
@@ -832,7 +815,7 @@ export default function DebtsPage() {
                       onChange={(e) => setAddDebtNewName(e.target.value)}
                       placeholder="Customer's full name"
                       required
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                      className="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                     />
                   </div>
                   <div>
@@ -843,7 +826,7 @@ export default function DebtsPage() {
                       onChange={(e) => setAddDebtNewPhone(e.target.value)}
                       placeholder="024XXXXXXX"
                       required
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                      className="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                     />
                   </div>
                   <div>
@@ -853,7 +836,7 @@ export default function DebtsPage() {
                       value={addDebtNewEmail}
                       onChange={(e) => setAddDebtNewEmail(e.target.value)}
                       placeholder="customer@example.com"
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                      className="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                     />
                   </div>
                 </>
@@ -864,7 +847,7 @@ export default function DebtsPage() {
                     value={addDebtCustomerId}
                     onChange={(e) => setAddDebtCustomerId(e.target.value)}
                     required
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-white min-h-[44px]"
+                    className="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-white min-h-[44px]"
                   >
                     <option value="">Select a customer</option>
                     {allCustomers.map((c: any) => (
@@ -886,7 +869,7 @@ export default function DebtsPage() {
                   onChange={(e) => setAddDebtAmount(e.target.value)}
                   placeholder="0.00"
                   required
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                 />
               </div>
 
@@ -896,7 +879,7 @@ export default function DebtsPage() {
                   type="date"
                   value={addDebtDueDate}
                   onChange={(e) => setAddDebtDueDate(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                 />
               </div>
 
@@ -907,7 +890,7 @@ export default function DebtsPage() {
                   value={addDebtNote}
                   onChange={(e) => setAddDebtNote(e.target.value)}
                   placeholder="e.g. Goods delivered on credit"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                 />
               </div>
 
@@ -939,7 +922,7 @@ export default function DebtsPage() {
             className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="sticky top-0 bg-white border-b border-gray-100 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between">
               <h3 className="font-semibold text-gray-900">Debt Details</h3>
               <button
                 onClick={() => setShowDetailModal(false)}
@@ -1010,7 +993,7 @@ export default function DebtsPage() {
                 <p className="text-sm text-neutral-light text-center py-4">No debt records found</p>
               )}
             </div>
-            <div className="sticky bottom-0 bg-white border-t border-gray-100 px-4 sm:px-6 py-4 rounded-b-2xl flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <div className="sticky bottom-0 bg-white border-t border-gray-200 px-4 sm:px-6 py-4 rounded-b-2xl flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
               {detailCustomer.total_debt > 0 && canPayDebt && (
                 <button
                   onClick={() => {
@@ -1040,7 +1023,7 @@ export default function DebtsPage() {
             className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="sticky top-0 bg-white border-b border-gray-100 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
               <h3 className="font-semibold text-gray-900">Customer Profile</h3>
               <button
                 onClick={() => setShowProfileModal(false)}
@@ -1211,7 +1194,7 @@ export default function DebtsPage() {
               )}
             </div>
 
-            <div className="sticky bottom-0 bg-white border-t border-gray-100 px-4 sm:px-6 py-4 rounded-b-2xl flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <div className="sticky bottom-0 bg-white border-t border-gray-200 px-4 sm:px-6 py-4 rounded-b-2xl flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
               {profileCustomer.total_debt > 0 && isAdmin && (
                 <button
                   onClick={() => {
@@ -1249,7 +1232,7 @@ export default function DebtsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowDebtDetailModal(false)}>
           <div className="absolute inset-0 bg-black/40" />
           <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="sticky top-0 bg-white border-b border-gray-100 px-5 py-4 rounded-t-2xl flex items-center justify-between z-10">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-5 py-4 rounded-t-2xl flex items-center justify-between z-10">
               <h3 className="font-semibold text-gray-900">Borrow Details</h3>
               <button onClick={() => setShowDebtDetailModal(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors">
                 <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
@@ -1306,7 +1289,7 @@ export default function DebtsPage() {
                 </div>
               )}
             </div>
-            <div className="sticky bottom-0 bg-white border-t border-gray-100 px-5 py-4 rounded-b-2xl">
+            <div className="sticky bottom-0 bg-white border-t border-gray-200 px-5 py-4 rounded-b-2xl">
               <button onClick={() => setShowDebtDetailModal(false)} className="w-full py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors">
                 Close
               </button>
@@ -1319,7 +1302,7 @@ export default function DebtsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowTxnDetailModal(false)}>
           <div className="absolute inset-0 bg-black/40" />
           <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="sticky top-0 bg-white border-b border-gray-100 px-5 py-4 rounded-t-2xl flex items-center justify-between z-10">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-5 py-4 rounded-t-2xl flex items-center justify-between z-10">
               <h3 className="font-semibold text-gray-900">{txnDetailData.amount_paid === 0 ? 'Borrow Details' : 'Payment Details'}</h3>
               <button onClick={() => setShowTxnDetailModal(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors">
                 <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
@@ -1370,7 +1353,7 @@ export default function DebtsPage() {
                 )}
               </div>
             </div>
-            <div className="sticky bottom-0 bg-white border-t border-gray-100 px-5 py-4 rounded-b-2xl">
+            <div className="sticky bottom-0 bg-white border-t border-gray-200 px-5 py-4 rounded-b-2xl">
               <button onClick={() => setShowTxnDetailModal(false)} className="w-full py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors">
                 Close
               </button>

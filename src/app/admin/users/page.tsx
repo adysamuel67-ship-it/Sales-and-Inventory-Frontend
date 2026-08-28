@@ -188,7 +188,7 @@ export default function AdminUsersPage() {
         />
       </div>
 
-      <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm">
+      <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm">
         {loading ? (
           <div className="px-5 py-12 text-center">
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
@@ -197,7 +197,7 @@ export default function AdminUsersPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-gray-100">
+                <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-gray-200">
                   <th className="text-left px-5 py-3 font-medium">Name</th>
                   <th className="text-left px-5 py-3 font-medium">Email</th>
                   <th className="text-left px-5 py-3 font-medium">Phone</th>
@@ -396,7 +396,7 @@ export default function AdminUsersPage() {
               )}
             </div>
 
-            <div className="px-6 py-4 border-t border-gray-100 flex items-center gap-3 rounded-b-2xl">
+            <div className="px-6 py-4 border-t border-gray-200 flex items-center gap-3 rounded-b-2xl">
               {!selectedUser.is_verified && (
                 <button
                   onClick={() => { handleVerifyUser(selectedUser.email); setSelectedUser(null) }}

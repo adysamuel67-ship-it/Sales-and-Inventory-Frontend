@@ -170,7 +170,7 @@ export default function ProductsPage() {
       )}
 
       {showForm && (
-        <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
+        <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-6 mb-6">
           <h3 className="font-semibold text-gray-900 mb-4">Add New Product</h3>
           <form onSubmit={handleCreate} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
@@ -268,7 +268,7 @@ export default function ProductsPage() {
               <button
                 key={product.product_id}
                 onClick={() => setDetailProduct(product)}
-                className="bg-surface rounded-2xl border border-gray-100 p-5 text-left hover:shadow-md hover:border-primary/20 hover:-translate-y-0.5 transition-all duration-200 group cursor-pointer"
+                className="bg-surface rounded-2xl border border-gray-200 p-5 text-left hover:shadow-md hover:border-primary/20 hover:-translate-y-0.5 transition-all duration-200 group cursor-pointer"
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/15 transition-colors">
@@ -303,7 +303,7 @@ export default function ProductsPage() {
                   </div>
                 </div>
 
-                <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
+                <div className="mt-3 pt-3 border-t border-gray-200 flex items-center justify-between">
                   <span className={`text-xs font-medium ${isOutOfStock ? 'text-danger' : isLowStock ? 'text-warning' : 'text-success'}`}>
                     {product.quantity ?? 0} {product.unit || 'units'} in stock
                   </span>

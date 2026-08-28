@@ -215,7 +215,7 @@ export default function ScheduleReminderModal({ businessId, customer, defaultDeb
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-gray-100 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
+        <div className="sticky top-0 bg-white border-b border-gray-200 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
           <h3 className="font-semibold text-gray-900">Schedule Reminder</h3>
           <button
             onClick={onClose}
@@ -348,7 +348,7 @@ export default function ScheduleReminderModal({ businessId, customer, defaultDeb
                 </span>
                 <span className="text-[11px] text-neutral-light">{smsPreview.length} chars</span>
               </div>
-              <div className="bg-white rounded-2xl rounded-tl-sm border border-gray-100 p-3 text-sm text-gray-700 leading-relaxed">
+              <div className="bg-white rounded-2xl rounded-tl-sm border border-gray-200 p-3 text-sm text-gray-700 leading-relaxed">
                 {smsPreview}
               </div>
             </div>

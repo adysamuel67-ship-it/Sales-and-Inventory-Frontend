@@ -19,8 +19,8 @@ export default memo(function LowStockAlerts({ items, businessId }: Props) {
   const productsLink = businessId ? `/business/${businessId}/products` : '/products'
 
   return (
-    <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm">
-      <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+    <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm">
+      <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
         <h3 className="font-semibold text-gray-900">Low Stock Alerts</h3>
         {items.length > 0 && (
           <span className="flex items-center gap-1.5 text-xs text-danger font-medium">

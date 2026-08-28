@@ -12,48 +12,34 @@ interface KpiCardProps {
 }
 
 const colorMap = {
-  primary: {
-    iconBg: 'bg-blue-50',
-    iconText: 'text-blue-600',
-    border: 'border-blue-100/80',
-  },
-  success: {
-    iconBg: 'bg-emerald-50',
-    iconText: 'text-emerald-600',
-    border: 'border-emerald-100/80',
-  },
-  warning: {
-    iconBg: 'bg-amber-50',
-    iconText: 'text-amber-600',
-    border: 'border-amber-100/80',
-  },
-  danger: {
-    iconBg: 'bg-rose-50',
-    iconText: 'text-rose-600',
-    border: 'border-rose-100/80',
-  },
+  primary: { iconBg: 'bg-blue-50', iconText: 'text-blue-600' },
+  success: { iconBg: 'bg-emerald-50', iconText: 'text-emerald-600' },
+  warning: { iconBg: 'bg-amber-50', iconText: 'text-amber-600' },
+  danger: { iconBg: 'bg-rose-50', iconText: 'text-rose-600' },
 }
 
 export default memo(function KpiCard({ title, value, subtitle, icon, color, trend }: KpiCardProps) {
   const styles = colorMap[color]
 
   return (
-    <div className={`kpi-card bg-white rounded-xl p-4 border ${styles.border} shadow-sm hover:shadow-md transition-shadow`}>
-      <div className="flex items-center gap-3">
-        <div className={`w-10 h-10 rounded-xl ${styles.iconBg} ${styles.iconText} flex items-center justify-center shrink-0`}>
+    <div className="kpi-card bg-surface rounded-2xl border border-gray-200 p-5 shadow-sm hover:shadow-md transition-shadow">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-xs font-medium text-neutral-light">{title}</p>
+          <p className="text-xl sm:text-2xl font-bold text-gray-900 mt-1 truncate">{value}</p>
+        </div>
+        <div className={`w-11 h-11 rounded-xl ${styles.iconBg} ${styles.iconText} flex items-center justify-center shrink-0`}>
           {icon}
         </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">{title}</p>
-          <p className="text-xl font-bold text-gray-900 truncate mt-0.5">{value}</p>
-        </div>
+      </div>
+      <div className="flex items-center gap-2 mt-2">
+        {subtitle && !trend && <p className="text-xs text-neutral-light">{subtitle}</p>}
         {trend && (
-          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-md shrink-0 ${trend.positive ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
+          <span className={`inline-flex items-center gap-1 text-xs font-medium px-1.5 py-0.5 rounded-md shrink-0 ${trend.positive ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
             {trend.positive ? '↑' : '↓'} {trend.value}
           </span>
         )}
       </div>
-      {subtitle && <p className="text-[10px] text-gray-400 mt-2 pl-[52px]">{subtitle}</p>}
     </div>
   )
 })

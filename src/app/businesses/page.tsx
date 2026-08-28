@@ -221,7 +221,7 @@ export default function BusinessesPage() {
       )}
 
       {showCreate && (
-        <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
+        <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-6 mb-6">
           <h3 className="font-semibold text-gray-900 mb-4">Create New Business</h3>
           <form onSubmit={handleCreate} className="flex gap-3">
             <input
@@ -251,7 +251,7 @@ export default function BusinessesPage() {
       )}
 
       {showJoin && (
-        <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
+        <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-6 mb-6">
           <h3 className="font-semibold text-gray-900 mb-4">Join a Business</h3>
           <form onSubmit={handleJoin} className="space-y-3">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -310,7 +310,7 @@ export default function BusinessesPage() {
         </div>
       )}
 
-      <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm">
+      <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm">
         {loading ? (
           <div className="px-5 py-12 text-center">
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
@@ -372,7 +372,7 @@ export default function BusinessesPage() {
                     <div className="mt-3 p-3 bg-gray-50 rounded-xl">
                       <p className="text-xs font-medium text-gray-500 mb-1">Business Key (share with members to join)</p>
                       <div className="flex items-center gap-2">
-                        <code className="flex-1 text-sm text-gray-900 bg-white px-3 py-2 rounded-lg border border-gray-200 truncate">
+                        <code className="flex-1 text-sm text-gray-900 bg-white px-3 py-2 rounded-lg border border-gray-300 truncate">
                           {businessKeys[biz.business_id]}
                         </code>
                         <button

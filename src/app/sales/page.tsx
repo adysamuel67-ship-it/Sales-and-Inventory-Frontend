@@ -249,7 +249,7 @@ export default function SalesPage() {
       )}
 
       {showForm && (
-        <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
+        <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-6 mb-6">
           <h3 className="font-semibold text-gray-900 mb-4">Record New Sale</h3>
           <form onSubmit={handleCreate} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
@@ -302,7 +302,7 @@ export default function SalesPage() {
                 <p className="text-lg font-bold text-gray-900">GH₵{formTotal.toFixed(2)}</p>
               </div>
             </div>
-            <div className="sm:col-span-2 border-t border-gray-100 pt-4">
+            <div className="sm:col-span-2 border-t border-gray-200 pt-4">
               <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">Customer (optional — auto-created if new)</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -373,7 +373,7 @@ export default function SalesPage() {
               Custom
             </button>
             {showDatePicker && (
-              <div className="absolute left-0 top-full mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-100 p-4 z-50">
+              <div className="absolute left-0 top-full mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-200 p-4 z-50">
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className="block text-[10px] text-gray-400 mb-1">From</label>
@@ -381,7 +381,7 @@ export default function SalesPage() {
                       type="date"
                       value={draftDateFilter.start}
                       onChange={(e) => setDraftDateFilter((prev) => ({ ...prev, start: e.target.value }))}
-                      className="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs focus:border-primary outline-none"
+                      className="w-full px-3 py-2 rounded-lg border border-gray-300 text-xs focus:border-primary outline-none"
                     />
                   </div>
                   <div>
@@ -390,7 +390,7 @@ export default function SalesPage() {
                       type="date"
                       value={draftDateFilter.end}
                       onChange={(e) => setDraftDateFilter((prev) => ({ ...prev, end: e.target.value }))}
-                      className="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs focus:border-primary outline-none"
+                      className="w-full px-3 py-2 rounded-lg border border-gray-300 text-xs focus:border-primary outline-none"
                     />
                   </div>
                 </div>
@@ -425,7 +425,7 @@ export default function SalesPage() {
               <button
                 key={sale.id}
                 onClick={() => setDetailSale(sale)}
-                className="bg-surface rounded-2xl border border-gray-100 p-5 text-left hover:shadow-md hover:border-primary/20 hover:-translate-y-0.5 transition-all duration-200 group cursor-pointer"
+                className="bg-surface rounded-2xl border border-gray-200 p-5 text-left hover:shadow-md hover:border-primary/20 hover:-translate-y-0.5 transition-all duration-200 group cursor-pointer"
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/15 transition-colors">
@@ -486,7 +486,7 @@ export default function SalesPage() {
                   </div>
                 )}
 
-                <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
+                <div className="mt-3 pt-3 border-t border-gray-200 flex items-center justify-between">
                   <span className="text-xs text-neutral-light">{sale.time}</span>
                   <svg className="w-4 h-4 text-gray-300 group-hover:text-primary/50 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

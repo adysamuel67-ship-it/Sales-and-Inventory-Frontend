@@ -227,7 +227,7 @@ export default function RequestsPage() {
         ))}
       </div>
 
-      <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm">
+      <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm">
         {loading ? (
           <div className="px-5 py-12 text-center">
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />

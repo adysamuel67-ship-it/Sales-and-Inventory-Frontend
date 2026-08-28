@@ -149,7 +149,7 @@ export default function ForgotPasswordPage() {
   if (step === 'success') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background px-4">
-        <div className="w-full max-w-md bg-surface rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
+        <div className="w-full max-w-md bg-surface rounded-2xl border border-gray-200 shadow-sm p-8 text-center">
           <div className="w-14 h-14 bg-success-light rounded-2xl flex items-center justify-center mx-auto mb-5">
             <svg className="w-7 h-7 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />

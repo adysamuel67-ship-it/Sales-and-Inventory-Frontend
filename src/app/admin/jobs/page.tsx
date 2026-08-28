@@ -102,7 +102,7 @@ export default function AdminJobsPage() {
         {cronJobs.map((job) => {
           const lastRun = jobs.find((j) => j.name === job.name)
           return (
-            <div key={job.name} className="bg-surface rounded-2xl border border-gray-100 shadow-sm p-5">
+            <div key={job.name} className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-5">
               <h3 className="font-semibold text-gray-900 text-sm">{job.label}</h3>
               <p className="text-xs text-neutral-light mt-1">{job.description}</p>
               {lastRun?.last_run && (
@@ -142,8 +142,8 @@ export default function AdminJobsPage() {
         })}
       </div>
 
-      <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm">
-        <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+      <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm">
+        <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
           <h3 className="font-semibold text-gray-900">Job History</h3>
           <button
             onClick={loadJobs}
@@ -160,7 +160,7 @@ export default function AdminJobsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-gray-100">
+                <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-gray-200">
                   <th className="text-left px-5 py-3 font-medium">Job</th>
                   <th className="text-center px-5 py-3 font-medium">Status</th>
                   <th className="text-right px-5 py-3 font-medium">Last Run</th>

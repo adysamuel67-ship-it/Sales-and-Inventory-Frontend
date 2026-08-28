@@ -280,7 +280,7 @@ export default function ProfilePage() {
 
         {/* Profile hero */}
         <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-          <div className="h-16 sm:h-20 bg-gradient-to-r from-primary/15 via-primary/5 to-transparent border-b border-gray-100" />
+          <div className="h-16 sm:h-20 bg-gradient-to-r from-primary/15 via-primary/5 to-transparent border-b border-gray-200" />
           <div className="px-5 sm:px-6 pb-5 sm:pb-6 -mt-8 sm:-mt-10">
             <div className="flex flex-col sm:flex-row sm:items-end gap-4">
               <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-primary to-indigo-500 ring-4 ring-surface flex items-center justify-center text-white text-2xl sm:text-3xl font-bold shrink-0">
@@ -366,7 +366,7 @@ export default function ProfilePage() {
             <>
               <div className="fixed inset-0 z-40" onClick={() => setShowBusinessDropdown(false)} />
               <div className="absolute top-full left-0 mt-2 w-72 bg-surface rounded-2xl border border-gray-200 shadow-xl z-50 overflow-hidden">
-                <div className="px-4 py-3 border-b border-gray-100">
+                <div className="px-4 py-3 border-b border-gray-200">
                   <p className="text-sm font-semibold text-gray-900">Your Businesses</p>
                 </div>
                 <div className="max-h-64 overflow-y-auto p-2">
@@ -585,7 +585,7 @@ export default function ProfilePage() {
                   Are you sure you want to permanently delete your account? This action cannot be undone and all your data will be removed.
                 </p>
               </div>
-              <div className="px-5 sm:px-6 py-4 border-t border-gray-100 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <div className="px-5 sm:px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                 <button
                   onClick={handleDeleteAccount}
                   disabled={deleting}

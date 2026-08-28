@@ -43,8 +43,8 @@ export default memo(function RecentSales({ sales, businessId }: Props) {
 
   return (
     <>
-    <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm">
-      <div className="px-5 py-4 border-b border-gray-100">
+    <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm">
+      <div className="px-5 py-4 border-b border-gray-200">
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-semibold text-gray-900">Recent Activity</h3>
           <Link href={salesLink} className="text-xs text-primary font-medium hover:underline">View All</Link>

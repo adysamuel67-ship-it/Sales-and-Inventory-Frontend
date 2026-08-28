@@ -431,7 +431,7 @@ export default function RemindersSection({ businessId }: Props) {
       ) : (
         <>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-            <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5">
+            <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-5">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-xs text-neutral-light uppercase tracking-wider">Total</p>
                 <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -442,7 +442,7 @@ export default function RemindersSection({ businessId }: Props) {
               </div>
               <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
             </div>
-            <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5">
+            <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-5">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-xs text-neutral-light uppercase tracking-wider">Active</p>
                 <div className="w-8 h-8 rounded-xl bg-success-light flex items-center justify-center">
@@ -453,7 +453,7 @@ export default function RemindersSection({ businessId }: Props) {
               </div>
               <p className="text-2xl font-bold text-success">{stats.active}</p>
             </div>
-            <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5">
+            <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-5">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-xs text-neutral-light uppercase tracking-wider">Paused</p>
                 <div className="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center">
@@ -464,7 +464,7 @@ export default function RemindersSection({ businessId }: Props) {
               </div>
               <p className="text-2xl font-bold text-gray-500">{stats.paused}</p>
             </div>
-            <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5">
+            <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-5">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-xs text-neutral-light uppercase tracking-wider">Ending Soon</p>
                 <div className="w-8 h-8 rounded-xl bg-warning-light flex items-center justify-center">
@@ -511,12 +511,12 @@ export default function RemindersSection({ businessId }: Props) {
             </div>
           </div>
 
-          <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm">
+          <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm">
             {filtered.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-gray-100">
+                    <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-gray-200">
                       <th className="text-left px-5 py-3 font-medium">Customer</th>
                       <th className="text-left px-5 py-3 font-medium hidden md:table-cell">Amount</th>
                       <th className="text-left px-5 py-3 font-medium">Window</th>
@@ -641,7 +641,7 @@ export default function RemindersSection({ businessId }: Props) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowPicker(false)}>
           <div className="absolute inset-0 bg-black/40" />
           <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-            <div className="sticky top-0 bg-white border-b border-gray-100 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
               <div>
                 <h3 className="font-semibold text-gray-900">Schedule a Reminder</h3>
                 <p className="text-xs text-neutral-light mt-0.5">Choose a customer with an outstanding balance</p>
@@ -714,7 +714,7 @@ export default function RemindersSection({ businessId }: Props) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => { if (!savingEdit) setEditingReminder(null) }}>
           <div className="absolute inset-0 bg-black/40" />
           <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="sticky top-0 bg-white border-b border-gray-100 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
               <h3 className="font-semibold text-gray-900">Edit Reminder</h3>
               <button
                 onClick={() => setEditingReminder(null)}
@@ -851,7 +851,7 @@ export default function RemindersSection({ businessId }: Props) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setDetailReminder(null)}>
           <div className="absolute inset-0 bg-black/40" />
           <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="sticky top-0 bg-white border-b border-gray-100 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
               <h3 className="font-semibold text-gray-900">Reminder Details</h3>
               <button onClick={() => setDetailReminder(null)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors">
                 <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -949,7 +949,7 @@ export default function RemindersSection({ businessId }: Props) {
                 </div>
               </div>
             </div>
-            <div className="sticky bottom-0 bg-white border-t border-gray-100 px-4 sm:px-6 py-4 rounded-b-2xl">
+            <div className="sticky bottom-0 bg-white border-t border-gray-200 px-4 sm:px-6 py-4 rounded-b-2xl">
               <button onClick={() => setDetailReminder(null)} className="w-full py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors">
                 Close
               </button>

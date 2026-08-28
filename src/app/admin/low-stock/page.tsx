@@ -103,7 +103,7 @@ export default function AdminLowStockPage() {
         <div className="mb-4 bg-danger-light text-danger text-sm p-3 rounded-xl">{error}</div>
       )}
 
-      <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm">
+      <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm">
         {loading ? (
           <div className="px-5 py-12 text-center">
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
@@ -112,7 +112,7 @@ export default function AdminLowStockPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-gray-100">
+                <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-gray-200">
                   <th className="text-left px-5 py-3 font-medium">Product</th>
                   <th className="text-left px-5 py-3 font-medium">Business</th>
                   <th className="text-center px-5 py-3 font-medium">Stock</th>

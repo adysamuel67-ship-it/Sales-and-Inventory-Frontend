@@ -65,26 +65,26 @@ describe('KpiCard', () => {
 
   it('renders with primary color', () => {
     const { container } = render(<KpiCard title="Revenue" value="100" icon={testIcon} color="primary" />)
-    const card = container.querySelector('.kpi-card')
-    expect(card?.className).toContain('border-blue-100')
+    expect(container.innerHTML).toContain('bg-blue-50')
+    expect(container.innerHTML).toContain('text-blue-600')
   })
 
   it('renders with success color', () => {
     const { container } = render(<KpiCard title="Profit" value="500" icon={testIcon} color="success" />)
-    const card = container.querySelector('.kpi-card')
-    expect(card?.className).toContain('border-emerald-100')
+    expect(container.innerHTML).toContain('bg-emerald-50')
+    expect(container.innerHTML).toContain('text-emerald-600')
   })
 
   it('renders with warning color', () => {
     const { container } = render(<KpiCard title="Low Stock" value="3" icon={testIcon} color="warning" />)
-    const card = container.querySelector('.kpi-card')
-    expect(card?.className).toContain('border-amber-100')
+    expect(container.innerHTML).toContain('bg-amber-50')
+    expect(container.innerHTML).toContain('text-amber-600')
   })
 
   it('renders with danger color', () => {
     const { container } = render(<KpiCard title="Products" value="8" icon={testIcon} color="danger" />)
-    const card = container.querySelector('.kpi-card')
-    expect(card?.className).toContain('border-rose-100')
+    expect(container.innerHTML).toContain('bg-rose-50')
+    expect(container.innerHTML).toContain('text-rose-600')
   })
 
   it('renders trend indicator when provided', () => {

@@ -204,7 +204,7 @@ export default function AdminBusinessesPage() {
         />
       </div>
 
-      <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm">
+      <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm">
         {loading ? (
           <div className="px-5 py-12 text-center">
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
@@ -213,7 +213,7 @@ export default function AdminBusinessesPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-gray-100">
+                <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-gray-200">
                   <th className="text-left px-5 py-3 font-medium">Name</th>
                   <th className="text-left px-5 py-3 font-medium">ID</th>
                   <th className="text-center px-5 py-3 font-medium">Members</th>
@@ -275,7 +275,7 @@ export default function AdminBusinessesPage() {
             className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 rounded-t-2xl flex items-center justify-between">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-2xl flex items-center justify-between">
               <h3 className="font-semibold text-gray-900">Business Profile</h3>
               <button
                 onClick={() => setShowProfile(false)}
@@ -340,7 +340,7 @@ export default function AdminBusinessesPage() {
                     <div className="mb-6">
                       <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Business Key</p>
                       <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-xl">
-                        <code className="flex-1 text-sm text-gray-900 bg-white px-3 py-2 rounded-lg border border-gray-200 truncate">
+                        <code className="flex-1 text-sm text-gray-900 bg-white px-3 py-2 rounded-lg border border-gray-300 truncate">
                           {profileBusinessKey}
                         </code>
                         <button
@@ -400,7 +400,7 @@ export default function AdminBusinessesPage() {
               )}
             </div>
 
-            <div className="sticky bottom-0 bg-white border-t border-gray-100 px-6 py-4 rounded-b-2xl flex items-center gap-3">
+            <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 rounded-b-2xl flex items-center gap-3">
               <button
                 onClick={() => {
                   router.push(`/business/${profileBiz.business_id}/dashboard`)

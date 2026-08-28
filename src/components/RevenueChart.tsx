@@ -16,7 +16,7 @@ interface Props {
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white p-3 rounded-xl shadow-lg border border-gray-100 text-sm">
+      <div className="bg-white p-3 rounded-xl shadow-lg border border-gray-200 text-sm">
         <p className="font-bold text-gray-900 mb-1">{label}</p>
         {payload.map((entry: any, i: number) => (
           <p key={i} style={{ color: entry.color }} className="font-medium">
@@ -31,7 +31,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 export default memo(function RevenueChart({ data }: Props) {
   return (
-    <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm p-5">
+    <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-5">
       <div className="flex items-center justify-between mb-5">
         <div>
           <h3 className="font-semibold text-gray-900">Revenue Overview</h3>

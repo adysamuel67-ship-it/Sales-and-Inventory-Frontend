@@ -136,7 +136,7 @@ export default function AdminKeysPage() {
         />
       </div>
 
-      <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm">
+      <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm">
         {loading ? (
           <div className="px-5 py-12 text-center">
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
@@ -146,7 +146,7 @@ export default function AdminKeysPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-gray-100">
+                <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-gray-200">
                   <th className="text-left px-5 py-3 font-medium">Business</th>
                   <th className="text-left px-5 py-3 font-medium">ID</th>
                   <th className="text-left px-5 py-3 font-medium">Business Key</th>
@@ -166,7 +166,7 @@ export default function AdminKeysPage() {
                     </td>
                     <td className="px-5 py-3.5 text-neutral-light">#{bk.business_id}</td>
                     <td className="px-5 py-3.5">
-                      <code className="text-xs text-gray-700 bg-gray-50 px-2.5 py-1.5 rounded-lg border border-gray-100 inline-block max-w-[280px] truncate">
+                      <code className="text-xs text-gray-700 bg-gray-50 px-2.5 py-1.5 rounded-lg border border-gray-200 inline-block max-w-[280px] truncate">
                         {bk.business_key || 'N/A'}
                       </code>
                     </td>

@@ -315,7 +315,7 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
                 </button>
 
                 {bizSwitcherOpen && (
-                  <div className="absolute top-full left-0 right-0 mt-1.5 bg-white rounded-xl shadow-xl border border-gray-100 py-1.5 z-50 max-h-64 overflow-y-auto">
+                  <div className="absolute top-full left-0 right-0 mt-1.5 bg-white rounded-xl shadow-xl border border-gray-200 py-1.5 z-50 max-h-64 overflow-y-auto">
                     <p className="px-3.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400">Switch Business</p>
                     {businesses.map((biz) => (
                       <button
@@ -336,7 +336,7 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
                         )}
                       </button>
                     ))}
-                    <div className="border-t border-gray-100 mt-1 pt-1">
+                    <div className="border-t border-gray-200 mt-1 pt-1">
                       <Link
                         href="/businesses"
                         onClick={() => setBizSwitcherOpen(false)}
@@ -376,8 +376,8 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
                 </button>
 
                 {notificationsOpen && (
-                  <div className="absolute left-0 right-0 mt-1 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden">
-                    <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+                  <div className="absolute left-0 right-0 mt-1 bg-white rounded-xl shadow-xl border border-gray-200 z-50 overflow-hidden">
+                    <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
                       <h3 className="text-sm font-semibold text-gray-900">
                         Requests {pendingApprovals.length > 0 && <span className="text-primary">({pendingApprovals.length})</span>}
                       </h3>
@@ -582,8 +582,8 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
               </button>
 
               {sidebarProfileOpen && (
-                <div className="absolute bottom-full left-0 right-0 mb-2 mx-1 bg-white rounded-xl shadow-xl border border-gray-100 py-1.5 z-50">
-                  <div className="px-3.5 py-2.5 border-b border-gray-100">
+                <div className="absolute bottom-full left-0 right-0 mb-2 mx-1 bg-white rounded-xl shadow-xl border border-gray-200 py-1.5 z-50">
+                  <div className="px-3.5 py-2.5 border-b border-gray-200">
                     <p className="text-[13px] font-semibold text-gray-900 truncate">{user?.name || 'User'}</p>
                     <div className="flex items-center gap-1.5 mt-1.5">
                       <span className="text-[10px] font-semibold uppercase tracking-wider bg-blue-50 text-primary px-2 py-0.5 rounded-md">
@@ -719,7 +719,7 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
                 )}
               </div>
 
-              <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-gray-100 flex items-center gap-3">
+              <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-gray-200 flex items-center gap-3">
                 <Link
                   href="/businesses/requests"
                   onClick={() => setSelectedApproval(null)}

@@ -39,7 +39,7 @@ export default function NotFound() {
             <div className="space-y-2">
               <button
                 onClick={() => router.push('/businesses')}
-                className="w-full flex items-center gap-3 px-3 py-2.5 bg-white rounded-xl border border-gray-100 text-left hover:shadow-sm transition-all text-sm"
+                className="w-full flex items-center gap-3 px-3 py-2.5 bg-white rounded-xl border border-gray-200 text-left hover:shadow-sm transition-all text-sm"
               >
                 <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center shrink-0">
                   <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">

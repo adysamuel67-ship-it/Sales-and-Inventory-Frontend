@@ -5,7 +5,11 @@ import { useParams } from 'next/navigation'
 import { reportAPI, saleAPI, productAPI } from '@/lib/api'
 import dynamic from 'next/dynamic'
 const RevenueChart = dynamic(() => import('@/components/RevenueChart'), { ssr: false })
-import { extractArray, extractProfit, extractSummary, getDateRange, parseApiError } from '@/lib/utils'
+import { extractArray, extractProfit, extractSummary, getDateRange, parseApiError, formatCedi } from '@/lib/utils'
+import PageHeader from '@/components/ui/PageHeader'
+import Alert from '@/components/ui/Alert'
+import EmptyState from '@/components/ui/EmptyState'
+import { ChartIcon } from '@/components/ui/Icons'
 
 interface ProfitData {
   total_revenue: number
@@ -184,81 +188,79 @@ export default function ReportsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Reports</h1>
-          <p className="text-sm text-neutral-light mt-1">Profit & analytics overview</p>
-        </div>
-        <div className="relative">
-          <button
-            onClick={() => showDatePicker ? setShowDatePicker(false) : handleOpenDatePicker()}
-            className="flex items-center gap-2 px-4 py-2.5 bg-surface border border-border rounded-xl text-sm font-medium text-gray-700 hover:bg-surfaceAlt transition-colors min-h-[44px]"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            {dateSubtitle}
-            <svg className={`w-4 h-4 transition-transform ${showDatePicker ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
+      <PageHeader
+        eyebrow="Analytics"
+        title="Reports"
+        subtitle="Profit & analytics overview"
+        actions={
+          <div className="relative">
+            <button
+              onClick={() => showDatePicker ? setShowDatePicker(false) : handleOpenDatePicker()}
+              className="flex items-center gap-2 px-4 py-2.5 bg-surface border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-surfaceAlt transition-colors min-h-[44px]"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              {dateSubtitle}
+              <svg className={`w-4 h-4 transition-transform ${showDatePicker ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
 
-          {showDatePicker && (
-            <div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-xl shadow-lg border border-gray-100 p-4 z-50">
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">Quick Select</p>
-              <div className="flex flex-wrap gap-2 mb-4">
-                {datePresets.map((preset) => (
-                  <button
-                    key={preset.days}
-                    onClick={() => handlePresetChange(preset.days)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                      activePreset === preset.days
-                        ? 'bg-primary text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    {preset.label}
-                  </button>
-                ))}
-              </div>
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Custom Range</p>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-[10px] text-gray-400 mb-1">From</label>
-                  <input
-                    type="date"
-                    value={draftDateRange.start}
-                    onChange={(e) => handleCustomDateChange('start', e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs focus:border-primary outline-none"
-                  />
+            {showDatePicker && (
+              <div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-xl shadow-lg border border-gray-200 p-4 z-50">
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">Quick Select</p>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {datePresets.map((preset) => (
+                    <button
+                      key={preset.days}
+                      onClick={() => handlePresetChange(preset.days)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                        activePreset === preset.days
+                          ? 'bg-primary text-white'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
                 </div>
-                <div>
-                  <label className="block text-[10px] text-gray-400 mb-1">To</label>
-                  <input
-                    type="date"
-                    value={draftDateRange.end}
-                    onChange={(e) => handleCustomDateChange('end', e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs focus:border-primary outline-none"
-                  />
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Custom Range</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-[10px] text-gray-400 mb-1">From</label>
+                    <input
+                      type="date"
+                      value={draftDateRange.start}
+                      onChange={(e) => handleCustomDateChange('start', e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg border border-gray-300 text-xs focus:border-primary outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-gray-400 mb-1">To</label>
+                    <input
+                      type="date"
+                      value={draftDateRange.end}
+                      onChange={(e) => handleCustomDateChange('end', e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg border border-gray-300 text-xs focus:border-primary outline-none"
+                    />
+                  </div>
                 </div>
+                <button
+                  onClick={handleApplyCustomDate}
+                  className="w-full mt-3 px-3 py-2 bg-primary text-white rounded-lg text-xs font-medium hover:bg-primary-dark transition-colors"
+                >
+                  Apply
+                </button>
               </div>
-              <button
-                onClick={handleApplyCustomDate}
-                className="w-full mt-3 px-3 py-2 bg-primary text-white rounded-lg text-xs font-medium hover:bg-primary-dark transition-colors"
-              >
-                Apply
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
+            )}
+          </div>
+        }
+      />
 
       {error && (
-        <div className="mb-6 text-sm p-3 rounded-xl flex items-center gap-2 bg-danger-light text-danger">
-          <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-          </svg>
-          {error}
+        <div className="mb-6">
+          <Alert kind="error">{error}</Alert>
         </div>
       )}
 
@@ -275,30 +277,30 @@ export default function ReportsPage() {
         <>
           {profit && (
             <div className="grid grid-cols-2 gap-3 mb-6">
-              <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm p-5">
+              <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-5">
                 <p className="text-xs text-neutral-light uppercase tracking-wider">Revenue</p>
                 <p className="text-2xl font-bold text-gray-900 mt-1">
-                  GH₵{profit.total_revenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  {formatCedi(profit.total_revenue)}
                 </p>
                 <p className="text-[10px] text-neutral-light mt-1">{dateSubtitle}</p>
               </div>
-              <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm p-5">
+              <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-5">
                 <p className="text-xs text-neutral-light uppercase tracking-wider">Profit</p>
                 <p className="text-2xl font-bold text-success mt-1">
-                  GH₵{profit.total_profit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  {formatCedi(profit.total_profit)}
                 </p>
                 {profitMargin && (
                   <p className="text-[10px] text-neutral-light mt-1">{profitMargin}% margin</p>
                 )}
               </div>
-              <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm p-5">
+              <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-5">
                 <p className="text-xs text-neutral-light uppercase tracking-wider">Cost</p>
                 <p className="text-2xl font-bold text-gray-900 mt-1">
-                  GH₵{profit.total_cost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  {formatCedi(profit.total_cost)}
                 </p>
               </div>
               {summary && (
-                <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm p-5">
+                <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-5">
                   <p className="text-xs text-neutral-light uppercase tracking-wider">Sales Count</p>
                   <p className="text-2xl font-bold text-gray-900 mt-1">
                     {summary.total_sales.toLocaleString()}
@@ -310,16 +312,16 @@ export default function ReportsPage() {
 
           {summary && !profit && (
             <div className="grid grid-cols-2 gap-3 mb-6">
-              <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm p-5">
+              <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-5">
                 <p className="text-xs text-neutral-light uppercase tracking-wider">Revenue</p>
                 <p className="text-2xl font-bold text-gray-900 mt-1">
-                  GH₵{summary.total_revenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  {formatCedi(summary.total_revenue)}
                 </p>
               </div>
-              <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm p-5">
+              <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-5">
                 <p className="text-xs text-neutral-light uppercase tracking-wider">Profit</p>
                 <p className="text-2xl font-bold text-success mt-1">
-                  GH₵{summary.total_profit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  {formatCedi(summary.total_profit)}
                 </p>
               </div>
             </div>
@@ -330,15 +332,11 @@ export default function ReportsPage() {
           </div>
 
           {!hasData && (
-            <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm px-5 py-12 text-center">
-              <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-              </div>
-              <p className="text-sm font-medium text-gray-900 mb-1">No data for this period</p>
-              <p className="text-xs text-neutral-light">Try selecting a different date range, or record some sales first.</p>
-            </div>
+            <EmptyState
+              icon={<ChartIcon className="w-6 h-6 text-primary" />}
+              title="No data for this period"
+              description="Try selecting a different date range, or record some sales first."
+            />
           )}
         </>
       )}

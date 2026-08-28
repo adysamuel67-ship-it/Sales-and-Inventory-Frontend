@@ -181,7 +181,7 @@ export default function AuthLayout({
       <div className="flex-1 flex items-center justify-center p-6 sm:p-8 bg-background relative">
         <div className="w-full max-w-md auth-animate-fade-up">
           {/* Card */}
-          <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/60 p-8 sm:p-10 border border-gray-100">
+          <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/60 p-8 sm:p-10 border border-gray-200">
             {/* Header */}
             <div className="mb-8">
               <h1 className="text-2xl font-bold text-gray-900">{title}</h1>

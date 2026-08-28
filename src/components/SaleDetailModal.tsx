@@ -31,7 +31,7 @@ export default function SaleDetailModal({ sale, onClose }: Props) {
         className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="sticky top-0 bg-white border-b border-gray-100 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
+        <div className="sticky top-0 bg-white border-b border-gray-200 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
           <h3 className="font-semibold text-gray-900">Sale Details</h3>
           <button
             onClick={onClose}
@@ -161,7 +161,7 @@ export default function SaleDetailModal({ sale, onClose }: Props) {
             </div>
           </div>
 
-          <div className="border-t border-gray-100 pt-4 space-y-2">
+          <div className="border-t border-gray-200 pt-4 space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span className="text-neutral-light">Total Sale Amount</span>
               <span className="font-semibold text-gray-900">GH₵{sale.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
@@ -198,7 +198,7 @@ export default function SaleDetailModal({ sale, onClose }: Props) {
           </div>
         </div>
 
-        <div className="sticky bottom-0 bg-white border-t border-gray-100 px-4 sm:px-6 py-4 rounded-b-2xl">
+        <div className="sticky bottom-0 bg-white border-t border-gray-200 px-4 sm:px-6 py-4 rounded-b-2xl">
           <button
             onClick={onClose}
             className="w-full py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors"
