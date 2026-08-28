@@ -1,20 +1,21 @@
 'use client'
 
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { useAuth } from '@/lib/auth'
-import { businessAPI, adminAPI, authAPI } from '@/lib/api'
+import { businessAPI, adminAPI } from '@/lib/api'
 import { isAdminRole, isSuperAdminUser, parseApiError, extractArray } from '@/lib/utils'
 import PageHeader from '@/components/ui/PageHeader'
 import Alert from '@/components/ui/Alert'
 import EmptyState from '@/components/ui/EmptyState'
-import { UsersIcon } from '@/components/ui/Icons'
+import { UsersIcon, LockIcon, ChevronRightIcon } from '@/components/ui/Icons'
 
 export default function SettingsPage() {
   const params = useParams()
   const router = useRouter()
   const businessId = parseInt(params?.id as string)
-  const { user, currentBusiness, fetchBusinesses, logout } = useAuth()
+  const { user, currentBusiness, fetchBusinesses } = useAuth()
   const [name, setName] = useState('')
   const [businessKey, setBusinessKey] = useState('')
   const [loading, setLoading] = useState(true)
@@ -264,123 +265,6 @@ export default function SettingsPage() {
       }
       setLeaving(false)
       setShowLeaveConfirm(false)
-    }
-  }
-
-  const [oldPassword, setOldPassword] = useState('')
-  const [newPassword, setNewPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [showPwOtp, setShowPwOtp] = useState(false)
-  const [pwOtp, setPwOtp] = useState(['', '', '', '', '', '', ''])
-  const [sendingOtp, setSendingOtp] = useState(false)
-  const [changingPassword, setChangingPassword] = useState(false)
-  const [pwOtpError, setPwOtpError] = useState('')
-  const [pwOtpSuccess, setPwOtpSuccess] = useState('')
-  const [resendTimer, setResendTimer] = useState(0)
-  const pwOtpRefs = useRef<(HTMLInputElement | null)[]>([])
-  const pwSuccessTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  const validateNewPassword = (pw: string): string => {
-    if (pw.length < 8) return 'Password must be at least 8 characters'
-    if (!/\d/.test(pw)) return 'Password must contain at least one number'
-    if (!/[A-Z]/.test(pw)) return 'Password must contain at least one uppercase letter'
-    return ''
-  }
-
-  const handleSendChangePasswordCode = async () => {
-    setError('')
-    setPwOtpError('')
-    setPwOtpSuccess('')
-    if (!oldPassword) { setPwOtpError('Please enter your current password'); return }
-    const invalid = validateNewPassword(newPassword)
-    if (invalid) { setPwOtpError(invalid); return }
-    if (newPassword !== confirmPassword) { setPwOtpError('Passwords do not match'); return }
-    if (!user?.email) { setPwOtpError('Unable to identify your account. Please log in again.'); return }
-    setSendingOtp(true)
-    try {
-      await authAPI.sendChangePasswordCode(user.email)
-      setShowPwOtp(true)
-      setPwOtpSuccess('A 7-digit verification code has been sent to your email.')
-      setResendTimer(120)
-    } catch (err: any) {
-      const detail = err.response?.data?.detail
-      setPwOtpError(typeof detail === 'string' ? detail : 'Failed to send verification code')
-    } finally {
-      setSendingOtp(false)
-    }
-  }
-
-  useEffect(() => {
-    if (resendTimer > 0) {
-      const t = setTimeout(() => setResendTimer(resendTimer - 1), 1000)
-      return () => clearTimeout(t)
-    }
-  }, [resendTimer])
-
-  useEffect(() => {
-    return () => {
-      if (pwSuccessTimerRef.current) clearTimeout(pwSuccessTimerRef.current)
-    }
-  }, [])
-
-  const handlePwOtpChange = (index: number, value: string) => {
-    if (value.length > 1) value = value.slice(-1)
-    if (!/^\d*$/.test(value)) return
-    const next = [...pwOtp]
-    next[index] = value
-    setPwOtp(next)
-    if (value && index < 6) pwOtpRefs.current[index + 1]?.focus()
-  }
-
-  const handlePwOtpKeyDown = (index: number, e: React.KeyboardEvent) => {
-    if (e.key === 'Backspace' && !pwOtp[index] && index > 0) pwOtpRefs.current[index - 1]?.focus()
-  }
-
-  const handlePwOtpPaste = (e: React.ClipboardEvent) => {
-    e.preventDefault()
-    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 7)
-    if (pasted) {
-      const next = pasted.split('').concat(Array(7).fill('')).slice(0, 7)
-      setPwOtp(next)
-      const nextEmpty = next.findIndex((c) => !c)
-      pwOtpRefs.current[nextEmpty === -1 ? 6 : nextEmpty]?.focus()
-    }
-  }
-
-  const handleChangePassword = async () => {
-    setError('')
-    setPwOtpError('')
-    const fullCode = pwOtp.join('')
-    if (fullCode.length !== 7) { setPwOtpError('Please enter the full 7-digit code'); return }
-    const invalid = validateNewPassword(newPassword)
-    if (invalid) { setPwOtpError(invalid); return }
-    if (newPassword !== confirmPassword) { setPwOtpError('Passwords do not match'); return }
-    setChangingPassword(true)
-    try {
-      await authAPI.changePassword({
-        old_password: oldPassword,
-        new_password: newPassword,
-        conf_password: confirmPassword,
-        otp: fullCode,
-      })
-      setPwOtpSuccess('Password changed successfully. Signing you out...')
-      pwSuccessTimerRef.current = setTimeout(() => {
-        logout()
-        router.replace('/login')
-      }, 1500)
-    } catch (err: any) {
-      const detail = err.response?.data?.detail
-      let msg = ''
-      if (Array.isArray(detail)) {
-        msg = detail.map((d: any) => d.msg || String(d)).join(', ')
-      } else if (typeof detail === 'string') {
-        msg = detail
-      } else {
-        msg = 'Failed to update password'
-      }
-      setPwOtpError(msg)
-    } finally {
-      setChangingPassword(false)
     }
   }
 
@@ -642,120 +526,28 @@ export default function SettingsPage() {
           )}
 
           {/* Change Password — all members */}
-          <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-6 mb-4">
-            <div className="flex items-center justify-between mb-1">
-              <h3 className="font-semibold text-gray-900">Change Password</h3>
-            </div>
-            <p className="text-xs text-neutral-light mb-4">
-              Update your account password. We&apos;ll send a one-time verification code to your email to confirm the change.
-            </p>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Current Password</label>
-                <input
-                  type="password"
-                  value={oldPassword}
-                  onChange={(e) => setOldPassword(e.target.value)}
-                  placeholder="Enter current password"
-                  autoComplete="current-password"
-                  className="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
-                />
+          <Link
+            href="/settings/change-password"
+            className="block bg-surface rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-6 mb-4 hover:shadow-md hover:border-gray-300 transition-all group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                <LockIcon className="w-5 h-5 text-primary" />
               </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">New Password</label>
-                  <input
-                    type="password"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Min 8 chars, 1 number, 1 uppercase"
-                    autoComplete="new-password"
-                    className="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
-                  />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <h3 className="font-semibold text-gray-900">Change Password</h3>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-primary bg-primary/10 px-2 py-0.5 rounded-md">
+                    Security
+                  </span>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Confirm New Password</label>
-                  <input
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Re-enter new password"
-                    autoComplete="new-password"
-                    className="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
-                  />
-                </div>
+                <p className="text-xs text-neutral-light mt-0.5">
+                  Update your account password with email verification
+                </p>
               </div>
-
-              {pwOtpError && <Alert kind="error">{pwOtpError}</Alert>}
-              {pwOtpSuccess && <Alert kind="success">{pwOtpSuccess}</Alert>}
-
-              {!showPwOtp ? (
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={handleSendChangePasswordCode}
-                    disabled={sendingOtp}
-                    className="px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed min-h-[44px] shrink-0"
-                  >
-                    {sendingOtp ? 'Sending...' : 'Send Verification Code'}
-                  </button>
-                  <p className="text-xs text-neutral-light">
-                    A 7-digit code will be sent to {user?.email || 'your email'}
-                  </p>
-                </div>
-              ) : (
-                <div className="bg-surfaceAlt rounded-xl p-4 space-y-4">
-                  <div>
-                    <p className="text-sm font-medium text-gray-900 mb-1.5">Verification Code</p>
-                    <p className="text-xs text-neutral-light mb-3">
-                      Enter the 7-digit code sent to {user?.email || 'your email'}
-                      {resendTimer > 0 && (
-                        <> (resend in {Math.floor(resendTimer / 60)}:{String(resendTimer % 60).padStart(2, '0')})</>
-                      )}
-                    </p>
-                    <div className="flex gap-2">
-                      {pwOtp.map((digit, i) => (
-                        <input
-                          key={i}
-                          ref={(el) => { pwOtpRefs.current[i] = el }}
-                          type="text"
-                          inputMode="numeric"
-                          maxLength={1}
-                          value={digit}
-                          onChange={(e) => handlePwOtpChange(i, e.target.value)}
-                          onKeyDown={(e) => handlePwOtpKeyDown(i, e)}
-                          onPaste={handlePwOtpPaste}
-                          className="w-10 h-10 text-center text-lg font-semibold text-gray-900 border border-gray-300 rounded-lg focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-                        />
-                      ))}
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={handleChangePassword}
-                      disabled={changingPassword || pwOtpSuccess !== ''}
-                      className="px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed min-h-[44px]"
-                    >
-                      {changingPassword ? 'Updating...' : 'Update Password'}
-                    </button>
-                    {resendTimer === 0 && (
-                      <button
-                        type="button"
-                        onClick={handleSendChangePasswordCode}
-                        disabled={sendingOtp}
-                        className="px-4 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors disabled:opacity-60 min-h-[44px]"
-                      >
-                        Resend Code
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
+              <ChevronRightIcon className="w-5 h-5 text-gray-300 group-hover:text-gray-500 transition-colors shrink-0" />
             </div>
-          </div>
+          </Link>
 
           {/* Leave Business — visible to ALL members */}
           <div className="bg-surface rounded-2xl border border-amber-200 shadow-sm p-4 sm:p-6 mb-4">
