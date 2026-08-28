@@ -262,6 +262,8 @@ export const authAPI = {
     api.post('/auth/otp/verification', { email: data.email, otp: data.code }),
   sendChangePasswordCode: (email: string) =>
     api.post('/auth/otp/get_code', { email }),
+  verifyPassword: (password: string) =>
+    api.post('/auth/verify/password', { password }),
   verifyChangePasswordOtp: (otp: string) =>
     api.post('/auth/otp/verify_change_password', { otp }),
   changePassword: (data: { old_password: string; new_password: string; conf_password: string; otp: string }) =>

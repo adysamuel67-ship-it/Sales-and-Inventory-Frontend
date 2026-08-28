@@ -85,14 +85,15 @@ export default function ChangePasswordPage() {
     }
     setSending(true)
     try {
+      await authAPI.verifyPassword(oldPassword)
       await authAPI.sendChangePasswordCode(user.email)
       setCodeSent(true)
       setStep(2)
-      setSuccess(`A 7-digit verification code has been sent to ${user.email}`)
+      setSuccess(`Your password is confirmed. A 7-digit verification code has been sent to ${user.email}`)
       setResendTimer(120)
     } catch (err: any) {
       const detail = err.response?.data?.detail
-      setError(typeof detail === 'string' ? detail : 'Failed to send verification code')
+      setError(typeof detail === 'string' ? detail : 'Failed to verify your password')
     } finally {
       setSending(false)
     }
