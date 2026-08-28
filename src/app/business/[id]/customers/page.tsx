@@ -92,6 +92,7 @@ function CustomersContent() {
 
   const [search, setSearch] = useState('')
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null)
+  const [deletingCustomer, setDeletingCustomer] = useState(false)
 
   const [showProfile, setShowProfile] = useState(false)
   const [profileCustomer, setProfileCustomer] = useState<Customer | null>(null)
@@ -288,16 +289,21 @@ function CustomersContent() {
     }
   }
 
-  const handleDelete = async (id: number) => {
-    if (!businessId) return
+  const handleDelete = async () => {
+    if (!businessId || deleteConfirm == null) return
+    setDeletingCustomer(true)
     try {
-      await customerAPI.delete(businessId, id)
+      await customerAPI.delete(businessId, deleteConfirm)
+      const deleted = customers.find((c) => c.customer_id === deleteConfirm)
       setDeleteConfirm(null)
-      setSuccess('Customer deleted.')
+      setSuccess(deleted ? `Customer "${deleted.name}" deleted.` : 'Customer deleted.')
       loadCustomers()
     } catch (err: any) {
       const detail = err.response?.data?.detail
       setError(typeof detail === 'string' ? detail : 'Failed to delete customer')
+      setDeleteConfirm(null)
+    } finally {
+      setDeletingCustomer(false)
     }
   }
 
@@ -731,7 +737,7 @@ function CustomersContent() {
                           </span>
                           {customer.is_active !== false && (
                             <span
-                              onClick={(e) => { e.stopPropagation(); handleDelete(customer.customer_id) }}
+                              onClick={(e) => { e.stopPropagation(); setDeleteConfirm(customer.customer_id) }}
                               className="px-2 py-0.5 text-[10px] font-medium text-danger bg-danger-light rounded hover:bg-danger/20 transition-colors cursor-pointer"
                             >
                               Delete
@@ -1079,6 +1085,64 @@ function CustomersContent() {
           onClose={() => setShowReminderModal(false)}
           onScheduled={(name) => setSuccess(`Reminder scheduled for ${name}`)}
         />
+      )}
+
+      {/* Delete Customer Confirmation */}
+      {deleteConfirm != null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => !deletingCustomer && setDeleteConfirm(null)}>
+          <div className="absolute inset-0 bg-black/50" />
+          <div
+            className="relative bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6">
+              <div className="w-14 h-14 rounded-full bg-danger-light flex items-center justify-center mx-auto mb-4">
+                <svg className="w-7 h-7 text-danger" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 text-center">Delete customer?</h3>
+              <p className="text-sm text-neutral-light mt-2 text-center">
+                You are about to permanently delete{' '}
+                <span className="font-semibold text-gray-900">
+                  {customers.find((c) => c.customer_id === deleteConfirm)?.name || `Customer #${deleteConfirm}`}
+                </span>
+                .
+              </p>
+              <div className="mt-4 bg-danger-light rounded-xl p-4 flex items-start gap-3">
+                <svg className="w-5 h-5 text-danger shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                <p className="text-sm text-danger font-medium leading-relaxed">
+                  This will permanently delete this customer together with all their sales, debts, transactions, and activity history. This action cannot be undone.
+                </p>
+              </div>
+            </div>
+            <div className="px-5 sm:px-6 py-4 border-t border-gray-100 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                disabled={deletingCustomer}
+                className="px-4 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors disabled:opacity-60 min-h-[44px] flex-1"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deletingCustomer}
+                className="flex-1 py-2.5 bg-danger text-white rounded-xl text-sm font-medium hover:bg-red-700 transition-colors disabled:opacity-60 flex items-center justify-center gap-2 min-h-[44px]"
+              >
+                {deletingCustomer ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  'Delete Customer'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

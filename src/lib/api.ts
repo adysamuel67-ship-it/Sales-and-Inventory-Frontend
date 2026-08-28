@@ -260,6 +260,12 @@ export const authAPI = {
     api.post('/auth/otp/get_code', { email }),
   verifyEmail: (data: { email: string; code: string }) =>
     api.post('/auth/otp/verification', { email: data.email, otp: data.code }),
+  sendChangePasswordCode: (email: string) =>
+    api.post('/auth/otp/get_code', { email }),
+  verifyChangePasswordOtp: (otp: string) =>
+    api.post('/auth/otp/verify_change_password', { otp }),
+  changePassword: (data: { old_password: string; new_password: string; conf_password: string; otp: string }) =>
+    api.post('/auth/verify/change_password', data),
   forgotPassword: (email: string) =>
     api.post('/auth/forgot_password', { email }),
   verifyForgotPassword: (data: { email: string; otp: string; password: string }) =>
@@ -277,8 +283,6 @@ export const profileAPI = {
     api.put(`/users/${userId}`, data),
   deleteProfile: (userId: number) =>
     api.delete(`/users/${userId}`),
-  changePassword: (userId: number, password: string) =>
-    api.put(`/users/${userId}`, { password }),
 }
 
 export const businessAPI = {
