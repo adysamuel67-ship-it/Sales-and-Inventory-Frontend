@@ -277,6 +277,8 @@ export const profileAPI = {
     api.put(`/users/${userId}`, data),
   deleteProfile: (userId: number) =>
     api.delete(`/users/${userId}`),
+  changePassword: (userId: number, password: string) =>
+    api.put(`/users/${userId}`, { password }),
 }
 
 export const businessAPI = {

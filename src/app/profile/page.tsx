@@ -4,11 +4,11 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
 import { useAuth } from '@/lib/auth'
-import { profileAPI, adminAPI } from '@/lib/api'
+import { profileAPI, adminAPI, authAPI } from '@/lib/api'
 import { parseApiError } from '@/lib/utils'
 
 export default function ProfilePage() {
-  const { isAuthenticated, isLoading, profileLoaded, isVerified, user, fetchProfile, businesses, currentBusiness, logout, setBusinessRole } = useAuth()
+  const { isAuthenticated, isLoading, profileLoaded, user, fetchProfile, businesses, currentBusiness, logout, setBusinessRole } = useAuth()
   const router = useRouter()
   const [editing, setEditing] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -19,6 +19,13 @@ export default function ProfilePage() {
   const [deleting, setDeleting] = useState(false)
   const [showBusinessDropdown, setShowBusinessDropdown] = useState(false)
   const [showPhotoToast, setShowPhotoToast] = useState(false)
+  const [pwForm, setPwForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
+  const [pwLoading, setPwLoading] = useState(false)
+  const [pwError, setPwError] = useState('')
+  const [pwSuccess, setPwSuccess] = useState('')
+  const [showCurrent, setShowCurrent] = useState(false)
+  const [showNew, setShowNew] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
   const isUnverified = user?.is_verified === false
 
   useEffect(() => {
@@ -120,6 +127,73 @@ export default function ProfilePage() {
       setShowDeleteConfirm(false)
     } finally {
       setDeleting(false)
+    }
+  }
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setPwError('')
+    setPwSuccess('')
+
+    const current = pwForm.currentPassword
+    const next = pwForm.newPassword
+    const confirm = pwForm.confirmPassword
+
+    if (!current) {
+      setPwError('Please enter your current password')
+      return
+    }
+    if (next.length < 8) {
+      setPwError('New password must be at least 8 characters')
+      return
+    }
+    if (next !== confirm) {
+      setPwError('New passwords do not match')
+      return
+    }
+    if (next === current) {
+      setPwError('New password must be different from your current password')
+      return
+    }
+
+    if (!user?.email || !user?.id) {
+      setPwError('Unable to verify your account. Please log out and log back in.')
+      return
+    }
+
+    setPwLoading(true)
+    try {
+      let loginRes: any = null
+      try {
+        loginRes = await authAPI.login({ email: user.email, password: current })
+      } catch (err: any) {
+        const status = err?.response?.status
+        if (status === 401 || status === 403) {
+          setPwError('Current password is incorrect')
+        } else {
+          setPwError(parseApiError(err) || 'Unable to verify your current password')
+        }
+        return
+      }
+
+      // Persist the fresh session from the verification login so the password
+      // update below works even if the previous access/refresh tokens were stale.
+      const freshToken = loginRes?.data?.access_token || loginRes?.data?.token
+      if (freshToken) {
+        localStorage.setItem('token', freshToken)
+      }
+      const freshRefresh = loginRes?.data?.refresh_token
+      if (freshRefresh) {
+        localStorage.setItem('refresh_token', freshRefresh)
+      }
+
+      await profileAPI.changePassword(user.id, next)
+      setPwSuccess('Password updated successfully!')
+      setPwForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
+    } catch (err: any) {
+      setPwError(parseApiError(err) || 'Failed to update password')
+    } finally {
+      setPwLoading(false)
     }
   }
 
@@ -513,19 +587,144 @@ export default function ProfilePage() {
         <div className="bg-surface rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6 mt-4">
           <div className="mb-5">
             <h3 className="text-base font-semibold text-gray-900">Change Password</h3>
-            <p className="text-xs sm:text-sm text-neutral-light mt-0.5">Update your account password</p>
+            <p className="text-xs sm:text-sm text-neutral-light mt-0.5">Keep your account secure with a strong password</p>
           </div>
-          <div className="bg-gray-50 rounded-xl border border-gray-100 p-4 sm:p-5 flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-              <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+
+          {pwError && (
+            <div className="mb-4 bg-danger-light text-danger text-sm p-3 rounded-xl flex items-center gap-2">
+              <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
               </svg>
+              {pwError}
             </div>
-            <div>
-              <p className="text-sm font-medium text-gray-900">Password management is handled by your administrator</p>
-              <p className="text-sm text-neutral-light mt-1">Contact an administrator to change your password.</p>
+          )}
+          {pwSuccess && (
+            <div className="mb-4 bg-success-light text-success text-sm p-3 rounded-xl flex items-center gap-2">
+              <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              {pwSuccess}
             </div>
-          </div>
+          )}
+
+          <form onSubmit={handleChangePassword} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Current Password</label>
+                <div className="relative">
+                  <input
+                    type={showCurrent ? 'text' : 'password'}
+                    value={pwForm.currentPassword}
+                    onChange={(e) => setPwForm({ ...pwForm, currentPassword: e.target.value })}
+                    placeholder="Enter current password"
+                    className="w-full px-4 py-2.5 pr-11 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrent(!showCurrent)}
+                    aria-label="Toggle current password visibility"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                  >
+                    {showCurrent ? (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+                      </svg>
+                    ) : (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">New Password</label>
+                <div className="relative">
+                  <input
+                    type={showNew ? 'text' : 'password'}
+                    value={pwForm.newPassword}
+                    onChange={(e) => setPwForm({ ...pwForm, newPassword: e.target.value })}
+                    placeholder="Min. 8 characters"
+                    className="w-full px-4 py-2.5 pr-11 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNew(!showNew)}
+                    aria-label="Toggle new password visibility"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                  >
+                    {showNew ? (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+                      </svg>
+                    ) : (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Confirm New Password</label>
+                <div className="relative">
+                  <input
+                    type={showConfirm ? 'text' : 'password'}
+                    value={pwForm.confirmPassword}
+                    onChange={(e) => setPwForm({ ...pwForm, confirmPassword: e.target.value })}
+                    placeholder="Re-enter new password"
+                    className="w-full px-4 py-2.5 pr-11 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirm(!showConfirm)}
+                    aria-label="Toggle confirm password visibility"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                  >
+                    {showConfirm ? (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+                      </svg>
+                    ) : (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              <button
+                type="submit"
+                disabled={pwLoading}
+                className="px-6 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-60 flex items-center justify-center gap-2 min-h-[44px]"
+              >
+                {pwLoading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  'Update Password'
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setPwForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
+                  setPwError('')
+                  setPwSuccess('')
+                }}
+                className="px-4 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors min-h-[44px]"
+              >
+                Clear
+              </button>
+            </div>
+          </form>
         </div>
 
         {/* Danger Zone */}
