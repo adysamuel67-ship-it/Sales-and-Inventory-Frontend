@@ -325,8 +325,8 @@ export default function SettingsPage() {
               <h3 className="font-semibold text-gray-900 mb-1">Business Key</h3>
               <p className="text-xs text-neutral-light mb-4">Share this key with team members so they can request to join.</p>
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                <div className="flex-1 px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 font-mono text-sm text-gray-700 truncate">
-                  {businessKey || 'No key available'}
+                <div className="flex-1 px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 font-mono text-sm text-gray-400 truncate">
+                  {businessKey ? '••••••••••••••••••••' : 'No key available'}
                 </div>
                 {businessKey && (
                   <button
