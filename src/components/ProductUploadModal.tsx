@@ -385,8 +385,17 @@ export default function ProductUploadModal({
             </div>
             <p className="mt-2 text-xs text-neutral-light">
               Only <span className="font-medium">name</span> and <span className="font-medium">price</span> are required.
-              Rows with the same product name as an existing item are skipped, so you can safely re-import.
             </p>
+          </div>
+
+          {/* Duplicate warning */}
+          <div className="bg-warning-light text-warning text-sm p-3 rounded-xl flex items-start gap-2">
+            <AlertTriangleIcon className="w-4 h-4 shrink-0 mt-0.5" />
+            <span>
+              Products already in your inventory are <span className="font-medium">not added and not overwritten</span>.
+              If a product name in your file already exists, that row is skipped — only brand-new product names will be created.
+              You can safely re-import the same file.
+            </span>
           </div>
         </div>
 
