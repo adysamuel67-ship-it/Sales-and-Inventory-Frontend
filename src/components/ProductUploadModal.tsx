@@ -177,10 +177,26 @@ export default function ProductUploadModal({
     setError('')
     setSuccess('')
     try {
-      await productAPI.upload(businessId, file, (p) => setProgress(p))
-      setSuccess(`${file.name} was imported successfully. New rows were added to your inventory.`)
+      const res = await productAPI.upload(businessId, file, (p) => setProgress(p))
+      const data = res.data || {}
+      const created = Number(data.created ?? data.products_created ?? 0)
+      const missing = Number(data.skipped_missing_name_price ?? 0)
+      const dupes = Number(data.skipped_duplicates ?? 0)
+      const existing = Number(data.skipped_existing ?? 0)
+
+      const parts: string[] = []
+      if (created > 0) parts.push(`${created} product${created > 1 ? 's' : ''} added`)
+      if (missing > 0) parts.push(`${missing} skipped (missing name/price)`)
+      if (dupes > 0) parts.push(`${dupes} skipped (duplicate name)`)
+      if (existing > 0) parts.push(`${existing} skipped (already in stock)`)
+      const summary = parts.length
+        ? parts.join(' · ')
+        : `${file.name} was imported with no new products to add.`
+
+      setSuccess(summary)
       setFile(null)
       setProgress(100)
+      onUploaded(summary)
     } catch (err: any) {
       const status = err?.response?.status
       const msg = parseApiError(err)
