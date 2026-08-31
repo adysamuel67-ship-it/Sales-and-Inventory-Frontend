@@ -354,6 +354,11 @@ export const productAPI = {
       },
     })
   },
+  export: (businessId: number, fileFormat: 'csv' | 'excel') =>
+    api.get('/download/products', {
+      params: { business_id: businessId, file_format: fileFormat },
+      responseType: 'blob',
+    }),
 }
 
 export const saleAPI = {

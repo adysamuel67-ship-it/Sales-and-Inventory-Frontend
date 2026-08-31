@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import { productAPI } from '@/lib/api'
 import { normalizeProduct, extractArray, parseApiError, isAdminRole, formatCedi } from '@/lib/utils'
@@ -35,6 +35,9 @@ export default function ProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState('')
   const [lowStockOnly, setLowStockOnly] = useState(false)
   const [detailProduct, setDetailProduct] = useState<any>(null)
+  const [showExportDropdown, setShowExportDropdown] = useState(false)
+  const [exporting, setExporting] = useState(false)
+  const exportRef = useRef<HTMLDivElement>(null)
   const [form, setForm] = useState({
     name: '', price: '', cost_price: '', quantity: '', unit: 'units', low_stock_threshold: '10', category: '', description: '', sku: '',
   })
@@ -177,6 +180,40 @@ export default function ProductsPage() {
     setSelectMode(false)
   }
 
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (exportRef.current && !exportRef.current.contains(e.target as Node)) {
+        setShowExportDropdown(false)
+      }
+    }
+    if (showExportDropdown) document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [showExportDropdown])
+
+  const handleExport = async (format: 'csv' | 'excel') => {
+    setShowExportDropdown(false)
+    setExporting(true)
+    try {
+      const res = await productAPI.export(businessId, format)
+      const blob = new Blob([res.data as BlobPart], {
+        type: format === 'csv' ? 'text/csv' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = format === 'csv' ? 'products.csv' : 'products.xlsx'
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+      setUploadNotice(`Products exported as ${format.toUpperCase()}`)
+    } catch (err: any) {
+      setError(parseApiError(err) || 'Failed to export products')
+    } finally {
+      setExporting(false)
+    }
+  }
+
   const handleBulkDelete = async () => {
     if (selected.size === 0) return
     setBulkDeleting(true)
@@ -210,20 +247,60 @@ export default function ProductsPage() {
         eyebrow="Inventory"
         title="Products"
         subtitle={`${stats.total} products · ${stats.lowStock} low stock · ${stats.outOfStock} out of stock`}
-        actions={canEdit && (
+        actions={
           <div className="flex items-center gap-2">
-            <Button variant="secondary" onClick={() => setShowUpload(true)} leftIcon={
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-              </svg>
-            }>
-              Import
-            </Button>
-            <Button onClick={openAdd} leftIcon={<PlusIcon className="w-4 h-4" />}>
-              Add Product
-            </Button>
+            <div ref={exportRef} className="relative">
+              <Button
+                variant="secondary"
+                disabled={exporting || loading || allProducts.length === 0}
+                onClick={() => setShowExportDropdown((v) => !v)}
+                leftIcon={
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                  </svg>
+                }
+              >
+                {exporting ? 'Exporting...' : 'Export'}
+              </Button>
+              {showExportDropdown && (
+                <div className="absolute right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 w-40 py-1">
+                  <button
+                    onClick={() => handleExport('csv')}
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2"
+                  >
+                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                    </svg>
+                    CSV
+                  </button>
+                  <button
+                    onClick={() => handleExport('excel')}
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2"
+                  >
+                    <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                    </svg>
+                    Excel
+                  </button>
+                </div>
+              )}
+            </div>
+            {canEdit && (
+              <>
+                <Button variant="secondary" onClick={() => setShowUpload(true)} leftIcon={
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                  </svg>
+                }>
+                  Import
+                </Button>
+                <Button onClick={openAdd} leftIcon={<PlusIcon className="w-4 h-4" />}>
+                  Add Product
+                </Button>
+              </>
+            )}
           </div>
-        )}
+        }
       />
 
       {/* Stats cards */}
