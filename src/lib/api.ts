@@ -323,7 +323,10 @@ export const adminAPI = {
 }
 
 export const productAPI = {
-  list: (businessId: number) => api.get(`/products/${businessId}`),
+  list: (businessId: number, params?: any) =>
+    api.get(`/products/${businessId}`, {
+      params: { limit: 100000, ...(params || {}) },
+    }),
   get: (businessId: number, productId: number) =>
     api.get(`/products/${businessId}/${productId}`),
   create: (businessId: number, data: any) =>
