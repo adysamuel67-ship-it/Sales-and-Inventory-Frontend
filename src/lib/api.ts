@@ -338,6 +338,19 @@ export const productAPI = {
     api.patch(`/products/${businessId}/${productId}/deactivate`),
   lowStock: (businessId: number) =>
     api.get(`/products/${businessId}/low_stock`),
+  upload: (businessId: number, file: File, onProgress?: (percent: number) => void) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    return api.post(`/upload/products`, formData, {
+      params: { business_id: businessId },
+      headers: { 'Content-Type': 'multipart/form-data' },
+      onUploadProgress: (e: any) => {
+        if (onProgress && e.total) {
+          onProgress(Math.round((e.loaded / e.total) * 100))
+        }
+      },
+    })
+  },
 }
 
 export const saleAPI = {

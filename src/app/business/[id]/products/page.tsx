@@ -6,6 +6,7 @@ import { productAPI } from '@/lib/api'
 import { normalizeProduct, extractArray, parseApiError, isAdminRole, formatCedi } from '@/lib/utils'
 import { useAuth } from '@/lib/auth'
 import ProductDetailModal from '@/components/ProductDetailModal'
+import ProductUploadModal from '@/components/ProductUploadModal'
 import PageHeader from '@/components/ui/PageHeader'
 import Alert from '@/components/ui/Alert'
 import Button from '@/components/ui/Button'
@@ -22,6 +23,8 @@ export default function ProductsPage() {
   const [sortKey, setSortKey] = useState<string>('name')
   const [sortAsc, setSortAsc] = useState(true)
   const [showAdd, setShowAdd] = useState(false)
+  const [showUpload, setShowUpload] = useState(false)
+  const [uploadNotice, setUploadNotice] = useState('')
   const [editProduct, setEditProduct] = useState<any>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; product: any }>({ open: false, product: null })
   const [categories, setCategories] = useState<string[]>([])
@@ -154,9 +157,18 @@ export default function ProductsPage() {
         title="Products"
         subtitle={`${stats.total} products · ${stats.lowStock} low stock · ${stats.outOfStock} out of stock`}
         actions={canEdit && (
-          <Button onClick={openAdd} leftIcon={<PlusIcon className="w-4 h-4" />}>
-            Add Product
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="secondary" onClick={() => setShowUpload(true)} leftIcon={
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+              </svg>
+            }>
+              Import
+            </Button>
+            <Button onClick={openAdd} leftIcon={<PlusIcon className="w-4 h-4" />}>
+              Add Product
+            </Button>
+          </div>
         )}
       />
 
@@ -204,6 +216,17 @@ export default function ProductsPage() {
       {/* Error */}
       {error && (
         <Alert kind="error">{error}</Alert>
+      )}
+
+      {/* Upload success notice */}
+      {uploadNotice && (
+        <Alert kind="success" icon={
+          <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+          </svg>
+        }>
+          {uploadNotice}
+        </Alert>
       )}
 
       {/* Loading */}
@@ -353,6 +376,19 @@ export default function ProductsPage() {
       {/* Product Detail Modal */}
       {detailProduct && (
         <ProductDetailModal product={detailProduct} onClose={() => setDetailProduct(null)} />
+      )}
+
+      {/* Product Upload/Import Modal */}
+      {showUpload && (
+        <ProductUploadModal
+          businessId={businessId}
+          onClose={() => setShowUpload(false)}
+          onUploaded={(message) => {
+            setShowUpload(false)
+            setUploadNotice(message)
+            load()
+          }}
+        />
       )}
 
       {/* Add/Edit Modal */}
