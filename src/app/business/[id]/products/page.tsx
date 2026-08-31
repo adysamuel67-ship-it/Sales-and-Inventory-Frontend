@@ -25,6 +25,10 @@ export default function ProductsPage() {
   const [showAdd, setShowAdd] = useState(false)
   const [showUpload, setShowUpload] = useState(false)
   const [uploadNotice, setUploadNotice] = useState('')
+  const [selected, setSelected] = useState<Set<number>>(new Set())
+  const [selectMode, setSelectMode] = useState(false)
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false)
+  const [bulkDeleting, setBulkDeleting] = useState(false)
   const [editProduct, setEditProduct] = useState<any>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; product: any }>({ open: false, product: null })
   const [categories, setCategories] = useState<string[]>([])
@@ -148,6 +152,56 @@ export default function ProductsPage() {
     }
   }
 
+  const toggleSelect = (id: number) => {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const toggleSelectAll = () => {
+    const ids = displayed.map((p: any) => p.product_id)
+    const allSelected = ids.length > 0 && ids.every((id) => selected.has(id))
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (allSelected) ids.forEach((id) => next.delete(id))
+      else ids.forEach((id) => next.add(id))
+      return next
+    })
+  }
+
+  const clearSelection = () => {
+    setSelected(new Set())
+    setSelectMode(false)
+  }
+
+  const handleBulkDelete = async () => {
+    if (selected.size === 0) return
+    setBulkDeleting(true)
+    let deleted = 0
+    try {
+      for (const id of Array.from(selected)) {
+        try {
+          await productAPI.delete(businessId!, id)
+          deleted++
+        } catch (err: any) {
+          setError(parseApiError(err))
+        }
+      }
+      setBulkDeleteConfirm(false)
+      if (deleted > 0) {
+        setUploadNotice(`${deleted} product${deleted > 1 ? 's' : ''} deleted successfully.`)
+      }
+      setSelected(new Set())
+      setSelectMode(false)
+      load()
+    } finally {
+      setBulkDeleting(false)
+    }
+  }
+
   const canEdit = isAdminRole(user?.business_role || user?.role)
 
   return (
@@ -213,6 +267,46 @@ export default function ProductsPage() {
         </div>
       </div>
 
+      {/* Bulk selection bar */}
+      {canEdit && !loading && displayed.length > 0 && (
+        <div className={`flex flex-wrap items-center gap-3 bg-white rounded-xl border p-3 transition-colors ${selectMode || selected.size > 0 ? 'border-primary/40 ring-2 ring-primary/10' : 'border-gray-200'}`}>
+          <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={displayed.length > 0 && displayed.every((p: any) => selected.has(p.product_id))}
+              onChange={toggleSelectAll}
+              className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary/30"
+            />
+            <span className="font-medium">Select all</span>
+          </label>
+
+          {selected.size > 0 && (
+            <>
+              <span className="text-sm text-neutral-light">
+                <span className="font-semibold text-gray-900">{selected.size}</span> selected
+              </span>
+              <div className="ml-auto flex items-center gap-2">
+                <Button
+                  variant="dangerOutline"
+                  size="sm"
+                  onClick={() => setBulkDeleteConfirm(true)}
+                  leftIcon={
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                    </svg>
+                  }
+                >
+                  Delete Selected
+                </Button>
+                <Button variant="ghost" size="sm" onClick={clearSelection}>
+                  Cancel
+                </Button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
       {/* Error */}
       {error && (
         <Alert kind="error">{error}</Alert>
@@ -256,6 +350,17 @@ export default function ProductsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-200 text-left text-xs text-neutral-light uppercase tracking-wider">
+                {canEdit && (
+                  <th className="px-4 py-3 w-10">
+                    <input
+                      type="checkbox"
+                      checked={displayed.length > 0 && displayed.every((p: any) => selected.has(p.product_id))}
+                      onChange={toggleSelectAll}
+                      onClick={(e) => e.stopPropagation()}
+                      className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary/30"
+                    />
+                  </th>
+                )}
                 {[
                   { key: 'name', label: 'Product' },
                   { key: 'price', label: 'Price' },
@@ -281,9 +386,20 @@ export default function ProductsPage() {
                 return (
                   <tr
                     key={p.product_id}
-                    className="border-b border-gray-50 hover:bg-gray-50/50 cursor-pointer transition-colors"
+                    className={`border-b border-gray-50 hover:bg-gray-50/50 cursor-pointer transition-colors ${selected.has(p.product_id) ? 'bg-primary-light/60' : ''}`}
                     onClick={() => setDetailProduct(p)}
                   >
+                    {canEdit && (
+                      <td className="px-4 py-3 w-10">
+                        <input
+                          type="checkbox"
+                          checked={selected.has(p.product_id)}
+                          onChange={() => toggleSelect(p.product_id)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary/30"
+                        />
+                      </td>
+                    )}
                     <td className="px-4 py-3">
                       <div className="font-medium text-gray-900">{p.name}</div>
                       {p.sku && <div className="text-xs text-neutral-light font-mono mt-0.5">SKU: {p.sku}</div>}
@@ -331,10 +447,19 @@ export default function ProductsPage() {
             return (
               <div
                 key={p.product_id}
-                className="bg-white rounded-xl border border-gray-200 p-4 cursor-pointer hover:shadow-sm transition-shadow"
+                className={`bg-white rounded-xl border border-gray-200 p-4 cursor-pointer hover:shadow-sm transition-shadow ${selected.has(p.product_id) ? 'border-primary/50 ring-2 ring-primary/10' : ''}`}
                 onClick={() => setDetailProduct(p)}
               >
                 <div className="flex items-start justify-between gap-2">
+                  {canEdit && (
+                    <input
+                      type="checkbox"
+                      checked={selected.has(p.product_id)}
+                      onChange={() => toggleSelect(p.product_id)}
+                      onClick={(e) => e.stopPropagation()}
+                      className="w-4 h-4 mt-1 rounded border-gray-300 text-primary focus:ring-primary/30 shrink-0"
+                    />
+                  )}
                   <div className="min-w-0 flex-1">
                     <h3 className="font-medium text-gray-900 truncate">{p.name}</h3>
                     {p.sku && <p className="text-xs text-neutral-light font-mono mt-0.5">SKU: {p.sku}</p>}
@@ -479,6 +604,30 @@ export default function ProductsPage() {
             <div className="flex gap-2">
               <button onClick={() => setDeleteConfirm({ open: false, product: null })} className="flex-1 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors">Cancel</button>
               <button onClick={handleDelete} className="flex-1 py-2.5 bg-danger text-white rounded-xl text-sm font-medium hover:bg-red-600 transition-colors">Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk delete confirm */}
+      {bulkDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setBulkDeleteConfirm(false)}>
+          <div className="absolute inset-0 bg-black/40" />
+          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 text-center" onClick={e => e.stopPropagation()}>
+            <div className="w-12 h-12 mx-auto rounded-full bg-danger-light flex items-center justify-center mb-4">
+              <svg className="w-6 h-6 text-danger" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+              </svg>
+            </div>
+            <h3 className="font-semibold text-gray-900 mb-1">Delete Products</h3>
+            <p className="text-sm text-neutral-light mb-5">
+              Are you sure you want to delete <strong>{selected.size}</strong> selected product{selected.size > 1 ? 's' : ''}? This cannot be undone.
+            </p>
+            <div className="flex gap-2">
+              <button onClick={() => setBulkDeleteConfirm(false)} className="flex-1 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors">Cancel</button>
+              <button onClick={handleBulkDelete} disabled={bulkDeleting} className="flex-1 py-2.5 bg-danger text-white rounded-xl text-sm font-medium hover:bg-red-600 transition-colors disabled:opacity-50">
+                {bulkDeleting ? 'Deleting...' : `Delete ${selected.size}`}
+              </button>
             </div>
           </div>
         </div>

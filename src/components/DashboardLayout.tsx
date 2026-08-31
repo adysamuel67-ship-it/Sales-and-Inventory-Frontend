@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { isManagerRole, isPlatformAdmin, isSuperAdminUser } from '@/lib/utils'
 import { businessAPI } from '@/lib/api'
 import BusinessBotLogo from './BusinessBotLogo'
+import AppLoadingSplash from './AppLoadingSplash'
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -248,14 +249,7 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
   }, [businessId, isManager])
 
   if (!profileLoaded) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-gray-400">Loading...</p>
-        </div>
-      </div>
-    )
+    return <AppLoadingSplash message="Loading your workspace..." />
   }
 
   if (user && user.is_verified === false) return null

@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/auth'
 import { adminAPI } from '@/lib/api'
 import { isSuperAdminUser } from '@/lib/utils'
 import DashboardLayout from '@/components/DashboardLayout'
+import AppLoadingSplash from '@/components/AppLoadingSplash'
 
 export default function BusinessLayout({
   children,
@@ -78,14 +79,7 @@ export default function BusinessLayout({
   }, [user?.id, isAuthenticated, profileLoaded, businessId, setBusinessRole, currentBusiness?.role, isSuperAdmin])
 
   if (isLoading || !isAuthenticated || !profileLoaded) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-neutral-light">Loading...</p>
-        </div>
-      </div>
-    )
+    return <AppLoadingSplash message="Preparing your workspace..." />
   }
 
   if (user && !user.is_verified) {
