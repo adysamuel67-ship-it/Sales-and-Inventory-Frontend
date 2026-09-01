@@ -26,7 +26,7 @@ export const Colors = {
   emeraldLight: '#ECFDF5',
 }
 
-export const API_BASE_URL = 'https://smart-sales-and-inventory-ai-tracking.onrender.com'
+export const API_BASE_URL = 'https://smart-sales-inventory.onrender.com'
 
 export const SPACING = {
   xs: 4,
