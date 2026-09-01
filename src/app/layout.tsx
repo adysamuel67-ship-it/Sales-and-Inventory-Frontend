@@ -3,6 +3,8 @@ import './globals.css'
 import { AuthProvider } from '@/lib/auth'
 import RouteLoadingOverlay from '@/components/RouteLoadingOverlay'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: 'Business Bot — Sales & Inventory',
   description: 'Multi-tenant inventory & sales platform for informal market traders',
