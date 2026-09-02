@@ -61,8 +61,39 @@ export default function SalesPage() {
   const [customerName, setCustomerName] = useState('')
   const [customerPhone, setCustomerPhone] = useState('')
   const [customerEmail, setCustomerEmail] = useState('')
+  const [showCustomerPicker, setShowCustomerPicker] = useState(false)
+  const [existingCustomers, setExistingCustomers] = useState<any[]>([])
+  const [customerSearch, setCustomerSearch] = useState('')
 
   const isStaff = isStaffRole(user?.business_role || user?.role)
+
+  const openCustomerPicker = async () => {
+    setShowCustomerPicker(true)
+    setCustomerSearch('')
+    try {
+      const res = await customerAPI.list(businessId)
+      setExistingCustomers(extractArray(res.data))
+    } catch {
+      setExistingCustomers([])
+    }
+  }
+
+  const selectCustomer = (c: any) => {
+    setCustomerName(c.name || '')
+    setCustomerPhone(c.phone || c.phone_number || c.mobile || '')
+    setCustomerEmail(c.email || '')
+    setShowCustomerPicker(false)
+  }
+
+  const filteredCustomers = useMemo(() => {
+    if (!customerSearch.trim()) return existingCustomers
+    const q = customerSearch.toLowerCase()
+    return existingCustomers.filter((c: any) =>
+      (c.name || '').toLowerCase().includes(q) ||
+      (c.phone || c.phone_number || c.mobile || '').includes(q) ||
+      (c.email || '').toLowerCase().includes(q)
+    )
+  }, [existingCustomers, customerSearch])
 
   const loadData = useCallback(async () => {
     if (!businessId) return
@@ -426,8 +457,20 @@ export default function SalesPage() {
                     className="w-full px-3 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                   />
                 </div>
+                <div className="flex items-center justify-between">
+                  <label className="block text-sm font-medium text-gray-700">Customer</label>
+                  <button
+                    type="button"
+                    onClick={openCustomerPicker}
+                    className="text-xs font-medium text-primary hover:text-primary-dark transition-colors flex items-center gap-1"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    Pick Existing
+                  </button>
+                </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Customer Name</label>
                   <input
                     type="text"
                     value={customerName}
@@ -438,17 +481,15 @@ export default function SalesPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Customer Email</label>
                   <input
                     type="email"
                     value={customerEmail}
                     onChange={(e) => setCustomerEmail(e.target.value)}
-                    placeholder="customer@example.com"
+                    placeholder="customer@example.com (optional)"
                     className="w-full px-3 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Customer Phone</label>
                   <input
                     type="tel"
                     value={customerPhone}
@@ -859,6 +900,82 @@ export default function SalesPage() {
       </div>
 
       {detailSale && <SaleDetailModal sale={detailSale} onClose={() => setDetailSale(null)} />}
+
+      {showCustomerPicker && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setShowCustomerPicker(false)} />
+          <div className="relative bg-white rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md max-h-[80vh] flex flex-col shadow-xl">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
+              <div>
+                <h3 className="font-semibold text-gray-900">Select Customer</h3>
+                <p className="text-xs text-neutral-light mt-0.5">{existingCustomers.length} customers available</p>
+              </div>
+              <button onClick={() => setShowCustomerPicker(false)} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-gray-100 transition-colors">
+                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="px-5 py-3 border-b border-gray-100">
+              <input
+                type="text"
+                value={customerSearch}
+                onChange={(e) => setCustomerSearch(e.target.value)}
+                placeholder="Search by name, phone, or email..."
+                autoFocus
+                className="w-full px-3 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+              />
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              {filteredCustomers.length > 0 ? (
+                <div className="divide-y divide-gray-50">
+                  {filteredCustomers.map((c: any) => (
+                    <button
+                      key={c.customer_id ?? c.id}
+                      onClick={() => selectCustomer(c)}
+                      className="w-full text-left px-5 py-3.5 hover:bg-gray-50 active:bg-gray-100 transition-colors flex items-center gap-3"
+                    >
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm shrink-0">
+                        {(c.name || '?').charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-gray-900 text-sm truncate">{c.name}</p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          {(c.phone || c.phone_number) && (
+                            <span className="text-xs text-neutral-light">{c.phone || c.phone_number}</span>
+                          )}
+                          {c.email && (
+                            <span className="text-xs text-neutral-light truncate">{c.email}</span>
+                          )}
+                        </div>
+                      </div>
+                      <svg className="w-4 h-4 text-gray-300 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="px-5 py-10 text-center">
+                  <p className="text-sm text-neutral-light">{customerSearch ? 'No customers match your search' : 'No customers yet'}</p>
+                  {!customerSearch && (
+                    <p className="text-xs text-neutral-light mt-1">Customers are created automatically when you record partial sales</p>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="px-5 py-3 border-t border-gray-200 bg-gray-50 rounded-b-2xl sm:rounded-b-2xl">
+              <button
+                type="button"
+                onClick={() => { setCustomerName(''); setCustomerPhone(''); setCustomerEmail(''); setShowCustomerPicker(false) }}
+                className="w-full py-2.5 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                Enter manually instead
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

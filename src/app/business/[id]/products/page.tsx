@@ -28,7 +28,6 @@ export default function ProductsPage() {
   const [selected, setSelected] = useState<Set<number>>(new Set())
   const [selectMode, setSelectMode] = useState(false)
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false)
-  const [bulkDeleting, setBulkDeleting] = useState(false)
   const [editProduct, setEditProduct] = useState<any>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; product: any }>({ open: false, product: null })
   const [categories, setCategories] = useState<string[]>([])
@@ -144,15 +143,17 @@ export default function ProductsPage() {
     }
   }
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!deleteConfirm.product) return
-    try {
-      await productAPI.delete(businessId!, deleteConfirm.product.product_id)
-      setDeleteConfirm({ open: false, product: null })
-      load()
-    } catch (err: any) {
-      setError(parseApiError(err))
-    }
+    const product = deleteConfirm.product
+    const productId = product.product_id
+    setDeleteConfirm({ open: false, product: null })
+    setAllProducts(prev => prev.filter(p => p.product_id !== productId))
+    setUploadNotice(`${product.name} deleted`)
+    productAPI.delete(businessId!, productId).catch((err: any) => {
+      setAllProducts(prev => [...prev, product])
+      setError(parseApiError(err) || 'Failed to delete product')
+    })
   }
 
   const toggleSelect = (id: number) => {
@@ -214,29 +215,26 @@ export default function ProductsPage() {
     }
   }
 
-  const handleBulkDelete = async () => {
+  const handleBulkDelete = () => {
     if (selected.size === 0) return
-    setBulkDeleting(true)
-    let deleted = 0
-    try {
-      for (const id of Array.from(selected)) {
-        try {
-          await productAPI.delete(businessId!, id)
-          deleted++
-        } catch (err: any) {
-          setError(parseApiError(err))
-        }
+    const idsToDelete = new Set(selected)
+    const removedProducts = allProducts.filter(p => idsToDelete.has(p.product_id))
+    setBulkDeleteConfirm(false)
+    setAllProducts(prev => prev.filter(p => !idsToDelete.has(p.product_id)))
+    setSelected(new Set())
+    setSelectMode(false)
+    setUploadNotice(`${idsToDelete.size} product${idsToDelete.size > 1 ? 's' : ''} deleted`)
+    let failed = 0
+    const promises = Array.from(idsToDelete).map(id =>
+      productAPI.delete(businessId!, id).catch(() => { failed++ })
+    )
+    Promise.all(promises).then(() => {
+      if (failed > 0) {
+        setAllProducts(prev => [...prev, ...removedProducts.filter(p => idsToDelete.has(p.product_id))])
+        setError(`${failed} product${failed > 1 ? 's' : ''} failed to delete`)
+        load()
       }
-      setBulkDeleteConfirm(false)
-      if (deleted > 0) {
-        setUploadNotice(`${deleted} product${deleted > 1 ? 's' : ''} deleted successfully.`)
-      }
-      setSelected(new Set())
-      setSelectMode(false)
-      load()
-    } finally {
-      setBulkDeleting(false)
-    }
+    })
   }
 
   const canEdit = isAdminRole(user?.business_role || user?.role)
@@ -702,8 +700,8 @@ export default function ProductsPage() {
             </p>
             <div className="flex gap-2">
               <button onClick={() => setBulkDeleteConfirm(false)} className="flex-1 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors">Cancel</button>
-              <button onClick={handleBulkDelete} disabled={bulkDeleting} className="flex-1 py-2.5 bg-danger text-white rounded-xl text-sm font-medium hover:bg-red-600 transition-colors disabled:opacity-50">
-                {bulkDeleting ? 'Deleting...' : `Delete ${selected.size}`}
+              <button onClick={handleBulkDelete} className="flex-1 py-2.5 bg-danger text-white rounded-xl text-sm font-medium hover:bg-red-600 transition-colors">
+                Delete {selected.size}
               </button>
             </div>
           </div>

@@ -22,13 +22,13 @@ export default memo(function KpiCard({ title, value, subtitle, icon, color, tren
   const styles = colorMap[color]
 
   return (
-    <div className="kpi-card bg-surface rounded-2xl border border-gray-200 p-5 shadow-sm hover:shadow-md transition-shadow">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-xs font-medium text-neutral-light">{title}</p>
-          <p className="text-xl sm:text-2xl font-bold text-gray-900 mt-1 truncate">{value}</p>
+    <div className="kpi-card bg-surface rounded-2xl border border-gray-200 p-4 sm:p-5 shadow-sm hover:shadow-md transition-shadow">
+      <div className="flex items-start justify-between gap-2 sm:gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="text-[11px] sm:text-xs font-medium text-neutral-light truncate">{title}</p>
+          <p className="text-base sm:text-xl lg:text-2xl font-bold text-gray-900 mt-1 break-words leading-tight">{value}</p>
         </div>
-        <div className={`w-11 h-11 rounded-xl ${styles.iconBg} ${styles.iconText} flex items-center justify-center shrink-0`}>
+        <div className={`w-9 h-9 sm:w-11 sm:h-11 rounded-xl ${styles.iconBg} ${styles.iconText} flex items-center justify-center shrink-0`}>
           {icon}
         </div>
       </div>
