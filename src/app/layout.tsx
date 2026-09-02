@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { AuthProvider } from '@/lib/auth'
-import RouteLoadingOverlay from '@/components/RouteLoadingOverlay'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,7 +14,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body className="antialiased">
         <AuthProvider>
-          <RouteLoadingOverlay />
           {children}
         </AuthProvider>
       </body>
