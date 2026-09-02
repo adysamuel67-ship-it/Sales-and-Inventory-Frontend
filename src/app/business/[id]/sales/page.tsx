@@ -289,7 +289,11 @@ export default function SalesPage() {
       const res = await saleAPI.get(businessId, sale.id)
       const raw = res.data?.data ?? res.data
       const enriched = mapSale(raw)
-      setDetailSale({ ...sale, ...enriched })
+      const merged: any = { ...sale }
+      Object.entries(enriched).forEach(([key, val]: any) => {
+        if (val !== undefined && val !== null && val !== '') merged[key] = val
+      })
+      setDetailSale(merged)
     } catch {
     }
   }
