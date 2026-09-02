@@ -283,6 +283,17 @@ export default function SalesPage() {
     }
   }
 
+  const handleDetail = async (sale: SaleRecord) => {
+    setDetailSale(sale)
+    try {
+      const res = await saleAPI.get(businessId, sale.id)
+      const raw = res.data?.data ?? res.data
+      const enriched = mapSale(raw)
+      setDetailSale({ ...sale, ...enriched })
+    } catch {
+    }
+  }
+
   const handleDelete = async (saleId: number) => {
     if (!businessId) return
     try {
@@ -656,7 +667,7 @@ export default function SalesPage() {
                     const isBorrow = isPartial || sale.payment_status === 'partial' || sale.payment_status === 'borrowed' || sale.payment_status === 'unpaid'
                     const balance = sale.amount - (sale.amount_paid ?? sale.amount)
                     return (
-                    <tr key={sale.id} className="border-t border-gray-50 hover:bg-gray-50/50 cursor-pointer transition-colors" onClick={() => setDetailSale(sale)}>
+                    <tr key={sale.id} className="border-t border-gray-50 hover:bg-gray-50/50 cursor-pointer transition-colors" onClick={() => handleDetail(sale)}>
                       <td className="px-5 py-3.5 font-medium text-gray-900">
                         <div className="flex items-center gap-2">
                           {isBorrow && <span className="w-1.5 h-1.5 rounded-full bg-warning shrink-0" />}
@@ -767,7 +778,7 @@ export default function SalesPage() {
                   <div
                     key={sale.id}
                     className="p-4 cursor-pointer hover:bg-gray-50/50 transition-colors active:bg-gray-100"
-                    onClick={() => setDetailSale(sale)}
+                    onClick={() => handleDetail(sale)}
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">

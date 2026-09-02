@@ -95,7 +95,7 @@ export default function SaleDetailModal({ sale, onClose }: Props) {
 
           {(sale.customer_name || sale.customer_phone || sale.customer_email) && (
             <div className="bg-surfaceAlt rounded-xl p-4">
-              <p className="text-xs text-neutral-light mb-2">Customer</p>
+              <p className="text-xs text-neutral-light mb-2">{isPartial ? 'Borrowed By' : 'Customer'}</p>
               <div className="space-y-2">
                 {sale.customer_name && (
                   <div className="flex items-center gap-2">
