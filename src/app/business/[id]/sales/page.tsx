@@ -64,6 +64,9 @@ export default function SalesPage() {
   const [showCustomerPicker, setShowCustomerPicker] = useState(false)
   const [existingCustomers, setExistingCustomers] = useState<any[]>([])
   const [customerSearch, setCustomerSearch] = useState('')
+  const [selectedSales, setSelectedSales] = useState<Set<number>>(new Set())
+  const [selectMode, setSelectMode] = useState(false)
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false)
 
   const isStaff = isStaffRole(user?.business_role || user?.role)
 
@@ -308,6 +311,51 @@ export default function SalesPage() {
       const detail = err.response?.data?.detail
       setError(typeof detail === 'string' ? detail : 'Failed to delete sale')
     }
+  }
+
+  const toggleSelect = (id: number) => {
+    setSelectedSales((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const toggleSelectAll = () => {
+    const ids = paginatedSales.map((s) => s.id)
+    const allSelected = ids.length > 0 && ids.every((id) => selectedSales.has(id))
+    setSelectedSales((prev) => {
+      const next = new Set(prev)
+      if (allSelected) ids.forEach((id) => next.delete(id))
+      else ids.forEach((id) => next.add(id))
+      return next
+    })
+  }
+
+  const clearSelection = () => {
+    setSelectedSales(new Set())
+    setSelectMode(false)
+  }
+
+  const handleBulkDelete = () => {
+    if (selectedSales.size === 0) return
+    const idsToDelete = new Set(selectedSales)
+    setBulkDeleteConfirm(false)
+    setAllSales((prev) => prev.filter((s) => !idsToDelete.has(s.id)))
+    setSelectedSales(new Set())
+    setSelectMode(false)
+    setSuccess(`${idsToDelete.size} sale${idsToDelete.size > 1 ? 's' : ''} deleted`)
+    let failed = 0
+    Array.from(idsToDelete).forEach((id) => {
+      saleAPI.delete(businessId, id).catch(() => { failed++ })
+    })
+    setTimeout(() => {
+      if (failed > 0) {
+        setError(`${failed} sale${failed > 1 ? 's' : ''} failed to delete`)
+        loadData()
+      }
+    }, 500)
   }
 
   return (
@@ -643,6 +691,49 @@ export default function SalesPage() {
 
       {/* Sales list */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        {!isStaff && !selectMode && (
+          <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-gray-100">
+            <span className="text-sm font-medium text-gray-900">Sales</span>
+            <button
+              onClick={() => { setSelectMode(true); setSelectedSales(new Set()) }}
+              className="text-xs font-medium text-primary hover:text-primary-dark transition-colors flex items-center gap-1.5"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+              </svg>
+              Bulk Select
+            </button>
+          </div>
+        )}
+        {selectMode && (
+          <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-primary/20 bg-primary/5">
+            <label className="flex items-center gap-2 text-sm font-medium text-primary cursor-pointer">
+              <input
+                type="checkbox"
+                checked={paginatedSales.length > 0 && paginatedSales.every((s) => selectedSales.has(s.id))}
+                onChange={toggleSelectAll}
+                className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+              />
+              Select all on page
+            </label>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-primary">{selectedSales.size} selected</span>
+              <button
+                onClick={clearSelection}
+                className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => setBulkDeleteConfirm(true)}
+                disabled={selectedSales.size === 0}
+                className="px-3 py-1.5 text-xs font-medium text-white bg-danger rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Delete ({selectedSales.size})
+              </button>
+            </div>
+          </div>
+        )}
         {loading ? (
           <div className="px-5 py-12 text-center">
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
@@ -654,6 +745,17 @@ export default function SalesPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-gray-200">
+                    {selectMode && (
+                      <th className="px-4 py-3 w-10">
+                        <input
+                          type="checkbox"
+                          checked={paginatedSales.length > 0 && paginatedSales.every((s) => selectedSales.has(s.id))}
+                          onChange={toggleSelectAll}
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                        />
+                      </th>
+                    )}
                     <th className="text-left px-5 py-3 font-medium">Product</th>
                     <th className="text-left px-5 py-3 font-medium">Customer</th>
                     <th className="text-left px-5 py-3 font-medium">Sold By</th>
@@ -672,6 +774,17 @@ export default function SalesPage() {
                     const balance = sale.amount - (sale.amount_paid ?? sale.amount)
                     return (
                     <tr key={sale.id} className="border-t border-gray-50 hover:bg-gray-50/50 cursor-pointer transition-colors" onClick={() => handleDetail(sale)}>
+                    {selectMode && (
+                      <td className="px-4 py-3.5 w-10">
+                        <input
+                          type="checkbox"
+                          checked={selectedSales.has(sale.id)}
+                          onChange={() => toggleSelect(sale.id)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                        />
+                      </td>
+                    )}
                       <td className="px-5 py-3.5 font-medium text-gray-900">
                         <div className="flex items-center gap-2">
                           {isBorrow && <span className="w-1.5 h-1.5 rounded-full bg-warning shrink-0" />}
@@ -785,6 +898,16 @@ export default function SalesPage() {
                     onClick={() => handleDetail(sale)}
                   >
                     <div className="flex items-start justify-between gap-2">
+                      {selectMode && (
+                        <div className="shrink-0 pt-0.5" onClick={(e) => e.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            checked={selectedSales.has(sale.id)}
+                            onChange={() => toggleSelect(sale.id)}
+                            className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                          />
+                        </div>
+                      )}
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
                           {isBorrow && <span className="w-1.5 h-1.5 rounded-full bg-warning shrink-0" />}
@@ -915,6 +1038,37 @@ export default function SalesPage() {
       </div>
 
       {detailSale && <SaleDetailModal sale={detailSale} onClose={() => setDetailSale(null)} />}
+
+      {bulkDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setBulkDeleteConfirm(false)} />
+          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
+            <div className="w-12 h-12 rounded-xl bg-danger/10 flex items-center justify-center text-danger mb-4">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </div>
+            <h3 className="font-semibold text-gray-900 text-lg mb-1">Delete Sales</h3>
+            <p className="text-sm text-neutral-light mb-5">
+              Are you sure you want to delete <strong>{selectedSales.size}</strong> selected sale{selectedSales.size > 1 ? 's' : ''}? This cannot be undone.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setBulkDeleteConfirm(false)}
+                className="flex-1 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleBulkDelete}
+                className="flex-1 py-2.5 bg-danger text-white rounded-xl text-sm font-medium hover:bg-red-600 transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showCustomerPicker && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
