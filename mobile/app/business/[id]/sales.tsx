@@ -15,6 +15,7 @@ import Card from '@/components/ui/Card'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import EmptyState from '@/components/ui/EmptyState'
 import AlertBadge from '@/components/ui/AlertBadge'
+import GradientHero from '@/components/ui/GradientHero'
 
 const { width } = Dimensions.get('window')
 
@@ -320,37 +321,33 @@ export default function SalesScreen() {
 
   return (
     <View style={s.root}>
-      <View style={s.heroBanner}>
-        <View style={s.heroCircle1} />
-        <View style={s.heroCircle2} />
-        <View style={s.heroContent}>
-          <View style={s.heroTop}>
-            <View>
-              <Text style={s.heroTitle}>Sales</Text>
-              <Text style={s.heroSubtitle}>{sales.length} transactions recorded</Text>
-            </View>
-            <TouchableOpacity style={s.addBtn} onPress={() => setShowRecordModal(true)}>
-              <Ionicons name="add" size={22} color="#FFF" />
-            </TouchableOpacity>
+      <GradientHero topInset={54} height={140} bubbles>
+        <View style={s.heroTop}>
+          <View>
+            <Text style={s.heroTitle}>Sales</Text>
+            <Text style={s.heroSubtitle}>{sales.length} transactions recorded</Text>
           </View>
-          <View style={s.heroQuickStats}>
-            <View style={s.heroStat}>
-              <Text style={s.heroStatValue}>{sales.length}</Text>
-              <Text style={s.heroStatLabel}>Sales</Text>
-            </View>
-            <View style={s.heroStatDivider} />
-            <View style={s.heroStat}>
-              <Text style={s.heroStatValue}>{totalItems}</Text>
-              <Text style={s.heroStatLabel}>Items</Text>
-            </View>
-            <View style={s.heroStatDivider} />
-            <View style={s.heroStat}>
-              <Text style={s.heroStatValue}>{formatCurrency(totalAmount).replace('GH₵ ', '₵')}</Text>
-              <Text style={s.heroStatLabel}>Total</Text>
-            </View>
+          <TouchableOpacity style={s.addBtn} onPress={() => setShowRecordModal(true)}>
+            <Ionicons name="add" size={22} color="#FFF" />
+          </TouchableOpacity>
+        </View>
+        <View style={s.heroQuickStats}>
+          <View style={s.heroStat}>
+            <Text style={s.heroStatValue}>{sales.length}</Text>
+            <Text style={s.heroStatLabel}>Sales</Text>
+          </View>
+          <View style={s.heroStatDivider} />
+          <View style={s.heroStat}>
+            <Text style={s.heroStatValue}>{totalItems}</Text>
+            <Text style={s.heroStatLabel}>Items</Text>
+          </View>
+          <View style={s.heroStatDivider} />
+          <View style={s.heroStat}>
+            <Text style={s.heroStatValue}>{formatCurrency(totalAmount).replace('GH₵ ', '₵')}</Text>
+            <Text style={s.heroStatLabel}>Total</Text>
           </View>
         </View>
-      </View>
+      </GradientHero>
 
       <View style={s.stickySection}>
         {error ? <AlertBadge message={error} type="error" /> : null}
@@ -590,23 +587,15 @@ export default function SalesScreen() {
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.background },
 
-  heroBanner: {
-    backgroundColor: Colors.navy,
-    paddingTop: 56, paddingBottom: 20, paddingHorizontal: 20,
-    position: 'relative', overflow: 'hidden',
-  },
-  heroCircle1: { position: 'absolute', top: -60, right: -40, width: 160, height: 160, borderRadius: 80, backgroundColor: 'rgba(37,99,235,0.3)' },
-  heroCircle2: { position: 'absolute', bottom: -20, left: -40, width: 120, height: 120, borderRadius: 60, backgroundColor: 'rgba(37,99,235,0.2)' },
-  heroContent: { position: 'relative', zIndex: 1 },
-  heroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  heroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingHorizontal: 20, paddingTop: 2 },
   heroTitle: { fontSize: 22, fontWeight: '800', color: '#FFFFFF' },
-  heroSubtitle: { fontSize: 13, color: 'rgba(255,255,255,0.5)', marginTop: 4 },
+  heroSubtitle: { fontSize: 13, color: 'rgba(255,255,255,0.75)', marginTop: 4 },
   addBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' },
 
   heroQuickStats: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around',
     backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: BORDER_RADIUS.xl,
-    marginTop: 16, paddingVertical: 14, paddingHorizontal: 12,
+    marginTop: 16, paddingVertical: 14, paddingHorizontal: 12, marginHorizontal: 20,
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)',
   },
   heroStat: { alignItems: 'center', flex: 1 },

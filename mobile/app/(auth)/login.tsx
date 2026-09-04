@@ -13,6 +13,7 @@ import { parseApiError } from '@/lib/utils'
 import { Colors, BORDER_RADIUS } from '@/lib/constants'
 import BusinessBotLogo from '@/components/BusinessBotLogo'
 import AlertBadge from '@/components/ui/AlertBadge'
+import GradientHero from '@/components/ui/GradientHero'
 
 const { width } = Dimensions.get('window')
 
@@ -122,10 +123,7 @@ export default function LoginScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* ── Hero ── */}
-        <View style={styles.hero}>
-          <View style={styles.heroCircle1} />
-          <View style={styles.heroCircle2} />
-          <View style={styles.heroCircle3} />
+        <GradientHero height={248} topInset={72} bubbles>
           <View style={styles.heroContent}>
             <View style={styles.logoContainer}>
               <BusinessBotLogo size={52} />
@@ -143,7 +141,7 @@ export default function LoginScreen() {
               </View>
             ))}
           </View>
-        </View>
+        </GradientHero>
 
         {/* ── Feature Showcase ── */}
         <View style={styles.section}>
@@ -324,29 +322,7 @@ const styles = StyleSheet.create({
   scrollContent: { paddingBottom: 0 },
 
   /* ── Hero ── */
-  hero: {
-    backgroundColor: Colors.primary,
-    paddingTop: 72,
-    paddingBottom: 36,
-    paddingHorizontal: 24,
-    overflow: 'hidden',
-  },
-  heroCircle1: {
-    position: 'absolute', top: -100, right: -60,
-    width: 260, height: 260, borderRadius: 130,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-  },
-  heroCircle2: {
-    position: 'absolute', top: 30, left: -80,
-    width: 200, height: 200, borderRadius: 100,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-  },
-  heroCircle3: {
-    position: 'absolute', bottom: -40, right: 40,
-    width: 120, height: 120, borderRadius: 60,
-    backgroundColor: 'rgba(255,255,255,0.04)',
-  },
-  heroContent: { alignItems: 'center', position: 'relative', zIndex: 1 },
+  heroContent: { alignItems: 'center', position: 'relative', zIndex: 1, paddingHorizontal: 24 },
   logoContainer: {
     width: 80, height: 80, borderRadius: 22,
     backgroundColor: 'rgba(255,255,255,0.15)',
@@ -361,6 +337,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', justifyContent: 'space-around',
     marginTop: 28, backgroundColor: 'rgba(255,255,255,0.12)',
     borderRadius: BORDER_RADIUS.xl, paddingVertical: 16, paddingHorizontal: 12,
+    marginHorizontal: 20,
   },
   statItem: { alignItems: 'center', flex: 1 },
   statValue: { fontSize: 18, fontWeight: '800', color: '#FFFFFF' },

@@ -1,19 +1,19 @@
 import { Tabs } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import { Colors } from '@/lib/constants'
-import { View, Text, StyleSheet } from 'react-native'
-import BusinessBotLogo from '@/components/BusinessBotLogo'
+import { Colors, SHADOW } from '@/lib/constants'
+import { StyleSheet, View } from 'react-native'
 
 export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#FFFFFF',
-        tabBarInactiveTintColor: 'rgba(255,255,255,0.4)',
+        tabBarActiveTintColor: Colors.primary,
+        tabBarInactiveTintColor: Colors.neutralLight,
         tabBarStyle: styles.tabBar,
         tabBarLabelStyle: styles.tabLabel,
         tabBarHideOnKeyboard: true,
+        tabBarShowLabel: true,
       }}
     >
       <Tabs.Screen
@@ -21,7 +21,9 @@ export default function TabsLayout() {
         options={{
           title: 'Home',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'home' : 'home-outline'} size={22} color={color} />
+            <View style={[styles.iconWrap, focused && styles.iconActive]}>
+              <Ionicons name={focused ? 'home' : 'home-outline'} size={21} color={focused ? Colors.primary : color} />
+            </View>
           ),
         }}
       />
@@ -30,7 +32,9 @@ export default function TabsLayout() {
         options={{
           title: 'Sales',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'cash' : 'cash-outline'} size={22} color={color} />
+            <View style={[styles.iconWrap, focused && styles.iconActive]}>
+              <Ionicons name={focused ? 'cash' : 'cash-outline'} size={21} color={focused ? Colors.primary : color} />
+            </View>
           ),
         }}
       />
@@ -39,7 +43,9 @@ export default function TabsLayout() {
         options={{
           title: 'Products',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'cube' : 'cube-outline'} size={22} color={color} />
+            <View style={[styles.iconWrap, focused && styles.iconActive]}>
+              <Ionicons name={focused ? 'cube' : 'cube-outline'} size={21} color={focused ? Colors.primary : color} />
+            </View>
           ),
         }}
       />
@@ -48,7 +54,9 @@ export default function TabsLayout() {
         options={{
           title: 'Customers',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'people' : 'people-outline'} size={22} color={color} />
+            <View style={[styles.iconWrap, focused && styles.iconActive]}>
+              <Ionicons name={focused ? 'people' : 'people-outline'} size={21} color={focused ? Colors.primary : color} />
+            </View>
           ),
         }}
       />
@@ -57,7 +65,9 @@ export default function TabsLayout() {
         options={{
           title: 'More',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'menu' : 'menu-outline'} size={22} color={color} />
+            <View style={[styles.iconWrap, focused && styles.iconActive]}>
+              <Ionicons name={focused ? 'menu' : 'menu-outline'} size={21} color={focused ? Colors.primary : color} />
+            </View>
           ),
         }}
       />
@@ -67,22 +77,28 @@ export default function TabsLayout() {
 
 const styles = StyleSheet.create({
   tabBar: {
-    backgroundColor: Colors.navy,
-    borderTopColor: 'rgba(255,255,255,0.06)',
-    borderTopWidth: 1,
-    paddingBottom: 8,
-    paddingTop: 8,
-    height: 68,
-    elevation: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
+    backgroundColor: Colors.surface,
+    borderTopColor: Colors.border,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingTop: 6,
+    height: 62,
+    ...SHADOW.lg,
+    elevation: 12,
   },
   tabLabel: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '600',
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
     marginTop: 2,
+  },
+  iconWrap: {
+    width: 34,
+    height: 30,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconActive: {
+    backgroundColor: Colors.primaryLight,
   },
 })

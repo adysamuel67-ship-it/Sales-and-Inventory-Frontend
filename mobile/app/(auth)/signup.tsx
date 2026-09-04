@@ -11,6 +11,7 @@ import { Colors, BORDER_RADIUS } from '@/lib/constants'
 import { useAuth } from '@/lib/auth'
 import BusinessBotLogo from '@/components/BusinessBotLogo'
 import AlertBadge from '@/components/ui/AlertBadge'
+import GradientHero from '@/components/ui/GradientHero'
 
 const { width } = Dimensions.get('window')
 
@@ -79,13 +80,10 @@ export default function SignupScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* ── Hero ── */}
-        <View style={styles.hero}>
+        <GradientHero height={250} topInset={72} bubbles>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Ionicons name="arrow-back" size={22} color="#FFF" />
           </TouchableOpacity>
-          <View style={styles.heroCircle1} />
-          <View style={styles.heroCircle2} />
-          <View style={styles.heroCircle3} />
           <View style={styles.heroContent}>
             <View style={styles.logoContainer}>
               <BusinessBotLogo size={48} />
@@ -105,7 +103,7 @@ export default function SignupScreen() {
             </View>
             <Text style={styles.socialProofText}>Trusted by business owners across Ghana</Text>
           </View>
-        </View>
+        </GradientHero>
 
         {/* ── Benefits ── */}
         <View style={styles.section}>
@@ -294,33 +292,13 @@ const styles = StyleSheet.create({
   scrollContent: { paddingBottom: 0 },
 
   /* ── Hero ── */
-  hero: {
-    backgroundColor: Colors.primaryDark,
-    paddingTop: 64, paddingBottom: 32, paddingHorizontal: 24,
-    overflow: 'hidden',
-  },
   backBtn: {
-    position: 'absolute', left: 20, top: 56,
+    position: 'absolute', left: 20, top: 8,
     width: 40, height: 40, borderRadius: 20,
     backgroundColor: 'rgba(255,255,255,0.15)',
     alignItems: 'center', justifyContent: 'center', zIndex: 10,
   },
-  heroCircle1: {
-    position: 'absolute', top: -80, left: -60,
-    width: 220, height: 220, borderRadius: 110,
-    backgroundColor: 'rgba(255,255,255,0.07)',
-  },
-  heroCircle2: {
-    position: 'absolute', top: 20, right: -40,
-    width: 160, height: 160, borderRadius: 80,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-  },
-  heroCircle3: {
-    position: 'absolute', bottom: -30, left: 40,
-    width: 100, height: 100, borderRadius: 50,
-    backgroundColor: 'rgba(255,255,255,0.04)',
-  },
-  heroContent: { alignItems: 'center', position: 'relative', zIndex: 1 },
+  heroContent: { alignItems: 'center', position: 'relative', zIndex: 1, paddingTop: 8, paddingHorizontal: 24 },
   logoContainer: {
     width: 72, height: 72, borderRadius: 20,
     backgroundColor: 'rgba(255,255,255,0.15)',

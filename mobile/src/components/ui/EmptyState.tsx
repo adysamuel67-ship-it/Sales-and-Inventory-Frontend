@@ -13,7 +13,7 @@ export default function EmptyState({ icon = 'folder-open-outline', title, messag
   return (
     <View style={styles.container}>
       <View style={styles.iconCircle}>
-        <Ionicons name={icon} size={24} color={Colors.primary} />
+        <Ionicons name={icon} size={26} color={Colors.primary} />
       </View>
       <Text style={styles.title}>{title}</Text>
       {message && <Text style={styles.message}>{message}</Text>}
@@ -30,17 +30,19 @@ const styles = StyleSheet.create({
     minHeight: 200,
   },
   iconCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: BORDER_RADIUS.xl,
+    width: 64,
+    height: 64,
+    borderRadius: BORDER_RADIUS.xxxl,
     backgroundColor: Colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: Colors.primary + '22',
   },
   title: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 17,
+    fontWeight: '700',
     color: Colors.text,
   },
   message: {
@@ -48,5 +50,7 @@ const styles = StyleSheet.create({
     color: Colors.textLight,
     marginTop: 6,
     textAlign: 'center',
+    lineHeight: 20,
+    maxWidth: 260,
   },
 })

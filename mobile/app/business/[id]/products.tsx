@@ -16,6 +16,7 @@ import KpiCard from '@/components/ui/KpiCard'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import EmptyState from '@/components/ui/EmptyState'
 import AlertBadge from '@/components/ui/AlertBadge'
+import GradientHero from '@/components/ui/GradientHero'
 
 const UNITS = ['units', 'kg', 'g', 'L', 'mL', 'pcs', 'boxes', 'bags']
 
@@ -188,42 +189,38 @@ export default function ProductsScreen() {
 
   return (
     <View style={s.root}>
-      <View style={s.heroBanner}>
-        <View style={s.heroCircle1} />
-        <View style={s.heroCircle2} />
-        <View style={s.heroContent}>
-          <View style={s.heroTop}>
-            <View>
-              <Text style={s.heroTitle}>Products</Text>
-              <Text style={s.heroSubtitle}>{products.length} products in inventory</Text>
-            </View>
-            <TouchableOpacity style={s.addBtn} onPress={openAddModal}>
-              <Ionicons name="add" size={22} color="#FFF" />
-            </TouchableOpacity>
+      <GradientHero topInset={54} height={140} bubbles>
+        <View style={s.heroTop}>
+          <View>
+            <Text style={s.heroTitle}>Products</Text>
+            <Text style={s.heroSubtitle}>{products.length} products in inventory</Text>
           </View>
-          <View style={s.heroQuickStats}>
-            <View style={s.heroStat}>
-              <Text style={s.heroStatValue}>{products.length}</Text>
-              <Text style={s.heroStatLabel}>Total</Text>
-            </View>
-            <View style={s.heroStatDivider} />
-            <View style={s.heroStat}>
-              <Text style={[s.heroStatValue, lowStockCount > 0 && { color: Colors.warning }]}>{lowStockCount}</Text>
-              <Text style={s.heroStatLabel}>Low Stock</Text>
-            </View>
-            <View style={s.heroStatDivider} />
-            <View style={s.heroStat}>
-              <Text style={[s.heroStatValue, outOfStockCount > 0 && { color: Colors.danger }]}>{outOfStockCount}</Text>
-              <Text style={s.heroStatLabel}>Out</Text>
-            </View>
-            <View style={s.heroStatDivider} />
-            <View style={s.heroStat}>
-              <Text style={s.heroStatValue}>{formatCurrency(totalValue).replace('GH₵ ', '₵')}</Text>
-              <Text style={s.heroStatLabel}>Value</Text>
-            </View>
+          <TouchableOpacity style={s.addBtn} onPress={openAddModal}>
+            <Ionicons name="add" size={22} color="#FFF" />
+          </TouchableOpacity>
+        </View>
+        <View style={s.heroQuickStats}>
+          <View style={s.heroStat}>
+            <Text style={s.heroStatValue}>{products.length}</Text>
+            <Text style={s.heroStatLabel}>Total</Text>
+          </View>
+          <View style={s.heroStatDivider} />
+          <View style={s.heroStat}>
+            <Text style={[s.heroStatValue, lowStockCount > 0 && { color: '#FDE68A' }]}>{lowStockCount}</Text>
+            <Text style={s.heroStatLabel}>Low Stock</Text>
+          </View>
+          <View style={s.heroStatDivider} />
+          <View style={s.heroStat}>
+            <Text style={[s.heroStatValue, outOfStockCount > 0 && { color: '#FCA5A5' }]}>{outOfStockCount}</Text>
+            <Text style={s.heroStatLabel}>Out</Text>
+          </View>
+          <View style={s.heroStatDivider} />
+          <View style={s.heroStat}>
+            <Text style={s.heroStatValue}>{formatCurrency(totalValue).replace('GH₵ ', '₵')}</Text>
+            <Text style={s.heroStatLabel}>Value</Text>
           </View>
         </View>
-      </View>
+      </GradientHero>
 
       <View style={s.stickySection}>
         {error ? <AlertBadge message={error} type="error" /> : null}
@@ -426,29 +423,21 @@ export default function ProductsScreen() {
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.background },
 
-  heroBanner: {
-    backgroundColor: Colors.navy,
-    paddingTop: 56, paddingBottom: 20, paddingHorizontal: 20,
-    position: 'relative', overflow: 'hidden',
-  },
-  heroCircle1: { position: 'absolute', top: -60, right: -40, width: 160, height: 160, borderRadius: 80, backgroundColor: 'rgba(37,99,235,0.3)' },
-  heroCircle2: { position: 'absolute', bottom: -20, left: -40, width: 120, height: 120, borderRadius: 60, backgroundColor: 'rgba(37,99,235,0.2)' },
-  heroContent: { position: 'relative', zIndex: 1 },
-  heroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  heroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingHorizontal: 20, paddingTop: 2 },
   heroTitle: { fontSize: 22, fontWeight: '800', color: '#FFFFFF' },
-  heroSubtitle: { fontSize: 13, color: 'rgba(255,255,255,0.5)', marginTop: 4 },
-  addBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' },
+  heroSubtitle: { fontSize: 13, color: 'rgba(255,255,255,0.75)', marginTop: 4 },
+  addBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.25)' },
 
   heroQuickStats: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around',
-    backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: BORDER_RADIUS.xl,
-    marginTop: 16, paddingVertical: 14, paddingHorizontal: 12,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: 'rgba(255,255,255,0.13)', borderRadius: BORDER_RADIUS.xl,
+    marginTop: 16, paddingVertical: 14, paddingHorizontal: 12, marginHorizontal: 20,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.16)',
   },
   heroStat: { alignItems: 'center', flex: 1 },
-  heroStatValue: { fontSize: 15, fontWeight: '800', color: '#FFFFFF' },
-  heroStatLabel: { fontSize: 10, color: 'rgba(255,255,255,0.5)', marginTop: 2, fontWeight: '500' },
-  heroStatDivider: { width: 1, height: 24, backgroundColor: 'rgba(255,255,255,0.1)' },
+  heroStatValue: { fontSize: 16, fontWeight: '800', color: '#FFFFFF' },
+  heroStatLabel: { fontSize: 10, color: 'rgba(255,255,255,0.7)', marginTop: 2, fontWeight: '600' },
+  heroStatDivider: { width: 1, height: 24, backgroundColor: 'rgba(255,255,255,0.16)' },
 
   stickySection: { backgroundColor: Colors.surface, borderBottomWidth: 1, borderBottomColor: Colors.border, paddingBottom: 8 },
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl, Dimensions, Modal as RNModal,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl, Modal as RNModal,
 } from 'react-native'
 import { useRouter, useLocalSearchParams } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
@@ -13,9 +13,8 @@ import { useAuth } from '@/lib/auth'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import AlertBadge from '@/components/ui/AlertBadge'
 import Card from '@/components/ui/Card'
-
-const { width } = Dimensions.get('window')
-const CARD_WIDTH = (width - 44) / 2
+import GradientHero from '@/components/ui/GradientHero'
+import KpiCard from '@/components/ui/KpiCard'
 
 const DATE_PRESETS = [
   { label: '7d', days: 7 },
@@ -163,43 +162,39 @@ export default function BusinessDashboard() {
       contentContainerStyle={styles.content}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[Colors.primary]} />}
     >
-      <View style={styles.heroBanner}>
-        <View style={styles.heroCircle1} />
-        <View style={styles.heroCircle2} />
-        <View style={styles.heroCircle3} />
-        <View style={styles.heroContent}>
-          <View style={styles.heroTop}>
-            <View>
-              <Text style={styles.heroGreeting}>Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 17 ? 'afternoon' : 'evening'} 👋</Text>
-              <Text style={styles.heroName}>{user?.name?.split(' ')[0] || 'User'}</Text>
-              <Text style={styles.heroSubtitle}>{currentBusiness?.name || 'Your Business'}</Text>
+      <GradientHero topInset={54} height={196}>
+        <View style={styles.heroInner}>
+          <View style={styles.heroTopRow}>
+            <Text style={styles.heroGreeting}>Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 17 ? 'afternoon' : 'evening'} 👋</Text>
+            <View style={styles.heroActions}>
+              <TouchableOpacity style={styles.heroIconBtn} onPress={() => router.push(`/business/${businessId}/notifications` as any)}>
+                <Ionicons name="notifications-outline" size={20} color="#fff" />
+                <View style={styles.heroNotifDot} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => router.push('/profile')} style={styles.heroAvatarBtn}>
+                <View style={styles.heroAvatar}>
+                  <Text style={styles.heroAvatarText}>{(user?.name || 'U')[0]?.toUpperCase()}</Text>
+                </View>
+                <View style={styles.heroOnlineDot} />
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity onPress={() => router.push('/profile')} style={styles.heroAvatarBtn}>
-              <View style={styles.heroAvatar}>
-                <Text style={styles.heroAvatarText}>{(user?.name || 'U')[0]?.toUpperCase()}</Text>
-              </View>
-              <View style={styles.heroOnlineDot} />
-            </TouchableOpacity>
           </View>
 
-          <View style={styles.heroQuickStats}>
-            <View style={styles.heroStat}>
-              <Text style={styles.heroStatValue}>{summary?.total_sales ?? 0}</Text>
-              <Text style={styles.heroStatLabel}>Sales</Text>
+          <View style={styles.heroTitleBlock}>
+            <Text style={styles.heroName}>{user?.name?.split(' ')[0] || 'User'}</Text>
+            <Text style={styles.heroSubtitle}>{currentBusiness?.name || 'Your Business'}</Text>
+          </View>
+
+          <View style={styles.heroRevenueCard}>
+            <View style={styles.heroRevenueLabel}>
+              <View style={styles.heroRevenueDot} />
+              <Text style={styles.heroRevenueLabelText}>Total Revenue · {dateSubtitle}</Text>
             </View>
-            <View style={styles.heroStatDivider} />
-            <View style={styles.heroStat}>
-              <Text style={styles.heroStatValue}>{formatCurrency(summary?.total_revenue ?? 0).replace('GH₵ ', '₵')}</Text>
-              <Text style={styles.heroStatLabel}>Revenue</Text>
-            </View>
-            <View style={styles.heroStatDivider} />
-            <View style={styles.heroStat}>
-              <Text style={styles.heroStatValue}>{summary?.total_products ?? 0}</Text>
-              <Text style={styles.heroStatLabel}>Products</Text>
-            </View>
+            <Text style={styles.heroRevenueValue}>{formatCurrency(summary?.total_revenue ?? 0).replace('GH₵ ', '₵')}</Text>
+            <Text style={styles.heroRevenueSub}>{summary?.total_sales ?? 0} sales · {summary?.total_products ?? 0} products</Text>
           </View>
         </View>
-      </View>
+      </GradientHero>
 
       <View style={styles.body}>
         {error ? <AlertBadge message={error} type="error" /> : null}
@@ -231,97 +226,17 @@ export default function BusinessDashboard() {
 
         {isStaff ? (
           <View style={styles.kpiGrid}>
-            <View style={[styles.kpiCard, { borderLeftColor: Colors.primary }]}>
-              <View style={[styles.kpiIconWrap, { backgroundColor: Colors.primaryLight }]}>
-                <Ionicons name="trending-up" size={20} color={Colors.primary} />
-              </View>
-              <Text style={styles.kpiValue}>{todaySummary?.total_revenue != null ? formatCurrency(todaySummary.total_revenue) : '---'}</Text>
-              <Text style={styles.kpiTitle}>Today's Revenue</Text>
-              <View style={[styles.kpiTrend, { backgroundColor: Colors.successLight }]}>
-                <Ionicons name="arrow-up" size={10} color={Colors.success} />
-                <Text style={[styles.kpiTrendText, { color: Colors.success }]}>Today</Text>
-              </View>
-            </View>
-            <View style={[styles.kpiCard, { borderLeftColor: Colors.success }]}>
-              <View style={[styles.kpiIconWrap, { backgroundColor: Colors.successLight }]}>
-                <Ionicons name="receipt" size={20} color={Colors.success} />
-              </View>
-              <Text style={styles.kpiValue}>{todaySummary?.total_sales != null ? String(todaySummary.total_sales) : '---'}</Text>
-              <Text style={styles.kpiTitle}>Today's Sales</Text>
-              <View style={[styles.kpiTrend, { backgroundColor: Colors.successLight }]}>
-                <Ionicons name="arrow-up" size={10} color={Colors.success} />
-                <Text style={[styles.kpiTrendText, { color: Colors.success }]}>Today</Text>
-              </View>
-            </View>
-            <View style={[styles.kpiCard, { borderLeftColor: Colors.warning }]}>
-              <View style={[styles.kpiIconWrap, { backgroundColor: Colors.warningLight }]}>
-                <Ionicons name="stats-chart" size={20} color={Colors.warning} />
-              </View>
-              <Text style={styles.kpiValue}>{summary?.total_sales != null ? String(summary.total_sales) : '---'}</Text>
-              <Text style={styles.kpiTitle}>Sales (7d)</Text>
-              <View style={[styles.kpiTrend, { backgroundColor: Colors.warningLight }]}>
-                <Ionicons name="time" size={10} color={Colors.warning} />
-                <Text style={[styles.kpiTrendText, { color: Colors.warning }]}>This week</Text>
-              </View>
-            </View>
-            <View style={[styles.kpiCard, { borderLeftColor: Colors.danger }]}>
-              <View style={[styles.kpiIconWrap, { backgroundColor: Colors.dangerLight }]}>
-                <Ionicons name="warning" size={20} color={Colors.danger} />
-              </View>
-              <Text style={styles.kpiValue}>{String(lowStock.length)}</Text>
-              <Text style={styles.kpiTitle}>Low Stock</Text>
-              <View style={[styles.kpiTrend, { backgroundColor: Colors.dangerLight }]}>
-                <Ionicons name="alert-circle" size={10} color={Colors.danger} />
-                <Text style={[styles.kpiTrendText, { color: Colors.danger }]}>Restock</Text>
-              </View>
-            </View>
+            <KpiCard title="Revenue" value={todaySummary?.total_revenue != null ? formatCurrency(todaySummary.total_revenue) : '---'} icon="trending-up" color="primary" subtitle="Today" />
+            <KpiCard title="Sales" value={todaySummary?.total_sales != null ? String(todaySummary.total_sales) : '---'} icon="receipt" color="success" subtitle="Today" />
+            <KpiCard title="Sales · 7d" value={summary?.total_sales != null ? String(summary.total_sales) : '---'} icon="stats-chart" color="warning" subtitle="This week" />
+            <KpiCard title="Low Stock" value={String(lowStock.length)} icon="warning" color="danger" subtitle="Restock now" />
           </View>
         ) : (
           <View style={styles.kpiGrid}>
-            <View style={[styles.kpiCard, { borderLeftColor: Colors.primary }]}>
-              <View style={[styles.kpiIconWrap, { backgroundColor: Colors.primaryLight }]}>
-                <Ionicons name="trending-up" size={20} color={Colors.primary} />
-              </View>
-              <Text style={styles.kpiValue}>{summary?.total_revenue != null ? formatCurrency(summary.total_revenue) : '---'}</Text>
-              <Text style={styles.kpiTitle}>Revenue</Text>
-              <View style={[styles.kpiTrend, { backgroundColor: Colors.primaryLight }]}>
-                <Ionicons name="time" size={10} color={Colors.primary} />
-                <Text style={[styles.kpiTrendText, { color: Colors.primary }]}>{dateSubtitle}</Text>
-              </View>
-            </View>
-            <View style={[styles.kpiCard, { borderLeftColor: Colors.success }]}>
-              <View style={[styles.kpiIconWrap, { backgroundColor: Colors.successLight }]}>
-                <Ionicons name="wallet" size={20} color={Colors.success} />
-              </View>
-              <Text style={styles.kpiValue}>{summary?.total_profit != null ? formatCurrency(summary.total_profit) : '---'}</Text>
-              <Text style={styles.kpiTitle}>Profit</Text>
-              <View style={[styles.kpiTrend, { backgroundColor: Colors.successLight }]}>
-                <Ionicons name="trending-up" size={10} color={Colors.success} />
-                <Text style={[styles.kpiTrendText, { color: Colors.success }]}>{dateSubtitle}</Text>
-              </View>
-            </View>
-            <View style={[styles.kpiCard, { borderLeftColor: Colors.warning }]}>
-              <View style={[styles.kpiIconWrap, { backgroundColor: Colors.warningLight }]}>
-                <Ionicons name="receipt" size={20} color={Colors.warning} />
-              </View>
-              <Text style={styles.kpiValue}>{summary?.total_sales != null ? String(summary.total_sales) : '---'}</Text>
-              <Text style={styles.kpiTitle}>Total Sales</Text>
-              <View style={[styles.kpiTrend, { backgroundColor: Colors.warningLight }]}>
-                <Ionicons name="time" size={10} color={Colors.warning} />
-                <Text style={[styles.kpiTrendText, { color: Colors.warning }]}>{dateSubtitle}</Text>
-              </View>
-            </View>
-            <View style={[styles.kpiCard, { borderLeftColor: Colors.purple }]}>
-              <View style={[styles.kpiIconWrap, { backgroundColor: Colors.purpleLight }]}>
-                <Ionicons name="cube" size={20} color={Colors.purple} />
-              </View>
-              <Text style={styles.kpiValue}>{summary?.total_products != null ? String(summary.total_products) : '---'}</Text>
-              <Text style={styles.kpiTitle}>Products</Text>
-              <View style={[styles.kpiTrend, { backgroundColor: Colors.purpleLight }]}>
-                <Ionicons name="grid" size={10} color={Colors.purple} />
-                <Text style={[styles.kpiTrendText, { color: Colors.purple }]}>In stock</Text>
-              </View>
-            </View>
+            <KpiCard title="Revenue" value={summary?.total_revenue != null ? formatCurrency(summary.total_revenue) : '---'} icon="trending-up" color="primary" subtitle={dateSubtitle} />
+            <KpiCard title="Profit" value={summary?.total_profit != null ? formatCurrency(summary.total_profit) : '---'} icon="wallet" color="success" subtitle={dateSubtitle} />
+            <KpiCard title="Sales" value={summary?.total_sales != null ? String(summary.total_sales) : '---'} icon="receipt" color="warning" subtitle={dateSubtitle} />
+            <KpiCard title="Products" value={summary?.total_products != null ? String(summary.total_products) : '---'} icon="cube" color="purple" subtitle="In stock" />
           </View>
         )}
 
@@ -583,37 +498,30 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   content: { paddingBottom: 40 },
 
-  heroBanner: {
-    backgroundColor: Colors.navy,
-    paddingTop: 60,
-    paddingBottom: 28,
-    paddingHorizontal: 20,
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  heroCircle1: { position: 'absolute', top: -60, right: -40, width: 180, height: 180, borderRadius: 90, backgroundColor: 'rgba(37,99,235,0.3)' },
-  heroCircle2: { position: 'absolute', bottom: -30, left: -50, width: 140, height: 140, borderRadius: 70, backgroundColor: 'rgba(37,99,235,0.2)' },
-  heroCircle3: { position: 'absolute', top: 20, right: 80, width: 60, height: 60, borderRadius: 30, backgroundColor: 'rgba(255,255,255,0.05)' },
-  heroContent: { position: 'relative', zIndex: 1 },
-  heroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  heroGreeting: { fontSize: 14, color: 'rgba(255,255,255,0.5)', fontWeight: '500' },
-  heroName: { fontSize: 28, fontWeight: '800', color: '#FFFFFF', marginTop: 2 },
-  heroSubtitle: { fontSize: 14, color: 'rgba(255,255,255,0.6)', marginTop: 2 },
+  heroInner: { flex: 1, paddingHorizontal: 20, paddingTop: 2 },
+  heroTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  heroActions: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  heroIconBtn: { position: 'relative', width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.16)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.22)' },
+  heroNotifDot: { position: 'absolute', top: 9, right: 9, width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.danger, borderWidth: 1.5, borderColor: '#fff' },
   heroAvatarBtn: { position: 'relative' },
-  heroAvatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: 'rgba(255,255,255,0.2)' },
-  heroAvatarText: { fontSize: 20, fontWeight: '700', color: '#FFFFFF' },
-  heroOnlineDot: { position: 'absolute', bottom: 0, right: 0, width: 14, height: 14, borderRadius: 7, backgroundColor: Colors.success, borderWidth: 2, borderColor: Colors.navy },
+  heroAvatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.3)' },
+  heroAvatarText: { fontSize: 17, fontWeight: '700', color: '#FFFFFF' },
+  heroOnlineDot: { position: 'absolute', bottom: 1, right: 1, width: 11, height: 11, borderRadius: 6, backgroundColor: Colors.success, borderWidth: 2, borderColor: '#2563EB' },
+  heroGreeting: { fontSize: 14, color: 'rgba(255,255,255,0.85)', fontWeight: '600' },
+  heroTitleBlock: { marginTop: 14 },
+  heroName: { fontSize: 30, fontWeight: '800', color: '#FFFFFF', letterSpacing: -0.5 },
+  heroSubtitle: { fontSize: 14, color: 'rgba(255,255,255,0.72)', marginTop: 2 },
 
-  heroQuickStats: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around',
-    backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: BORDER_RADIUS.xl,
-    marginTop: 20, paddingVertical: 16, paddingHorizontal: 12,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)',
+  heroRevenueCard: {
+    marginTop: 18, backgroundColor: 'rgba(255,255,255,0.14)',
+    borderRadius: BORDER_RADIUS.xl, padding: 16,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
   },
-  heroStat: { alignItems: 'center', flex: 1 },
-  heroStatValue: { fontSize: 16, fontWeight: '800', color: '#FFFFFF' },
-  heroStatLabel: { fontSize: 11, color: 'rgba(255,255,255,0.5)', marginTop: 2, fontWeight: '500' },
-  heroStatDivider: { width: 1, height: 28, backgroundColor: 'rgba(255,255,255,0.1)' },
+  heroRevenueLabel: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  heroRevenueDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#7DD3FC' },
+  heroRevenueLabelText: { fontSize: 12, color: 'rgba(255,255,255,0.75)', fontWeight: '600', letterSpacing: 0.3 },
+  heroRevenueValue: { fontSize: 32, fontWeight: '800', color: '#FFFFFF', letterSpacing: -1, marginTop: 8 },
+  heroRevenueSub: { fontSize: 13, color: 'rgba(255,255,255,0.7)', marginTop: 6, fontWeight: '500' },
 
   body: { padding: 16, gap: 12 },
 
@@ -631,17 +539,7 @@ const styles = StyleSheet.create({
   dateRangeInfo: { flexDirection: 'row', alignItems: 'center', gap: 4, marginLeft: 6 },
   dateRangeText: { fontSize: FONT_SIZE.xs, color: Colors.textLight },
 
-  kpiGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  kpiCard: {
-    width: CARD_WIDTH, backgroundColor: Colors.surface, borderRadius: BORDER_RADIUS.xl,
-    padding: 14, borderLeftWidth: 3,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2,
-  },
-  kpiIconWrap: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginBottom: 10 },
-  kpiValue: { fontSize: 18, fontWeight: '800', color: Colors.text, marginBottom: 2 },
-  kpiTitle: { fontSize: 12, color: Colors.textLight, fontWeight: '500' },
-  kpiTrend: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 8, paddingVertical: 3, borderRadius: BORDER_RADIUS.full, marginTop: 8, alignSelf: 'flex-start' },
-  kpiTrendText: { fontSize: 10, fontWeight: '600' },
+  kpiGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
 
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 },
   sectionHeaderLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },

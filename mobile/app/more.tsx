@@ -9,6 +9,7 @@ import { businessAPI } from '@/lib/api'
 import { isAdminRole } from '@/lib/utils'
 import { Colors, BORDER_RADIUS } from '@/lib/constants'
 import Button from '@/components/ui/Button'
+import GradientHero from '@/components/ui/GradientHero'
 
 export default function MoreScreen() {
   const router = useRouter()
@@ -54,19 +55,24 @@ export default function MoreScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.profileHeader}>
-        <View style={styles.profileAvatarLarge}>
-          <Text style={styles.profileAvatarText}>{(user?.name || 'U')[0]?.toUpperCase()}</Text>
-        </View>
-        <Text style={styles.profileName}>{user?.name || 'User'}</Text>
-        <Text style={styles.profileEmail}>{user?.email || ''}</Text>
-        {currentBusiness && (
-          <View style={styles.roleBadge}>
-            <Text style={styles.roleBadgeText}>{user?.business_role || user?.role || 'Member'}</Text>
+      <GradientHero topInset={54} height={120}>
+        <View style={styles.profileHeaderInner}>
+          <View style={styles.heroAvatar}>
+            <Text style={styles.profileAvatarText}>{(user?.name || 'U')[0]?.toUpperCase()}</Text>
           </View>
-        )}
-      </View>
+          <View style={{ flex: 1, paddingLeft: 14 }}>
+            <Text style={styles.profileName}>{user?.name || 'User'}</Text>
+            <Text style={styles.profileEmail}>{user?.email || ''}</Text>
+            {currentBusiness && (
+              <View style={styles.roleBadge}>
+                <Text style={styles.roleBadgeText}>{user?.business_role || user?.role || 'Member'}</Text>
+              </View>
+            )}
+          </View>
+        </View>
+      </GradientHero>
 
+      <View style={styles.afterHero}>
       {currentBusiness && (
         <>
           <Text style={styles.sectionHeader}>Business</Text>
@@ -164,6 +170,7 @@ export default function MoreScreen() {
       </View>
 
       <Text style={[styles.sectionHeader, { textAlign: 'center', marginTop: 24 }]}>Sales & Inventory Tracker v1.0</Text>
+      </View>
 
       <Modal visible={showBizSelector} transparent animationType="slide">
         <View style={styles.modalOverlay}>
@@ -227,14 +234,19 @@ export default function MoreScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
-  content: { padding: 20, paddingBottom: 40 },
-  profileHeader: { alignItems: 'center', paddingTop: 60, paddingBottom: 24, backgroundColor: Colors.surface, marginBottom: 16, borderBottomLeftRadius: BORDER_RADIUS.xl, borderBottomRightRadius: BORDER_RADIUS.xl },
-  profileAvatarLarge: { width: 80, height: 80, borderRadius: 40, backgroundColor: Colors.primaryLight, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
-  profileAvatarText: { fontSize: 32, fontWeight: '700', color: Colors.primary },
-  profileName: { fontSize: 22, fontWeight: '700', color: Colors.text },
-  profileEmail: { fontSize: 14, color: Colors.textLight, marginTop: 4 },
-  roleBadge: { backgroundColor: Colors.primaryLight, paddingHorizontal: 12, paddingVertical: 4, borderRadius: BORDER_RADIUS.full, marginTop: 8 },
-  roleBadgeText: { fontSize: 12, fontWeight: '600', color: Colors.primary, textTransform: 'capitalize' },
+  content: { paddingBottom: 40 },
+  profileHeaderInner: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: 4 },
+  heroAvatar: {
+    width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(255,255,255,0.18)',
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 2, borderColor: 'rgba(255,255,255,0.3)',
+  },
+  profileAvatarText: { fontSize: 26, fontWeight: '800', color: '#FFFFFF' },
+  profileName: { fontSize: 20, fontWeight: '800', color: '#FFFFFF' },
+  profileEmail: { fontSize: 13, color: 'rgba(255,255,255,0.75)', marginTop: 2 },
+  roleBadge: { backgroundColor: 'rgba(255,255,255,0.22)', paddingHorizontal: 12, paddingVertical: 4, borderRadius: BORDER_RADIUS.full, marginTop: 8, alignSelf: 'flex-start', borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' },
+  roleBadgeText: { fontSize: 12, fontWeight: '700', color: '#FFFFFF', textTransform: 'capitalize' },
+  afterHero: { paddingHorizontal: 20, paddingTop: 20 },
   sectionHeader: { fontSize: 12, fontWeight: '700', color: Colors.textLight, textTransform: 'uppercase', letterSpacing: 1, paddingHorizontal: 4, marginBottom: 8, marginTop: 8 },
   bizCard: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.surface,

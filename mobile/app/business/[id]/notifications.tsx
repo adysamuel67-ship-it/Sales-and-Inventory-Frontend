@@ -18,6 +18,7 @@ import { Colors, BORDER_RADIUS, FONT_SIZE } from '@/lib/constants'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import EmptyState from '@/components/ui/EmptyState'
 import AlertBadge from '@/components/ui/AlertBadge'
+import GradientHero from '@/components/ui/GradientHero'
 
 // Lazy, fetch-on-open behavior: shows cached notifications instantly and
 // refreshes in the background so we don't constantly wake the sleeping
@@ -101,6 +102,13 @@ export default function NotificationsScreen() {
     setHasHidden(true)
   }
 
+  const markAllRead = () => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })))
+    setMarkedAll(true)
+  }
+
+  const [markedAll, setMarkedAll] = useState(false)
+
   const visible = notifications.filter((n) => !dismissedIds.has(n.notification_id))
   const unreadCount = visible.filter((n) => !n.is_read).length
 
@@ -138,16 +146,28 @@ export default function NotificationsScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.topBar}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={24} color={Colors.text} />
-        </TouchableOpacity>
-        <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>Notifications</Text>
-          {unreadCount > 0 && <Text style={styles.headerSub}>{unreadCount} unread</Text>}
+      <GradientHero topInset={52} height={86} bubbles={false}>
+        <View style={styles.headerRow}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+            <Ionicons name="arrow-back" size={22} color="#fff" />
+          </TouchableOpacity>
+          <View style={styles.headerCenter}>
+            <Text style={styles.headerTitle}>Notifications</Text>
+            {unreadCount > 0 ? (
+              <Text style={styles.headerSub}>{unreadCount} unread</Text>
+            ) : (
+              <Text style={styles.headerSub}>You're all caught up</Text>
+            )}
+          </View>
+          {unreadCount > 0 ? (
+            <TouchableOpacity style={styles.markAllBtn} onPress={markAllRead}>
+              <Ionicons name="checkmark-done" size={18} color="#fff" />
+            </TouchableOpacity>
+          ) : (
+            <View style={{ width: 34 }} />
+          )}
         </View>
-        <View style={{ width: 32 }} />
-      </View>
+      </GradientHero>
 
       {error ? <AlertBadge message={error} type="warning" /> : null}
 
@@ -171,15 +191,22 @@ export default function NotificationsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
-  topBar: {
-    flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16,
-    paddingVertical: 14, backgroundColor: Colors.surface,
-    borderBottomWidth: 1, borderBottomColor: Colors.border,
+  headerRow: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: 16, paddingTop: 4,
   },
-  backBtn: { width: 32 },
+  backBtn: {
+    width: 34, height: 34, borderRadius: 17,
+    backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center',
+  },
   headerCenter: { flex: 1, alignItems: 'center' },
-  headerTitle: { fontSize: FONT_SIZE.lg, fontWeight: '700', color: Colors.text },
-  headerSub: { fontSize: FONT_SIZE.xs, color: Colors.textLight, marginTop: 2 },
+  headerTitle: { fontSize: FONT_SIZE.lg, fontWeight: '800', color: '#FFFFFF', letterSpacing: 0.2 },
+  headerSub: { fontSize: FONT_SIZE.xs, color: 'rgba(255,255,255,0.8)', marginTop: 2, fontWeight: '600' },
+  markAllBtn: {
+    width: 34, height: 34, borderRadius: 17,
+    backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.25)',
+  },
   list: { padding: 16, paddingBottom: 40, flexGrow: 1 },
   card: {
     flexDirection: 'row', backgroundColor: Colors.surface, borderRadius: BORDER_RADIUS.xl,
@@ -187,7 +214,10 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05,
     shadowRadius: 3, elevation: 1,
   },
-  cardUnread: { backgroundColor: '#EFF4FF', borderColor: Colors.primaryLight, borderWidth: 1 },
+  cardUnread: {
+    backgroundColor: '#EFF4FF', borderColor: Colors.primaryLight, borderWidth: 1,
+    borderLeftWidth: 4, borderLeftColor: Colors.primary,
+  },
   iconWrap: {
     width: 40, height: 40, borderRadius: BORDER_RADIUS.lg,
     alignItems: 'center', justifyContent: 'center',

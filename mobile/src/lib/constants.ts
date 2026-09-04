@@ -35,6 +35,8 @@ export const SPACING = {
   lg: 16,
   xl: 20,
   xxl: 24,
+  '3xl': 32,
+  '4xl': 40,
 }
 
 export const BORDER_RADIUS = {
@@ -43,6 +45,7 @@ export const BORDER_RADIUS = {
   lg: 12,
   xl: 16,
   xxl: 20,
+  xxxl: 28,
   full: 9999,
 }
 
@@ -54,4 +57,39 @@ export const FONT_SIZE = {
   xl: 20,
   xxl: 24,
   title: 28,
+  hero: 34,
+}
+
+// Unified elevation/soft-shadow presets for a modern, light, floating UI.
+// `rest` is for Android (elevation), `ios` stack is for iOS shadow props.
+export const SHADOW = {
+  sm: {
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  md: {
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  lg: {
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 6,
+  },
+}
+
+// Brand gradient stops used across the app (hero banners, primary surfaces).
+export const GRADIENTS = {
+  primary: ['#4F8DF9', '#2563EB', '#1D4ED8'] as const,
+  primarySoft: ['#EFF4FF', '#E0EAFF'] as const,
+  navy: ['#1E293B', '#14213D'] as const,
+  card: ['#FFFFFF', '#F8FAFC'] as const,
 }

@@ -12,6 +12,7 @@ import { Colors, BORDER_RADIUS } from '@/lib/constants'
 import Button from '@/components/ui/Button'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import AlertBadge from '@/components/ui/AlertBadge'
+import GradientHero from '@/components/ui/GradientHero'
 
 const { width } = Dimensions.get('window')
 
@@ -140,12 +141,9 @@ export default function ProfileScreen() {
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
 
-        <View style={styles.heroCover}>
-          <View style={styles.heroCoverCircle1} />
-          <View style={styles.heroCoverCircle2} />
-          <View style={styles.heroCoverCircle3} />
-          <View style={styles.heroCoverFade} />
-        </View>
+        <GradientHero topInset={56} height={112}>
+          <View style={styles.heroFadeSpace} />
+        </GradientHero>
 
         <View style={styles.heroInfo}>
           <TouchableOpacity style={styles.avatarContainer}>
@@ -470,32 +468,10 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   scrollContent: { paddingBottom: 40 },
 
-  heroCover: {
-    height: 160,
-    backgroundColor: Colors.primary,
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  heroCoverCircle1: {
-    position: 'absolute', top: -50, right: -30,
-    width: 180, height: 180, borderRadius: 90, backgroundColor: 'rgba(255,255,255,0.08)',
-  },
-  heroCoverCircle2: {
-    position: 'absolute', bottom: -30, left: -40,
-    width: 140, height: 140, borderRadius: 70, backgroundColor: 'rgba(255,255,255,0.06)',
-  },
-  heroCoverCircle3: {
-    position: 'absolute', top: 20, right: 80,
-    width: 60, height: 60, borderRadius: 30, backgroundColor: 'rgba(255,255,255,0.05)',
-  },
-  heroCoverFade: {
-    position: 'absolute', bottom: 0, left: 0, right: 0, height: 40,
-    backgroundColor: Colors.background,
-  },
-
+  heroFadeSpace: { flex: 1 },
   heroInfo: {
     alignItems: 'center',
-    marginTop: -52,
+    marginTop: -56,
     paddingHorizontal: 20,
   },
   avatarContainer: { position: 'relative', marginBottom: 12 },

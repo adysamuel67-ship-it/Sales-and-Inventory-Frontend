@@ -1,65 +1,52 @@
 import React from 'react'
 import { View, Text, StyleSheet, StyleProp, ViewStyle } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { Colors, BORDER_RADIUS, FONT_SIZE, SPACING } from '@/lib/constants'
+import { Colors, BORDER_RADIUS, FONT_SIZE, SHADOW } from '@/lib/constants'
 
 interface KpiCardProps {
   title: string
   value: string
   subtitle?: string
   icon?: keyof typeof Ionicons.glyphMap
-  color?: 'primary' | 'success' | 'warning' | 'danger'
+  color?: 'primary' | 'success' | 'warning' | 'danger' | 'purple' | 'emerald'
   trend?: { value: string; positive: boolean }
   style?: StyleProp<ViewStyle>
 }
 
-const colorMap = {
-  primary: {
-    iconBg: '#EFF4FF',
-    iconText: '#2563EB',
-    border: '#DBEAFE',
-  },
-  success: {
-    iconBg: '#DCFCE7',
-    iconText: '#16A34A',
-    border: '#BBF7D0',
-  },
-  warning: {
-    iconBg: '#FEF3C7',
-    iconText: '#D97706',
-    border: '#FDE68A',
-  },
-  danger: {
-    iconBg: '#FEE2E2',
-    iconText: '#DC2626',
-    border: '#FECDD3',
-  },
+const colorMap: Record<NonNullable<KpiCardProps['color']>, { bg: string; text: string; accent: string }> = {
+  primary: { bg: Colors.primaryLight, text: Colors.primary, accent: Colors.primary },
+  success: { bg: Colors.successLight, text: Colors.success, accent: Colors.success },
+  warning: { bg: Colors.warningLight, text: Colors.warning, accent: Colors.warning },
+  danger: { bg: Colors.dangerLight, text: Colors.danger, accent: Colors.danger },
+  purple: { bg: Colors.purpleLight, text: Colors.purple, accent: Colors.purple },
+  emerald: { bg: Colors.emeraldLight, text: Colors.emerald, accent: Colors.emerald },
 }
 
 export default function KpiCard({ title, value, subtitle, icon, color = 'primary', trend, style }: KpiCardProps) {
   const colors = colorMap[color]
 
   return (
-    <View style={[styles.card, { borderColor: colors.border }, style]}>
+    <View style={[styles.card, style]}>
+      <View style={[styles.accentBar, { backgroundColor: colors.accent }]} />
       <View style={styles.row}>
         {icon && (
-          <View style={[styles.iconContainer, { backgroundColor: colors.iconBg }]}>
-            <Ionicons name={icon} size={20} color={colors.iconText} />
+          <View style={[styles.iconContainer, { backgroundColor: colors.bg }]}>
+            <Ionicons name={icon} size={18} color={colors.text} />
           </View>
         )}
         <View style={styles.content}>
-          <Text style={styles.title}>{title}</Text>
-          <Text style={styles.value}>{value}</Text>
+          <Text style={styles.title} numberOfLines={1}>{title}</Text>
+          <Text style={styles.value} numberOfLines={1}>{value}</Text>
         </View>
         {trend && (
-          <View style={[styles.trendBadge, { backgroundColor: trend.positive ? '#DCFCE7' : '#FEE2E2' }]}>
-            <Text style={[styles.trendText, { color: trend.positive ? '#16A34A' : '#DC2626' }]}>
+          <View style={[styles.trendBadge, { backgroundColor: trend.positive ? Colors.successLight : Colors.dangerLight }]}>
+            <Text style={[styles.trendText, { color: trend.positive ? Colors.success : Colors.danger }]}>
               {trend.positive ? '↑' : '↓'} {trend.value}
             </Text>
           </View>
         )}
       </View>
-      {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+      {subtitle && <Text style={styles.subtitle} numberOfLines={1}>{subtitle}</Text>}
     </View>
   )
 }
@@ -67,16 +54,21 @@ export default function KpiCard({ title, value, subtitle, icon, color = 'primary
 const styles = StyleSheet.create({
   card: {
     backgroundColor: Colors.surface,
-    borderRadius: BORDER_RADIUS.lg,
+    borderRadius: BORDER_RADIUS.xl,
     padding: 14,
-    borderWidth: 1,
     flex: 1,
     minWidth: '45%',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
+    ...SHADOW.md,
+    overflow: 'hidden',
+  },
+  accentBar: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 3,
+    borderTopLeftRadius: BORDER_RADIUS.xl,
+    borderBottomLeftRadius: BORDER_RADIUS.xl,
   },
   row: {
     flexDirection: 'row',
@@ -97,13 +89,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 11,
     color: Colors.neutralLight,
-    fontWeight: '500',
+    fontWeight: '600',
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 0.6,
   },
   value: {
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: 19,
+    fontWeight: '800',
     color: Colors.text,
     marginTop: 2,
   },
@@ -111,11 +103,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: BORDER_RADIUS.md,
-    marginLeft: 8,
+    marginLeft: 6,
   },
   trendText: {
     fontSize: 10,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   subtitle: {
     fontSize: 10,

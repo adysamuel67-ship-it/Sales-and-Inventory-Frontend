@@ -11,6 +11,7 @@ import { extractProfit, extractArray, getDateRange, formatCurrency, extractSumma
 import { Colors, BORDER_RADIUS, FONT_SIZE } from '@/lib/constants'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import AlertBadge from '@/components/ui/AlertBadge'
+import GradientHero from '@/components/ui/GradientHero'
 
 const { width } = Dimensions.get('window')
 const CARD_WIDTH = (width - 44) / 2
@@ -101,17 +102,15 @@ export default function ReportsScreen() {
       contentContainerStyle={styles.content}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[Colors.primary]} />}
     >
-      <View style={styles.heroBanner}>
-        <View style={styles.heroCircle1} />
-        <View style={styles.heroCircle2} />
-        <View style={styles.heroContent}>
+      <GradientHero topInset={54} height={140} bubbles>
+        <View style={styles.heroTop}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Ionicons name="arrow-back" size={22} color="#FFF" />
           </TouchableOpacity>
           <Text style={styles.heroTitle}>Reports & Analytics</Text>
           <Text style={styles.heroSubtitle}>Track your business performance</Text>
         </View>
-      </View>
+      </GradientHero>
 
       <View style={styles.body}>
         <View style={styles.datePresetRow}>
@@ -263,17 +262,10 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   content: { paddingBottom: 40 },
 
-  heroBanner: {
-    backgroundColor: Colors.navy,
-    paddingTop: 60, paddingBottom: 24, paddingHorizontal: 20,
-    position: 'relative', overflow: 'hidden',
-  },
-  heroCircle1: { position: 'absolute', top: -60, right: -40, width: 180, height: 180, borderRadius: 90, backgroundColor: 'rgba(37,99,235,0.3)' },
-  heroCircle2: { position: 'absolute', bottom: -30, left: -50, width: 140, height: 140, borderRadius: 70, backgroundColor: 'rgba(37,99,235,0.2)' },
-  heroContent: { position: 'relative', zIndex: 1 },
+  heroTop: { paddingHorizontal: 20, paddingTop: 2 },
   backBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.12)', alignItems: 'center', justifyContent: 'center', marginBottom: 14 },
   heroTitle: { fontSize: 24, fontWeight: '800', color: '#FFFFFF' },
-  heroSubtitle: { fontSize: 14, color: 'rgba(255,255,255,0.6)', marginTop: 4 },
+  heroSubtitle: { fontSize: 14, color: 'rgba(255,255,255,0.75)', marginTop: 4 },
 
   body: { padding: 16, gap: 12 },
 
