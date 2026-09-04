@@ -452,6 +452,99 @@ export const reportAPI = {
     api.get(`/reports/analytics/dashboard/${businessId}`),
 }
 
+export interface NotificationItem {
+  notification_id: number
+  user_id: number
+  business_id: number
+  title?: string
+  message: string
+  is_read: boolean
+  created_at: string
+}
+
+// Small in-memory + localStorage cache so the notifications bell can open
+// instantly without waking the sleeping Render service on every click.
+const NOTIF_CACHE_KEY = 'notifications_cache_v1'
+
+export interface NotificationsCache {
+  businessId: number | null
+  items: NotificationItem[]
+  fetchedAt: number
+}
+
+export function getNotificationsCache(): NotificationsCache | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = localStorage.getItem(NOTIF_CACHE_KEY)
+    return raw ? JSON.parse(raw) : null
+  } catch {
+    return null
+  }
+}
+
+export function setNotificationsCache(cache: NotificationsCache) {
+  if (typeof window === 'undefined') return
+  try {
+    localStorage.setItem(NOTIF_CACHE_KEY, JSON.stringify(cache))
+  } catch {
+    // ignore quota errors
+  }
+}
+
+export const notificationAPI = {
+  // GET /notifications/get_notifications/{business_id}
+  // Returns ALL notifications for the business (backend does not filter per-user).
+  list: (businessId: number) => api.get(`/notifications/get_notifications/${businessId}`),
+  // POST /notifications/send (used by business/system flows; kept for completeness)
+  send: (businessId: number, data: { title: string; message: string; user_id: number; business_id: number }) =>
+    api.post(`/notifications/send`, { ...data, business_id: businessId }, { params: { business_id: businessId } }),
+}
+
+export function normalizeNotifications(data: any): NotificationItem[] {
+  if (Array.isArray(data)) return data
+  if (Array.isArray(data?.notifications)) return data.notifications
+  if (Array.isArray(data?.data)) return data.data
+  if (Array.isArray(data?.items)) return data.items
+  return []
+}
+
+// Tracks which notification ids the user has dismissed (read/hidden) locally.
+// The backend only exposes send + list, so read/dismiss state is persisted client-side.
+const NOTIF_DISMISSED_KEY = 'notifications_dismissed_v1'
+
+export function getDismissedNotificationIds(): Set<number> {
+  if (typeof window === 'undefined') return new Set()
+  try {
+    const raw = localStorage.getItem(NOTIF_DISMISSED_KEY)
+    const arr: number[] = raw ? JSON.parse(raw) : []
+    return new Set(arr)
+  } catch {
+    return new Set()
+  }
+}
+
+export function dismissNotification(id: number) {
+  if (typeof window === 'undefined') return
+  try {
+    const ids = getDismissedNotificationIds()
+    ids.add(id)
+    localStorage.setItem(NOTIF_DISMISSED_KEY, JSON.stringify(Array.from(ids)))
+  } catch {
+    // ignore
+  }
+}
+
+export function restoreNotification(id: number) {
+  if (typeof window === 'undefined') return
+  try {
+    const ids = getDismissedNotificationIds()
+    ids.delete(id)
+    localStorage.setItem(NOTIF_DISMISSED_KEY, JSON.stringify(Array.from(ids)))
+  } catch {
+    // ignore
+  }
+}
+
 export async function tryProactiveRefresh(): Promise<string | null> {
   if (typeof window === 'undefined') return null
   const token = localStorage.getItem('token')

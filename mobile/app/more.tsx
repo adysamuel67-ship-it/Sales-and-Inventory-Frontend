@@ -108,6 +108,13 @@ export default function MoreScreen() {
           <Text style={styles.menuLabel}>Join Business</Text>
           <Ionicons name="chevron-forward" size={18} color={Colors.textLight} />
         </TouchableOpacity>
+        <TouchableOpacity style={styles.menuRow} onPress={() => { if (currentBusiness) router.push(`/business/${currentBusiness.business_id}/notifications`) }}>
+          <View style={[styles.menuIcon, { backgroundColor: '#EFF4FF' }]}>
+            <Ionicons name="notifications" size={20} color={Colors.primary} />
+          </View>
+          <Text style={styles.menuLabel}>Notifications</Text>
+          <Ionicons name="chevron-forward" size={18} color={Colors.textLight} />
+        </TouchableOpacity>
         {currentBusiness && (
           <TouchableOpacity style={styles.menuRow} onPress={() => router.push(`/business/${currentBusiness.business_id}/requests`)}>
             <View style={[styles.menuIcon, { backgroundColor: '#FEF3C7' }]}>

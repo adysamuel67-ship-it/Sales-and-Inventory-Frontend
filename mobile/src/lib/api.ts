@@ -284,4 +284,76 @@ export const reportAPI = {
   dashboard: (businessId: number) => api.get(`/reports/analytics/dashboard/${businessId}`),
 }
 
+export interface NotificationItem {
+  notification_id: number
+  user_id: number
+  business_id: number
+  title?: string
+  message: string
+  is_read: boolean
+  created_at: string
+}
+
+const NOTIF_CACHE_KEY = 'notifications_cache_v1'
+const NOTIF_DISMISSED_KEY = 'notifications_dismissed_v1'
+
+export interface NotificationsCache {
+  businessId: number | null
+  items: NotificationItem[]
+  fetchedAt: number
+}
+
+export async function getNotificationsCache(): Promise<NotificationsCache | null> {
+  try {
+    const raw = await AsyncStorage.getItem(NOTIF_CACHE_KEY)
+    return raw ? JSON.parse(raw) : null
+  } catch {
+    return null
+  }
+}
+
+export async function setNotificationsCache(cache: NotificationsCache) {
+  try {
+    await AsyncStorage.setItem(NOTIF_CACHE_KEY, JSON.stringify(cache))
+  } catch {
+    // ignore
+  }
+}
+
+export const notificationAPI = {
+  // GET /notifications/get_notifications/{business_id}
+  // Returns ALL notifications for the business (backend does not filter per-user).
+  list: (businessId: number) => api.get(`/notifications/get_notifications/${businessId}`),
+  send: (businessId: number, data: { title: string; message: string; user_id: number; business_id: number }) =>
+    api.post(`/notifications/send`, { ...data, business_id: businessId }, { params: { business_id: businessId } }),
+}
+
+export function normalizeNotifications(data: any): NotificationItem[] {
+  if (Array.isArray(data)) return data
+  if (Array.isArray(data?.notifications)) return data.notifications
+  if (Array.isArray(data?.data)) return data.data
+  if (Array.isArray(data?.items)) return data.items
+  return []
+}
+
+export async function getDismissedNotificationIds(): Promise<Set<number>> {
+  try {
+    const raw = await AsyncStorage.getItem(NOTIF_DISMISSED_KEY)
+    const arr: number[] = raw ? JSON.parse(raw) : []
+    return new Set(arr)
+  } catch {
+    return new Set()
+  }
+}
+
+export async function dismissNotification(id: number) {
+  try {
+    const ids = await getDismissedNotificationIds()
+    ids.add(id)
+    await AsyncStorage.setItem(NOTIF_DISMISSED_KEY, JSON.stringify(Array.from(ids)))
+  } catch {
+    // ignore
+  }
+}
+
 export default api

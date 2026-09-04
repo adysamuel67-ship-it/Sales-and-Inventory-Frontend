@@ -1,11 +1,21 @@
 'use client'
 
 import { useAuth } from '@/lib/auth'
-import { useState, useRef, useEffect, useMemo } from 'react'
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { usePathname, useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { isManagerRole, isPlatformAdmin, isSuperAdminUser } from '@/lib/utils'
-import { businessAPI } from '@/lib/api'
+import {
+  businessAPI,
+  notificationAPI,
+  normalizeNotifications,
+  getNotificationsCache,
+  setNotificationsCache,
+  getDismissedNotificationIds,
+  dismissNotification,
+  restoreNotification,
+} from '@/lib/api'
+import type { NotificationItem } from '@/lib/api'
 import BusinessBotLogo from './BusinessBotLogo'
 import AppLoadingSplash from './AppLoadingSplash'
 
@@ -114,6 +124,22 @@ function NavIcon({ name }: { name: string }) {
   return icons[name] || <div className="w-[18px] h-[18px]" />
 }
 
+function formatNotifTime(iso?: string): string {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return ''
+  const now = Date.now()
+  const diff = now - d.getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1) return 'Just now'
+  if (mins < 60) return `${mins}m ago`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs}h ago`
+  const days = Math.floor(hrs / 24)
+  if (days < 7) return `${days}d ago`
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
 export default function DashboardLayout({ children, businessId: propBusinessId }: DashboardLayoutProps) {
   const { user, logout, businesses, currentBusiness, switchBusiness, profileLoaded } = useAuth()
   const pathname = usePathname()
@@ -130,6 +156,10 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [pendingApprovals, setPendingApprovals] = useState<any[]>([])
   const [selectedApproval, setSelectedApproval] = useState<any>(null)
+  const [notifications, setNotifications] = useState<NotificationItem[]>([])
+  const [notificationsLoading, setNotificationsLoading] = useState(false)
+  const [dismissedIds, setDismissedIds] = useState<Set<number>>(new Set())
+  const [activeTab, setActiveTab] = useState<'all' | 'approvals'>('all')
   const profileRef = useRef<HTMLDivElement>(null)
   const sidebarProfileRef = useRef<HTMLDivElement>(null)
   const bizSwitcherRef = useRef<HTMLDivElement>(null)
@@ -248,6 +278,62 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
     return () => { cancelled = true; clearInterval(interval) }
   }, [businessId, isManager])
 
+  // Seed locally-dismissed ids once.
+  useEffect(() => {
+    setDismissedIds(getDismissedNotificationIds())
+  }, [])
+
+  // Lazy, fetch-on-open notifications: avoids waking the sleeping free-tier
+  // Render service constantly. Shows cached items instantly, refreshes in the
+  // background when the bell is opened, and re-checks after a longer stale window.
+  const fetchNotifications = useCallback(async (force = false) => {
+    if (!businessId || !isManager) return
+    const bizNum = Number(businessId)
+    const cached = getNotificationsCache()
+    const stale = !cached || cached.businessId !== bizNum ||
+      (Date.now() - cached.fetchedAt > 30 * 60 * 1000)
+    if (cached && cached.businessId === bizNum) {
+      setNotifications(cached.items)
+    }
+    if (!force && !stale) {
+      return
+    }
+    setNotificationsLoading(true)
+    try {
+      const res = await notificationAPI.list(bizNum)
+      const items = normalizeNotifications(res.data)
+      items.sort((a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      setNotifications(items)
+      setNotificationsCache({ businessId: bizNum, items, fetchedAt: Date.now() })
+    } catch {
+      // keep showing cached items on failure (server cold start / offline)
+    } finally {
+      setNotificationsLoading(false)
+    }
+  }, [businessId, isManager])
+
+  useEffect(() => {
+    if (!notificationsOpen) return
+    fetchNotifications(false)
+  }, [notificationsOpen, fetchNotifications])
+
+  const visibleNotifications = useMemo(
+    () => notifications.filter((n) => !dismissedIds.has(n.notification_id)),
+    [notifications, dismissedIds]
+  )
+  const unreadCount = visibleNotifications.filter((n) => !n.is_read).length
+
+  const handleDismissNotification = (id: number) => {
+    dismissNotification(id)
+    setDismissedIds(new Set(getDismissedNotificationIds()))
+  }
+
+  const handleRestoreNotification = (id: number) => {
+    restoreNotification(id)
+    setDismissedIds(new Set(getDismissedNotificationIds()))
+  }
+
   if (!profileLoaded) {
     return <AppLoadingSplash message="Loading your workspace..." />
   }
@@ -353,7 +439,7 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
             <div className="px-3 pb-2">
               <div ref={notificationsRef} className="relative">
                 <button
-                  onClick={() => setNotificationsOpen(!notificationsOpen)}
+                  onClick={() => { setNotificationsOpen(!notificationsOpen); if (!notificationsOpen) setActiveTab('all') }}
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] transition-all duration-200 min-h-[40px] group text-white/50 hover:bg-white/[0.06] hover:text-white/80"
                 >
                   <span className="text-white/35 group-hover:text-white/55">
@@ -362,10 +448,8 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
                     </svg>
                   </span>
                   <span className="flex-1 text-left">Notifications</span>
-                  {pendingApprovals.length > 0 && (
-                    <span className="min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full bg-primary text-white text-[10px] font-bold leading-none">
-                      {pendingApprovals.length}
-                    </span>
+                  {(unreadCount + pendingApprovals.length) > 0 && notificationsOpen && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary" />
                   )}
                 </button>
 
@@ -373,58 +457,126 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
                   <div className="absolute left-0 right-0 mt-1 bg-white rounded-xl shadow-xl border border-gray-200 z-50 overflow-hidden">
                     <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
                       <h3 className="text-sm font-semibold text-gray-900">
-                        Requests {pendingApprovals.length > 0 && <span className="text-primary">({pendingApprovals.length})</span>}
+                        {(unreadCount + pendingApprovals.length) > 0 && (
+                          <span className="text-primary">({unreadCount + pendingApprovals.length})</span>
+                        )}
+                        {activeTab === 'all' ? 'Notifications' : 'Requests'}
                       </h3>
-                      {pendingApprovals.length > 0 && (
-                        <Link
-                          href="/businesses/requests"
-                          onClick={() => setNotificationsOpen(false)}
-                          className="text-xs text-primary font-medium hover:underline"
+                      <div className="flex items-center gap-2">
+                        {notificationsLoading && (
+                          <span className="text-[10px] text-gray-400 flex items-center gap-1">
+                            <span className="inline-block w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                            Syncing
+                          </span>
+                        )}
+                        <button
+                          onClick={() => { setActiveTab('all'); fetchNotifications(true) }}
+                          className={`text-xs font-medium px-2 py-1 rounded-md transition-colors ${activeTab === 'all' ? 'bg-primary/10 text-primary' : 'text-gray-400 hover:text-gray-600'}`}
                         >
-                          View all
-                        </Link>
-                      )}
+                          All
+                        </button>
+                        <button
+                          onClick={() => { setActiveTab('approvals'); fetchNotifications(true) }}
+                          className={`text-xs font-medium px-2 py-1 rounded-md transition-colors ${activeTab === 'approvals' ? 'bg-primary/10 text-primary' : 'text-gray-400 hover:text-gray-600'}`}
+                        >
+                          Requests {pendingApprovals.length > 0 && <span>({pendingApprovals.length})</span>}
+                        </button>
+                      </div>
                     </div>
-                    <div className="max-h-72 overflow-y-auto">
-                      {pendingApprovals.length > 0 ? (
-                        pendingApprovals.map((approval: any, idx: number) => {
-                          const requesterName = approval.requester?.name || approval.requester_name || approval.name || 'Unknown'
-                          const requesterEmail = approval.requester?.email || approval.email || ''
-                          const role = approval.approval_type || approval.role || 'member'
-                          const reason = approval.reason || ''
-                          return (
-                            <button
-                              key={approval.approval_id || approval.id || idx}
-                              onClick={() => { setSelectedApproval(approval); setNotificationsOpen(false) }}
-                              className="w-full text-left px-4 py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors cursor-pointer"
-                            >
-                              <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                                  <span className="text-xs font-semibold text-primary">{requesterName.charAt(0).toUpperCase()}</span>
+
+                    {activeTab === 'all' ? (
+                      <div className="max-h-72 overflow-y-auto">
+                        {visibleNotifications.length > 0 ? (
+                          visibleNotifications.map((n) => {
+                            const title = n.title || 'Notification'
+                            const isRead = n.is_read
+                            const time = formatNotifTime(n.created_at)
+                            return (
+                              <div
+                                key={n.notification_id}
+                                className={`px-4 py-3 border-b border-gray-50 last:border-0 group flex items-start gap-3 transition-colors ${isRead ? 'hover:bg-gray-50' : 'bg-blue-50/50 hover:bg-blue-50'}`}
+                              >
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${isRead ? 'bg-gray-100' : 'bg-primary/10'}`}>
+                                  <svg className={`w-4 h-4 ${isRead ? 'text-gray-400' : 'text-primary'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                  </svg>
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                  <p className="text-sm font-medium text-gray-900 truncate">{requesterName}</p>
-                                  <p className="text-xs text-gray-400 truncate">{requesterEmail}</p>
+                                  <div className="flex items-center justify-between gap-2">
+                                    <p className="text-sm font-medium text-gray-900 truncate">{title}</p>
+                                    {!isRead && <span className="w-2 h-2 rounded-full bg-primary shrink-0" />}
+                                  </div>
+                                  <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{n.message}</p>
+                                  <p className="text-[10px] text-gray-400 mt-1">{time}</p>
                                 </div>
-                                <span className="text-[10px] font-medium uppercase tracking-wider bg-primary/10 text-primary px-2 py-0.5 rounded-full shrink-0">
-                                  {role}
-                                </span>
+                                <button
+                                  onClick={() => handleDismissNotification(n.notification_id)}
+                                  title="Dismiss"
+                                  className="text-gray-300 hover:text-gray-600 transition-colors shrink-0 opacity-0 group-hover:opacity-100"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                                  </svg>
+                                </button>
                               </div>
-                              {reason && (
-                                <p className="text-xs text-gray-400 mt-1.5 ml-11 line-clamp-2">{reason}</p>
-                              )}
-                            </button>
-                          )
-                        })
-                      ) : (
-                        <div className="px-4 py-8 text-center">
-                          <svg className="w-8 h-8 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
-                          </svg>
-                          <p className="text-sm text-gray-500">No pending requests</p>
-                        </div>
-                      )}
-                    </div>
+                            )
+                          })
+                        ) : notificationsLoading ? (
+                          <div className="px-4 py-8 text-center">
+                            <span className="inline-block w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                            <p className="text-sm text-gray-500 mt-3">Loading notifications...</p>
+                          </div>
+                        ) : (
+                          <div className="px-4 py-8 text-center">
+                            <svg className="w-8 h-8 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                            </svg>
+                            <p className="text-sm text-gray-500">No notifications</p>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="max-h-72 overflow-y-auto">
+                        {pendingApprovals.length > 0 ? (
+                          pendingApprovals.map((approval: any, idx: number) => {
+                            const requesterName = approval.requester?.name || approval.requester_name || approval.name || 'Unknown'
+                            const requesterEmail = approval.requester?.email || approval.email || ''
+                            const role = approval.approval_type || approval.role || 'member'
+                            const reason = approval.reason || ''
+                            return (
+                              <button
+                                key={approval.approval_id || approval.id || idx}
+                                onClick={() => { setSelectedApproval(approval); setNotificationsOpen(false) }}
+                                className="w-full text-left px-4 py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors cursor-pointer"
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                                    <span className="text-xs font-semibold text-primary">{requesterName.charAt(0).toUpperCase()}</span>
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    <p className="text-sm font-medium text-gray-900 truncate">{requesterName}</p>
+                                    <p className="text-xs text-gray-400 truncate">{requesterEmail}</p>
+                                  </div>
+                                  <span className="text-[10px] font-medium uppercase tracking-wider bg-primary/10 text-primary px-2 py-0.5 rounded-full shrink-0">
+                                    {role}
+                                  </span>
+                                </div>
+                                {reason && (
+                                  <p className="text-xs text-gray-400 mt-1.5 ml-11 line-clamp-2">{reason}</p>
+                                )}
+                              </button>
+                            )
+                          })
+                        ) : (
+                          <div className="px-4 py-8 text-center">
+                            <svg className="w-8 h-8 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                            </svg>
+                            <p className="text-sm text-gray-500">No pending requests</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

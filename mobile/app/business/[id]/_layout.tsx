@@ -11,6 +11,7 @@ export default function BusinessLayout() {
       <Stack.Screen name="reports" />
       <Stack.Screen name="settings" />
       <Stack.Screen name="requests" />
+      <Stack.Screen name="notifications" />
     </Stack>
   )
 }
