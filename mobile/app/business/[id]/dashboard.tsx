@@ -15,6 +15,7 @@ import AlertBadge from '@/components/ui/AlertBadge'
 import Card from '@/components/ui/Card'
 import GradientHero from '@/components/ui/GradientHero'
 import KpiCard from '@/components/ui/KpiCard'
+import { useUnreadNotifications } from '@/lib/useNotifications'
 
 const DATE_PRESETS = [
   { label: '7d', days: 7 },
@@ -34,6 +35,7 @@ export default function BusinessDashboard() {
   const { user, currentBusiness } = useAuth()
   const businessId = Number(id) || currentBusiness?.business_id || 0
   const router = useRouter()
+  const unreadCount = useUnreadNotifications(businessId || undefined)
 
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -169,7 +171,11 @@ export default function BusinessDashboard() {
             <View style={styles.heroActions}>
               <TouchableOpacity style={styles.heroIconBtn} onPress={() => router.push(`/business/${businessId}/notifications` as any)}>
                 <Ionicons name="notifications-outline" size={20} color="#fff" />
-                <View style={styles.heroNotifDot} />
+                {unreadCount > 0 && (
+                  <View style={styles.heroBadge}>
+                    <Text style={styles.heroBadgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
+                  </View>
+                )}
               </TouchableOpacity>
               <TouchableOpacity onPress={() => router.push('/profile')} style={styles.heroAvatarBtn}>
                 <View style={styles.heroAvatar}>
@@ -502,7 +508,13 @@ const styles = StyleSheet.create({
   heroTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   heroActions: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   heroIconBtn: { position: 'relative', width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.16)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.22)' },
-  heroNotifDot: { position: 'absolute', top: 9, right: 9, width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.danger, borderWidth: 1.5, borderColor: '#fff' },
+  heroBadge: {
+    position: 'absolute', top: -4, right: -6,
+    minWidth: 18, height: 18, borderRadius: 9, paddingHorizontal: 4,
+    backgroundColor: Colors.danger, alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1.5, borderColor: '#fff',
+  },
+  heroBadgeText: { fontSize: 10, fontWeight: '800', color: '#fff' },
   heroAvatarBtn: { position: 'relative' },
   heroAvatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.3)' },
   heroAvatarText: { fontSize: 17, fontWeight: '700', color: '#FFFFFF' },

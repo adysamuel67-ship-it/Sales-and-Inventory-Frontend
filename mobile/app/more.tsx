@@ -10,10 +10,12 @@ import { isAdminRole } from '@/lib/utils'
 import { Colors, BORDER_RADIUS } from '@/lib/constants'
 import Button from '@/components/ui/Button'
 import GradientHero from '@/components/ui/GradientHero'
+import { useUnreadNotifications } from '@/lib/useNotifications'
 
 export default function MoreScreen() {
   const router = useRouter()
   const { user, currentBusiness, businesses, switchBusiness, fetchBusinesses, logout } = useAuth()
+  const unreadCount = useUnreadNotifications(currentBusiness?.business_id)
   const [showBizSelector, setShowBizSelector] = useState(false)
   const [loadingLeave, setLoadingLeave] = useState(false)
   const isAdmin = isAdminRole(user?.business_role) || isAdminRole(user?.role)
@@ -119,6 +121,11 @@ export default function MoreScreen() {
             <Ionicons name="notifications" size={20} color={Colors.primary} />
           </View>
           <Text style={styles.menuLabel}>Notifications</Text>
+          {unreadCount > 0 ? (
+            <View style={styles.menuBadge}>
+              <Text style={styles.menuBadgeText}>{unreadCount > 99 ? '99+' : unreadCount}</Text>
+            </View>
+          ) : null}
           <Ionicons name="chevron-forward" size={18} color={Colors.textLight} />
         </TouchableOpacity>
         {currentBusiness && (
@@ -282,6 +289,11 @@ const styles = StyleSheet.create({
   },
   menuLabel: { flex: 1, fontSize: 16, color: Colors.text, fontWeight: '500' },
   dangerText: { color: Colors.danger },
+  menuBadge: {
+    minWidth: 22, height: 22, borderRadius: 11, paddingHorizontal: 6,
+    backgroundColor: Colors.primary, alignItems: 'center', justifyContent: 'center',
+  },
+  menuBadgeText: { fontSize: 12, fontWeight: '800', color: '#FFF' },
   modalOverlay: {
     flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end',
   },

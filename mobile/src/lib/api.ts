@@ -356,4 +356,66 @@ export async function dismissNotification(id: number) {
   }
 }
 
+const NOTIF_READ_KEY = 'notifications_read_v1'
+
+export async function getReadNotificationIds(): Promise<Set<number>> {
+  try {
+    const raw = await AsyncStorage.getItem(NOTIF_READ_KEY)
+    const arr: number[] = raw ? JSON.parse(raw) : []
+    return new Set(arr)
+  } catch {
+    return new Set()
+  }
+}
+
+export async function markNotificationRead(id: number) {
+  try {
+    const ids = await getReadNotificationIds()
+    ids.add(id)
+    await AsyncStorage.setItem(NOTIF_READ_KEY, JSON.stringify(Array.from(ids)))
+  } catch {
+    // ignore
+  }
+}
+
+export async function markAllNotificationsRead(ids: number[]) {
+  try {
+    const existing = await getReadNotificationIds()
+    for (const id of ids) existing.add(id)
+    await AsyncStorage.setItem(NOTIF_READ_KEY, JSON.stringify(Array.from(existing)))
+  } catch {
+    // ignore
+  }
+}
+
+export function computeUnreadCount(
+  notifications: NotificationItem[],
+  readIds: Set<number>,
+  dismissedIds: Set<number>,
+): number {
+  return notifications.filter(
+    (n) => !readIds.has(n.notification_id) && !dismissedIds.has(n.notification_id),
+  ).length
+}
+
+export type NotificationKind =
+  | 'stock'
+  | 'sale'
+  | 'member'
+  | 'debt'
+  | 'general'
+
+export function inferNotificationKind(text: string): NotificationKind {
+  const t = (text || '').toLowerCase()
+  if (t.includes('stock') || t.includes('low') || t.includes('restock') || t.includes('out of'))
+    return 'stock'
+  if (t.includes('sale') || t.includes('purchas') || t.includes('order') || t.includes('receipt'))
+    return 'sale'
+  if (t.includes('join') || t.includes('request') || t.includes('member') || t.includes('invite'))
+    return 'member'
+  if (t.includes('debt') || t.includes('borrow') || t.includes('owe') || t.includes('payment'))
+    return 'debt'
+  return 'general'
+}
+
 export default api
