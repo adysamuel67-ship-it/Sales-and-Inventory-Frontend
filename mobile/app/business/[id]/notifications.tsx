@@ -19,7 +19,7 @@ import {
 } from '@/lib/api'
 import type { NotificationItem, NotificationKind } from '@/lib/api'
 import { useAuth } from '@/lib/auth'
-import { Colors, BORDER_RADIUS, FONT_SIZE, SHADOW } from '@/lib/constants'
+import { Colors, BORDER_RADIUS, FONT_SIZE, SHADOW, FONTS } from '@/lib/constants'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import EmptyState from '@/components/ui/EmptyState'
 import AlertBadge from '@/components/ui/AlertBadge'
@@ -196,7 +196,7 @@ export default function NotificationsScreen() {
                 <Text style={styles.headerCountText}>{unreadCount} unread</Text>
               </View>
             ) : (
-              <Text style={styles.headerSub}>You're all caught up</Text>
+              <Text style={styles.headerSub}>You’re all caught up</Text>
             )}
           </View>
           {unreadCount > 0 ? (
@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center',
   },
   headerCenter: { flex: 1, alignItems: 'center' },
-  headerTitle: { fontSize: FONT_SIZE.lg, fontWeight: '800', color: '#FFFFFF', letterSpacing: 0.2 },
+  headerTitle: { fontSize: FONT_SIZE.lg, fontFamily: FONTS.extrabold, color: '#FFFFFF', letterSpacing: 0.2 },
   headerCountPill: {
     marginTop: 4, backgroundColor: 'rgba(255,255,255,0.22)', paddingHorizontal: 10,
     paddingVertical: 2, borderRadius: BORDER_RADIUS.full,
@@ -317,7 +317,7 @@ const styles = StyleSheet.create({
   item: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.surface,
     borderRadius: BORDER_RADIUS.xl, padding: 16, gap: 14,
-    ...SHADOW.md,
+    borderWidth: 1, borderColor: Colors.border, ...SHADOW.sm,
   },
   itemUnread: {
     backgroundColor: '#EFF4FF',

@@ -7,7 +7,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '@/lib/auth'
 import { businessAPI } from '@/lib/api'
 import { isAdminRole } from '@/lib/utils'
-import { Colors, BORDER_RADIUS } from '@/lib/constants'
+import { Colors, BORDER_RADIUS, SHADOW, FONTS } from '@/lib/constants'
 import Button from '@/components/ui/Button'
 import GradientHero from '@/components/ui/GradientHero'
 import { useUnreadNotifications } from '@/lib/useNotifications'
@@ -249,7 +249,7 @@ const styles = StyleSheet.create({
     borderWidth: 2, borderColor: 'rgba(255,255,255,0.3)',
   },
   profileAvatarText: { fontSize: 26, fontWeight: '800', color: '#FFFFFF' },
-  profileName: { fontSize: 20, fontWeight: '800', color: '#FFFFFF' },
+  profileName: { fontSize: 20, fontFamily: FONTS.extrabold, color: '#FFFFFF' },
   profileEmail: { fontSize: 13, color: 'rgba(255,255,255,0.75)', marginTop: 2 },
   roleBadge: { backgroundColor: 'rgba(255,255,255,0.22)', paddingHorizontal: 12, paddingVertical: 4, borderRadius: BORDER_RADIUS.full, marginTop: 8, alignSelf: 'flex-start', borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' },
   roleBadgeText: { fontSize: 12, fontWeight: '700', color: '#FFFFFF', textTransform: 'capitalize' },
@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
   bizCard: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.surface,
     borderRadius: BORDER_RADIUS.xl, padding: 16, marginBottom: 24,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 2,
+    borderWidth: 1, borderColor: Colors.border, ...SHADOW.sm,
   },
   bizIcon: {
     width: 48, height: 48, borderRadius: BORDER_RADIUS.xl, backgroundColor: Colors.primaryLight,
@@ -269,7 +269,7 @@ const styles = StyleSheet.create({
   bizRole: { fontSize: 13, color: Colors.textLight, marginTop: 2 },
   section: {
     backgroundColor: Colors.surface, borderRadius: BORDER_RADIUS.xl, marginBottom: 16, overflow: 'hidden',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 1,
+    borderWidth: 1, borderColor: Colors.border, ...SHADOW.sm,
   },
   adminCard: {
     flexDirection: 'row', alignItems: 'center', padding: 16, gap: 12,

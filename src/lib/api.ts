@@ -369,9 +369,9 @@ export const saleAPI = {
   get: (businessId: number, saleId: number) =>
     api.get(`/sales/${businessId}/${saleId}`),
   update: (businessId: number, saleId: number, data: any) =>
-    api.put(`/sales/${businessId}/${saleId}`, data),
+    api.put(`/sale/${businessId}/${saleId}`, data),
   getReceipt: (businessId: number, saleId: number) =>
-    api.get(`/sales/${businessId}/${saleId}/receipt`),
+    api.get(`/${businessId}/${saleId}/reciept`),
   delete: (businessId: number, saleId: number) =>
     api.delete(`/sales/${businessId}/${saleId}`),
 }
@@ -453,7 +453,7 @@ export const reportAPI = {
   dashboard: (businessId: number) =>
     api.get(`/reports/analytics/dashboard/${businessId}`),
   saleSummary: (businessId: number, date?: string, endDate?: string) =>
-    api.get(`/reports/analytics/summary/${businessId}`, { params: date && endDate ? { date, end_date: endDate } : {} }),
+    api.get(`/reports/analytics/summery/${businessId}`, { params: date && endDate ? { date, end_date: endDate } : {} }),
   debtsReport: (businessId: number) =>
     api.get(`/reports/analytics/debts/${businessId}`),
 }

@@ -8,7 +8,7 @@ import SimpleLineChart from '@/components/ui/SimpleLineChart'
 import SimpleBarChart from '@/components/ui/SimpleBarChart'
 import { reportAPI, productAPI, saleAPI } from '@/lib/api'
 import { extractSummary, extractArray, getDateRange, formatCurrency, mapLowStock, mapSale, isStaffRole, formatPayment, generateDateLabels } from '@/lib/utils'
-import { Colors, BORDER_RADIUS, FONT_SIZE, SPACING } from '@/lib/constants'
+import { Colors, BORDER_RADIUS, FONT_SIZE, SPACING, SHADOW, FONTS } from '@/lib/constants'
 import { useAuth } from '@/lib/auth'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import AlertBadge from '@/components/ui/AlertBadge'
@@ -519,10 +519,10 @@ const styles = StyleSheet.create({
   heroAvatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.3)' },
   heroAvatarText: { fontSize: 17, fontWeight: '700', color: '#FFFFFF' },
   heroOnlineDot: { position: 'absolute', bottom: 1, right: 1, width: 11, height: 11, borderRadius: 6, backgroundColor: Colors.success, borderWidth: 2, borderColor: '#2563EB' },
-  heroGreeting: { fontSize: 14, color: 'rgba(255,255,255,0.85)', fontWeight: '600' },
+  heroGreeting: { fontSize: 14, color: 'rgba(255,255,255,0.85)', fontFamily: FONTS.semibold },
   heroTitleBlock: { marginTop: 14 },
-  heroName: { fontSize: 30, fontWeight: '800', color: '#FFFFFF', letterSpacing: -0.5 },
-  heroSubtitle: { fontSize: 14, color: 'rgba(255,255,255,0.72)', marginTop: 2 },
+  heroName: { fontSize: 30, fontFamily: FONTS.extrabold, color: '#FFFFFF', letterSpacing: -0.5 },
+  heroSubtitle: { fontSize: 14, color: 'rgba(255,255,255,0.72)', marginTop: 2, fontFamily: FONTS.medium },
 
   heroRevenueCard: {
     marginTop: 18, backgroundColor: 'rgba(255,255,255,0.14)',
@@ -531,9 +531,9 @@ const styles = StyleSheet.create({
   },
   heroRevenueLabel: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   heroRevenueDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#7DD3FC' },
-  heroRevenueLabelText: { fontSize: 12, color: 'rgba(255,255,255,0.75)', fontWeight: '600', letterSpacing: 0.3 },
-  heroRevenueValue: { fontSize: 32, fontWeight: '800', color: '#FFFFFF', letterSpacing: -1, marginTop: 8 },
-  heroRevenueSub: { fontSize: 13, color: 'rgba(255,255,255,0.7)', marginTop: 6, fontWeight: '500' },
+  heroRevenueLabelText: { fontSize: 12, color: 'rgba(255,255,255,0.75)', fontFamily: FONTS.semibold, letterSpacing: 0.3 },
+  heroRevenueValue: { fontSize: 32, fontFamily: FONTS.extrabold, color: '#FFFFFF', letterSpacing: -1, marginTop: 8 },
+  heroRevenueSub: { fontSize: 13, color: 'rgba(255,255,255,0.7)', marginTop: 6, fontFamily: FONTS.medium },
 
   body: { padding: 16, gap: 12 },
 
@@ -555,13 +555,13 @@ const styles = StyleSheet.create({
 
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 },
   sectionHeaderLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: Colors.text },
+  sectionTitle: { fontSize: 16, fontFamily: FONTS.bold, color: Colors.text },
   seeAllBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  seeAllText: { fontSize: 13, fontWeight: '600', color: Colors.primary },
+  seeAllText: { fontSize: 13, fontFamily: FONTS.semibold, color: Colors.primary },
 
   chartCard: {
     backgroundColor: Colors.surface, borderRadius: BORDER_RADIUS.xl, padding: 16,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2,
+    borderWidth: 1, borderColor: Colors.border, ...SHADOW.sm,
   },
   chartToggle: { flexDirection: 'row', gap: 4, backgroundColor: Colors.surfaceAlt, borderRadius: BORDER_RADIUS.md, padding: 2 },
   chartToggleBtn: { width: 32, height: 28, borderRadius: BORDER_RADIUS.sm, alignItems: 'center', justifyContent: 'center' },
@@ -571,7 +571,7 @@ const styles = StyleSheet.create({
 
   lowStockCard: {
     backgroundColor: Colors.surface, borderRadius: BORDER_RADIUS.xl, overflow: 'hidden',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2,
+    borderWidth: 1, borderColor: Colors.border, ...SHADOW.sm,
   },
   lowStockItem: { flexDirection: 'row', alignItems: 'center', padding: 14, gap: 12 },
   lowStockItemBorder: { borderBottomWidth: 1, borderBottomColor: '#F8FAFC' },
@@ -587,7 +587,7 @@ const styles = StyleSheet.create({
 
   activityCard: {
     backgroundColor: Colors.surface, borderRadius: BORDER_RADIUS.xl, overflow: 'hidden',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2,
+    borderWidth: 1, borderColor: Colors.border, ...SHADOW.sm,
   },
   activityTabs: { flexDirection: 'row', padding: 8, gap: 4 },
   activityTab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingVertical: 8, borderRadius: BORDER_RADIUS.md },
@@ -613,8 +613,8 @@ const styles = StyleSheet.create({
   emptyActivityIcon: { width: 52, height: 52, borderRadius: 26, backgroundColor: Colors.primaryLight, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
   emptyActivityTitle: { fontSize: 16, fontWeight: '600', color: Colors.text, marginBottom: 4 },
   emptyActivityMsg: { fontSize: 13, color: Colors.textLight, marginBottom: 16 },
-  addSaleBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: Colors.primary, paddingHorizontal: 20, paddingVertical: 10, borderRadius: BORDER_RADIUS.full },
-  addSaleBtnText: { fontSize: 13, fontWeight: '600', color: '#FFFFFF' },
+  addSaleBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: Colors.primary, paddingHorizontal: 20, paddingVertical: 10, borderRadius: BORDER_RADIUS.md, ...SHADOW.primary },
+  addSaleBtnText: { fontSize: 13, fontFamily: FONTS.semibold, color: '#FFFFFF' },
 
   emptyDashboard: { alignItems: 'center', paddingVertical: 40 },
   emptyDashboardTitle: { fontSize: 18, fontWeight: '600', color: Colors.text, marginTop: 12 },

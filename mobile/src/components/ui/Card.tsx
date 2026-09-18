@@ -16,7 +16,6 @@ export default function Card({ children, style, padding = 16, outlined = false, 
       style={[
         styles.card,
         { padding },
-        outlined && styles.outlined,
         flat && styles.flat,
         style,
       ]}
@@ -29,13 +28,9 @@ export default function Card({ children, style, padding = 16, outlined = false, 
 const styles = StyleSheet.create({
   card: {
     backgroundColor: Colors.surface,
-    borderRadius: BORDER_RADIUS.xxl,
-    ...SHADOW.md,
-  },
-  outlined: {
+    borderRadius: BORDER_RADIUS.xl,
     borderWidth: 1,
     borderColor: Colors.border,
-    backgroundColor: Colors.surface,
     ...SHADOW.sm,
   },
   flat: {

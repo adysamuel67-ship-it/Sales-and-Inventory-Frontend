@@ -7,7 +7,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { customerAPI, debtAPI, saleAPI } from '@/lib/api'
 import { extractArray, formatCurrency, parseApiError, formatPayment, mapSale } from '@/lib/utils'
-import { Colors, BORDER_RADIUS, FONT_SIZE, SPACING } from '@/lib/constants'
+import { Colors, BORDER_RADIUS, FONT_SIZE, SPACING, SHADOW, FONTS } from '@/lib/constants'
 import { useAuth } from '@/lib/auth'
 import Button from '@/components/ui/Button'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
@@ -691,7 +691,7 @@ export default function CustomersScreen() {
               <Ionicons name="trash" size={24} color={Colors.danger} />
             </View>
             <Text style={styles.confirmTitle}>Delete Customer</Text>
-            <Text style={styles.confirmMessage}>Are you sure you want to delete "{deleteTarget?.name}"? This action cannot be undone.</Text>
+            <Text style={styles.confirmMessage}>Are you sure you want to delete “{deleteTarget?.name}”? This action cannot be undone.</Text>
             <View style={styles.confirmBtns}>
               <Button title="Cancel" variant="outline" onPress={() => { setShowDeleteConfirm(false); setDeleteTarget(null) }} style={{ flex: 1 }} />
               <Button title="Delete" variant="danger" onPress={handleDelete} style={{ flex: 1 }} />
@@ -712,7 +712,7 @@ const styles = StyleSheet.create({
   topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 60, paddingHorizontal: 16, paddingBottom: 12, backgroundColor: Colors.surface },
   statsBadge: { backgroundColor: Colors.surfaceAlt, paddingHorizontal: 10, paddingVertical: 4, borderRadius: BORDER_RADIUS.full },
   statsBadgeText: { fontSize: 11, fontWeight: '600', color: Colors.textLight },
-  headerTitle: { fontSize: 20, fontWeight: '700', color: Colors.text },
+  headerTitle: { fontSize: 20, fontFamily: FONTS.bold, color: Colors.text },
   addBtn: { backgroundColor: Colors.primary, borderRadius: BORDER_RADIUS.lg, padding: 10, shadowColor: Colors.primary, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 4 },
 
   tabRow: { flexDirection: 'row', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 4, gap: 8 },
@@ -730,7 +730,7 @@ const styles = StyleSheet.create({
   searchRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.surface, borderRadius: BORDER_RADIUS.lg, paddingHorizontal: 14, paddingVertical: 10, borderWidth: 1, borderColor: Colors.border, gap: 8 },
   searchInput: { flex: 1, fontSize: 14, color: Colors.text, paddingVertical: 2 },
 
-  customerCard: { backgroundColor: Colors.surface, borderRadius: BORDER_RADIUS.xl, marginBottom: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 },
+  customerCard: { backgroundColor: Colors.surface, borderRadius: BORDER_RADIUS.xl, marginBottom: 10, borderWidth: 1, borderColor: Colors.border, ...SHADOW.sm },
   cardContent: { flexDirection: 'row', alignItems: 'center', padding: 14 },
   cardLeft: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 },
   avatar: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
@@ -752,7 +752,7 @@ const styles = StyleSheet.create({
   emptyIcon: { width: 64, height: 64, borderRadius: 32, backgroundColor: Colors.primaryLight, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
   emptyTitle: { fontSize: 18, fontWeight: '700', color: Colors.text, marginBottom: 4 },
   emptyMsg: { fontSize: 14, color: Colors.textLight, marginBottom: 20 },
-  emptyBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: Colors.primary, paddingHorizontal: 20, paddingVertical: 12, borderRadius: BORDER_RADIUS.full },
+  emptyBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: Colors.primary, paddingHorizontal: 20, paddingVertical: 12, borderRadius: BORDER_RADIUS.md },
   emptyBtnText: { fontSize: 14, fontWeight: '600', color: '#FFF' },
 
   // Modals

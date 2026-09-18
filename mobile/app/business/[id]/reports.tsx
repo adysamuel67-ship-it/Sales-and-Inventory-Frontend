@@ -8,7 +8,7 @@ import SimpleLineChart from '@/components/ui/SimpleLineChart'
 import { reportAPI, saleAPI } from '@/lib/api'
 import { useAuth } from '@/lib/auth'
 import { extractProfit, extractArray, getDateRange, formatCurrency, extractSummary, formatPayment, generateDateLabels } from '@/lib/utils'
-import { Colors, BORDER_RADIUS, FONT_SIZE } from '@/lib/constants'
+import { Colors, BORDER_RADIUS, FONT_SIZE, SHADOW, FONTS } from '@/lib/constants'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import AlertBadge from '@/components/ui/AlertBadge'
 import GradientHero from '@/components/ui/GradientHero'
@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
 
   heroTop: { paddingHorizontal: 20, paddingTop: 2 },
   backBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.12)', alignItems: 'center', justifyContent: 'center', marginBottom: 14 },
-  heroTitle: { fontSize: 24, fontWeight: '800', color: '#FFFFFF' },
+  heroTitle: { fontSize: 24, fontFamily: FONTS.extrabold, color: '#FFFFFF' },
   heroSubtitle: { fontSize: 14, color: 'rgba(255,255,255,0.75)', marginTop: 4 },
 
   body: { padding: 16, gap: 12 },
@@ -281,12 +281,12 @@ const styles = StyleSheet.create({
   kpiCard: {
     width: CARD_WIDTH, backgroundColor: Colors.surface, borderRadius: BORDER_RADIUS.xl,
     padding: 14, borderLeftWidth: 3,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2,
+    borderWidth: 1, borderColor: Colors.border, ...SHADOW.sm,
   },
   kpiCardWide: {
     width: '100%', backgroundColor: Colors.surface, borderRadius: BORDER_RADIUS.xl,
     padding: 16, borderLeftWidth: 3,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2,
+    borderWidth: 1, borderColor: Colors.border, ...SHADOW.sm,
   },
   kpiIconWrap: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginBottom: 10 },
   kpiValue: { fontSize: 16, fontWeight: '800', color: Colors.text, marginBottom: 2 },
@@ -298,11 +298,11 @@ const styles = StyleSheet.create({
   sectionCard: {
     backgroundColor: Colors.surface, borderRadius: BORDER_RADIUS.xl,
     padding: 16, overflow: 'hidden',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2,
+    borderWidth: 1, borderColor: Colors.border, ...SHADOW.sm,
   },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
   sectionHeaderLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: Colors.text },
+  sectionTitle: { fontSize: 16, fontFamily: FONTS.bold, color: Colors.text },
 
   analyticsGrid: { flexDirection: 'row', gap: 10, marginBottom: 16 },
   analyticsItem: {

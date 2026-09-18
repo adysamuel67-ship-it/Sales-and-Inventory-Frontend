@@ -8,7 +8,7 @@ import { useLocalSearchParams } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { saleAPI, productAPI, customerAPI } from '@/lib/api'
 import { extractArray, mapSale, formatCurrency, formatPayment, parseApiError } from '@/lib/utils'
-import { Colors, BORDER_RADIUS } from '@/lib/constants'
+import { Colors, BORDER_RADIUS, SHADOW, FONTS } from '@/lib/constants'
 import { useAuth } from '@/lib/auth'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
@@ -588,8 +588,8 @@ const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.background },
 
   heroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingHorizontal: 20, paddingTop: 2 },
-  heroTitle: { fontSize: 22, fontWeight: '800', color: '#FFFFFF' },
-  heroSubtitle: { fontSize: 13, color: 'rgba(255,255,255,0.75)', marginTop: 4 },
+  heroTitle: { fontSize: 22, fontFamily: FONTS.extrabold, color: '#FFFFFF', letterSpacing: -0.4 },
+  heroSubtitle: { fontSize: 13, color: 'rgba(255,255,255,0.75)', marginTop: 4, fontFamily: FONTS.medium },
   addBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' },
 
   heroQuickStats: {
@@ -619,9 +619,9 @@ const s = StyleSheet.create({
   listContent: { padding: 16, paddingBottom: 100 },
 
   card: {
-    backgroundColor: Colors.surface, borderRadius: BORDER_RADIUS.lg, padding: 14,
-    marginBottom: 10, borderWidth: 1, borderColor: '#F1F5F9',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 2,
+    backgroundColor: Colors.surface, borderRadius: BORDER_RADIUS.xl, padding: 14,
+    marginBottom: 10, borderWidth: 1, borderColor: Colors.border,
+    ...SHADOW.sm,
   },
   cardHeader: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10,

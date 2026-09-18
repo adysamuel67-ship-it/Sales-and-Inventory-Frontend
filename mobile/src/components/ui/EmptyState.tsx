@@ -1,7 +1,7 @@
 import React from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { Colors, BORDER_RADIUS } from '@/lib/constants'
+import { Colors, BORDER_RADIUS, FONTS } from '@/lib/constants'
 
 interface EmptyStateProps {
   icon?: keyof typeof Ionicons.glyphMap
@@ -9,11 +9,12 @@ interface EmptyStateProps {
   message?: string
 }
 
+// Matches the web EmptyState: gray-50 rounded chip, muted outline icon, small title.
 export default function EmptyState({ icon = 'folder-open-outline', title, message }: EmptyStateProps) {
   return (
     <View style={styles.container}>
       <View style={styles.iconCircle}>
-        <Ionicons name={icon} size={26} color={Colors.primary} />
+        <Ionicons name={icon} size={24} color={Colors.neutralLight} />
       </View>
       <Text style={styles.title}>{title}</Text>
       {message && <Text style={styles.message}>{message}</Text>}
@@ -30,27 +31,27 @@ const styles = StyleSheet.create({
     minHeight: 200,
   },
   iconCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: BORDER_RADIUS.xxxl,
-    backgroundColor: Colors.primaryLight,
+    width: 56,
+    height: 56,
+    borderRadius: BORDER_RADIUS.xl,
+    backgroundColor: Colors.gray100,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: 14,
     borderWidth: 1,
-    borderColor: Colors.primary + '22',
+    borderColor: Colors.gray200,
   },
   title: {
-    fontSize: 17,
-    fontWeight: '700',
+    fontSize: 15,
+    fontFamily: FONTS.semibold,
     color: Colors.text,
   },
   message: {
-    fontSize: 14,
-    color: Colors.textLight,
-    marginTop: 6,
+    fontSize: 13,
+    color: Colors.neutralLight,
+    marginTop: 5,
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: 19,
     maxWidth: 260,
   },
 })

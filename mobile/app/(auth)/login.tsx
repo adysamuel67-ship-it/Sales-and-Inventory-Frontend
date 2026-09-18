@@ -179,7 +179,7 @@ export default function LoginScreen() {
                     <Ionicons key={j} name="star" size={14} color="#F59E0B" />
                   ))}
                 </View>
-                <Text style={styles.testimonialText}>"{t.text}"</Text>
+                <Text style={styles.testimonialText}>“{t.text}”</Text>
                 <View style={styles.testimonialAuthor}>
                   <View style={styles.testimonialAvatar}>
                     <Text style={styles.testimonialAvatarText}>{t.name[0]}</Text>

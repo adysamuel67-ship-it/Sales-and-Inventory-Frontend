@@ -7,7 +7,7 @@ import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { authAPI } from '@/lib/api'
 import { parseApiError } from '@/lib/utils'
-import { Colors, BORDER_RADIUS } from '@/lib/constants'
+import { Colors, BORDER_RADIUS, SHADOW, FONTS } from '@/lib/constants'
 import Button from '@/components/ui/Button'
 import AlertBadge from '@/components/ui/AlertBadge'
 
@@ -220,7 +220,7 @@ export default function ForgotPasswordScreen() {
             <Ionicons name="key-outline" size={40} color={Colors.primary} />
           </View>
           <Text style={styles.title}>Forgot Password?</Text>
-          <Text style={styles.subtitle}>Enter your email and we'll send you a reset code</Text>
+          <Text style={styles.subtitle}>Enter your email and we’ll send you a reset code</Text>
         </View>
 
         {error ? <AlertBadge message={error} type="error" /> : null}
@@ -266,7 +266,7 @@ const styles = StyleSheet.create({
     width: 80, height: 80, borderRadius: BORDER_RADIUS.xxl, backgroundColor: Colors.primaryLight,
     alignItems: 'center', justifyContent: 'center', marginBottom: 20,
   },
-  title: { fontSize: 24, fontWeight: '700', color: Colors.text },
+  title: { fontSize: 24, fontFamily: FONTS.bold, color: Colors.text },
   subtitle: { fontSize: 15, color: Colors.textLight, marginTop: 8, textAlign: 'center', lineHeight: 22 },
   form: {},
   inputGroup: { marginBottom: 16 },

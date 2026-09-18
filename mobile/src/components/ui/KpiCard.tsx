@@ -1,7 +1,7 @@
 import React from 'react'
 import { View, Text, StyleSheet, StyleProp, ViewStyle } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { Colors, BORDER_RADIUS, FONT_SIZE, SHADOW } from '@/lib/constants'
+import { Colors, BORDER_RADIUS, SHADOW, FONTS, CHIP_COLORS } from '@/lib/constants'
 
 interface KpiCardProps {
   title: string
@@ -13,25 +13,17 @@ interface KpiCardProps {
   style?: StyleProp<ViewStyle>
 }
 
-const colorMap: Record<NonNullable<KpiCardProps['color']>, { bg: string; text: string; accent: string }> = {
-  primary: { bg: Colors.primaryLight, text: Colors.primary, accent: Colors.primary },
-  success: { bg: Colors.successLight, text: Colors.success, accent: Colors.success },
-  warning: { bg: Colors.warningLight, text: Colors.warning, accent: Colors.warning },
-  danger: { bg: Colors.dangerLight, text: Colors.danger, accent: Colors.danger },
-  purple: { bg: Colors.purpleLight, text: Colors.purple, accent: Colors.purple },
-  emerald: { bg: Colors.emeraldLight, text: Colors.emerald, accent: Colors.emerald },
-}
-
+// Matches the web KpiCard: bordered white card (rounded-2xl), colored icon chip,
+// uppercase 11px label, bold value, tinted trend pill.
 export default function KpiCard({ title, value, subtitle, icon, color = 'primary', trend, style }: KpiCardProps) {
-  const colors = colorMap[color]
+  const chip = CHIP_COLORS[color]
 
   return (
     <View style={[styles.card, style]}>
-      <View style={[styles.accentBar, { backgroundColor: colors.accent }]} />
       <View style={styles.row}>
         {icon && (
-          <View style={[styles.iconContainer, { backgroundColor: colors.bg }]}>
-            <Ionicons name={icon} size={18} color={colors.text} />
+          <View style={[styles.iconContainer, { backgroundColor: chip.bg }]}>
+            <Ionicons name={icon} size={18} color={chip.text} />
           </View>
         )}
         <View style={styles.content}>
@@ -55,20 +47,12 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: Colors.surface,
     borderRadius: BORDER_RADIUS.xl,
+    borderWidth: 1,
+    borderColor: Colors.border,
     padding: 14,
     flex: 1,
     minWidth: '45%',
-    ...SHADOW.md,
-    overflow: 'hidden',
-  },
-  accentBar: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 3,
-    borderTopLeftRadius: BORDER_RADIUS.xl,
-    borderBottomLeftRadius: BORDER_RADIUS.xl,
+    ...SHADOW.sm,
   },
   row: {
     flexDirection: 'row',
@@ -89,28 +73,29 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 11,
     color: Colors.neutralLight,
-    fontWeight: '600',
+    fontFamily: FONTS.medium,
     textTransform: 'uppercase',
     letterSpacing: 0.6,
   },
   value: {
-    fontSize: 19,
-    fontWeight: '800',
+    fontSize: 20,
+    fontFamily: FONTS.extrabold,
     color: Colors.text,
     marginTop: 2,
+    letterSpacing: -0.3,
   },
   trendBadge: {
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: BORDER_RADIUS.md,
+    borderRadius: BORDER_RADIUS.sm,
     marginLeft: 6,
   },
   trendText: {
-    fontSize: 10,
-    fontWeight: '700',
+    fontSize: 11,
+    fontFamily: FONTS.semibold,
   },
   subtitle: {
-    fontSize: 10,
+    fontSize: 11,
     color: Colors.neutralLight,
     marginTop: 8,
     marginLeft: 52,

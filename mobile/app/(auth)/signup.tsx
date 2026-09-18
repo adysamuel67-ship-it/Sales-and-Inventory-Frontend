@@ -107,7 +107,7 @@ export default function SignupScreen() {
 
         {/* ── Benefits ── */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Why You'll Love It</Text>
+          <Text style={styles.sectionTitle}>Why You’ll Love It</Text>
           <Text style={styles.sectionSubtitle}>Real results from real business owners</Text>
           {benefits.map((b, i) => (
             <View key={i} style={styles.benefitCard}>

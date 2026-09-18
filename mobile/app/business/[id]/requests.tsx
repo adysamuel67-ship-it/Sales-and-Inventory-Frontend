@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useRouter, useLocalSearchParams } from 'expo-router'
 import { businessAPI } from '@/lib/api'
 import { useAuth } from '@/lib/auth'
-import { Colors, SPACING, BORDER_RADIUS, FONT_SIZE } from '@/lib/constants'
+import { Colors, SPACING, BORDER_RADIUS, FONT_SIZE, SHADOW, FONTS } from '@/lib/constants'
 import { extractArray, parseApiError, isAdminRole, getRoleColor, getRoleLabel } from '@/lib/utils'
 import type { Approval } from '@/types'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 60, paddingHorizontal: 16, paddingBottom: 12, backgroundColor: Colors.surface },
   backBtn: { padding: 4 },
-  headerTitle: { fontSize: 20, fontWeight: '700', color: Colors.text },
+  headerTitle: { fontSize: 20, fontFamily: FONTS.bold, color: Colors.text },
   tabRow: { flexDirection: 'row', paddingHorizontal: 16, paddingTop: 12, gap: 6 },
   tabBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 8, paddingHorizontal: 14, borderRadius: BORDER_RADIUS.full, backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.border },
   tabActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
@@ -269,7 +269,7 @@ const styles = StyleSheet.create({
   countText: { fontSize: 10, fontWeight: '700', color: Colors.textLight },
   countTextActive: { color: '#FFF' },
   list: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 40 },
-  card: { flexDirection: 'row', backgroundColor: Colors.surface, borderRadius: BORDER_RADIUS.xl, marginBottom: 10, overflow: 'hidden', elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3 },
+  card: { flexDirection: 'row', backgroundColor: Colors.surface, borderRadius: BORDER_RADIUS.xl, marginBottom: 10, overflow: 'hidden', borderWidth: 1, borderColor: Colors.border, ...SHADOW.sm },
   statusStrip: { width: 4 },
   cardBody: { flex: 1, padding: 14 },
   cardHeader: { flexDirection: 'row', alignItems: 'center' },

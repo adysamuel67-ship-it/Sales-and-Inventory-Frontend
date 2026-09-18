@@ -7,7 +7,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { businessAPI, adminAPI } from '@/lib/api'
 import { extractArray, isAdminRole, parseApiError, getRoleColor, getRoleLabel } from '@/lib/utils'
-import { Colors, BORDER_RADIUS, FONT_SIZE } from '@/lib/constants'
+import { Colors, BORDER_RADIUS, FONT_SIZE, SHADOW, FONTS } from '@/lib/constants'
 import { useAuth } from '@/lib/auth'
 import Button from '@/components/ui/Button'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
@@ -285,7 +285,7 @@ export default function SettingsScreen() {
               <Text style={styles.sectionTitle}>Leave Business</Text>
             </View>
           </View>
-          <Text style={styles.dangerText}>Once you leave, you'll lose access to this business and all its data.</Text>
+          <Text style={styles.dangerText}>Once you leave, you’ll lose access to this business and all its data.</Text>
           <TouchableOpacity style={styles.leaveBtn} onPress={() => setShowLeaveConfirm(true)}>
             <Ionicons name="exit-outline" size={18} color={Colors.danger} />
             <Text style={styles.leaveBtnText}>Leave Business</Text>
@@ -334,7 +334,7 @@ export default function SettingsScreen() {
               <Ionicons name="exit" size={22} color={Colors.warning} />
             </View>
             <Text style={styles.modalTitle}>Leave Business</Text>
-            <Text style={styles.modalMessage}>Are you sure you want to leave "{currentBusiness?.name}"? You will lose access to all data.</Text>
+            <Text style={styles.modalMessage}>Are you sure you want to leave “{currentBusiness?.name}”? You will lose access to all data.</Text>
             <View style={styles.modalBtns}>
               <Button title="Cancel" variant="outline" onPress={() => setShowLeaveConfirm(false)} style={{ flex: 1 }} />
               <Button title="Leave" variant="danger" onPress={handleLeave} loading={leaveLoading} style={{ flex: 1 }} />
@@ -442,7 +442,7 @@ const styles = StyleSheet.create({
 
   heroTop: { paddingHorizontal: 20, paddingTop: 2 },
   backBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.12)', alignItems: 'center', justifyContent: 'center', marginBottom: 14 },
-  heroTitle: { fontSize: 24, fontWeight: '800', color: '#FFFFFF' },
+  heroTitle: { fontSize: 24, fontFamily: FONTS.extrabold, color: '#FFFFFF' },
   heroSubtitle: { fontSize: 14, color: 'rgba(255,255,255,0.75)', marginTop: 4 },
   heroQuickStats: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around',
@@ -460,13 +460,13 @@ const styles = StyleSheet.create({
   sectionCard: {
     backgroundColor: Colors.surface, borderRadius: BORDER_RADIUS.xl,
     padding: 16, overflow: 'hidden',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2,
+    borderWidth: 1, borderColor: Colors.border, ...SHADOW.sm,
   },
   dangerCard: { borderWidth: 1, borderColor: Colors.danger + '30' },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   sectionHeaderLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   sectionIcon: { width: 32, height: 32, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: Colors.text },
+  sectionTitle: { fontSize: 16, fontFamily: FONTS.bold, color: Colors.text },
   editBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 4, paddingHorizontal: 8 },
   editBtnText: { fontSize: 13, fontWeight: '600', color: Colors.primary },
 

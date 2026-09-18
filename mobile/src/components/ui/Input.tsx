@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { View, TextInput, Text, StyleSheet, TextInputProps, ViewStyle } from 'react-native'
-import { Colors, BORDER_RADIUS } from '@/lib/constants'
+import { Colors, BORDER_RADIUS, FONTS } from '@/lib/constants'
 
 interface InputProps extends TextInputProps {
   label?: string
@@ -8,6 +8,8 @@ interface InputProps extends TextInputProps {
   containerStyle?: ViewStyle
 }
 
+// Web-style Field: label text-sm/medium gray-700, input rounded-lg border-gray-300
+// with a primary focus ring.
 export default function Input({ label, error, containerStyle, style, onFocus, onBlur, ...props }: InputProps) {
   const [focused, setFocused] = useState(false)
 
@@ -30,23 +32,22 @@ export default function Input({ label, error, containerStyle, style, onFocus, on
 
 const styles = StyleSheet.create({
   container: { marginBottom: 16 },
-  label: { fontSize: 13, fontWeight: '600', color: Colors.text, marginBottom: 7 },
+  label: { fontSize: 14, fontFamily: FONTS.medium, color: Colors.gray700, marginBottom: 6 },
   wrap: {
     backgroundColor: Colors.surface,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-    borderRadius: BORDER_RADIUS.lg,
-    ...({ shadowColor: '#0F172A', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 3, elevation: 1 } as object),
+    borderWidth: 1,
+    borderColor: Colors.borderStrong,
+    borderRadius: BORDER_RADIUS.md,
   },
   wrapFocused: {
     borderColor: Colors.primary,
-    ...({ shadowColor: Colors.primary, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.15, shadowRadius: 6, elevation: 2 } as object),
+    ...({ shadowColor: Colors.primary, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.18, shadowRadius: 6, elevation: 2 } as object),
   },
   wrapError: { borderColor: Colors.danger },
   input: {
-    paddingHorizontal: 16,
-    paddingVertical: 13,
-    fontSize: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
     color: Colors.text,
   },
   error: { color: Colors.danger, fontSize: 12, marginTop: 5 },

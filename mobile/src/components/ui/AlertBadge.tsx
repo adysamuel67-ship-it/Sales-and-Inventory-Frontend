@@ -1,7 +1,7 @@
 import React from 'react'
 import { View, Text, StyleSheet, StyleProp, ViewStyle } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { Colors, BORDER_RADIUS } from '@/lib/constants'
+import { Colors, BORDER_RADIUS, FONTS } from '@/lib/constants'
 
 interface AlertBadgeProps {
   message: string
@@ -16,24 +16,21 @@ const iconMap = {
   info: 'information-circle' as const,
 }
 
-export default function AlertBadge({ message, type = 'info', style }: AlertBadgeProps) {
-  const bgColor =
-    type === 'success' ? Colors.successLight
-    : type === 'error' ? Colors.dangerLight
-    : type === 'warning' ? Colors.warningLight
-    : Colors.primaryLight
-  const textColor =
-    type === 'success' ? Colors.success
-    : type === 'error' ? Colors.danger
-    : type === 'warning' ? Colors.warning
-    : Colors.primary
+const typeMap = {
+  success: { bg: Colors.successLight, text: Colors.success, border: '#86EFAC' },
+  error: { bg: Colors.dangerLight, text: Colors.danger, border: '#FECACA' },
+  warning: { bg: Colors.warningLight, text: Colors.warning, border: '#FDE68A' },
+  info: { bg: '#EFF6FF', text: '#1D4ED8', border: '#BFDBFE' },
+}
 
+export default function AlertBadge({ message, type = 'info', style }: AlertBadgeProps) {
+  const c = typeMap[type]
   if (!message) return null
 
   return (
-    <View style={[styles.badge, { backgroundColor: bgColor }, style]}>
-      <Ionicons name={iconMap[type]} size={16} color={textColor} style={styles.icon} />
-      <Text style={[styles.text, { color: textColor }]}>{message}</Text>
+    <View style={[styles.badge, { backgroundColor: c.bg, borderColor: c.border }, style]}>
+      <Ionicons name={iconMap[type]} size={17} color={c.text} style={styles.icon} />
+      <Text style={[styles.text, { color: c.text }]}>{message}</Text>
     </View>
   )
 }
@@ -44,10 +41,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 12,
     borderRadius: BORDER_RADIUS.lg,
-    marginBottom: 12,
+    borderWidth: 1,
   },
   icon: {
     marginRight: 8,
   },
-  text: { fontSize: 14, fontWeight: '500', flex: 1 },
+  text: { fontSize: 13, fontFamily: FONTS.medium, flex: 1 },
 })

@@ -242,7 +242,7 @@ export const cronAPI = {
 }
 
 export const productAPI = {
-  list: (businessId: number, params?: any) => api.get(`/products/${businessId}`, { params }),
+  list: (businessId: number, params?: any) => params ? api.get(`/products/${businessId}`, { params }) : api.get(`/products/${businessId}`),
   get: (businessId: number, productId: number) => api.get(`/products/${businessId}/${productId}`),
   create: (businessId: number, data: any) => api.post(`/products/${businessId}`, data),
   update: (businessId: number, productId: number, data: any) => api.put(`/products/${businessId}/${productId}`, data),

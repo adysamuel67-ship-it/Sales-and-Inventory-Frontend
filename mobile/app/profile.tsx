@@ -8,7 +8,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '@/lib/auth'
 import { profileAPI, businessAPI } from '@/lib/api'
 import { parseApiError, formatDate, isAdminRole, getRoleColor, getRoleLabel } from '@/lib/utils'
-import { Colors, BORDER_RADIUS } from '@/lib/constants'
+import { Colors, BORDER_RADIUS, SHADOW, FONTS } from '@/lib/constants'
 import Button from '@/components/ui/Button'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import AlertBadge from '@/components/ui/AlertBadge'
@@ -517,8 +517,7 @@ const styles = StyleSheet.create({
     flex: 1, minWidth: (width - 48) / 4,
     backgroundColor: Colors.surface, borderRadius: BORDER_RADIUS.lg,
     padding: 12, alignItems: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04, shadowRadius: 4, elevation: 2,
+    borderWidth: 1, borderColor: Colors.border, ...SHADOW.sm,
   },
   statIcon: {
     width: 36, height: 36, borderRadius: 10,
@@ -530,7 +529,7 @@ const styles = StyleSheet.create({
   section: { paddingHorizontal: 16, marginTop: 20 },
   sectionHeader: { marginBottom: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   sectionHeaderLeft: { flex: 1 },
-  sectionTitle: { fontSize: 17, fontWeight: '700', color: Colors.text },
+  sectionTitle: { fontSize: 17, fontFamily: FONTS.bold, color: Colors.text },
   sectionSub: { fontSize: 13, color: Colors.neutralLight, marginTop: 2 },
 
   editBtn: {
@@ -544,8 +543,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     backgroundColor: Colors.surface, borderRadius: BORDER_RADIUS.lg, padding: 14,
     marginBottom: 10,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04, shadowRadius: 4, elevation: 2,
+    borderWidth: 1, borderColor: Colors.border, ...SHADOW.sm,
   },
   bizCardActive: {
     borderWidth: 1.5, borderColor: Colors.primary,
@@ -583,8 +581,7 @@ const styles = StyleSheet.create({
 
   infoCard: {
     backgroundColor: Colors.surface, borderRadius: BORDER_RADIUS.lg, overflow: 'hidden',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04, shadowRadius: 4, elevation: 2,
+    borderWidth: 1, borderColor: Colors.border, ...SHADOW.sm,
   },
   infoRow: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
@@ -617,8 +614,7 @@ const styles = StyleSheet.create({
   passwordNotice: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
     backgroundColor: Colors.surface, borderRadius: BORDER_RADIUS.lg, padding: 16,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04, shadowRadius: 4, elevation: 2,
+    borderWidth: 1, borderColor: Colors.border, ...SHADOW.sm,
   },
   passwordNoticeIcon: {
     width: 36, height: 36, borderRadius: 10,
@@ -630,8 +626,7 @@ const styles = StyleSheet.create({
   adminCard: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
     backgroundColor: Colors.surface, borderRadius: BORDER_RADIUS.lg, padding: 16,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04, shadowRadius: 4, elevation: 2,
+    borderWidth: 1, borderColor: Colors.border, ...SHADOW.sm,
   },
   adminCardIcon: {
     width: 40, height: 40, borderRadius: 10,
@@ -643,8 +638,7 @@ const styles = StyleSheet.create({
   signOutBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
     backgroundColor: Colors.surface, borderRadius: BORDER_RADIUS.lg, padding: 16,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04, shadowRadius: 4, elevation: 2,
+    borderWidth: 1, borderColor: Colors.border, ...SHADOW.sm,
   },
   signOutText: { fontSize: 16, fontWeight: '600', color: Colors.danger },
 

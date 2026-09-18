@@ -8,7 +8,7 @@ import { useLocalSearchParams } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { productAPI } from '@/lib/api'
 import { extractArray, normalizeProduct, formatCurrency, parseApiError } from '@/lib/utils'
-import { Colors, BORDER_RADIUS } from '@/lib/constants'
+import { Colors, BORDER_RADIUS, FONTS } from '@/lib/constants'
 import { useAuth } from '@/lib/auth'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
@@ -408,7 +408,7 @@ export default function ProductsScreen() {
         <View style={s.overlay}>
           <View style={s.confirmCard}>
             <Text style={s.confirmTitle}>Delete Product</Text>
-            <Text style={s.confirmMsg}>Are you sure you want to delete "{deleteTarget?.name}"?</Text>
+            <Text style={s.confirmMsg}>Are you sure you want to delete “{deleteTarget?.name}”?</Text>
             <View style={s.confirmActions}>
               <Button title="Cancel" variant="outline" onPress={() => { setShowDeleteConfirm(false); setDeleteTarget(null) }} style={{ flex: 1 }} />
               <Button title="Delete" variant="danger" onPress={handleDelete} style={{ flex: 1 }} />
@@ -424,8 +424,8 @@ const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.background },
 
   heroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingHorizontal: 20, paddingTop: 2 },
-  heroTitle: { fontSize: 22, fontWeight: '800', color: '#FFFFFF' },
-  heroSubtitle: { fontSize: 13, color: 'rgba(255,255,255,0.75)', marginTop: 4 },
+  heroTitle: { fontSize: 22, fontFamily: FONTS.extrabold, color: '#FFFFFF', letterSpacing: -0.4 },
+  heroSubtitle: { fontSize: 13, color: 'rgba(255,255,255,0.75)', marginTop: 4, fontFamily: FONTS.medium },
   addBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.25)' },
 
   heroQuickStats: {
@@ -464,12 +464,12 @@ const s = StyleSheet.create({
 
   productCard: { marginBottom: 12, padding: 14 },
   productHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  productName: { fontSize: 15, fontWeight: '700', color: Colors.text },
-  productSku: { fontSize: 11, color: Colors.textLight, marginTop: 2 },
-  stockBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 100 },
-  stockText: { fontSize: 11, fontWeight: '700' },
+  productName: { fontSize: 15, fontFamily: FONTS.bold, color: Colors.text },
+  productSku: { fontSize: 11, color: Colors.textLight, marginTop: 2, fontFamily: FONTS.regular },
+  stockBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: BORDER_RADIUS.full },
+  stockText: { fontSize: 11, fontFamily: FONTS.bold },
   productMeta: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 },
-  productPrice: { fontSize: 16, fontWeight: '700', color: Colors.primary },
+  productPrice: { fontSize: 16, fontFamily: FONTS.bold, color: Colors.primary },
   productCategory: {
     fontSize: 11, color: Colors.textLight, backgroundColor: Colors.surfaceAlt,
     paddingHorizontal: 8, paddingVertical: 3, borderRadius: 100, fontWeight: '600',

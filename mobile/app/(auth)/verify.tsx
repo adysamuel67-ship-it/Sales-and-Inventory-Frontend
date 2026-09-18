@@ -7,12 +7,12 @@ import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { authAPI } from '@/lib/api'
 import { parseApiError } from '@/lib/utils'
-import { Colors, BORDER_RADIUS } from '@/lib/constants'
+import { Colors, BORDER_RADIUS, SHADOW, FONTS } from '@/lib/constants'
 import { useAuth } from '@/lib/auth'
 import Button from '@/components/ui/Button'
 import AlertBadge from '@/components/ui/AlertBadge'
 
-const OTP_LENGTH = 6
+const OTP_LENGTH = 7
 
 export default function VerifyScreen() {
   const router = useRouter()
@@ -54,7 +54,7 @@ export default function VerifyScreen() {
   const handleVerify = async () => {
     const code = otp.join('')
     if (code.length !== OTP_LENGTH) {
-      setError('Please enter the complete 6-digit code')
+      setError('Please enter the complete 7-digit code')
       return
     }
     if (!email) {
@@ -161,12 +161,12 @@ const styles = StyleSheet.create({
     width: 80, height: 80, borderRadius: BORDER_RADIUS.xxl, backgroundColor: Colors.primaryLight,
     alignItems: 'center', justifyContent: 'center', marginBottom: 20,
   },
-  title: { fontSize: 24, fontWeight: '700', color: Colors.text },
+  title: { fontSize: 24, fontFamily: FONTS.bold, color: Colors.text },
   subtitle: { fontSize: 15, color: Colors.textLight, marginTop: 8, textAlign: 'center', lineHeight: 22 },
-  otpRow: { flexDirection: 'row', justifyContent: 'center', gap: 10, marginBottom: 24 },
+  otpRow: { flexDirection: 'row', gap: 8, marginBottom: 24 },
   otpInput: {
-    width: 48, height: 56, borderWidth: 2, borderColor: Colors.border, borderRadius: BORDER_RADIUS.lg,
-    textAlign: 'center', fontSize: 22, fontWeight: '700', color: Colors.text,
+    flex: 1, height: 56, borderWidth: 2, borderColor: Colors.border, borderRadius: BORDER_RADIUS.lg,
+    textAlign: 'center', fontSize: 20, fontWeight: '700', color: Colors.text,
     backgroundColor: Colors.surface,
   },
   otpFilled: { borderColor: Colors.primary, backgroundColor: Colors.primaryLight },

@@ -7,7 +7,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { debtAPI, customerAPI } from '@/lib/api'
 import { extractArray, formatCurrency, parseApiError, isAdminRole } from '@/lib/utils'
-import { Colors, BORDER_RADIUS } from '@/lib/constants'
+import { Colors, BORDER_RADIUS, SHADOW, FONTS } from '@/lib/constants'
 import { useAuth } from '@/lib/auth'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
@@ -453,7 +453,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 60, paddingHorizontal: 16, paddingBottom: 12, backgroundColor: Colors.surface },
   backBtn: { padding: 4 },
-  headerTitle: { fontSize: 20, fontWeight: '700', color: Colors.text },
+  headerTitle: { fontSize: 20, fontFamily: FONTS.bold, color: Colors.text },
   addBtn: { backgroundColor: Colors.primary, borderRadius: BORDER_RADIUS.lg, padding: 8 },
   kpiRow: { flexDirection: 'row', gap: 12, paddingHorizontal: 16, paddingTop: 16 },
   tabRow: { flexDirection: 'row', backgroundColor: Colors.surface, marginHorizontal: 16, marginTop: 12, borderRadius: BORDER_RADIUS.lg, overflow: 'hidden' },
@@ -517,4 +517,7 @@ const styles = StyleSheet.create({
   txBorder: { borderBottomWidth: 1, borderBottomColor: Colors.border },
   txNote: { fontSize: 12, color: Colors.textLight, marginTop: 2 },
   txTime: { fontSize: 11, color: Colors.textLight, marginTop: 2 },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 24 },
+  confirmModal: { backgroundColor: Colors.surface, borderRadius: BORDER_RADIUS.xxl, padding: 24, width: '100%', maxWidth: 380 },
+  confirmTitle: { fontSize: 18, fontFamily: FONTS.bold, color: Colors.text, marginBottom: 8 },
 })

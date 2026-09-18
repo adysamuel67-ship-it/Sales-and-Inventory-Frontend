@@ -7,7 +7,7 @@ import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { businessAPI } from '@/lib/api'
 import { parseApiError } from '@/lib/utils'
-import { Colors, BORDER_RADIUS, FONT_SIZE } from '@/lib/constants'
+import { Colors, BORDER_RADIUS, FONT_SIZE, SHADOW, FONTS } from '@/lib/constants'
 import { useAuth } from '@/lib/auth'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 60, paddingHorizontal: 16, paddingBottom: 12, backgroundColor: Colors.surface },
   backBtn: { padding: 4 },
-  headerTitle: { fontSize: 20, fontWeight: '700', color: Colors.text },
+  headerTitle: { fontSize: 20, fontFamily: FONTS.bold, color: Colors.text },
   container: { flex: 1, backgroundColor: Colors.background },
   content: { padding: 16, paddingBottom: 40 },
   currentBizCard: { marginBottom: 16 },
