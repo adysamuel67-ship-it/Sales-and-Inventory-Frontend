@@ -16,6 +16,23 @@ export function avatarColor(userId?: number | null): string {
   return AVATAR_COLORS[userId % AVATAR_COLORS.length]
 }
 
+// WhatsApp-style per-member sender name colors that stay legible on white bubbles.
+const NAME_COLORS = [
+  'text-blue-600',
+  'text-emerald-600',
+  'text-violet-600',
+  'text-amber-600',
+  'text-rose-600',
+  'text-cyan-600',
+  'text-fuchsia-600',
+  'text-indigo-600',
+]
+
+export function memberColor(userId?: number | null): string {
+  if (!userId) return 'text-gray-600'
+  return NAME_COLORS[userId % NAME_COLORS.length]
+}
+
 export function initials(name?: string | null, fallback = '?'): string {
   if (!name) return fallback
   const parts = name.trim().split(/\s+/)

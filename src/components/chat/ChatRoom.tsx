@@ -211,40 +211,40 @@ export default function ChatRoom({ businessId, businessName, selfUserId }: ChatR
   const presencePreview = state.presence.slice(0, 5)
 
   return (
-    <div className="flex flex-col h-[calc(100dvh-7rem)] min-h-[520px] bg-surface rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+    <div className="flex flex-col h-[calc(100dvh-7rem)] min-h-[520px] lg:h-[calc(100dvh-8.75rem)] bg-surface rounded-xl lg:rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between gap-3 px-4 sm:px-5 py-3 border-b border-gray-200 bg-white/70 backdrop-blur">
+      <div className="flex items-center justify-between gap-3 px-3 sm:px-5 py-3 bg-[#008069] text-white">
         <div className="flex items-center gap-3 min-w-0">
           {businessName ? (
-            <ChatAvatar userId={businessId} name={businessName} size="md" />
+            <ChatAvatar userId={businessId} name={businessName} size="md" className="ring-2 ring-white/20" />
           ) : (
-            <div className={`w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center`}>
-              <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+            <div className="w-9 h-9 rounded-full bg-white/15 flex items-center justify-center">
+              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>
             </div>
           )}
           <div className="min-w-0">
-            <h2 className="text-[15px] font-bold text-gray-900 truncate leading-tight">
-              {businessName ? `${businessName} Chat` : 'Team Chat'}
+            <h2 className="text-[15px] font-semibold truncate leading-tight">
+              {businessName ? businessName : 'Team Chat'}
             </h2>
-            <p className="text-[11px] flex items-center gap-1.5 text-neutral-light">
-              <span className={`w-1.5 h-1.5 rounded-full ${state.connected ? 'bg-emerald-500' : 'bg-amber-400 animate-pulse'}`} />
+            <p className="text-[11px] flex items-center gap-1.5 text-white/80">
+              <span className={`w-1.5 h-1.5 rounded-full ${state.connected ? 'bg-emerald-400' : 'bg-amber-300 animate-pulse'}`} />
               {state.connected
                 ? onlineCount > 0
                   ? `${onlineCount} ${onlineCount === 1 ? 'member' : 'members'} online`
-                  : 'Live'
+                  : 'online'
                 : 'Connecting…'}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5">
+        <div className="hidden md:flex items-center gap-0.5">
           {presencePreview.map((u: ChatPresenceUser) => (
-            <ChatAvatar key={u.user_id} userId={u.user_id} name={u.name} size="sm" online className="-mr-2.5 last:mr-0" />
+            <ChatAvatar key={u.user_id} userId={u.user_id} name={u.name} size="sm" online className="-mr-2 last:mr-0 ring-2 ring-[#008069]" />
           ))}
           {onlineCount > 5 && (
-            <span className="w-7 h-7 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-[10px] font-semibold text-neutral-light">
+            <span className="w-7 h-7 rounded-full bg-white/15 flex items-center justify-center text-[10px] font-semibold text-white">
               +{onlineCount - 5}
             </span>
           )}

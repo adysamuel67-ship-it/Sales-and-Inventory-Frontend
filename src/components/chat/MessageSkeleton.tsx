@@ -13,9 +13,9 @@ export default function MessageSkeleton({ self = false }: { self?: boolean }) {
       )}
       <div className="space-y-2">
         <div className={`h-2 w-16 rounded-full bg-gray-200 ${self ? 'ml-auto' : ''}`} />
-        <div className={`rounded-2xl p-3.5 space-y-2 ${self ? 'bg-primary/20' : 'bg-gray-100'}`}>
-          <div className="h-3 w-48 rounded-full bg-current opacity-25" />
-          <div className="h-3 w-32 rounded-full bg-current opacity-15" />
+        <div className={`rounded-2xl p-3.5 space-y-2 ${self ? 'bg-[#D9FDD3]' : 'bg-white border border-black/5'}`}>
+          <div className={`h-3 w-48 rounded-full ${self ? 'bg-black/10' : 'bg-gray-200'}`} />
+          <div className={`h-3 w-32 rounded-full ${self ? 'bg-black/10' : 'bg-gray-200'}`} />
         </div>
       </div>
     </div>
