@@ -452,6 +452,96 @@ export const reportAPI = {
     api.get(`/reports/analytics/dashboard/${businessId}`),
 }
 
+export interface ChatMessageData {
+  id?: number
+  from?: number
+  name?: string | null
+  role?: string | null
+  user_id?: number
+  business_id: number
+  message?: string
+  attachment_type?: string | null
+  attachment_url?: string | null
+  attachment_name?: string | null
+  attachment_size?: number | null
+  is_edited?: boolean
+  is_deleted?: boolean
+  edited_at?: string | null
+  deleted_at?: string | null
+  sent_at?: string | null
+  created_at?: string
+  self?: boolean
+}
+
+export interface ChatHistoryResponse {
+  items: ChatMessageData[]
+  has_more: boolean
+  next_before_id: number | null
+  total: number
+}
+
+export interface ChatPresenceUser {
+  user_id: number
+  name?: string | null
+  role?: string | null
+}
+
+export interface UnreadCountResponse {
+  unread: number
+}
+
+export const fullMediaUrl = (url?: string | null): string | undefined => {
+  if (!url) return undefined
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return url
+  return `${API_BASE_URL}${url}`
+}
+
+export function normalizeChatMessage(raw: any): ChatMessageData {
+  return {
+    ...raw,
+    id: raw.id,
+    from: raw.from ?? raw.user_id,
+    business_id: raw.business_id,
+    message: raw.message || '',
+    name: raw.name ?? null,
+    role: raw.role ?? null,
+    attachment_url: fullMediaUrl(raw.attachment_url),
+    sent_at: raw.sent_at ?? raw.created_at,
+  }
+}
+
+export const chatAPI = {
+  wsTicket: (businessId: number) =>
+    api.post(`/chat/ws-ticket/${businessId}`),
+  history: (businessId: number, params?: { limit?: number; before_id?: number }) =>
+    api.get(`/chat/${businessId}/messages`, { params }),
+  editMessage: (businessId: number, messageId: number, message: string) =>
+    api.put(`/chat/${businessId}/messages/${messageId}`, { message }),
+  deleteMessage: (businessId: number, messageId: number) =>
+    api.delete(`/chat/${businessId}/messages/${messageId}`),
+  upload: (businessId: number, file: File, onProgress?: (percent: number) => void) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    return api.post(`/chat/${businessId}/upload`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      onUploadProgress: (e: any) => {
+        if (onProgress && e.total) {
+          onProgress(Math.round((e.loaded / e.total) * 100))
+        }
+      },
+    })
+  },
+  unreadCount: (businessId: number) =>
+    api.get(`/chat/${businessId}/unread_count`),
+  setReadPosition: (businessId: number, lastReadMessageId: number) =>
+    api.put(`/chat/${businessId}/read_position`, { last_read_message_id: lastReadMessageId }),
+}
+
+export function chatWebSocketUrl(businessId: number, ticket: string): string {
+  const base = API_BASE_URL.replace(/^http/, 'ws')
+  return `${base}/chat/${businessId}?token=${ticket}`
+}
+
 export interface NotificationItem {
   notification_id: number
   user_id: number

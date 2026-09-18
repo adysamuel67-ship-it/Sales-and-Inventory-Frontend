@@ -14,6 +14,7 @@ import {
   getDismissedNotificationIds,
   dismissNotification,
   restoreNotification,
+  chatAPI,
 } from '@/lib/api'
 import type { NotificationItem } from '@/lib/api'
 import BusinessBotLogo from './BusinessBotLogo'
@@ -120,6 +121,11 @@ function NavIcon({ name }: { name: string }) {
         <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
       </svg>
     ),
+    chat: (
+      <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+      </svg>
+    ),
   }
   return icons[name] || <div className="w-[18px] h-[18px]" />
 }
@@ -160,6 +166,7 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
   const [notificationsLoading, setNotificationsLoading] = useState(false)
   const [dismissedIds, setDismissedIds] = useState<Set<number>>(new Set())
   const [activeTab, setActiveTab] = useState<'all' | 'approvals'>('all')
+  const [chatUnread, setChatUnread] = useState(0)
   const profileRef = useRef<HTMLDivElement>(null)
   const sidebarProfileRef = useRef<HTMLDivElement>(null)
   const bizSwitcherRef = useRef<HTMLDivElement>(null)
@@ -178,8 +185,19 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
   const isManager = isManagerRole(effectiveRole)
   const bizBase = businessId ? `/business/${businessId}` : ''
 
-  const normalNavItems = useMemo(() => [
+  interface NavItem {
+    label: string
+    icon: string
+    href: string
+    id: string
+    group: string
+    ownerOnly?: boolean
+    badge?: number
+  }
+
+  const normalNavItems = useMemo<NavItem[]>(() => [
     { label: 'Dashboard', icon: 'dashboard', href: `${bizBase}/dashboard`, id: 'dashboard', group: 'main' },
+    { label: 'Chat', icon: 'chat', href: `${bizBase}/chat`, id: 'chat', group: 'main', badge: chatUnread },
     { label: 'Sales', icon: 'sales', href: `${bizBase}/sales`, id: 'sales', group: 'main' },
     { label: 'Products', icon: 'products', href: `${bizBase}/products`, id: 'products', group: 'main' },
     { label: 'Customers', icon: 'customers', href: `${bizBase}/customers`, id: 'customers', group: 'management' },
@@ -187,7 +205,7 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
     { label: 'Reports', icon: 'reports', href: `${bizBase}/reports`, id: 'reports', group: 'admin', ownerOnly: true },
     { label: 'Businesses', icon: 'admin-businesses', href: '/businesses', id: 'businesses-nav', group: 'account' },
     { label: 'Settings', icon: 'settings', href: `${bizBase}/settings`, id: 'settings', group: 'account' },
-  ], [bizBase])
+  ], [bizBase, chatUnread])
 
   const visibleNavItems = useMemo(
     () => normalNavItems.filter((item) => {
@@ -317,6 +335,32 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
     if (!notificationsOpen) return
     fetchNotifications(false)
   }, [notificationsOpen, fetchNotifications])
+
+  // Unread chat badge — refresh periodically and whenever the route changes.
+  useEffect(() => {
+    if (!businessId) {
+      setChatUnread(0)
+      return
+    }
+    if (pathname === `/business/${businessId}/chat`) {
+      setChatUnread(0)
+      return
+    }
+    let cancelled = false
+    const loadUnread = async () => {
+      try {
+        const res = await chatAPI.unreadCount(Number(businessId))
+        if (cancelled) return
+        const count = res?.data?.unread ?? 0
+        setChatUnread(count)
+      } catch {
+        if (!cancelled) setChatUnread(0)
+      }
+    }
+    loadUnread()
+    const interval = setInterval(loadUnread, 20000)
+    return () => { cancelled = true; clearInterval(interval) }
+  }, [businessId, pathname])
 
   const visibleNotifications = useMemo(
     () => notifications.filter((n) => !dismissedIds.has(n.notification_id)),
@@ -641,6 +685,11 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
                         <NavIcon name={item.icon} />
                       </span>
                       <span className="flex-1">{item.label}</span>
+                      {!disabled && item.badge ? (
+                        <span className="min-w-[20px] h-5 px-1.5 inline-flex items-center justify-center rounded-full bg-primary text-white text-[10px] font-bold leading-none shadow-sm">
+                          {item.badge > 99 ? '99+' : item.badge}
+                        </span>
+                      ) : null}
                       {isActive && (
                         <div className="w-1.5 h-1.5 rounded-full bg-white/60" />
                       )}
