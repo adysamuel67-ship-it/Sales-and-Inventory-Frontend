@@ -338,7 +338,7 @@ export const productAPI = {
   restock: (businessId: number, productId: number, quantity: number) =>
     api.post(`/products/${businessId}/${productId}/restock`, { quantity }),
   deactivate: (businessId: number, productId: number) =>
-    api.patch(`/products/${businessId}/${productId}/deactivate`),
+    api.put(`/products/${businessId}/${productId}/deactivate`),
   lowStock: (businessId: number) =>
     api.get(`/products/${businessId}/low_stock`),
   upload: (businessId: number, file: File, onProgress?: (percent: number) => void) => {
@@ -369,7 +369,9 @@ export const saleAPI = {
   get: (businessId: number, saleId: number) =>
     api.get(`/sales/${businessId}/${saleId}`),
   update: (businessId: number, saleId: number, data: any) =>
-    api.put(`/sale/${businessId}/${saleId}`, data),
+    api.put(`/sales/${businessId}/${saleId}`, data),
+  getReceipt: (businessId: number, saleId: number) =>
+    api.get(`/sales/${businessId}/${saleId}/receipt`),
   delete: (businessId: number, saleId: number) =>
     api.delete(`/sales/${businessId}/${saleId}`),
 }
@@ -450,6 +452,10 @@ export const reportAPI = {
     api.get(`/reports/analytics/dashboard/${businessId}`, { params: { date, end_date: endDate } }),
   dashboard: (businessId: number) =>
     api.get(`/reports/analytics/dashboard/${businessId}`),
+  saleSummary: (businessId: number, date?: string, endDate?: string) =>
+    api.get(`/reports/analytics/summary/${businessId}`, { params: date && endDate ? { date, end_date: endDate } : {} }),
+  debtsReport: (businessId: number) =>
+    api.get(`/reports/analytics/debts/${businessId}`),
 }
 
 export interface ChatMessageData {

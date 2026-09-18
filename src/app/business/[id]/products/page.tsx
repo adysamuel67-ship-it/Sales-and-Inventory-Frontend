@@ -41,6 +41,10 @@ export default function ProductsPage() {
     name: '', price: '', cost_price: '', quantity: '', unit: 'units', low_stock_threshold: '10', category: '', description: '', sku: '',
   })
   const [saving, setSaving] = useState(false)
+  const [showRestockModal, setShowRestockModal] = useState(false)
+  const [restockProduct, setRestockProduct] = useState<any>(null)
+  const [restockQty, setRestockQty] = useState('')
+  const [restocking, setRestocking] = useState(false)
 
   const load = useCallback(async () => {
     if (!businessId || isNaN(businessId)) return
@@ -235,6 +239,53 @@ export default function ProductsPage() {
         load()
       }
     })
+  }
+
+  const openRestock = (p: any, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setRestockProduct(p)
+    setRestockQty('')
+    setShowRestockModal(true)
+  }
+
+  const handleRestock = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!businessId || !restockProduct) return
+    const qty = parseInt(restockQty)
+    if (isNaN(qty) || qty <= 0) {
+      setError('Please enter a valid quantity to add')
+      return
+    }
+    setRestocking(true)
+    setError('')
+    try {
+      const res = await productAPI.restock(businessId, restockProduct.product_id, qty)
+      const updated = res.data?.data ?? res.data
+      setAllProducts(prev => prev.map(p =>
+        p.product_id === restockProduct.product_id
+          ? { ...p, quantity: updated?.quantity ?? p.quantity + qty }
+          : p
+      ))
+      setShowRestockModal(false)
+      setUploadNotice(`${qty} ${restockProduct.unit || 'units'} added to ${restockProduct.name}`)
+    } catch (err: any) {
+      setError(parseApiError(err) || 'Failed to restock product')
+    } finally {
+      setRestocking(false)
+    }
+  }
+
+  const handleToggleActive = async (p: any, e: React.MouseEvent) => {
+    e.stopPropagation()
+    const nextActive = !p.is_active
+    setAllProducts(prev => prev.map(x => x.product_id === p.product_id ? { ...x, is_active: nextActive } : x))
+    try {
+      await productAPI.deactivate(businessId!, p.product_id)
+      setUploadNotice(`${p.name} ${nextActive ? 'reactivated' : 'deactivated'}`)
+    } catch (err: any) {
+      setAllProducts(prev => prev.map(x => x.product_id === p.product_id ? { ...x, is_active: !nextActive } : x))
+      setError(parseApiError(err) || 'Failed to update product status')
+    }
   }
 
   const canEdit = isAdminRole(user?.business_role || user?.role)
@@ -478,6 +529,9 @@ export default function ProductsPage() {
                     <td className="px-4 py-3">
                       <div className="font-medium text-gray-900">{p.name}</div>
                       {p.sku && <div className="text-xs text-neutral-light font-mono mt-0.5">SKU: {p.sku}</div>}
+                      {p.is_active === false && (
+                        <span className="inline-block px-1.5 py-0.5 mt-1 text-[10px] font-medium uppercase tracking-wider bg-gray-100 text-gray-500 rounded">Inactive</span>
+                      )}
                     </td>
                     <td className="px-4 py-3 font-medium text-gray-900">{formatCedi(p.price)}</td>
                     <td className="px-4 py-3 text-gray-600">{formatCedi(p.cost_price)}</td>
@@ -492,6 +546,32 @@ export default function ProductsPage() {
                     <td className="px-4 py-3 text-right">
                       {canEdit && (
                         <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={(e) => openRestock(p, e)}
+                            title="Restock"
+                            className="p-1.5 rounded-lg hover:bg-success-light text-gray-500 hover:text-success transition-colors"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 15a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5zm10.5 0a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5zM6.75 15V12a6 6 0 017.032-5.888l2.25-3.038a.75.75 0 011.006-.275l1.5.866a.75.75 0 01.274 1.006l-2.25 3.038A6 6 0 0118 12v3M3 21h18" />
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18.75h3" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={(e) => handleToggleActive(p, e)}
+                            title={p.is_active === false ? 'Activate' : 'Deactivate'}
+                            className={`p-1.5 rounded-lg transition-colors ${p.is_active === false ? 'text-gray-400 hover:bg-success-light hover:text-success' : 'text-gray-500 hover:bg-warning-light hover:text-warning'}`}
+                          >
+                            {p.is_active === false ? (
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                            ) : (
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14" />
+                              </svg>
+                            )}
+                          </button>
                           <button onClick={(e) => openEdit(p, e)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors">
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
@@ -543,6 +623,8 @@ export default function ProductsPage() {
                     <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-danger-light text-danger shrink-0">Out</span>
                   ) : isLow ? (
                     <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-warning-light text-warning shrink-0">Low</span>
+                  ) : p.is_active === false ? (
+                    <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500 shrink-0">Inactive</span>
                   ) : null}
                 </div>
                 <div className="mt-3 grid grid-cols-3 gap-2 text-sm">
@@ -562,9 +644,13 @@ export default function ProductsPage() {
                   </div>
                 </div>
                 {canEdit && (
-                  <div className="mt-3 pt-3 border-t border-gray-200 flex gap-2">
-                    <button onClick={(e) => openEdit(p, e)} className="flex-1 py-2 text-xs font-medium text-primary bg-primary-light rounded-lg hover:bg-primary/15 transition-colors">Edit</button>
-                    <button onClick={(e) => { e.stopPropagation(); setDeleteConfirm({ open: true, product: p }) }} className="flex-1 py-2 text-xs font-medium text-danger bg-danger-light rounded-lg hover:bg-danger/15 transition-colors">Delete</button>
+                  <div className="mt-3 pt-3 border-t border-gray-200 grid grid-cols-2 gap-2">
+                    <button onClick={(e) => openEdit(p, e)} className="py-2 text-xs font-medium text-primary bg-primary-light rounded-lg hover:bg-primary/15 transition-colors">Edit</button>
+                    <button onClick={(e) => openRestock(p, e)} className="py-2 text-xs font-medium text-success bg-success-light rounded-lg hover:bg-success/15 transition-colors">Restock</button>
+                    <button onClick={(e) => handleToggleActive(p, e)} className={`py-2 text-xs font-medium rounded-lg transition-colors ${p.is_active === false ? 'text-success bg-success-light hover:bg-success/15' : 'text-warning bg-warning-light hover:bg-warning/15'}`}>
+                      {p.is_active === false ? 'Activate' : 'Deactivate'}
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); setDeleteConfirm({ open: true, product: p }) }} className="py-2 text-xs font-medium text-danger bg-danger-light rounded-lg hover:bg-danger/15 transition-colors">Delete</button>
                   </div>
                 )}
               </div>
@@ -589,6 +675,55 @@ export default function ProductsPage() {
             load()
           }}
         />
+      )}
+
+      {/* Restock Modal */}
+      {showRestockModal && restockProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowRestockModal(false)}>
+          <div className="absolute inset-0 bg-black/40" />
+          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4">
+            <div>
+              <h3 className="font-semibold text-gray-900">Restock Product</h3>
+              <p className="text-sm text-neutral-light mt-1">
+                Add stock to <span className="font-medium text-gray-900">{restockProduct.name}</span>.
+                Current quantity:{' '}
+                <span className="font-medium text-gray-900">{restockProduct.quantity || 0}</span>
+              </p>
+            </div>
+            <form onSubmit={handleRestock} className="space-y-4">
+              <div>
+                <label htmlFor="restock-qty" className="block text-sm font-medium text-gray-700 mb-1">
+                  Quantity to add
+                </label>
+                <input
+                  id="restock-qty"
+                  type="number"
+                  min="1"
+                  value={restockQty}
+                  onChange={(e) => setRestockQty(e.target.value)}
+                  placeholder="e.g. 50"
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+                />
+              </div>
+              <div className="flex items-center gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setShowRestockModal(false)}
+                  className="flex-1 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={restocking}
+                  className="flex-1 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-50"
+                >
+                  {restocking ? 'Adding...' : 'Add Stock'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
 
       {/* Add/Edit Modal */}

@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/auth'
 import { saleAPI, productAPI, customerAPI, adminAPI } from '@/lib/api'
 import { extractArray, normalizeProduct, mapSale, parseApiError, isStaffRole, MappedSale, formatPayment, formatCedi } from '@/lib/utils'
 import SaleDetailModal from '@/components/SaleDetailModal'
+import SaleReceiptModal from '@/components/SaleReceiptModal'
 import PageHeader from '@/components/ui/PageHeader'
 import Alert from '@/components/ui/Alert'
 import Button from '@/components/ui/Button'
@@ -56,6 +57,7 @@ export default function SalesPage() {
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null)
   const [detailSale, setDetailSale] = useState<MappedSale | null>(null)
+  const [receiptSaleId, setReceiptSaleId] = useState<number | null>(null)
   const [paymentStatus, setPaymentStatus] = useState<'fully_paid' | 'partial'>('fully_paid')
   const [amountPaid, setAmountPaid] = useState('')
   const [customerName, setCustomerName] = useState('')
@@ -876,6 +878,12 @@ export default function SalesPage() {
                               Delete
                             </button>
                           )}
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setReceiptSaleId(sale.id) }}
+                            className="text-xs text-primary hover:underline font-medium"
+                          >
+                            Receipt
+                          </button>
                         </td>
                       )}
                     </tr>
@@ -966,6 +974,12 @@ export default function SalesPage() {
                       </div>
                       <div className="flex items-center gap-3">
                         <span className="text-xs text-neutral-light">×{sale.qty}</span>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setReceiptSaleId(sale.id) }}
+                          className="text-xs text-primary font-medium"
+                        >
+                          Receipt
+                        </button>
                         {!isStaff && (
                           <button
                             onClick={(e) => { e.stopPropagation(); setDeleteConfirm(sale.id) }}
@@ -1038,6 +1052,14 @@ export default function SalesPage() {
       </div>
 
       {detailSale && <SaleDetailModal sale={detailSale} onClose={() => setDetailSale(null)} />}
+
+      {receiptSaleId != null && (
+        <SaleReceiptModal
+          businessId={businessId}
+          saleId={receiptSaleId}
+          onClose={() => setReceiptSaleId(null)}
+        />
+      )}
 
       {bulkDeleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">

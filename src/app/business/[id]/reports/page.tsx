@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useParams } from 'next/navigation'
-import { reportAPI, saleAPI, productAPI } from '@/lib/api'
+import { reportAPI, saleAPI, productAPI, customerAPI } from '@/lib/api'
 import dynamic from 'next/dynamic'
 const RevenueChart = dynamic(() => import('@/components/RevenueChart'), { ssr: false })
 import { extractArray, extractProfit, extractSummary, getDateRange, parseApiError, formatCedi } from '@/lib/utils'
@@ -24,6 +24,26 @@ interface SummaryData {
   total_profit: number
   total_sales: number
   total_products?: number
+}
+
+interface SaleSummaryData {
+  total_revenue?: number
+  total_profit?: number
+  total_sales?: number
+  sold_quantity?: number
+  profit_margin?: number
+  cash_total?: number
+  momo_total?: number
+  card_total?: number
+  best_selling_product?: string | null
+}
+
+interface DebtData {
+  debt_id?: number
+  customer_id: number
+  amount: number
+  due_date?: string | null
+  is_paid?: boolean
 }
 
 interface ChartDataPoint {
@@ -48,6 +68,10 @@ export default function ReportsPage() {
   const businessId = parseInt(params?.id as string)
   const [profit, setProfit] = useState<ProfitData | null>(null)
   const [summary, setSummary] = useState<SummaryData | null>(null)
+  const [saleSummary, setSaleSummary] = useState<SaleSummaryData | null>(null)
+  const [debts, setDebts] = useState<DebtData[]>([])
+  const [debtsLoading, setDebtsLoading] = useState(false)
+  const [customersById, setCustomersById] = useState<Record<number, { name?: string | null }>>({})
   const [chartData, setChartData] = useState<ChartDataPoint[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -62,13 +86,15 @@ export default function ReportsPage() {
     setError('')
     setProfit(null)
     setSummary(null)
+    setSaleSummary(null)
     setChartData([])
 
     try {
-      const [profitRes, summaryRes, salesRes] = await Promise.allSettled([
+      const [profitRes, summaryRes, salesRes, saleSummaryRes] = await Promise.allSettled([
         reportAPI.profit(businessId, dateRange.start, dateRange.end),
         reportAPI.summary(businessId, dateRange.start, dateRange.end),
         saleAPI.list(businessId, { date: dateRange.start, end_date: dateRange.end }),
+        reportAPI.saleSummary(businessId, dateRange.start, dateRange.end),
       ])
 
       if (profitRes.status === 'fulfilled') {
@@ -79,6 +105,12 @@ export default function ReportsPage() {
       if (summaryRes.status === 'fulfilled') {
         const s = extractSummary(summaryRes.value.data)
         setSummary(s)
+      }
+
+      if (saleSummaryRes.status === 'fulfilled') {
+        const raw = saleSummaryRes.value.data
+        const d = raw?.data ?? raw
+        if (d) setSaleSummary(d)
       }
 
       if (salesRes.status === 'fulfilled') {
@@ -155,6 +187,30 @@ export default function ReportsPage() {
   useEffect(() => {
     loadReports()
   }, [loadReports])
+
+  useEffect(() => {
+    if (!businessId) return
+    setDebtsLoading(true)
+    Promise.allSettled([
+      reportAPI.debtsReport(businessId),
+      customerAPI.list(businessId),
+    ]).then(([debtsRes, customersRes]) => {
+      if (debtsRes.status === 'fulfilled') {
+        const arr = extractArray(debtsRes.value.data)
+        setDebts(arr)
+      }
+      if (customersRes.status === 'fulfilled') {
+        const arr = extractArray(customersRes.value.data)
+        const map: Record<number, { name?: string | null }> = {}
+        for (const c of arr) {
+          const id = c.customer_id ?? c.id
+          if (id != null) map[id] = c
+        }
+        setCustomersById(map)
+      }
+      setDebtsLoading(false)
+    }).catch(() => setDebtsLoading(false))
+  }, [businessId])
 
   const handlePresetChange = (days: number) => {
     setActivePreset(days)
@@ -327,9 +383,131 @@ export default function ReportsPage() {
             </div>
           )}
 
+          {saleSummary && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
+              <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-4">
+                <p className="text-xs text-neutral-light uppercase tracking-wider">Units Sold</p>
+                <p className="text-xl font-bold text-gray-900 mt-1">
+                  {(saleSummary.sold_quantity ?? 0).toLocaleString()}
+                </p>
+              </div>
+              <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-4">
+                <p className="text-xs text-neutral-light uppercase tracking-wider">Cash</p>
+                <p className="text-xl font-bold text-gray-900 mt-1">
+                  {formatCedi(saleSummary.cash_total ?? 0)}
+                </p>
+              </div>
+              <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-4">
+                <p className="text-xs text-neutral-light uppercase tracking-wider">Mobile Money</p>
+                <p className="text-xl font-bold text-gray-900 mt-1">
+                  {formatCedi(saleSummary.momo_total ?? 0)}
+                </p>
+              </div>
+              <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-4">
+                <p className="text-xs text-neutral-light uppercase tracking-wider">Card</p>
+                <p className="text-xl font-bold text-gray-900 mt-1">
+                  {formatCedi(saleSummary.card_total ?? 0)}
+                </p>
+              </div>
+              {saleSummary.best_selling_product && (
+                <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-4 col-span-2 sm:col-span-1">
+                  <p className="text-xs text-neutral-light uppercase tracking-wider">Best Seller</p>
+                  <p className="text-xl font-bold text-primary mt-1 truncate">
+                    {saleSummary.best_selling_product}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="mb-6">
             <RevenueChart data={chartData} />
           </div>
+
+          {debtsLoading ? (
+            <div className="skeleton h-40 rounded-2xl mb-6" />
+          ) : debts.length > 0 ? (
+            <section className="bg-surface rounded-2xl border border-gray-200 shadow-sm overflow-hidden mb-6">
+              <div className="px-5 py-4 border-b border-gray-200">
+                <h3 className="font-semibold text-gray-900">Debts Report</h3>
+                <p className="text-xs text-neutral-light mt-0.5">
+                  {debts.filter((d) => !d.is_paid).length} unpaid ·{' '}
+                  {formatCedi(debts.filter((d) => !d.is_paid).reduce((sum, d) => sum + Number(d.amount || 0), 0))} outstanding
+                </p>
+              </div>
+              <div className="hidden sm:block">
+                <table className="w-full">
+                  <thead>
+                    <tr className="text-left text-[11px] uppercase tracking-wider text-neutral-light border-b border-gray-200">
+                      <th className="px-5 py-3">Customer</th>
+                      <th className="px-5 py-3">Amount</th>
+                      <th className="px-5 py-3">Due Date</th>
+                      <th className="px-5 py-3">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {debts.map((d, idx) => {
+                      const customer = customersById[d.customer_id]
+                      const overdue = d.due_date && !d.is_paid && new Date(d.due_date) < new Date()
+                      return (
+                        <tr key={d.debt_id ?? idx} className="border-b border-gray-100 last:border-0">
+                          <td className="px-5 py-3">
+                            <span className="font-medium text-gray-900">{customer?.name || 'Customer'}</span>
+                            <span className="text-xs text-neutral-light"> · #{d.customer_id}</span>
+                          </td>
+                          <td className="px-5 py-3">
+                            <span className={`font-semibold ${d.is_paid ? 'text-gray-400 line-through' : 'text-danger'}`}>
+                              {formatCedi(d.amount)}
+                            </span>
+                          </td>
+                          <td className="px-5 py-3 text-sm text-gray-700">
+                            {d.due_date ? new Date(d.due_date).toLocaleDateString() : '—'}
+                          </td>
+                          <td className="px-5 py-3">
+                            {d.is_paid ? (
+                              <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-success-light text-success">Paid</span>
+                            ) : overdue ? (
+                              <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-danger-light text-danger">Overdue</span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-warning-light text-warning">Unpaid</span>
+                            )}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              <div className="sm:hidden divide-y divide-gray-100 px-4">
+                {debts.map((d, idx) => {
+                  const customer = customersById[d.customer_id]
+                  const overdue = d.due_date && !d.is_paid && new Date(d.due_date) < new Date()
+                  return (
+                    <div key={d.debt_id ?? idx} className="py-3">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-gray-900">{customer?.name || 'Customer'}</span>
+                        <span className={`font-semibold ${d.is_paid ? 'text-gray-400 line-through' : 'text-danger'}`}>
+                          {formatCedi(d.amount)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between mt-1">
+                        <span className="text-xs text-neutral-light">
+                          {d.due_date ? `Due ${new Date(d.due_date).toLocaleDateString()}` : 'No due date'}
+                        </span>
+                        {d.is_paid ? (
+                          <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-success-light text-success">Paid</span>
+                        ) : overdue ? (
+                          <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-danger-light text-danger">Overdue</span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-warning-light text-warning">Unpaid</span>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </section>
+          ) : null}
 
           {!hasData && (
             <EmptyState
