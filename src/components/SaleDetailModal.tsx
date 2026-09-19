@@ -6,6 +6,8 @@ import { MappedSale, formatPayment } from '@/lib/utils'
 interface Props {
   sale: MappedSale
   onClose: () => void
+  canEdit?: boolean
+  onEdit?: () => void
 }
 
 const paymentColorMap: Record<string, string> = {
@@ -14,7 +16,7 @@ const paymentColorMap: Record<string, string> = {
   card: 'bg-warning-light text-warning',
 }
 
-export default function SaleDetailModal({ sale, onClose }: Props) {
+export default function SaleDetailModal({ sale, onClose, canEdit, onEdit }: Props) {
   const isPartial = sale.amount_paid != null && sale.amount_paid < sale.amount && sale.amount > 0
   const balance = sale.amount - (sale.amount_paid ?? sale.amount)
 
@@ -198,7 +200,15 @@ export default function SaleDetailModal({ sale, onClose }: Props) {
           </div>
         </div>
 
-        <div className="sticky bottom-0 bg-white border-t border-gray-200 px-4 sm:px-6 py-4 rounded-b-2xl">
+        <div className="sticky bottom-0 bg-white border-t border-gray-200 px-4 sm:px-6 py-4 rounded-b-2xl space-y-2">
+          {onEdit && (
+            <button
+              onClick={onEdit}
+              className="w-full py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors"
+            >
+              Edit Sale
+            </button>
+          )}
           <button
             onClick={onClose}
             className="w-full py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors"

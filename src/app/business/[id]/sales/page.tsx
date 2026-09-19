@@ -4,8 +4,9 @@ import { useEffect, useState, useMemo, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
 import { saleAPI, productAPI, customerAPI, adminAPI } from '@/lib/api'
-import { extractArray, normalizeProduct, mapSale, parseApiError, isStaffRole, MappedSale, formatPayment, formatCedi } from '@/lib/utils'
+import { extractArray, normalizeProduct, mapSale, parseApiError, isStaffRole, isAdminRole, MappedSale, formatPayment, formatCedi } from '@/lib/utils'
 import SaleDetailModal from '@/components/SaleDetailModal'
+import SaleEditModal from '@/components/SaleEditModal'
 import SaleReceiptModal from '@/components/SaleReceiptModal'
 import PageHeader from '@/components/ui/PageHeader'
 import Alert from '@/components/ui/Alert'
@@ -57,6 +58,7 @@ export default function SalesPage() {
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null)
   const [detailSale, setDetailSale] = useState<MappedSale | null>(null)
+  const [editingSale, setEditingSale] = useState<MappedSale | null>(null)
   const [receiptSaleId, setReceiptSaleId] = useState<number | null>(null)
   const [paymentStatus, setPaymentStatus] = useState<'fully_paid' | 'partial'>('fully_paid')
   const [amountPaid, setAmountPaid] = useState('')
@@ -71,6 +73,7 @@ export default function SalesPage() {
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false)
 
   const isStaff = isStaffRole(user?.business_role || user?.role)
+  const canEditSale = isAdminRole(user?.business_role || user?.role) || user?.business_role === 'cashier' || user?.role === 'cashier'
 
   const openCustomerPicker = async () => {
     setShowCustomerPicker(true)
@@ -1051,7 +1054,27 @@ export default function SalesPage() {
         )}
       </div>
 
-      {detailSale && <SaleDetailModal sale={detailSale} onClose={() => setDetailSale(null)} />}
+      {detailSale && (
+        <SaleDetailModal
+          sale={detailSale}
+          onClose={() => setDetailSale(null)}
+          canEdit={canEditSale}
+          onEdit={() => { setEditingSale(detailSale); setDetailSale(null) }}
+        />
+      )}
+
+      {editingSale && (
+        <SaleEditModal
+          sale={editingSale}
+          businessId={businessId}
+          onClose={() => setEditingSale(null)}
+          onSaved={() => {
+            setEditingSale(null)
+            setSuccess('Sale updated successfully!')
+            loadData()
+          }}
+        />
+      )}
 
       {receiptSaleId != null && (
         <SaleReceiptModal
