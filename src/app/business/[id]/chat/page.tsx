@@ -20,13 +20,21 @@ export default function ChatPage() {
     return null
   }
 
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      router.back()
+    } else {
+      router.push(`/business/${businessId}/dashboard`)
+    }
+  }
+
   return (
-    <div className="max-w-full mx-auto">
-      <ChatRoom
-        businessId={businessId}
-        businessName={currentBusiness?.name}
-        selfUserId={user?.id ?? getUserIdFromToken()}
-      />
-    </div>
+    <ChatRoom
+      businessId={businessId}
+      businessName={currentBusiness?.name}
+      selfUserId={user?.id ?? getUserIdFromToken()}
+      fullScreen
+      onBack={handleBack}
+    />
   )
 }

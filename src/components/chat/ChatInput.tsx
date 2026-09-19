@@ -196,7 +196,7 @@ export default function ChatInput({
           <div className={`flex-1 flex items-end rounded-3xl border bg-white pl-3 pr-2 py-1.5 transition-all ${
             editing
               ? 'border-amber-300 ring-2 ring-amber-200/50'
-              : 'border-gray-300 focus-within:border-[#25D366] focus-within:ring-2 focus-within:ring-[#25D366]/20'
+              : 'border-gray-300 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20'
           }`}>
             <textarea
               ref={textareaRef}
@@ -215,7 +215,7 @@ export default function ChatInput({
             <button
               type="button"
               onClick={handleSend}
-              className="shrink-0 w-11 h-11 rounded-full bg-[#00A884] text-white hover:bg-[#06b496] transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm flex items-center justify-center"
+              className="shrink-0 w-11 h-11 rounded-full bg-primary text-white hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm flex items-center justify-center"
               aria-label="Send message"
             >
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">

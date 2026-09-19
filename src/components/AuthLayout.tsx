@@ -2,6 +2,7 @@
 
 import BusinessBotLogo from './BusinessBotLogo'
 import AuthIllustration from './AuthIllustration'
+import Link from 'next/link'
 
 interface Feature {
   icon: React.ReactNode
@@ -194,9 +195,9 @@ export default function AuthLayout({
           {/* Footer text */}
           <p className="text-center text-xs text-neutral-light mt-6 px-4">
             By continuing, you agree to Business Bot&apos;s{' '}
-            <span className="text-primary font-medium cursor-pointer hover:underline">Terms of Service</span>
+            <Link href="/terms" className="text-primary font-medium hover:underline">Terms of Service</Link>
             {' '}and{' '}
-            <span className="text-primary font-medium cursor-pointer hover:underline">Privacy Policy</span>.
+            <Link href="/privacy" className="text-primary font-medium hover:underline">Privacy Policy</Link>.
           </p>
         </div>
       </div>

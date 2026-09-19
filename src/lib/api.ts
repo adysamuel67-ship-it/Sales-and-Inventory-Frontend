@@ -371,7 +371,7 @@ export const saleAPI = {
   update: (businessId: number, saleId: number, data: any) =>
     api.put(`/sale/${businessId}/${saleId}`, data),
   getReceipt: (businessId: number, saleId: number) =>
-    api.get(`/${businessId}/${saleId}/reciept`),
+    api.get(`/${businessId}/${saleId}/receipt`),
   delete: (businessId: number, saleId: number) =>
     api.delete(`/sales/${businessId}/${saleId}`),
 }

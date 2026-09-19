@@ -19,6 +19,8 @@ interface ChatRoomProps {
   businessId: number
   businessName?: string
   selfUserId: number | null
+  fullScreen?: boolean
+  onBack?: () => void
 }
 
 function deriveMaxId(messages: ChatMessageData[]): number {
@@ -29,7 +31,7 @@ function deriveMaxId(messages: ChatMessageData[]): number {
   return max
 }
 
-export default function ChatRoom({ businessId, businessName, selfUserId }: ChatRoomProps) {
+export default function ChatRoom({ businessId, businessName, selfUserId, fullScreen, onBack }: ChatRoomProps) {
   const { state, sendMessage, sendTyping, subscribe } = useChatSocket(businessId, selfUserId, {
     enabled: !!businessId && selfUserId != null,
   })
@@ -211,10 +213,21 @@ export default function ChatRoom({ businessId, businessName, selfUserId }: ChatR
   const presencePreview = state.presence.slice(0, 5)
 
   return (
-    <div className="flex flex-col h-[calc(100dvh-7rem)] min-h-[520px] lg:h-[calc(100dvh-8.75rem)] bg-surface rounded-xl lg:rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+    <div className={`flex flex-col bg-surface overflow-hidden ${fullScreen ? 'h-dvh rounded-none border-0' : 'h-[calc(100dvh-7rem)] min-h-[520px] lg:h-[calc(100dvh-8.75rem)] rounded-xl lg:rounded-2xl border border-gray-200 shadow-sm'}`}>
       {/* Header */}
-      <div className="flex items-center justify-between gap-3 px-3 sm:px-5 py-3 bg-[#008069] text-white">
+      <div className="flex items-center justify-between gap-3 px-3 sm:px-5 py-3 bg-primary text-white">
         <div className="flex items-center gap-3 min-w-0">
+          {onBack && (
+            <button
+              onClick={onBack}
+              aria-label="Back"
+              className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-white/15 transition-colors shrink-0"
+            >
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+              </svg>
+            </button>
+          )}
           {businessName ? (
             <ChatAvatar userId={businessId} name={businessName} size="md" className="ring-2 ring-white/20" />
           ) : (
@@ -241,7 +254,7 @@ export default function ChatRoom({ businessId, businessName, selfUserId }: ChatR
 
         <div className="hidden md:flex items-center gap-0.5">
           {presencePreview.map((u: ChatPresenceUser) => (
-            <ChatAvatar key={u.user_id} userId={u.user_id} name={u.name} size="sm" online className="-mr-2 last:mr-0 ring-2 ring-[#008069]" />
+            <ChatAvatar key={u.user_id} userId={u.user_id} name={u.name} size="sm" online className="-mr-2 last:mr-0 ring-2 ring-primary" />
           ))}
           {onlineCount > 5 && (
             <span className="w-7 h-7 rounded-full bg-white/15 flex items-center justify-center text-[10px] font-semibold text-white">

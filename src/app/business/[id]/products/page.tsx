@@ -661,7 +661,27 @@ export default function ProductsPage() {
 
       {/* Product Detail Modal */}
       {detailProduct && (
-        <ProductDetailModal product={detailProduct} onClose={() => setDetailProduct(null)} />
+        <ProductDetailModal
+          product={detailProduct}
+          onClose={() => setDetailProduct(null)}
+          canManage={canEdit}
+          onEdit={(p) => {
+            setDetailProduct(null)
+            openEdit(p, new MouseEvent('click') as unknown as React.MouseEvent)
+          }}
+          onRestock={(p) => {
+            setDetailProduct(null)
+            openRestock(p, new MouseEvent('click') as unknown as React.MouseEvent)
+          }}
+          onToggleActive={(p) => {
+            setDetailProduct(null)
+            handleToggleActive(p, new MouseEvent('click') as unknown as React.MouseEvent)
+          }}
+          onDelete={(p) => {
+            setDetailProduct(null)
+            setDeleteConfirm({ open: true, product: p })
+          }}
+        />
       )}
 
       {/* Product Upload/Import Modal */}

@@ -17,10 +17,11 @@ export function formatShortTime(iso?: string | null): string {
   return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
 }
 
-// WhatsApp-style chat wallpaper: warm light grey canvas with a faint dotted texture.
+// Chat wallpaper: light cool grey-blue canvas with a faint dotted texture,
+// aligned with the app's primary (blue) colour system.
 export const chatWallpaper = {
-  backgroundColor: '#EFEAE2',
-  backgroundImage: 'radial-gradient(circle at 0.5px 0.5px, rgba(17, 27, 33, 0.055) 1px, transparent 0)',
+  backgroundColor: '#EEF3FC',
+  backgroundImage: 'radial-gradient(circle at 0.5px 0.5px, rgba(37, 99, 235, 0.07) 1px, transparent 0)',
   backgroundSize: '18px 18px',
 }
 

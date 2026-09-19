@@ -134,7 +134,7 @@ export default function MessageBubble({ message, self, showSender, showAvatar = 
 
           <div className={`relative rounded-xl px-3 py-2 text-[13.8px] leading-[1.38] break-words shadow-[0_1px_1px_rgba(0,0,0,0.08)] ${
             self
-              ? 'bg-[#D9FDD3] text-[#111B21] rounded-tr-[3px]'
+              ? 'bg-primary-light text-[#111B21] rounded-tr-[3px]'
               : 'bg-white text-[#111B21] rounded-tl-[3px]'
           }`}>
             {message.is_deleted ? (

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useRouter, useParams } from 'next/navigation'
+import { useRouter, useParams, usePathname } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
 import { adminAPI } from '@/lib/api'
 import { isSuperAdminUser } from '@/lib/utils'
@@ -15,9 +15,11 @@ export default function BusinessLayout({
 }) {
   const router = useRouter()
   const params = useParams()
+  const pathname = usePathname()
   const { isAuthenticated, isLoading, profileLoaded, isVerified, user, currentBusiness, businesses, fetchBusinesses, switchBusiness, setBusinessRole } = useAuth()
   const businessId = params?.id as string
   const isUnverified = user?.is_verified === false
+  const isChatRoute = pathname === `/business/${businessId}/chat`
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -95,6 +97,10 @@ export default function BusinessLayout({
   if (businesses.length > 0 && !businesses.find((b) => b.business_id === parseInt(businessId)) && !isSuperAdminUser(user)) {
     router.replace('/businesses')
     return null
+  }
+
+  if (isChatRoute) {
+    return <div className="min-h-dvh">{children}</div>
   }
 
   return (

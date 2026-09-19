@@ -13,6 +13,7 @@ interface Product {
   category?: string
   description?: string
   sku?: string
+  is_active?: boolean
   created_at?: string
   updated_at?: string
 }
@@ -20,9 +21,14 @@ interface Product {
 interface Props {
   product: Product
   onClose: () => void
+  canManage?: boolean
+  onEdit?: (product: Product) => void
+  onDelete?: (product: Product) => void
+  onRestock?: (product: Product) => void
+  onToggleActive?: (product: Product) => void
 }
 
-export default function ProductDetailModal({ product, onClose }: Props) {
+export default function ProductDetailModal({ product, onClose, canManage, onEdit, onDelete, onRestock, onToggleActive }: Props) {
   const margin = product.price > 0 && product.cost_price > 0
     ? ((product.price - product.cost_price) / product.price * 100).toFixed(1)
     : null
@@ -122,36 +128,66 @@ export default function ProductDetailModal({ product, onClose }: Props) {
             </div>
           )}
 
-          {/* Timestamps */}
-          <div className="bg-surfaceAlt rounded-xl p-4 space-y-2">
-            {product.created_at && (
-              <div className="flex items-center gap-2 text-sm">
-                <svg className="w-4 h-4 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
-                </svg>
-                <span className="text-gray-700">Added {new Date(product.created_at).toLocaleDateString()}</span>
-              </div>
-            )}
-            {product.updated_at && (
-              <div className="flex items-center gap-2 text-sm">
-                <svg className="w-4 h-4 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" />
-                </svg>
-                <span className="text-gray-700">Updated {new Date(product.updated_at).toLocaleDateString()}</span>
-              </div>
-            )}
-          </div>
+{/* Timestamps */}
+        <div className="bg-surfaceAlt rounded-xl p-4 space-y-2">
+          {product.created_at && (
+            <div className="flex items-center gap-2 text-sm">
+              <svg className="w-4 h-4 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+              </svg>
+              <span className="text-gray-700">Added {new Date(product.created_at).toLocaleDateString()}</span>
+            </div>
+          )}
+          {product.updated_at && (
+            <div className="flex items-center gap-2 text-sm">
+              <svg className="w-4 h-4 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" />
+              </svg>
+              <span className="text-gray-700">Updated {new Date(product.updated_at).toLocaleDateString()}</span>
+            </div>
+          )}
         </div>
 
-        {/* Close button */}
-        <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 rounded-b-2xl">
-          <button
-            onClick={onClose}
-            className="w-full py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors"
-          >
-            Close
-          </button>
-        </div>
+        {/* Manage actions */}
+        {canManage && (
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={() => onEdit?.(product)}
+              className="py-2.5 text-sm font-medium text-primary bg-primary-light rounded-xl hover:bg-primary/15 transition-colors"
+            >
+              Edit Product
+            </button>
+            <button
+              onClick={() => onRestock?.(product)}
+              className="py-2.5 text-sm font-medium text-success bg-success-light rounded-xl hover:bg-success/15 transition-colors"
+            >
+              Restock
+            </button>
+            <button
+              onClick={() => onToggleActive?.(product)}
+              className={`py-2.5 text-sm font-medium rounded-xl transition-colors ${product.is_active === false ? 'text-success bg-success-light hover:bg-success/15' : 'text-warning bg-warning-light hover:bg-warning/15'}`}
+            >
+              {product.is_active === false ? 'Activate' : 'Deactivate'}
+            </button>
+            <button
+              onClick={() => onDelete?.(product)}
+              className="py-2.5 text-sm font-medium text-danger bg-danger-light rounded-xl hover:bg-danger/15 transition-colors"
+            >
+              Delete Product
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Close button */}
+      <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 rounded-b-2xl">
+        <button
+          onClick={onClose}
+          className="w-full py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors"
+        >
+          Close
+        </button>
+      </div>
       </div>
     </div>
   )
