@@ -178,13 +178,13 @@ export default function RequestsPage() {
     <DashboardLayout>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Requests</h1>
+          <h1 className="text-2xl font-bold text-slate-900">Requests</h1>
           <p className="text-sm text-neutral-light mt-1">View and manage all join requests across your businesses</p>
         </div>
         <button
           onClick={loadAllApprovals}
           disabled={loading}
-          className="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors flex items-center gap-2 min-h-[44px]"
+          className="px-4 py-2.5 bg-slate-100 text-slate-700 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors flex items-center gap-2 min-h-[44px]"
         >
           <svg className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -218,7 +218,7 @@ export default function RequestsPage() {
             className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-colors ${
               statusFilter === filter
                 ? 'bg-primary text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
             {filter.charAt(0).toUpperCase() + filter.slice(1)}
@@ -227,14 +227,14 @@ export default function RequestsPage() {
         ))}
       </div>
 
-      <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm">
+      <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm">
         {loading ? (
           <div className="px-5 py-12 text-center">
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
             <p className="text-sm text-neutral-light mt-3">Loading requests...</p>
           </div>
         ) : filteredApprovals.length > 0 ? (
-          <div className="divide-y divide-gray-50">
+          <div className="divide-y divide-slate-50">
             {filteredApprovals.map((approval) => (
               <div key={approval.approval_id} className="p-5">
                 <div className="flex items-start justify-between gap-4">
@@ -246,15 +246,15 @@ export default function RequestsPage() {
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-sm font-semibold text-gray-900">{approval.requester?.name || 'Unknown'}</p>
-                        <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full ${statusStyles[approval.status] || 'bg-gray-100 text-gray-500'}`}>
+                        <p className="text-sm font-semibold text-slate-900">{approval.requester?.name || 'Unknown'}</p>
+                        <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full ${statusStyles[approval.status] || 'bg-slate-100 text-slate-500'}`}>
                           {approval.status}
                         </span>
                       </div>
                       <p className="text-xs text-neutral-light mt-0.5">{approval.requester?.email}</p>
                       <p className="text-xs text-neutral-light">To: {getBusinessName(approval.business_id)}</p>
                       {approval.reason && (
-                        <p className="text-xs text-gray-500 mt-1 italic">&ldquo;{approval.reason}&rdquo;</p>
+                        <p className="text-xs text-slate-500 mt-1 italic">&ldquo;{approval.reason}&rdquo;</p>
                       )}
                       <p className="text-[10px] text-neutral-light mt-1">Role: {approval.approval_type}</p>
                     </div>
@@ -309,7 +309,7 @@ export default function RequestsPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
-            <p className="text-sm font-medium text-gray-900 mb-1">No requests found</p>
+            <p className="text-sm font-medium text-slate-900 mb-1">No requests found</p>
             <p className="text-xs text-neutral-light">
               {statusFilter === 'all' ? 'There are no join requests across your businesses' : `No ${statusFilter} requests`}
             </p>
@@ -329,7 +329,7 @@ export default function RequestsPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
                 </svg>
               </div>
-              <h3 className="text-base font-semibold text-gray-900 text-center mb-1">Delete this request?</h3>
+              <h3 className="text-base font-semibold text-slate-900 text-center mb-1">Delete this request?</h3>
               <p className="text-sm text-neutral-light text-center mb-5">
                 The join request from <strong>{approval.requester?.name || 'Unknown'}</strong> to{' '}
                 <strong>{getBusinessName(approval.business_id)}</strong> will be permanently removed. This cannot be undone.
@@ -338,7 +338,7 @@ export default function RequestsPage() {
                 <button
                   onClick={() => setDeleteConfirmId(null)}
                   disabled={deletingApproval}
-                  className="flex-1 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors min-h-[44px] disabled:opacity-60"
+                  className="flex-1 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors min-h-[44px] disabled:opacity-60"
                 >
                   Cancel
                 </button>

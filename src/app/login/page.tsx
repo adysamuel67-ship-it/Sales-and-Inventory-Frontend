@@ -127,7 +127,7 @@ function LoginForm() {
         )}
 
         <div className="auth-animate-fade-up auth-delay-1">
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Email Address</label>
+          <label className="block text-sm font-medium text-slate-700 mb-1.5">Email Address</label>
           <input
             type="email"
             required
@@ -135,8 +135,8 @@ function LoginForm() {
             onChange={(e) => setForm({ ...form, email: e.target.value })}
             onFocus={() => setEmailFocused(true)}
             onBlur={() => setEmailFocused(false)}
-            className={`w-full px-4 py-3 rounded-xl border text-sm outline-none transition-all bg-gray-50 focus:bg-white ${
-              emailFocused ? 'border-primary ring-2 ring-primary/20' : 'border-gray-200'
+            className={`w-full px-4 py-3 rounded-xl border text-sm outline-none transition-all bg-slate-50 focus:bg-white ${
+              emailFocused ? 'border-primary ring-2 ring-primary/20' : 'border-slate-200'
             }`}
             placeholder="you@example.com"
           />
@@ -144,7 +144,7 @@ function LoginForm() {
 
         <div className="auth-animate-fade-up auth-delay-2">
           <div className="flex items-center justify-between mb-1.5">
-            <label className="block text-sm font-medium text-gray-700">Password</label>
+            <label className="block text-sm font-medium text-slate-700">Password</label>
             <Link href="/forgot-password" className="text-xs text-primary font-medium hover:underline">
               Forgot password?
             </Link>
@@ -157,15 +157,15 @@ function LoginForm() {
               onChange={(e) => setForm({ ...form, password: e.target.value })}
               onFocus={() => setPasswordFocused(true)}
               onBlur={() => setPasswordFocused(false)}
-              className={`w-full px-4 py-3 pr-11 rounded-xl border text-sm outline-none transition-all bg-gray-50 focus:bg-white ${
-                passwordFocused ? 'border-primary ring-2 ring-primary/20' : 'border-gray-200'
+              className={`w-full px-4 py-3 pr-11 rounded-xl border text-sm outline-none transition-all bg-slate-50 focus:bg-white ${
+                passwordFocused ? 'border-primary ring-2 ring-primary/20' : 'border-slate-200'
               }`}
               placeholder="Enter your password"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-light hover:text-gray-600 transition-colors p-1"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-light hover:text-slate-600 transition-colors p-1"
             >
               {showPassword ? (
                 <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -188,7 +188,7 @@ function LoginForm() {
             className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all shrink-0 ${
               rememberMe
                 ? 'bg-primary border-primary'
-                : 'border-gray-300 bg-white hover:border-gray-400'
+                : 'border-slate-300 bg-white hover:border-slate-400'
             }`}
           >
             {rememberMe && (
@@ -197,7 +197,7 @@ function LoginForm() {
               </svg>
             )}
           </button>
-          <span className="text-sm text-gray-600">Remember me on this device</span>
+          <span className="text-sm text-slate-600">Remember me on this device</span>
         </div>
 
         <button

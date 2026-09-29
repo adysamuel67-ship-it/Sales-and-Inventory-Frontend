@@ -1,12 +1,4 @@
-type BadgeColor =
-  | 'blue'
-  | 'emerald'
-  | 'amber'
-  | 'red'
-  | 'purple'
-  | 'slate'
-  | 'gray'
-  | 'rose'
+type BadgeColor = 'blue' | 'emerald' | 'amber' | 'red' | 'purple' | 'slate' | 'rose'
 
 export default function Badge({
   color = 'slate',
@@ -26,7 +18,6 @@ export default function Badge({
     red: 'bg-red-50 text-red-700 ring-red-100',
     purple: 'bg-purple-50 text-purple-700 ring-purple-100',
     slate: 'bg-slate-100 text-slate-600 ring-slate-200',
-    gray: 'bg-gray-100 text-gray-600 ring-gray-200',
     rose: 'bg-rose-50 text-rose-700 ring-rose-100',
   }
 

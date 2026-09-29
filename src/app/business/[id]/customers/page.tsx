@@ -454,50 +454,50 @@ function CustomersContent() {
       {debtError && <div className="mb-4"><Alert kind="warning">{debtError}</Alert></div>}
 
       {showForm && (
-        <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-6 mb-6">
-          <h3 className="font-semibold text-gray-900 mb-4">
+        <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-6 mb-6">
+          <h3 className="font-semibold text-slate-900 mb-4">
             {returnSale ? 'Create Customer to Complete Sale' : 'Add New Customer'}
           </h3>
           <form onSubmit={handleCreate} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Full Name *</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Full Name *</label>
               <input
                 type="text"
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
                 placeholder="e.g. Kwame Mensah"
                 required
-                className="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone Number</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Phone Number</label>
               <input
                 type="tel"
                 value={formPhone}
                 onChange={(e) => setFormPhone(e.target.value)}
                 placeholder="024XXXXXXX"
-                className="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Email (optional)</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Email (optional)</label>
               <input
                 type="email"
                 value={formEmail}
                 onChange={(e) => setFormEmail(e.target.value)}
                 placeholder="email@example.com"
-                className="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Address (optional)</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Address (optional)</label>
               <input
                 type="text"
                 value={formAddress}
                 onChange={(e) => setFormAddress(e.target.value)}
                 placeholder="e.g. 123 Main St, Accra"
-                className="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
               />
             </div>
             <div className="flex items-end gap-3 sm:col-span-2">
@@ -517,7 +517,7 @@ function CustomersContent() {
                     resetCreateForm()
                   }
                 }}
-                className="px-4 py-3 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors min-h-[44px]"
+                className="px-4 py-3 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors min-h-[44px]"
               >
                 {returnSale ? 'Back to Sales' : 'Cancel'}
               </button>
@@ -527,44 +527,44 @@ function CustomersContent() {
       )}
 
       {showEditForm && editCustomer && (
-        <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-6 mb-6">
-          <h3 className="font-semibold text-gray-900 mb-4">Edit Customer</h3>
+        <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-6 mb-6">
+          <h3 className="font-semibold text-slate-900 mb-4">Edit Customer</h3>
           <form onSubmit={handleUpdate} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Full Name *</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Full Name *</label>
               <input
                 type="text"
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
                 required
-                className="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone Number</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Phone Number</label>
               <input
                 type="tel"
                 value={editPhone}
                 onChange={(e) => setEditPhone(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Email</label>
               <input
                 type="email"
                 value={editEmail}
                 onChange={(e) => setEditEmail(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Address</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Address</label>
               <input
                 type="text"
                 value={editAddress}
                 onChange={(e) => setEditAddress(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
               />
             </div>
             <div className="flex items-end gap-3 sm:col-span-2">
@@ -581,7 +581,7 @@ function CustomersContent() {
                   setShowEditForm(false)
                   setEditCustomer(null)
                 }}
-                className="px-4 py-3 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors min-h-[44px]"
+                className="px-4 py-3 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors min-h-[44px]"
               >
                 Cancel
               </button>
@@ -590,13 +590,13 @@ function CustomersContent() {
         </div>
       )}
 
-      <div className="flex items-center gap-1 mb-6 bg-gray-100 rounded-xl p-1 w-fit">
+      <div className="flex items-center gap-1 mb-6 bg-slate-100 rounded-xl p-1 w-fit">
         <button
           onClick={() => setActiveTab('all')}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
             activeTab === 'all'
-              ? 'bg-white text-gray-900 shadow-sm'
-              : 'text-gray-500 hover:text-gray-700'
+              ? 'bg-white text-slate-900 shadow-sm'
+              : 'text-slate-500 hover:text-slate-700'
           }`}
         >
           All Customers ({customers.length})
@@ -605,8 +605,8 @@ function CustomersContent() {
           onClick={() => setActiveTab('debt')}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
             activeTab === 'debt'
-              ? 'bg-white text-gray-900 shadow-sm'
-              : 'text-gray-500 hover:text-gray-700'
+              ? 'bg-white text-slate-900 shadow-sm'
+              : 'text-slate-500 hover:text-slate-700'
           }`}
         >
           With Debt ({debtCustomers.length})
@@ -634,12 +634,12 @@ function CustomersContent() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by name, phone, or email..."
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
           />
         </div>
       </div>
 
-      <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm">
+      <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm">
         {loading ? (
           <div className="px-5 py-12 text-center">
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
@@ -652,20 +652,20 @@ function CustomersContent() {
                 <button
                   key={customer.customer_id}
                   onClick={() => openProfile(customer)}
-                  className="bg-white rounded-2xl border border-gray-200 p-5 text-left hover:shadow-md hover:border-primary/20 hover:-translate-y-0.5 transition-all duration-200 group cursor-pointer"
+                  className="bg-white rounded-2xl border border-slate-200 p-5 text-left hover:shadow-md hover:border-primary/20 hover:-translate-y-0.5 transition-all duration-200 group cursor-pointer"
                 >
                   <div className="flex items-center gap-3 mb-3">
                     <div className={`w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
                       customer.is_active === false
-                        ? 'bg-gray-100 text-gray-400'
+                        ? 'bg-slate-100 text-slate-400'
                         : 'bg-primary/10 text-primary'
                     }`}>
                       {customer.name?.charAt(0)?.toUpperCase() || '?'}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h3 className="font-semibold text-gray-900 text-sm truncate group-hover:text-primary transition-colors">{customer.name}</h3>
+                      <h3 className="font-semibold text-slate-900 text-sm truncate group-hover:text-primary transition-colors">{customer.name}</h3>
                       {customer.is_active === false && (
-                        <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-semibold uppercase tracking-wide bg-gray-100 text-gray-500 mt-0.5">Inactive</span>
+                        <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-semibold uppercase tracking-wide bg-slate-100 text-slate-500 mt-0.5">Inactive</span>
                       )}
                     </div>
                     {debt > 0 && (
@@ -679,7 +679,7 @@ function CustomersContent() {
 
                   <div className="space-y-1.5 mb-3">
                     {customer.phone && (
-                      <div className="flex items-center gap-2 text-xs text-gray-600">
+                      <div className="flex items-center gap-2 text-xs text-slate-600">
                         <svg className="w-3.5 h-3.5 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                         </svg>
@@ -687,7 +687,7 @@ function CustomersContent() {
                       </div>
                     )}
                     {customer.email && (
-                      <div className="flex items-center gap-2 text-xs text-gray-600">
+                      <div className="flex items-center gap-2 text-xs text-slate-600">
                         <svg className="w-3.5 h-3.5 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                         </svg>
@@ -695,7 +695,7 @@ function CustomersContent() {
                       </div>
                     )}
                     {customer.address && (
-                      <div className="flex items-center gap-2 text-xs text-gray-600">
+                      <div className="flex items-center gap-2 text-xs text-slate-600">
                         <svg className="w-3.5 h-3.5 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -705,13 +705,13 @@ function CustomersContent() {
                     )}
                   </div>
 
-                  <div className="pt-3 border-t border-gray-200 flex items-center justify-between">
+                  <div className="pt-3 border-t border-slate-200 flex items-center justify-between">
                     <div className="flex items-center gap-1.5">
                       {!isStaff && isAdmin && (
                         <>
                           <span
                             onClick={(e) => { e.stopPropagation(); openEditForm(customer) }}
-                            className="px-2 py-0.5 text-[10px] font-medium text-gray-500 bg-gray-100 rounded hover:bg-gray-200 transition-colors cursor-pointer"
+                            className="px-2 py-0.5 text-[10px] font-medium text-slate-500 bg-slate-100 rounded hover:bg-slate-200 transition-colors cursor-pointer"
                           >
                             Edit
                           </span>
@@ -726,7 +726,7 @@ function CustomersContent() {
                         </>
                       )}
                     </div>
-                    <svg className="w-4 h-4 text-gray-300 group-hover:text-primary/50 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 text-slate-300 group-hover:text-primary/50 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                   </div>
@@ -767,13 +767,13 @@ function CustomersContent() {
             className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
-              <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Customer Profile</h3>
+            <div className="sticky top-0 bg-white border-b border-slate-200 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
+              <h3 className="font-semibold text-slate-900 text-sm sm:text-base">Customer Profile</h3>
               <button
                 onClick={() => setShowProfile(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
               >
-                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
@@ -783,17 +783,17 @@ function CustomersContent() {
               <div className="flex items-center gap-3 sm:gap-4 mb-5 sm:mb-6">
                 <div className={`w-11 h-11 sm:w-14 sm:h-14 rounded-full flex items-center justify-center text-base sm:text-lg font-bold shrink-0 ${
                   profileCustomer.is_active === false
-                    ? 'bg-gray-100 text-gray-400'
+                    ? 'bg-slate-100 text-slate-400'
                     : 'bg-primary/10 text-primary'
                 }`}>
                   {profileCustomer.name?.charAt(0)?.toUpperCase() || '?'}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h4 className="text-base sm:text-lg font-semibold text-gray-900 truncate">{profileCustomer.name}</h4>
+                  <h4 className="text-base sm:text-lg font-semibold text-slate-900 truncate">{profileCustomer.name}</h4>
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
                       profileCustomer.is_active === false
-                        ? 'bg-gray-100 text-gray-500'
+                        ? 'bg-slate-100 text-slate-500'
                         : 'bg-success-light text-success'
                     }`}>
                       {profileCustomer.is_active === false ? 'Inactive' : 'Active'}
@@ -813,7 +813,7 @@ function CustomersContent() {
                     <svg className="w-4 h-4 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                     </svg>
-                    <span className="text-gray-600">{profileCustomer.phone}</span>
+                    <span className="text-slate-600">{profileCustomer.phone}</span>
                   </div>
                 )}
                 {profileCustomer.email && (
@@ -821,7 +821,7 @@ function CustomersContent() {
                     <svg className="w-4 h-4 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
-                    <span className="text-gray-600">{profileCustomer.email}</span>
+                    <span className="text-slate-600">{profileCustomer.email}</span>
                   </div>
                 )}
                 {profileCustomer.address && (
@@ -830,7 +830,7 @@ function CustomersContent() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
-                    <span className="text-gray-600">{profileCustomer.address}</span>
+                    <span className="text-slate-600">{profileCustomer.address}</span>
                   </div>
                 )}
                 {!profileCustomer.phone && !profileCustomer.email && !profileCustomer.address && (
@@ -841,7 +841,7 @@ function CustomersContent() {
               <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-5 sm:mb-6">
                 <div className="bg-surfaceAlt rounded-xl p-2.5 sm:p-4">
                   <p className="text-[10px] sm:text-xs text-neutral-light mb-0.5 sm:mb-1">Total Spent</p>
-                  <p className="text-sm sm:text-lg font-semibold text-gray-900">
+                  <p className="text-sm sm:text-lg font-semibold text-slate-900">
                     {profileLoading ? '...' : formatCedi(profileTotalSpent)}
                   </p>
                 </div>
@@ -853,7 +853,7 @@ function CustomersContent() {
                 </div>
                 <div className="bg-surfaceAlt rounded-xl p-2.5 sm:p-4">
                   <p className="text-[10px] sm:text-xs text-neutral-light mb-0.5 sm:mb-1">Transactions</p>
-                  <p className="text-sm sm:text-lg font-semibold text-gray-900">
+                  <p className="text-sm sm:text-lg font-semibold text-slate-900">
                     {profileLoading ? '...' : profileTransactions.length}
                   </p>
                 </div>
@@ -911,7 +911,7 @@ function CustomersContent() {
                         {hasBorrowed && (
                           <div className="mb-6">
                             <div className="flex items-center gap-2 mb-3">
-                              <h5 className="text-sm font-semibold text-gray-900">Borrowed</h5>
+                              <h5 className="text-sm font-semibold text-slate-900">Borrowed</h5>
                               <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-warning text-white text-xs font-bold">
                                 {borrowedItems.length}
                               </span>
@@ -920,7 +920,7 @@ function CustomersContent() {
                               {borrowedItems.map((item) => (
                                 <div
                                   key={item.key}
-                                  className={`flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 px-3 bg-surfaceAlt rounded-lg text-sm${item.source === 'sale' ? ' cursor-pointer hover:bg-gray-50 transition-colors' : ''}`}
+                                  className={`flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 px-3 bg-surfaceAlt rounded-lg text-sm${item.source === 'sale' ? ' cursor-pointer hover:bg-slate-50 transition-colors' : ''}`}
                                   onClick={item.source === 'sale' ? () => {
                                     const sale = profileSales.find(s => s.sale_id === Number(item.key.replace('sale-', '')))
                                     if (sale) setDetailSale(saleToMappedSale(sale))
@@ -928,7 +928,7 @@ function CustomersContent() {
                                 >
                                   <div>
                                     <div className="flex items-center gap-2">
-                                        <span className="font-medium text-gray-900">{formatCedi(item.amount)}</span>
+                                        <span className="font-medium text-slate-900">{formatCedi(item.amount)}</span>
                                         <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-warning-light text-warning">
                                           Borrowed
                                         </span>
@@ -966,14 +966,14 @@ function CustomersContent() {
                         {hasPayments && (
                           <div className="mb-6">
                             <div className="flex items-center gap-2 mb-3">
-                              <h5 className="text-sm font-semibold text-gray-900">Payments</h5>
+                              <h5 className="text-sm font-semibold text-slate-900">Payments</h5>
                               <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-success text-white text-xs font-bold">
                                 {profileTransactions.length}
                               </span>
                             </div>
                             <div className="space-y-2">
                               {profileTransactions.map((txn) => (
-                                <div key={txn.transaction_id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2.5 px-3 bg-surfaceAlt rounded-lg text-sm cursor-pointer hover:bg-gray-50 transition-colors">
+                                <div key={txn.transaction_id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2.5 px-3 bg-surfaceAlt rounded-lg text-sm cursor-pointer hover:bg-slate-50 transition-colors">
                                   <div>
                                     <div className="flex items-center gap-2">
                                       <span className="font-medium text-success">{formatCedi(txn.amount_paid)}</span>
@@ -1004,7 +1004,7 @@ function CustomersContent() {
               )}
             </div>
 
-            <div className="sticky bottom-0 bg-white border-t border-gray-200 px-4 sm:px-6 py-3 sm:py-4 rounded-b-2xl flex flex-wrap items-center gap-2 sm:gap-3">
+            <div className="sticky bottom-0 bg-white border-t border-slate-200 px-4 sm:px-6 py-3 sm:py-4 rounded-b-2xl flex flex-wrap items-center gap-2 sm:gap-3">
               {isAdmin && (
                 <>
                   <button
@@ -1033,7 +1033,7 @@ function CustomersContent() {
               )}
               <button
                 onClick={() => setShowProfile(false)}
-                className="px-4 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors min-h-[44px]"
+                className="px-4 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors min-h-[44px]"
               >
                 Close
               </button>
@@ -1067,10 +1067,10 @@ function CustomersContent() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-bold text-gray-900 text-center">Delete customer?</h3>
+              <h3 className="text-lg font-bold text-slate-900 text-center">Delete customer?</h3>
               <p className="text-sm text-neutral-light mt-2 text-center">
                 You are about to permanently delete{' '}
-                <span className="font-semibold text-gray-900">
+                <span className="font-semibold text-slate-900">
                   {customers.find((c) => c.customer_id === deleteConfirm)?.name || `Customer #${deleteConfirm}`}
                 </span>
                 .
@@ -1084,11 +1084,11 @@ function CustomersContent() {
                 </p>
               </div>
             </div>
-            <div className="px-5 sm:px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <div className="px-5 sm:px-6 py-4 border-t border-slate-200 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
               <button
                 onClick={() => setDeleteConfirm(null)}
                 disabled={deletingCustomer}
-                className="px-4 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors disabled:opacity-60 min-h-[44px] flex-1"
+                className="px-4 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors disabled:opacity-60 min-h-[44px] flex-1"
               >
                 Cancel
               </button>

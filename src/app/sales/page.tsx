@@ -221,13 +221,13 @@ export default function SalesPage() {
                 method === 'cash' ? 'bg-success-light text-success'
                   : method === 'mobile_money' ? 'bg-primary-light text-primary'
                   : method === 'card' ? 'bg-warning-light text-warning'
-      : 'bg-gray-100 text-gray-600'
+      : 'bg-slate-100 text-slate-600'
 
   return (
     <DashboardLayout>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Sales</h1>
+          <h1 className="text-2xl font-bold text-slate-900">Sales</h1>
           <p className="text-sm text-neutral-light mt-1">Record and view your sales</p>
         </div>
         <button
@@ -249,16 +249,16 @@ export default function SalesPage() {
       )}
 
       {showForm && (
-        <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-6 mb-6">
-          <h3 className="font-semibold text-gray-900 mb-4">Record New Sale</h3>
+        <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-6 mb-6">
+          <h3 className="font-semibold text-slate-900 mb-4">Record New Sale</h3>
           <form onSubmit={handleCreate} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Product</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Product</label>
               <select
                 value={form.product_id}
                 onChange={(e) => setForm({ ...form, product_id: e.target.value })}
                 required
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-white"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-white"
               >
                 <option value="">Select a product</option>
                 {products.map((p) => (
@@ -269,7 +269,7 @@ export default function SalesPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Quantity</label>
               <input
                 type="number"
                 min="1"
@@ -278,18 +278,18 @@ export default function SalesPage() {
                 onChange={(e) => setForm({ ...form, quantity: e.target.value })}
                 placeholder="0"
                 required
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
               />
               {selectedProduct && parseInt(form.quantity) > (selectedProduct.quantity ?? 0) && (
                 <p className="text-xs text-danger mt-1">Exceeds available stock ({selectedProduct.quantity})</p>
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Payment Method</label>
               <select
                 value={form.payment_method}
                 onChange={(e) => setForm({ ...form, payment_method: e.target.value })}
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-white"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-white"
               >
                 <option value="cash">Cash</option>
                 <option value="mobile_money">Mobile Money (MoMo)</option>
@@ -297,32 +297,32 @@ export default function SalesPage() {
               </select>
             </div>
             <div className="flex items-end">
-              <div className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200">
+              <div className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200">
                 <p className="text-xs text-neutral-light">Total Amount</p>
-                <p className="text-lg font-bold text-gray-900">GH₵{formTotal.toFixed(2)}</p>
+                <p className="text-lg font-bold text-slate-900">GH₵{formTotal.toFixed(2)}</p>
               </div>
             </div>
-            <div className="sm:col-span-2 border-t border-gray-200 pt-4">
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">Customer (optional — auto-created if new)</p>
+            <div className="sm:col-span-2 border-t border-slate-200 pt-4">
+              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-3">Customer (optional — auto-created if new)</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Customer Name</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Customer Name</label>
                   <input
                     type="text"
                     value={form.customer_name}
                     onChange={(e) => setForm({ ...form, customer_name: e.target.value })}
                     placeholder="Leave blank if no customer"
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Customer Phone</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Customer Phone</label>
                   <input
                     type="tel"
                     value={form.customer_phone}
                     onChange={(e) => setForm({ ...form, customer_phone: e.target.value })}
                     placeholder="024XXXXXXX"
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                   />
                 </div>
               </div>
@@ -338,7 +338,7 @@ export default function SalesPage() {
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
-                className="px-4 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors"
+                className="px-4 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors"
               >
                 Cancel
               </button>
@@ -356,7 +356,7 @@ export default function SalesPage() {
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                 activePreset === preset.days
                   ? 'bg-primary text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
               {preset.label}
@@ -365,7 +365,7 @@ export default function SalesPage() {
           <div className="relative">
             <button
               onClick={() => showDatePicker ? setShowDatePicker(false) : handleOpenDatePicker()}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -373,24 +373,24 @@ export default function SalesPage() {
               Custom
             </button>
             {showDatePicker && (
-              <div className="absolute left-0 top-full mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-200 p-4 z-50">
+              <div className="absolute left-0 top-full mt-2 w-64 bg-white rounded-xl shadow-lg border border-slate-200 p-4 z-50">
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-[10px] text-gray-400 mb-1">From</label>
+                    <label className="block text-[10px] text-slate-400 mb-1">From</label>
                     <input
                       type="date"
                       value={draftDateFilter.start}
                       onChange={(e) => setDraftDateFilter((prev) => ({ ...prev, start: e.target.value }))}
-                      className="w-full px-3 py-2 rounded-lg border border-gray-300 text-xs focus:border-primary outline-none"
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:border-primary outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] text-gray-400 mb-1">To</label>
+                    <label className="block text-[10px] text-slate-400 mb-1">To</label>
                     <input
                       type="date"
                       value={draftDateFilter.end}
                       onChange={(e) => setDraftDateFilter((prev) => ({ ...prev, end: e.target.value }))}
-                      className="w-full px-3 py-2 rounded-lg border border-gray-300 text-xs focus:border-primary outline-none"
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:border-primary outline-none"
                     />
                   </div>
                 </div>
@@ -407,7 +407,7 @@ export default function SalesPage() {
         <div className="flex items-center gap-4 text-xs text-neutral-light">
           <span>{filteredSales.length} sales</span>
           <span>{totalQty} items</span>
-          <span className="font-semibold text-gray-900">GH₵{totalAmount.toFixed(2)}</span>
+          <span className="font-semibold text-slate-900">GH₵{totalAmount.toFixed(2)}</span>
         </div>
       </div>
 
@@ -425,7 +425,7 @@ export default function SalesPage() {
               <button
                 key={sale.id}
                 onClick={() => setDetailSale(sale)}
-                className="bg-surface rounded-2xl border border-gray-200 p-5 text-left hover:shadow-md hover:border-primary/20 hover:-translate-y-0.5 transition-all duration-200 group cursor-pointer"
+                className="bg-surface rounded-2xl border border-slate-200 p-5 text-left hover:shadow-md hover:border-primary/20 hover:-translate-y-0.5 transition-all duration-200 group cursor-pointer"
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/15 transition-colors">
@@ -441,7 +441,7 @@ export default function SalesPage() {
                   </div>
                 </div>
 
-                <h3 className="font-medium text-gray-900 text-sm mb-1 truncate group-hover:text-primary transition-colors">
+                <h3 className="font-medium text-slate-900 text-sm mb-1 truncate group-hover:text-primary transition-colors">
                   {sale.product}
                 </h3>
 
@@ -452,7 +452,7 @@ export default function SalesPage() {
                       <span className="text-xs text-neutral-light">left of GH₵{sale.amount.toFixed(2)}</span>
                     </>
                   ) : (
-                    <span className="text-lg font-bold text-gray-900">GH₵{sale.amount.toFixed(2)}</span>
+                    <span className="text-lg font-bold text-slate-900">GH₵{sale.amount.toFixed(2)}</span>
                   )}
                 </div>
 
@@ -482,13 +482,13 @@ export default function SalesPage() {
                       {sale.sold_by_name.charAt(0).toUpperCase()}
                     </div>
                     <span className="text-neutral-light">Sold by</span>
-                    <span className="text-gray-700 font-medium truncate">{sale.sold_by_name}</span>
+                    <span className="text-slate-700 font-medium truncate">{sale.sold_by_name}</span>
                   </div>
                 )}
 
-                <div className="mt-3 pt-3 border-t border-gray-200 flex items-center justify-between">
+                <div className="mt-3 pt-3 border-t border-slate-200 flex items-center justify-between">
                   <span className="text-xs text-neutral-light">{sale.time}</span>
-                  <svg className="w-4 h-4 text-gray-300 group-hover:text-primary/50 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 text-slate-300 group-hover:text-primary/50 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
                 </div>
@@ -508,7 +508,7 @@ export default function SalesPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15a2.25 2.25 0 012.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z" />
             </svg>
           </div>
-          <p className="text-sm font-medium text-gray-900 mb-1">
+          <p className="text-sm font-medium text-slate-900 mb-1">
             {dateFilter.start || dateFilter.end
               ? 'No sales found for the selected date range'
               : 'No sales recorded yet'}

@@ -1,5 +1,5 @@
 import { ImageResponse } from 'next/og'
-import { SITE_NAME, SITE_TAGLINE } from '@/lib/site'
+import { COMPANY_NAME, SITE_NAME, SITE_TAGLINE } from '@/lib/site'
 
 export const runtime = 'nodejs'
 export const alt = `${SITE_NAME} — ${SITE_TAGLINE}`
@@ -35,7 +35,7 @@ export default async function OpengraphImage() {
             <div style={{ color: '#FFFFFF', fontSize: 30, fontWeight: 700, letterSpacing: -0.5 }}>
               {SITE_NAME}
             </div>
-            <div style={{ color: '#94A3B8', fontSize: 19, marginTop: 4 }}>Made in Ghana</div>
+            <div style={{ color: '#94A3B8', fontSize: 19, marginTop: 4 }}>{`by ${COMPANY_NAME}`}</div>
           </div>
         </div>
 

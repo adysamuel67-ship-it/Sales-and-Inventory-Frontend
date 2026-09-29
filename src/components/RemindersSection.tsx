@@ -386,7 +386,7 @@ export default function RemindersSection({ businessId }: Props) {
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3">
         <div>
-          <h2 className="text-lg font-bold text-gray-900">Payment Reminders</h2>
+          <h2 className="text-lg font-bold text-slate-900">Payment Reminders</h2>
           <p className="text-xs sm:text-sm text-neutral-light mt-0.5">Automated SMS reminders for customer debt payments</p>
         </div>
         {canManage && (
@@ -431,7 +431,7 @@ export default function RemindersSection({ businessId }: Props) {
       ) : (
         <>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-            <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-5">
+            <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-xs text-neutral-light uppercase tracking-wider">Total</p>
                 <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -440,9 +440,9 @@ export default function RemindersSection({ businessId }: Props) {
                   </svg>
                 </div>
               </div>
-              <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+              <p className="text-2xl font-bold text-slate-900">{stats.total}</p>
             </div>
-            <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-5">
+            <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-xs text-neutral-light uppercase tracking-wider">Active</p>
                 <div className="w-8 h-8 rounded-xl bg-success-light flex items-center justify-center">
@@ -453,18 +453,18 @@ export default function RemindersSection({ businessId }: Props) {
               </div>
               <p className="text-2xl font-bold text-success">{stats.active}</p>
             </div>
-            <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-5">
+            <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-xs text-neutral-light uppercase tracking-wider">Paused</p>
-                <div className="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center">
-                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
+                <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center">
+                  <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
               </div>
-              <p className="text-2xl font-bold text-gray-500">{stats.paused}</p>
+              <p className="text-2xl font-bold text-slate-500">{stats.paused}</p>
             </div>
-            <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-5">
+            <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-xs text-neutral-light uppercase tracking-wider">Ending Soon</p>
                 <div className="w-8 h-8 rounded-xl bg-warning-light flex items-center justify-center">
@@ -478,7 +478,7 @@ export default function RemindersSection({ businessId }: Props) {
           </div>
 
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-4">
-            <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1 w-fit">
+            <div className="flex items-center gap-1 bg-slate-100 rounded-xl p-1 w-fit">
               {([
                 { key: 'all' as Tab, label: `All (${stats.total})` },
                 { key: 'active' as Tab, label: `Active (${stats.active})` },
@@ -489,8 +489,8 @@ export default function RemindersSection({ businessId }: Props) {
                   onClick={() => setActiveTab(tab.key)}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
                     activeTab === tab.key
-                      ? 'bg-white text-gray-900 shadow-sm'
-                      : 'text-gray-500 hover:text-gray-700'
+                      ? 'bg-white text-slate-900 shadow-sm'
+                      : 'text-slate-500 hover:text-slate-700'
                   }`}
                 >
                   {tab.label}
@@ -506,17 +506,17 @@ export default function RemindersSection({ businessId }: Props) {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search by customer, phone, or note..."
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
               />
             </div>
           </div>
 
-          <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm">
+          <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm">
             {filtered.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-gray-200">
+                    <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-slate-200">
                       <th className="text-left px-5 py-3 font-medium">Customer</th>
                       <th className="text-left px-5 py-3 font-medium hidden md:table-cell">Amount</th>
                       <th className="text-left px-5 py-3 font-medium">Window</th>
@@ -534,30 +534,30 @@ export default function RemindersSection({ businessId }: Props) {
                         <tr
                           key={reminder.reminder_id}
                           onClick={() => openDetail(reminder)}
-                          className="border-t border-gray-50 table-row-hover cursor-pointer"
+                          className="border-t border-slate-50 table-row-hover cursor-pointer"
                         >
                           <td className="px-5 py-3.5">
                             <div className="flex items-center gap-3">
                               <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold shrink-0 ${
-                                reminder.is_active ? 'bg-primary/10 text-primary' : 'bg-gray-100 text-gray-500'
+                                reminder.is_active ? 'bg-primary/10 text-primary' : 'bg-slate-100 text-slate-500'
                               }`}>
                                 {cust?.name?.charAt(0)?.toUpperCase() || '?'}
                               </div>
                               <div className="min-w-0">
-                                <div className="font-medium text-gray-900 truncate">{cust?.name || 'Unknown'}</div>
+                                <div className="font-medium text-slate-900 truncate">{cust?.name || 'Unknown'}</div>
                                 {cust?.phone && <div className="text-xs text-neutral-light mt-0.5">{cust.phone}</div>}
                               </div>
                             </div>
                           </td>
                           <td className="px-5 py-3.5 hidden md:table-cell">
                             {debt ? (
-                              <span className="font-semibold text-gray-900">{formatCurrency(debt.amount)}</span>
+                              <span className="font-semibold text-slate-900">{formatCurrency(debt.amount)}</span>
                             ) : (
                               <span className="text-neutral-light">—</span>
                             )}
                           </td>
                           <td className="px-5 py-3.5">
-                            <div className="text-gray-700">
+                            <div className="text-slate-700">
                               {dateOnly(reminder.start_date) || '—'} <span className="text-neutral-light">→</span> {dateOnly(reminder.end_date) || '—'}
                             </div>
                             <div className="flex items-center gap-2 mt-0.5">
@@ -570,11 +570,11 @@ export default function RemindersSection({ businessId }: Props) {
                             </div>
                           </td>
                           <td className="px-5 py-3.5 hidden sm:table-cell">
-                            <span className="text-gray-600 line-clamp-2 max-w-[220px]">{reminder.note || '—'}</span>
+                            <span className="text-slate-600 line-clamp-2 max-w-[220px]">{reminder.note || '—'}</span>
                           </td>
                           <td className="px-5 py-3.5 text-center">
                             <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
-                              reminder.is_active ? 'bg-success-light text-success' : 'bg-gray-200 text-gray-600'
+                              reminder.is_active ? 'bg-success-light text-success' : 'bg-slate-200 text-slate-600'
                             }`}>
                               {reminder.is_active ? 'Active' : 'Paused'}
                             </span>
@@ -585,7 +585,7 @@ export default function RemindersSection({ businessId }: Props) {
                                 <>
                                   <button
                                     onClick={() => openEdit(reminder)}
-                                    className="px-2.5 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                                    className="px-2.5 py-1 text-xs font-medium text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors"
                                   >
                                     Edit
                                   </button>
@@ -623,7 +623,7 @@ export default function RemindersSection({ businessId }: Props) {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                   </svg>
                 </div>
-                <p className="text-sm font-medium text-gray-900 mb-1">
+                <p className="text-sm font-medium text-slate-900 mb-1">
                   {search ? 'No reminders match your search' : 'No reminders yet'}
                 </p>
                 <p className="text-xs text-neutral-light">
@@ -641,16 +641,16 @@ export default function RemindersSection({ businessId }: Props) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowPicker(false)}>
           <div className="absolute inset-0 bg-black/40" />
           <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
+            <div className="sticky top-0 bg-white border-b border-slate-200 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
               <div>
-                <h3 className="font-semibold text-gray-900">Schedule a Reminder</h3>
+                <h3 className="font-semibold text-slate-900">Schedule a Reminder</h3>
                 <p className="text-xs text-neutral-light mt-0.5">Choose a customer with an outstanding balance</p>
               </div>
               <button
                 onClick={() => setShowPicker(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
               >
-                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
@@ -664,13 +664,13 @@ export default function RemindersSection({ businessId }: Props) {
                       <button
                         key={c.customer_id}
                         onClick={() => openSchedule(c)}
-                        className="w-full flex items-center gap-3 p-3 bg-surfaceAlt rounded-xl hover:bg-gray-200/60 transition-colors text-left"
+                        className="w-full flex items-center gap-3 p-3 bg-surfaceAlt rounded-xl hover:bg-slate-200/60 transition-colors text-left"
                       >
                         <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-sm font-semibold text-primary shrink-0">
                           {c.customer_name?.charAt(0)?.toUpperCase() || '?'}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">{c.customer_name}</p>
+                          <p className="text-sm font-medium text-slate-900 truncate">{c.customer_name}</p>
                           {c.customer_phone && <p className="text-xs text-neutral-light mt-0.5">{c.customer_phone}</p>}
                         </div>
                         <div className="text-right shrink-0">
@@ -688,7 +688,7 @@ export default function RemindersSection({ businessId }: Props) {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
-                  <p className="text-sm font-medium text-gray-900 mb-1">No outstanding debts</p>
+                  <p className="text-sm font-medium text-slate-900 mb-1">No outstanding debts</p>
                   <p className="text-xs text-neutral-light">All customer debts are settled — nothing to remind about.</p>
                 </div>
               )}
@@ -714,13 +714,13 @@ export default function RemindersSection({ businessId }: Props) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => { if (!savingEdit) setEditingReminder(null) }}>
           <div className="absolute inset-0 bg-black/40" />
           <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
-              <h3 className="font-semibold text-gray-900">Edit Reminder</h3>
+            <div className="sticky top-0 bg-white border-b border-slate-200 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
+              <h3 className="font-semibold text-slate-900">Edit Reminder</h3>
               <button
                 onClick={() => setEditingReminder(null)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
               >
-                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
@@ -732,7 +732,7 @@ export default function RemindersSection({ businessId }: Props) {
                     {getCustomer(editingReminder)?.name?.charAt(0)?.toUpperCase() || '?'}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-gray-900 truncate">{getCustomer(editingReminder)?.name || 'Unknown'}</p>
+                    <p className="text-sm font-semibold text-slate-900 truncate">{getCustomer(editingReminder)?.name || 'Unknown'}</p>
                     {getCustomer(editingReminder)?.phone && (
                       <p className="text-xs text-neutral-light mt-0.5">{getCustomer(editingReminder)?.phone}</p>
                     )}
@@ -742,40 +742,40 @@ export default function RemindersSection({ businessId }: Props) {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Start Date *</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Start Date *</label>
                   <input
                     type="date"
                     value={editStart}
                     onChange={(e) => setEditStart(e.target.value)}
                     required
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">End Date *</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">End Date *</label>
                   <input
                     type="date"
                     value={editEnd}
                     onChange={(e) => setEditEnd(e.target.value)}
                     required
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Time of Day</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Time of Day</label>
                 <input
                   type="time"
                   value={editTime}
                   onChange={(e) => setEditTime(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                 />
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-sm font-medium text-gray-700">Note</label>
+                  <label className="block text-sm font-medium text-slate-700">Note</label>
                   <span className={`text-[11px] ${editNote.length > 150 ? 'text-danger' : 'text-neutral-light'}`}>
                     {editNote.length}/150
                   </span>
@@ -786,7 +786,7 @@ export default function RemindersSection({ businessId }: Props) {
                   maxLength={150}
                   rows={2}
                   placeholder="e.g. Friendly follow-up on your balance"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all resize-none"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all resize-none"
                 />
               </div>
 
@@ -798,12 +798,12 @@ export default function RemindersSection({ businessId }: Props) {
                     onChange={(e) => setEditActive(e.target.checked)}
                     className="sr-only"
                   />
-                  <div className={`w-10 h-5 rounded-full transition-colors ${editActive ? 'bg-success' : 'bg-gray-300'}`}>
+                  <div className={`w-10 h-5 rounded-full transition-colors ${editActive ? 'bg-success' : 'bg-slate-300'}`}>
                     <div className={`w-4 h-4 bg-white rounded-full shadow transition-transform mt-0.5 ${editActive ? 'translate-x-5 ml-0.5' : 'translate-x-0.5 ml-0'}`} />
                   </div>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-900">{editActive ? 'Active' : 'Paused'}</p>
+                  <p className="text-sm font-medium text-slate-900">{editActive ? 'Active' : 'Paused'}</p>
                   <p className="text-xs text-neutral-light">Paused reminders will not send any SMS.</p>
                 </div>
               </label>
@@ -837,7 +837,7 @@ export default function RemindersSection({ businessId }: Props) {
                 <button
                   type="button"
                   onClick={() => setEditingReminder(null)}
-                  className="px-4 py-3 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors min-h-[44px]"
+                  className="px-4 py-3 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors min-h-[44px]"
                 >
                   Cancel
                 </button>
@@ -851,10 +851,10 @@ export default function RemindersSection({ businessId }: Props) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setDetailReminder(null)}>
           <div className="absolute inset-0 bg-black/40" />
           <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
-              <h3 className="font-semibold text-gray-900">Reminder Details</h3>
-              <button onClick={() => setDetailReminder(null)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors">
-                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="sticky top-0 bg-white border-b border-slate-200 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
+              <h3 className="font-semibold text-slate-900">Reminder Details</h3>
+              <button onClick={() => setDetailReminder(null)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors">
+                <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
@@ -866,7 +866,7 @@ export default function RemindersSection({ businessId }: Props) {
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs text-neutral-light">Borrower</p>
-                  <p className="text-lg font-semibold text-gray-900 truncate">{detailCustomer?.name || 'Unknown'}</p>
+                  <p className="text-lg font-semibold text-slate-900 truncate">{detailCustomer?.name || 'Unknown'}</p>
                   {detailCustomer?.phone && <p className="text-xs text-neutral-light mt-0.5">{detailCustomer.phone}</p>}
                 </div>
               </div>
@@ -876,7 +876,7 @@ export default function RemindersSection({ businessId }: Props) {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="bg-surfaceAlt rounded-xl p-4">
                     <p className="text-xs text-neutral-light mb-1">Amount</p>
-                    <p className="text-lg font-bold text-gray-900">{detailDebt ? formatCurrency(detailDebt.amount) : '—'}</p>
+                    <p className="text-lg font-bold text-slate-900">{detailDebt ? formatCurrency(detailDebt.amount) : '—'}</p>
                   </div>
                   <div className="bg-surfaceAlt rounded-xl p-4">
                     <p className="text-xs text-neutral-light mb-1">Status</p>
@@ -890,11 +890,11 @@ export default function RemindersSection({ businessId }: Props) {
                 <div className="grid grid-cols-2 gap-3 mt-3">
                   <div className="bg-surfaceAlt rounded-xl p-4">
                     <p className="text-xs text-neutral-light mb-1">Due Date</p>
-                    <p className="text-sm font-medium text-gray-900">{detailDebt?.due_date ? dateOnly(detailDebt.due_date) : '—'}</p>
+                    <p className="text-sm font-medium text-slate-900">{detailDebt?.due_date ? dateOnly(detailDebt.due_date) : '—'}</p>
                   </div>
                   <div className="bg-surfaceAlt rounded-xl p-4">
                     <p className="text-xs text-neutral-light mb-1">Debt ID</p>
-                    <p className="text-sm font-medium text-gray-900">#{detailReminder.debt_id}</p>
+                    <p className="text-sm font-medium text-slate-900">#{detailReminder.debt_id}</p>
                   </div>
                 </div>
               </div>
@@ -909,7 +909,7 @@ export default function RemindersSection({ businessId }: Props) {
                     </div>
                   ) : detailCreator ? (
                     <div>
-                      <p className="text-sm font-semibold text-gray-900">{detailCreator.name}</p>
+                      <p className="text-sm font-semibold text-slate-900">{detailCreator.name}</p>
                       {detailCreator.created_at && (
                         <p className="text-xs text-neutral-light mt-0.5">
                           Added {new Date(detailCreator.created_at).toLocaleDateString()} at{' '}
@@ -928,29 +928,29 @@ export default function RemindersSection({ businessId }: Props) {
                 <div className="bg-surfaceAlt rounded-xl p-4 space-y-2">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-neutral-light">Window</span>
-                    <span className="text-gray-900 font-medium">{dateOnly(detailReminder.start_date) || '—'} → {dateOnly(detailReminder.end_date) || '—'}</span>
+                    <span className="text-slate-900 font-medium">{dateOnly(detailReminder.start_date) || '—'} → {dateOnly(detailReminder.end_date) || '—'}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-neutral-light">Time</span>
-                    <span className="text-gray-900 font-medium">Daily {formatTime(detailReminder.time_of_day)}</span>
+                    <span className="text-slate-900 font-medium">Daily {formatTime(detailReminder.time_of_day)}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-neutral-light">Status</span>
-                    <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${detailReminder.is_active ? 'bg-success-light text-success' : 'bg-gray-200 text-gray-600'}`}>
+                    <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${detailReminder.is_active ? 'bg-success-light text-success' : 'bg-slate-200 text-slate-600'}`}>
                       {detailReminder.is_active ? 'Active' : 'Paused'}
                     </span>
                   </div>
                   {detailReminder.note && (
                     <div className="text-sm">
                       <span className="text-neutral-light block mb-0.5">Note</span>
-                      <p className="text-gray-700">{detailReminder.note}</p>
+                      <p className="text-slate-700">{detailReminder.note}</p>
                     </div>
                   )}
                 </div>
               </div>
             </div>
-            <div className="sticky bottom-0 bg-white border-t border-gray-200 px-4 sm:px-6 py-4 rounded-b-2xl">
-              <button onClick={() => setDetailReminder(null)} className="w-full py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors">
+            <div className="sticky bottom-0 bg-white border-t border-slate-200 px-4 sm:px-6 py-4 rounded-b-2xl">
+              <button onClick={() => setDetailReminder(null)} className="w-full py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors">
                 Close
               </button>
             </div>
@@ -967,7 +967,7 @@ export default function RemindersSection({ businessId }: Props) {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
               </svg>
             </div>
-            <h3 className="text-base font-semibold text-gray-900 text-center mb-1">Delete this reminder?</h3>
+            <h3 className="text-base font-semibold text-slate-900 text-center mb-1">Delete this reminder?</h3>
             <p className="text-sm text-neutral-light text-center mb-5">
               The reminder for <strong>{getCustomer(deleteConfirm)?.name || 'Unknown'}</strong> will be permanently removed and no longer send SMS.
             </p>
@@ -975,7 +975,7 @@ export default function RemindersSection({ businessId }: Props) {
               <button
                 onClick={() => setDeleteConfirm(null)}
                 disabled={deleting}
-                className="flex-1 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors min-h-[44px] disabled:opacity-60"
+                className="flex-1 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors min-h-[44px] disabled:opacity-60"
               >
                 Cancel
               </button>

@@ -224,21 +224,21 @@ export default function ProductUploadModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
+        <div className="sticky top-0 bg-white border-b border-slate-200 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-primary-light rounded-xl flex items-center justify-center">
               <BoxIcon className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h3 className="font-semibold text-gray-900">Import Products</h3>
+              <h3 className="font-semibold text-slate-900">Import Products</h3>
               <p className="text-xs text-neutral-light">Upload a CSV or Excel file to add products in bulk</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
+            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
           >
-            <XIcon className="w-4 h-4 text-gray-500" />
+            <XIcon className="w-4 h-4 text-slate-500" />
           </button>
         </div>
 
@@ -248,7 +248,7 @@ export default function ProductUploadModal({
             <div className="flex flex-wrap items-center gap-2 text-xs text-neutral-light">
               <span>Supported:</span>
               {ACCEPTED_EXTENSIONS.map((ext) => (
-                <span key={ext} className="px-2 py-0.5 bg-white rounded-md border border-gray-200 font-mono text-gray-600">
+                <span key={ext} className="px-2 py-0.5 bg-white rounded-md border border-slate-200 font-mono text-slate-600">
                   {ext}
                 </span>
               ))}
@@ -273,7 +273,7 @@ export default function ProductUploadModal({
             onDrop={handleDrop}
             onClick={() => inputRef.current?.click()}
             className={`cursor-pointer rounded-2xl border-2 border-dashed transition-colors p-8 text-center ${
-              dragging ? 'border-primary bg-primary-light' : 'border-gray-300 hover:border-primary/60 hover:bg-gray-50'
+              dragging ? 'border-primary bg-primary-light' : 'border-slate-300 hover:border-primary/60 hover:bg-slate-50'
             }`}
           >
             <input
@@ -288,7 +288,7 @@ export default function ProductUploadModal({
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
               </svg>
             </div>
-            <p className="text-sm font-medium text-gray-900">
+            <p className="text-sm font-medium text-slate-900">
               {file ? file.name : 'Drag & drop your file here, or click to browse'}
             </p>
             {file && (
@@ -305,13 +305,13 @@ export default function ProductUploadModal({
           {file && !uploading && (
             <div className="flex items-center justify-between gap-3 bg-surfaceAlt rounded-xl p-3">
               <div className="flex items-center gap-2.5 min-w-0">
-                <span className="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center shrink-0">
+                <span className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center shrink-0">
                   <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                   </svg>
                 </span>
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">{file.name}</p>
+                  <p className="text-sm font-medium text-slate-900 truncate">{file.name}</p>
                   <p className="text-xs text-neutral-light">{fileTypeLabel(file.name)} · {formatSize(file.size)}</p>
                 </div>
               </div>
@@ -331,7 +331,7 @@ export default function ProductUploadModal({
                 <span>Uploading {file?.name}...</span>
                 <span>{progress}%</span>
               </div>
-              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-primary rounded-full transition-all"
                   style={{ width: `${progress}%` }}
@@ -357,13 +357,13 @@ export default function ProductUploadModal({
           {/* Column reference */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <h4 className="text-sm font-semibold text-gray-900">Accepted Columns</h4>
+              <h4 className="text-sm font-semibold text-slate-900">Accepted Columns</h4>
               <span className="text-xs text-neutral-light">The column names in your file can match any alias below</span>
             </div>
-            <div className="rounded-xl border border-gray-200 overflow-hidden">
+            <div className="rounded-xl border border-slate-200 overflow-hidden">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-gray-50 text-left text-xs text-neutral-light uppercase tracking-wider border-b border-gray-200">
+                  <tr className="bg-slate-50 text-left text-xs text-neutral-light uppercase tracking-wider border-b border-slate-200">
                     <th className="px-4 py-2.5 font-medium">Field</th>
                     <th className="px-4 py-2.5 font-medium">Accepted header names</th>
                     <th className="px-4 py-2.5 font-medium">Type / Notes</th>
@@ -371,9 +371,9 @@ export default function ProductUploadModal({
                 </thead>
                 <tbody>
                   {COLUMN_REFERENCES.map((col, idx) => (
-                    <tr key={col.field} className={idx % 2 ? 'bg-gray-50/50' : 'bg-white'}>
+                    <tr key={col.field} className={idx % 2 ? 'bg-slate-50/50' : 'bg-white'}>
                       <td className="px-4 py-2.5 align-top">
-                        <span className={`inline-flex items-center gap-1.5 font-medium ${col.required ? 'text-gray-900' : 'text-gray-700'}`}>
+                        <span className={`inline-flex items-center gap-1.5 font-medium ${col.required ? 'text-slate-900' : 'text-slate-700'}`}>
                           {col.label}
                           {col.required && (
                             <span className="px-1.5 py-0.5 rounded-full bg-danger-light text-danger text-[10px] font-semibold uppercase">
@@ -415,7 +415,7 @@ export default function ProductUploadModal({
           </div>
         </div>
 
-        <div className="sticky bottom-0 bg-white border-t border-gray-200 px-4 sm:px-6 py-4 rounded-b-2xl flex gap-3">
+        <div className="sticky bottom-0 bg-white border-t border-slate-200 px-4 sm:px-6 py-4 rounded-b-2xl flex gap-3">
           <Button variant="secondary" className="flex-1" onClick={onClose} disabled={uploading}>
             Cancel
           </Button>

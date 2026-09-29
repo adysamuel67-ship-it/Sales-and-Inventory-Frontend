@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import BusinessBotLogo from '@/components/BusinessBotLogo'
+import { COMPANY_NAME, SUPPORT_EMAIL, SUPPORT_PHONE_DISPLAY } from '@/lib/site'
 
 export const metadata: Metadata = {
   title: 'Terms of Service',
@@ -87,7 +88,7 @@ const sections = [
   {
     title: '11. Contact Us',
     body: [
-      'If you have any questions about these Terms, please contact us at support@businessbot.app.',
+      `Business Bot GH is a product of ${COMPANY_NAME}. If you have any questions about these Terms, call us on ${SUPPORT_PHONE_DISPLAY} or email ${SUPPORT_EMAIL}.`,
     ],
   },
 ]
@@ -96,12 +97,12 @@ export default function TermsPage() {
   return (
     <main className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200">
+      <header className="bg-white border-b border-slate-200">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3">
             <BusinessBotLogo size={36} />
             <div>
-              <p className="font-semibold text-gray-900 text-[15px] leading-tight">Business Bot</p>
+              <p className="font-semibold text-slate-900 text-[15px] leading-tight">Business Bot</p>
               <p className="text-[11px] text-neutral-light">Sales & Inventory Tracking</p>
             </div>
           </Link>
@@ -115,12 +116,12 @@ export default function TermsPage() {
       </header>
 
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
-        <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-10">
+        <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-10">
           <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-2">Legal</p>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">Terms of Service</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-1">Terms of Service</h1>
           <p className="text-sm text-neutral-light">Last updated: September 2026</p>
 
-          <p className="text-sm text-gray-600 leading-relaxed mt-6">
+          <p className="text-sm text-slate-600 leading-relaxed mt-6">
             These Terms of Service (&quot;Terms&quot;) govern your access to and use of the Business Bot sales and inventory
             tracking platform. Please read them carefully before you create an account or use the Service.
           </p>
@@ -128,9 +129,9 @@ export default function TermsPage() {
           <div className="mt-8 space-y-8">
             {sections.map((section) => (
               <section key={section.title}>
-                <h2 className="text-lg font-semibold text-gray-900 mb-2">{section.title}</h2>
+                <h2 className="text-lg font-semibold text-slate-900 mb-2">{section.title}</h2>
                 {section.body.map((text, i) => (
-                  <p key={i} className="text-sm text-gray-600 leading-relaxed mb-2">{text}</p>
+                  <p key={i} className="text-sm text-slate-600 leading-relaxed mb-2">{text}</p>
                 ))}
               </section>
             ))}

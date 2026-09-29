@@ -213,7 +213,7 @@ export default function ChatRoom({ businessId, businessName, selfUserId, fullScr
   const presencePreview = state.presence.slice(0, 5)
 
   return (
-    <div className={`flex flex-col bg-surface overflow-hidden ${fullScreen ? 'h-dvh rounded-none border-0' : 'h-[calc(100dvh-7rem)] min-h-[520px] lg:h-[calc(100dvh-8.75rem)] rounded-xl lg:rounded-2xl border border-gray-200 shadow-sm'}`}>
+    <div className={`flex flex-col bg-surface overflow-hidden ${fullScreen ? 'h-dvh rounded-none border-0' : 'h-[calc(100dvh-7rem)] min-h-[520px] lg:h-[calc(100dvh-8.75rem)] rounded-xl lg:rounded-2xl border border-slate-200 shadow-sm'}`}>
       {/* Header */}
       <div className="flex items-center justify-between gap-3 px-3 sm:px-5 py-3 bg-primary text-white">
         <div className="flex items-center gap-3 min-w-0">

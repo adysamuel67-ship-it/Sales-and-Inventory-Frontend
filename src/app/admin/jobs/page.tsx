@@ -85,7 +85,7 @@ export default function AdminJobsPage() {
   return (
     <DashboardLayout>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Cron Jobs</h1>
+        <h1 className="text-2xl font-bold text-slate-900">Cron Jobs</h1>
         <p className="text-sm text-neutral-light mt-1">Manage and trigger scheduled jobs</p>
       </div>
 
@@ -102,8 +102,8 @@ export default function AdminJobsPage() {
         {cronJobs.map((job) => {
           const lastRun = jobs.find((j) => j.name === job.name)
           return (
-            <div key={job.name} className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-5">
-              <h3 className="font-semibold text-gray-900 text-sm">{job.label}</h3>
+            <div key={job.name} className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-5">
+              <h3 className="font-semibold text-slate-900 text-sm">{job.label}</h3>
               <p className="text-xs text-neutral-light mt-1">{job.description}</p>
               {lastRun?.last_run && (
                 <p className="text-[10px] text-neutral-light mt-2">
@@ -122,7 +122,7 @@ export default function AdminJobsPage() {
                     </button>
                     <button
                       onClick={() => setConfirmTrigger(null)}
-                      className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors min-h-[36px]"
+                      className="px-3 py-1.5 text-xs font-medium text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors min-h-[36px]"
                     >
                       Cancel
                     </button>
@@ -142,9 +142,9 @@ export default function AdminJobsPage() {
         })}
       </div>
 
-      <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm">
-        <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
-          <h3 className="font-semibold text-gray-900">Job History</h3>
+      <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm">
+        <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+          <h3 className="font-semibold text-slate-900">Job History</h3>
           <button
             onClick={loadJobs}
             className="text-xs text-primary font-medium hover:underline"
@@ -160,7 +160,7 @@ export default function AdminJobsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-gray-200">
+                <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-slate-200">
                   <th className="text-left px-5 py-3 font-medium">Job</th>
                   <th className="text-center px-5 py-3 font-medium">Status</th>
                   <th className="text-right px-5 py-3 font-medium">Last Run</th>
@@ -168,8 +168,8 @@ export default function AdminJobsPage() {
               </thead>
               <tbody>
                 {jobs.map((job) => (
-                  <tr key={job.id || job.name} className="border-t border-gray-50 table-row-hover">
-                    <td className="px-5 py-3.5 font-medium text-gray-900">{job.name}</td>
+                  <tr key={job.id || job.name} className="border-t border-slate-50 table-row-hover">
+                    <td className="px-5 py-3.5 font-medium text-slate-900">{job.name}</td>
                     <td className="px-5 py-3.5 text-center">
                       <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
                         job.status === 'success' ? 'bg-success-light text-success'

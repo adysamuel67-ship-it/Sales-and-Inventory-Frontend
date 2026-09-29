@@ -5,7 +5,7 @@ import LandingAuthActions from '@/components/LandingAuthActions'
 import DashboardPreview from '@/components/landing/DashboardPreview'
 import MobileCtaBar from '@/components/landing/MobileCtaBar'
 import PhonePreview from '@/components/landing/PhonePreview'
-import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, absoluteUrl } from '@/lib/site'
+import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, COMPANY_NAME, SUPPORT_PHONE_DISPLAY, SUPPORT_PHONE_TEL, absoluteUrl } from '@/lib/site'
 
 export const metadata: Metadata = {
   title: `${SITE_NAME} — Free Sales & Inventory Tracking App for Ghanaian Businesses`,
@@ -86,6 +86,10 @@ const faqs = [
     q: 'How do I get back in if I forget my password?',
     a: 'Use the "Forgot password" link on the sign-in page and we will email you a link to set a new one.',
   },
+  {
+    q: 'How do I get help from a real person?',
+    a: `Call ${SUPPORT_PHONE_DISPLAY} and someone from ${COMPANY_NAME} will pick up. There is no ticket queue and no chatbot.`,
+  },
 ]
 
 export default function Home() {
@@ -99,6 +103,14 @@ export default function Home() {
     description: SITE_DESCRIPTION,
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'GHS' },
     areaServed: 'GH',
+    author: { '@type': 'Organization', name: COMPANY_NAME },
+    publisher: { '@type': 'Organization', name: COMPANY_NAME },
+    contactPoint: {
+      '@type': 'ContactPoint',
+      telephone: `+${SUPPORT_PHONE_TEL.replace(/^\+/, '')}`,
+      contactType: 'customer support',
+      areaServed: 'GH',
+    },
   }
 
   return (
@@ -341,6 +353,19 @@ export default function Home() {
               <span className="text-sm font-semibold text-slate-900">{SITE_NAME}</span>
             </div>
             <p className="mt-3 text-[13px] leading-relaxed text-slate-500">{SITE_TAGLINE}.</p>
+            <p className="mt-3 text-[13px] text-slate-400">
+              A product of{' '}
+              <span className="font-medium text-slate-600">{COMPANY_NAME}</span>
+            </p>
+            <a
+              href={`tel:${SUPPORT_PHONE_TEL}`}
+              className="mt-3 inline-flex items-center gap-2 text-[13px] font-medium tabular-nums text-slate-600 transition-colors hover:text-primary"
+            >
+              <svg className="h-4 w-4 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
+              </svg>
+              {SUPPORT_PHONE_DISPLAY}
+            </a>
           </div>
 
           <nav className="-ml-2.5 flex flex-wrap items-center gap-x-6 gap-y-1 text-sm">
@@ -361,7 +386,7 @@ export default function Home() {
 
         <div className="border-t border-slate-100">
           <p className="mx-auto max-w-6xl px-4 py-5 text-xs text-slate-400 sm:px-6">
-            &copy; {new Date().getFullYear()} {SITE_NAME}. Made in Ghana.
+            &copy; {new Date().getFullYear()} {COMPANY_NAME}. Made in Ghana.
           </p>
         </div>
       </footer>

@@ -508,12 +508,12 @@ export default function DebtsPage() {
         <>
           {summary && (
             <div className="grid grid-cols-2 gap-3 mb-6">
-              <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-5">
+              <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-5">
                 <p className="text-xs text-neutral-light uppercase tracking-wider">Outstanding</p>
                 <p className="text-2xl font-bold text-danger mt-1">{formatCurrency(summary.total_outstanding)}</p>
                 <p className="text-[10px] text-neutral-light mt-1">{summary.total_customers} customer{summary.total_customers !== 1 ? 's' : ''}</p>
               </div>
-              <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-5">
+              <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-5">
                 <p className="text-xs text-neutral-light uppercase tracking-wider">Overdue</p>
                 <p className="text-2xl font-bold text-warning mt-1">{summary.total_overdue}</p>
                 <p className="text-[10px] text-neutral-light mt-1">{formatCurrency(summary.overdue_amount)} overdue</p>
@@ -521,7 +521,7 @@ export default function DebtsPage() {
             </div>
           )}
 
-          <div className="flex items-center gap-1 mb-4 bg-gray-100 rounded-xl p-1 w-fit">
+          <div className="flex items-center gap-1 mb-4 bg-slate-100 rounded-xl p-1 w-fit">
             {([
               { key: 'all' as Tab, label: `In Debt (${debtCustomers.length})` },
               { key: 'overdue' as Tab, label: `Overdue (${overdueCustomers.length})` },
@@ -533,8 +533,8 @@ export default function DebtsPage() {
                 onClick={() => setActiveTab(tab.key)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
                   activeTab === tab.key
-                    ? 'bg-white text-gray-900 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700'
                 }`}
               >
                 {tab.label}
@@ -556,13 +556,13 @@ export default function DebtsPage() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search by name, phone, or email..."
-                  className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                 />
               </div>
               <select
                 value={sortOrder}
                 onChange={(e) => setSortOrder(e.target.value as typeof sortOrder)}
-                className="px-3 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary outline-none min-h-[44px]"
+                className="px-3 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary outline-none min-h-[44px]"
               >
                 <option value="highest">Highest Debt</option>
                 <option value="lowest">Lowest Debt</option>
@@ -570,12 +570,12 @@ export default function DebtsPage() {
               </select>
             </div>
   
-            <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm">
+            <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm">
               {filtered.length > 0 ? (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-gray-200">
+                      <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-slate-200">
                         <th className="text-left px-5 py-3 font-medium">Customer</th>
                         <th className="text-right px-5 py-3 font-medium">Debt</th>
                         <th className="text-center px-5 py-3 font-medium hidden sm:table-cell">Status</th>
@@ -586,7 +586,7 @@ export default function DebtsPage() {
                       {filtered.map((customer) => {
                         const hasOverdue = customer.debts.some((d) => !d.is_paid && d.due_date && isOverdue(d.due_date))
                         return (
-                          <tr key={customer.customer_id} className="border-t border-gray-50 table-row-hover">
+                          <tr key={customer.customer_id} className="border-t border-slate-50 table-row-hover">
                             <td className="px-5 py-3.5">
                               <button
                                 onClick={() => openProfile(customer)}
@@ -598,7 +598,7 @@ export default function DebtsPage() {
                                   {customer.customer_name?.charAt(0)?.toUpperCase() || '?'}
                                 </div>
                                 <div>
-                                  <div className="font-medium text-gray-900 underline decoration-dotted underline-offset-2 cursor-pointer">{customer.customer_name}</div>
+                                  <div className="font-medium text-slate-900 underline decoration-dotted underline-offset-2 cursor-pointer">{customer.customer_name}</div>
                                   {customer.customer_phone && (
                                     <div className="text-xs text-neutral-light mt-0.5">{customer.customer_phone}</div>
                                   )}
@@ -629,7 +629,7 @@ export default function DebtsPage() {
                               <div className="flex items-center gap-2 justify-end">
                                 <button
                                   onClick={() => openProfile(customer)}
-                                  className="px-2.5 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                                  className="px-2.5 py-1 text-xs font-medium text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors"
                                 >
                                   Details
                                 </button>
@@ -645,7 +645,7 @@ export default function DebtsPage() {
                                     <button
                                       disabled
                                       title="Debt settled"
-                                      className="px-2.5 py-1 text-xs font-medium text-gray-400 bg-gray-100 rounded-lg cursor-not-allowed"
+                                      className="px-2.5 py-1 text-xs font-medium text-slate-400 bg-slate-100 rounded-lg cursor-not-allowed"
                                     >
                                       Debt settled
                                     </button>
@@ -690,13 +690,13 @@ export default function DebtsPage() {
             className="relative bg-white rounded-2xl shadow-xl w-full max-w-md"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-6 py-4 border-b border-gray-200 rounded-t-2xl flex items-center justify-between">
-              <h3 className="font-semibold text-gray-900">Record Payment</h3>
+            <div className="px-6 py-4 border-b border-slate-200 rounded-t-2xl flex items-center justify-between">
+              <h3 className="font-semibold text-slate-900">Record Payment</h3>
               <button
                 onClick={() => setShowPaymentModal(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
               >
-                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
@@ -704,7 +704,7 @@ export default function DebtsPage() {
             <form onSubmit={handlePayment} className="px-6 py-5 space-y-4">
               <div className="bg-surfaceAlt rounded-xl p-4">
                 <p className="text-xs text-neutral-light mb-1">Customer</p>
-                <p className="text-sm font-semibold text-gray-900">{paymentCustomer.customer_name}</p>
+                <p className="text-sm font-semibold text-slate-900">{paymentCustomer.customer_name}</p>
                 <p className="text-xs text-neutral-light mt-1">
                   Outstanding: <span className="font-semibold text-danger">{formatCurrency(paymentCustomer.total_debt)}</span>
                 </p>
@@ -716,15 +716,15 @@ export default function DebtsPage() {
                     type="checkbox"
                     checked={paymentFullyPaid}
                     onChange={(e) => setPaymentFullyPaid(e.target.checked)}
-                    className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                    className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary"
                   />
-                  <span className="text-sm font-medium text-gray-700">Mark as fully paid</span>
+                  <span className="text-sm font-medium text-slate-700">Mark as fully paid</span>
                 </label>
               </div>
 
               {!paymentFullyPaid && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Payment Amount (GH\u20B5)</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Payment Amount (GH\u20B5)</label>
                   <input
                     type="number"
                     step="0.01"
@@ -734,19 +734,19 @@ export default function DebtsPage() {
                     onChange={(e) => setPaymentAmount(e.target.value)}
                     placeholder="0.00"
                     required
-                    className="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                    className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                   />
                 </div>
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Note (optional)</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Note (optional)</label>
                 <input
                   type="text"
                   value={paymentNote}
                   onChange={(e) => setPaymentNote(e.target.value)}
                   placeholder="e.g. Partial payment via MoMo"
-                  className="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                 />
               </div>
 
@@ -761,7 +761,7 @@ export default function DebtsPage() {
                 <button
                   type="button"
                   onClick={() => setShowPaymentModal(false)}
-                  className="px-4 py-3 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors min-h-[44px]"
+                  className="px-4 py-3 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors min-h-[44px]"
                 >
                   Cancel
                 </button>
@@ -778,13 +778,13 @@ export default function DebtsPage() {
             className="relative bg-white rounded-2xl shadow-xl w-full max-w-md"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-6 py-4 border-b border-gray-200 rounded-t-2xl flex items-center justify-between">
-              <h3 className="font-semibold text-gray-900">Add New Debt</h3>
+            <div className="px-6 py-4 border-b border-slate-200 rounded-t-2xl flex items-center justify-between">
+              <h3 className="font-semibold text-slate-900">Add New Debt</h3>
               <button
                 onClick={() => setShowAddDebtModal(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
               >
-                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
@@ -799,55 +799,55 @@ export default function DebtsPage() {
                       setAddDebtNewCustomer(e.target.checked)
                       setAddDebtCustomerId('')
                     }}
-                    className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                    className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary"
                   />
-                  <span className="text-sm font-medium text-gray-700">Create new customer</span>
+                  <span className="text-sm font-medium text-slate-700">Create new customer</span>
                 </label>
               </div>
 
               {addDebtNewCustomer ? (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Customer Name *</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Customer Name *</label>
                     <input
                       type="text"
                       value={addDebtNewName}
                       onChange={(e) => setAddDebtNewName(e.target.value)}
                       placeholder="Customer's full name"
                       required
-                      className="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                      className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Customer Phone *</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Customer Phone *</label>
                     <input
                       type="tel"
                       value={addDebtNewPhone}
                       onChange={(e) => setAddDebtNewPhone(e.target.value)}
                       placeholder="024XXXXXXX"
                       required
-                      className="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                      className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Customer Email</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Customer Email</label>
                     <input
                       type="email"
                       value={addDebtNewEmail}
                       onChange={(e) => setAddDebtNewEmail(e.target.value)}
                       placeholder="customer@example.com"
-                      className="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                      className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                     />
                   </div>
                 </>
               ) : (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Customer *</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Customer *</label>
                   <select
                     value={addDebtCustomerId}
                     onChange={(e) => setAddDebtCustomerId(e.target.value)}
                     required
-                    className="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-white min-h-[44px]"
+                    className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-white min-h-[44px]"
                   >
                     <option value="">Select a customer</option>
                     {allCustomers.map((c: any) => (
@@ -860,7 +860,7 @@ export default function DebtsPage() {
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Amount (GH\u20B5) *</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Amount (GH\u20B5) *</label>
                 <input
                   type="number"
                   step="0.01"
@@ -869,28 +869,28 @@ export default function DebtsPage() {
                   onChange={(e) => setAddDebtAmount(e.target.value)}
                   placeholder="0.00"
                   required
-                  className="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Due Date</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Due Date</label>
                 <input
                   type="date"
                   value={addDebtDueDate}
                   onChange={(e) => setAddDebtDueDate(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Note (optional)</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Note (optional)</label>
                 <input
                   type="text"
                   value={addDebtNote}
                   onChange={(e) => setAddDebtNote(e.target.value)}
                   placeholder="e.g. Goods delivered on credit"
-                  className="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                 />
               </div>
 
@@ -905,7 +905,7 @@ export default function DebtsPage() {
                 <button
                   type="button"
                   onClick={() => setShowAddDebtModal(false)}
-                  className="px-4 py-3 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors min-h-[44px]"
+                  className="px-4 py-3 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors min-h-[44px]"
                 >
                   Cancel
                 </button>
@@ -922,13 +922,13 @@ export default function DebtsPage() {
             className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between">
-              <h3 className="font-semibold text-gray-900">Debt Details</h3>
+            <div className="sticky top-0 bg-white border-b border-slate-200 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between">
+              <h3 className="font-semibold text-slate-900">Debt Details</h3>
               <button
                 onClick={() => setShowDetailModal(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
               >
-                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
@@ -939,7 +939,7 @@ export default function DebtsPage() {
                   {detailCustomer.customer_name?.charAt(0)?.toUpperCase() || '?'}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h4 className="text-base sm:text-lg font-semibold text-gray-900 truncate">{detailCustomer.customer_name}</h4>
+                  <h4 className="text-base sm:text-lg font-semibold text-slate-900 truncate">{detailCustomer.customer_name}</h4>
                   {detailCustomer.customer_phone && (
                     <p className="text-sm text-neutral-light">{detailCustomer.customer_phone}</p>
                   )}
@@ -953,7 +953,7 @@ export default function DebtsPage() {
 
               {detailCustomer.debts.length > 0 ? (
                 <div>
-                  <h5 className="text-sm font-semibold text-gray-900 mb-3">Debt Records</h5>
+                  <h5 className="text-sm font-semibold text-slate-900 mb-3">Debt Records</h5>
                   <div className="space-y-2">
                     {detailCustomer.debts.map((debt) => {
                       const overdue = !debt.is_paid && debt.due_date && isOverdue(debt.due_date)
@@ -962,7 +962,7 @@ export default function DebtsPage() {
                         <div key={debt.debt_id} className="flex items-center justify-between py-3 px-4 bg-surfaceAlt rounded-xl text-sm">
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
-                              <span className="font-medium text-gray-900">{formatCurrency(debt.amount)}</span>
+                              <span className="font-medium text-slate-900">{formatCurrency(debt.amount)}</span>
                               <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
                                 debt.is_paid ? 'bg-success-light text-success' : overdue ? 'bg-danger-light text-danger' : 'bg-warning-light text-warning'
                               }`}>
@@ -993,7 +993,7 @@ export default function DebtsPage() {
                 <p className="text-sm text-neutral-light text-center py-4">No debt records found</p>
               )}
             </div>
-            <div className="sticky bottom-0 bg-white border-t border-gray-200 px-4 sm:px-6 py-4 rounded-b-2xl flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <div className="sticky bottom-0 bg-white border-t border-slate-200 px-4 sm:px-6 py-4 rounded-b-2xl flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
               {detailCustomer.total_debt > 0 && canPayDebt && (
                 <button
                   onClick={() => {
@@ -1007,7 +1007,7 @@ export default function DebtsPage() {
               )}
               <button
                 onClick={() => setShowDetailModal(false)}
-                className="px-4 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors min-h-[44px]"
+                className="px-4 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors min-h-[44px]"
               >
                 Close
               </button>
@@ -1023,13 +1023,13 @@ export default function DebtsPage() {
             className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
-              <h3 className="font-semibold text-gray-900">Customer Profile</h3>
+            <div className="sticky top-0 bg-white border-b border-slate-200 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
+              <h3 className="font-semibold text-slate-900">Customer Profile</h3>
               <button
                 onClick={() => setShowProfileModal(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
               >
-                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
@@ -1041,7 +1041,7 @@ export default function DebtsPage() {
                   {profileCustomer.customer_name?.charAt(0)?.toUpperCase() || '?'}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h4 className="text-base sm:text-lg font-semibold text-gray-900 truncate">{profileCustomer.customer_name}</h4>
+                  <h4 className="text-base sm:text-lg font-semibold text-slate-900 truncate">{profileCustomer.customer_name}</h4>
                   <div className="flex items-center gap-1 sm:gap-2 mt-0.5 text-xs sm:text-sm flex-wrap">
                     {profileCustomer.customer_phone && (
                       <span className="text-neutral-light truncate">{profileCustomer.customer_phone}</span>
@@ -1068,7 +1068,7 @@ export default function DebtsPage() {
                 </div>
                 <div className="bg-surfaceAlt rounded-xl p-2.5 sm:p-4">
                   <p className="text-[10px] sm:text-xs text-neutral-light mb-0.5 sm:mb-1">Transactions</p>
-                  <p className="text-sm sm:text-lg font-semibold text-gray-900">
+                  <p className="text-sm sm:text-lg font-semibold text-slate-900">
                     {profileLoading ? '...' : profileTransactions.length}
                   </p>
                 </div>
@@ -1084,7 +1084,7 @@ export default function DebtsPage() {
                   })
                 return unpaidDebts.length > 0 ? (
                   <div className="mb-6">
-                    <h5 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                    <h5 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
                       <span>Borrowed</span>
                       <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-warning-light text-warning">{unpaidDebts.length}</span>
                     </h5>
@@ -1093,9 +1093,9 @@ export default function DebtsPage() {
                         const overdue = debt.due_date && isOverdue(debt.due_date)
                         const daysLeft = debt.due_date ? daysUntilDue(debt.due_date) : null
                         return (
-                          <div key={debt.debt_id} onClick={() => { setDebtDetailData({ debt, customer: profileCustomer }); setShowDebtDetailModal(true) }} className="flex items-center justify-between py-2.5 px-3 bg-surfaceAlt rounded-lg text-sm cursor-pointer hover:bg-gray-100 transition-colors">
+                          <div key={debt.debt_id} onClick={() => { setDebtDetailData({ debt, customer: profileCustomer }); setShowDebtDetailModal(true) }} className="flex items-center justify-between py-2.5 px-3 bg-surfaceAlt rounded-lg text-sm cursor-pointer hover:bg-slate-100 transition-colors">
                             <div>
-                              <span className="font-medium text-gray-900">{formatCurrency(debt.amount)}</span>
+                              <span className="font-medium text-slate-900">{formatCurrency(debt.amount)}</span>
                               {debt.due_date && (
                                 <span className="text-xs text-neutral-light ml-2">
                                   Due {new Date(debt.due_date).toLocaleDateString()}
@@ -1141,15 +1141,15 @@ export default function DebtsPage() {
                       <>
                         {borrows.length > 0 && (
                           <div className="mb-6">
-                            <h5 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                            <h5 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
                               <span>Borrowed</span>
                               <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-warning-light text-warning">{borrows.length}</span>
                             </h5>
                             <div className="space-y-2">
                               {borrows.map((txn) => (
-                                <div key={txn.transaction_id} onClick={() => { setTxnDetailData(txn); setShowTxnDetailModal(true) }} className="flex items-center justify-between py-2.5 px-3 bg-surfaceAlt rounded-lg text-sm cursor-pointer hover:bg-gray-100 transition-colors">
+                                <div key={txn.transaction_id} onClick={() => { setTxnDetailData(txn); setShowTxnDetailModal(true) }} className="flex items-center justify-between py-2.5 px-3 bg-surfaceAlt rounded-lg text-sm cursor-pointer hover:bg-slate-100 transition-colors">
                                   <div>
-                                    <span className="font-medium text-gray-900">{txn.note || 'Borrowed'}</span>
+                                    <span className="font-medium text-slate-900">{txn.note || 'Borrowed'}</span>
                                     <p className="text-xs text-neutral-light mt-0.5">
                                       {new Date(txn.created_at).toLocaleDateString()} at {new Date(txn.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                     </p>
@@ -1161,13 +1161,13 @@ export default function DebtsPage() {
                         )}
                         {payments.length > 0 && (
                           <div>
-                            <h5 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                            <h5 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
                               <span>Payments</span>
                               <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-success-light text-success">{payments.length}</span>
                             </h5>
                             <div className="space-y-2">
                               {payments.map((txn) => (
-                                <div key={txn.transaction_id} onClick={() => { setTxnDetailData(txn); setShowTxnDetailModal(true) }} className="flex items-center justify-between py-2.5 px-3 bg-surfaceAlt rounded-lg text-sm cursor-pointer hover:bg-gray-100 transition-colors">
+                                <div key={txn.transaction_id} onClick={() => { setTxnDetailData(txn); setShowTxnDetailModal(true) }} className="flex items-center justify-between py-2.5 px-3 bg-surfaceAlt rounded-lg text-sm cursor-pointer hover:bg-slate-100 transition-colors">
                                   <div>
                                     <span className="font-medium text-success">{formatCurrency(txn.amount_paid)}</span>
                                     <p className="text-xs text-neutral-light mt-0.5">
@@ -1194,7 +1194,7 @@ export default function DebtsPage() {
               )}
             </div>
 
-            <div className="sticky bottom-0 bg-white border-t border-gray-200 px-4 sm:px-6 py-4 rounded-b-2xl flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <div className="sticky bottom-0 bg-white border-t border-slate-200 px-4 sm:px-6 py-4 rounded-b-2xl flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
               {profileCustomer.total_debt > 0 && isAdmin && (
                 <button
                   onClick={() => {
@@ -1208,7 +1208,7 @@ export default function DebtsPage() {
               )}
               <button
                 onClick={() => setShowProfileModal(false)}
-                className="px-4 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors min-h-[44px]"
+                className="px-4 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors min-h-[44px]"
               >
                 Close
               </button>
@@ -1232,10 +1232,10 @@ export default function DebtsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowDebtDetailModal(false)}>
           <div className="absolute inset-0 bg-black/40" />
           <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-5 py-4 rounded-t-2xl flex items-center justify-between z-10">
-              <h3 className="font-semibold text-gray-900">Borrow Details</h3>
-              <button onClick={() => setShowDebtDetailModal(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors">
-                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            <div className="sticky top-0 bg-white border-b border-slate-200 px-5 py-4 rounded-t-2xl flex items-center justify-between z-10">
+              <h3 className="font-semibold text-slate-900">Borrow Details</h3>
+              <button onClick={() => setShowDebtDetailModal(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors">
+                <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
             <div className="px-5 py-5 space-y-5">
@@ -1262,19 +1262,19 @@ export default function DebtsPage() {
                 </div>
                 <div className="bg-surfaceAlt rounded-xl p-4">
                   <p className="text-xs text-neutral-light mb-1">Customer</p>
-                  <p className="text-sm font-medium text-gray-900">{debtDetailData.customer.customer_name}</p>
+                  <p className="text-sm font-medium text-slate-900">{debtDetailData.customer.customer_name}</p>
                 </div>
               </div>
 
               <div className="bg-surfaceAlt rounded-xl p-4 space-y-2">
                 <div className="flex items-center gap-2 text-sm">
                   <svg className="w-4 h-4 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>
-                  <span className="text-gray-700">Created: {debtDetailData.debt.created_at ? new Date(debtDetailData.debt.created_at).toLocaleDateString() : 'N/A'}</span>
+                  <span className="text-slate-700">Created: {debtDetailData.debt.created_at ? new Date(debtDetailData.debt.created_at).toLocaleDateString() : 'N/A'}</span>
                 </div>
                 {debtDetailData.debt.due_date && (
                   <div className="flex items-center gap-2 text-sm">
                     <svg className="w-4 h-4 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    <span className="text-gray-700">Due: {new Date(debtDetailData.debt.due_date).toLocaleDateString()}</span>
+                    <span className="text-slate-700">Due: {new Date(debtDetailData.debt.due_date).toLocaleDateString()}</span>
                     {!debtDetailData.debt.is_paid && isOverdue(debtDetailData.debt.due_date) && (
                       <span className="text-xs text-danger font-medium ml-1">(overdue)</span>
                     )}
@@ -1285,12 +1285,12 @@ export default function DebtsPage() {
               {debtDetailData.customer.customer_phone && (
                 <div className="bg-surfaceAlt rounded-xl p-4">
                   <p className="text-xs text-neutral-light mb-1">Customer Phone</p>
-                  <p className="text-sm font-medium text-gray-900">{debtDetailData.customer.customer_phone}</p>
+                  <p className="text-sm font-medium text-slate-900">{debtDetailData.customer.customer_phone}</p>
                 </div>
               )}
             </div>
-            <div className="sticky bottom-0 bg-white border-t border-gray-200 px-5 py-4 rounded-b-2xl">
-              <button onClick={() => setShowDebtDetailModal(false)} className="w-full py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors">
+            <div className="sticky bottom-0 bg-white border-t border-slate-200 px-5 py-4 rounded-b-2xl">
+              <button onClick={() => setShowDebtDetailModal(false)} className="w-full py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors">
                 Close
               </button>
             </div>
@@ -1302,10 +1302,10 @@ export default function DebtsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowTxnDetailModal(false)}>
           <div className="absolute inset-0 bg-black/40" />
           <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-5 py-4 rounded-t-2xl flex items-center justify-between z-10">
-              <h3 className="font-semibold text-gray-900">{txnDetailData.amount_paid === 0 ? 'Borrow Details' : 'Payment Details'}</h3>
-              <button onClick={() => setShowTxnDetailModal(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors">
-                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            <div className="sticky top-0 bg-white border-b border-slate-200 px-5 py-4 rounded-t-2xl flex items-center justify-between z-10">
+              <h3 className="font-semibold text-slate-900">{txnDetailData.amount_paid === 0 ? 'Borrow Details' : 'Payment Details'}</h3>
+              <button onClick={() => setShowTxnDetailModal(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors">
+                <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
             <div className="px-5 py-5 space-y-5">
@@ -1332,29 +1332,29 @@ export default function DebtsPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-surfaceAlt rounded-xl p-4">
                   <p className="text-xs text-neutral-light mb-1">Transaction ID</p>
-                  <p className="text-sm font-medium text-gray-900">#{txnDetailData.transaction_id}</p>
+                  <p className="text-sm font-medium text-slate-900">#{txnDetailData.transaction_id}</p>
                 </div>
                 <div className="bg-surfaceAlt rounded-xl p-4">
                   <p className="text-xs text-neutral-light mb-1">Customer</p>
-                  <p className="text-sm font-medium text-gray-900">{txnDetailData.customer_name || profileCustomer?.customer_name || 'N/A'}</p>
+                  <p className="text-sm font-medium text-slate-900">{txnDetailData.customer_name || profileCustomer?.customer_name || 'N/A'}</p>
                 </div>
               </div>
 
               <div className="bg-surfaceAlt rounded-xl p-4 space-y-2">
                 <div className="flex items-center gap-2 text-sm">
                   <svg className="w-4 h-4 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>
-                  <span className="text-gray-700">Date: {txnDetailData.created_at ? new Date(txnDetailData.created_at).toLocaleDateString() : 'N/A'}</span>
+                  <span className="text-slate-700">Date: {txnDetailData.created_at ? new Date(txnDetailData.created_at).toLocaleDateString() : 'N/A'}</span>
                 </div>
                 {txnDetailData.note && (
                   <div className="flex items-start gap-2 text-sm">
                     <svg className="w-4 h-4 text-neutral-light shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" /></svg>
-                    <span className="text-gray-700">{txnDetailData.note}</span>
+                    <span className="text-slate-700">{txnDetailData.note}</span>
                   </div>
                 )}
               </div>
             </div>
-            <div className="sticky bottom-0 bg-white border-t border-gray-200 px-5 py-4 rounded-b-2xl">
-              <button onClick={() => setShowTxnDetailModal(false)} className="w-full py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors">
+            <div className="sticky bottom-0 bg-white border-t border-slate-200 px-5 py-4 rounded-b-2xl">
+              <button onClick={() => setShowTxnDetailModal(false)} className="w-full py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors">
                 Close
               </button>
             </div>

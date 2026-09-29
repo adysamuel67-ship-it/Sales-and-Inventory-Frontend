@@ -386,11 +386,11 @@ export default function SalesPage() {
 
       {/* Record Sale Form */}
       {showForm && (
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-6">
-          <h3 className="font-semibold text-gray-900 mb-4">Record New Sale</h3>
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6">
+          <h3 className="font-semibold text-slate-900 mb-4">Record New Sale</h3>
           <form onSubmit={handleCreate} className="space-y-4">
             <div className="space-y-3">
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Products</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Products</label>
               {lineItems.map((item, idx) => {
                 const selectedIds = lineItems.filter((li) => li.product_id).map((li) => li.product_id)
                 const availableProducts = products.filter((p) => !selectedIds.includes(String(p.product_id)) || p.product_id === parseInt(item.product_id))
@@ -404,7 +404,7 @@ export default function SalesPage() {
                         updated[idx] = { ...updated[idx], product_id: e.target.value }
                         setLineItems(updated)
                       }}
-                      className="flex-1 px-3 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-white min-h-[44px]"
+                      className="flex-1 px-3 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-white min-h-[44px]"
                     >
                       <option value="">Select a product</option>
                       {availableProducts.map((p) => (
@@ -424,7 +424,7 @@ export default function SalesPage() {
                         setLineItems(updated)
                       }}
                       placeholder="Qty"
-                      className="w-20 px-3 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                      className="w-20 px-3 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                     />
                     {lineItems.length > 1 && (
                       <button
@@ -449,7 +449,7 @@ export default function SalesPage() {
               <button
                 type="button"
                 onClick={() => setLineItems([...lineItems, { product_id: '', quantity: '' }])}
-                className="w-full py-2.5 rounded-xl border border-dashed border-gray-300 text-sm font-medium text-neutral-light hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-1.5"
+                className="w-full py-2.5 rounded-xl border border-dashed border-slate-300 text-sm font-medium text-neutral-light hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-1.5"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -458,7 +458,7 @@ export default function SalesPage() {
               </button>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Payment Method</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Payment Method</label>
               <div className="flex gap-2">
                 {[
                   { value: 'cash', label: 'Cash' },
@@ -474,7 +474,7 @@ export default function SalesPage() {
                         ? value === 'cash' ? 'bg-success text-white'
                           : value === 'mobile_money' ? 'bg-primary text-white'
                           : 'bg-warning text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                     }`}
                   >
                     {label}
@@ -483,7 +483,7 @@ export default function SalesPage() {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Payment Status</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Payment Status</label>
               <div className="flex gap-2">
                 <button
                   type="button"
@@ -491,7 +491,7 @@ export default function SalesPage() {
                   className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all min-h-[44px] ${
                     paymentStatus === 'fully_paid'
                       ? 'bg-success text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
                 >
                   Fully Paid
@@ -502,7 +502,7 @@ export default function SalesPage() {
                   className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all min-h-[44px] ${
                     paymentStatus === 'partial'
                       ? 'bg-warning text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
                 >
                   Partial Payment
@@ -512,7 +512,7 @@ export default function SalesPage() {
             {paymentStatus === 'partial' && (
               <>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Amount Paid (GH₵)</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Amount Paid (GH₵)</label>
                   <input
                     type="number"
                     step="0.01"
@@ -522,11 +522,11 @@ export default function SalesPage() {
                     onChange={(e) => setAmountPaid(e.target.value)}
                     placeholder="0.00"
                     required
-                    className="w-full px-3 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                    className="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                   />
                 </div>
                 <div className="flex items-center justify-between">
-                  <label className="block text-sm font-medium text-gray-700">Customer</label>
+                  <label className="block text-sm font-medium text-slate-700">Customer</label>
                   <button
                     type="button"
                     onClick={openCustomerPicker}
@@ -545,7 +545,7 @@ export default function SalesPage() {
                     onChange={(e) => setCustomerName(e.target.value)}
                     placeholder="Customer's full name"
                     required
-                    className="w-full px-3 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                    className="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                   />
                 </div>
                 <div>
@@ -554,7 +554,7 @@ export default function SalesPage() {
                     value={customerEmail}
                     onChange={(e) => setCustomerEmail(e.target.value)}
                     placeholder="customer@example.com (optional)"
-                    className="w-full px-3 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                    className="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                   />
                 </div>
                 <div>
@@ -564,7 +564,7 @@ export default function SalesPage() {
                     onChange={(e) => setCustomerPhone(e.target.value)}
                     placeholder="024XXXXXXX"
                     required
-                    className="w-full px-3 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                    className="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                   />
                 </div>
                 {isPartialPayment && (
@@ -585,15 +585,15 @@ export default function SalesPage() {
                   const qty = parseInt(item.quantity) || 0
                   return (
                     <div key={idx} className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">{product.name} × {qty}</span>
-                      <span className="font-medium text-gray-900">{formatCedi(product.price * qty)}</span>
+                      <span className="text-slate-600">{product.name} × {qty}</span>
+                      <span className="font-medium text-slate-900">{formatCedi(product.price * qty)}</span>
                     </div>
                   )
                 })}
               </div>
-              <div className="border-t border-gray-200 mt-2 pt-2">
+              <div className="border-t border-slate-200 mt-2 pt-2">
                 <p className="text-xs text-neutral-light uppercase tracking-wider">Total Amount</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">{formatCedi(formTotal)}</p>
+                <p className="text-2xl font-bold text-slate-900 mt-1">{formatCedi(formTotal)}</p>
               </div>
               {paymentStatus === 'partial' && effectiveAmountPaid > 0 && (
                 <div className="flex items-center justify-between mt-2">
@@ -616,7 +616,7 @@ export default function SalesPage() {
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
-                className="px-4 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors min-h-[44px]"
+                className="px-4 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors min-h-[44px]"
               >
                 Cancel
               </button>
@@ -626,7 +626,7 @@ export default function SalesPage() {
       )}
 
       {/* Filters + Summary */}
-      <div className="bg-white rounded-xl border border-gray-200 p-3 sm:p-4 space-y-3">
+      <div className="bg-white rounded-xl border border-slate-200 p-3 sm:p-4 space-y-3">
         {/* Date presets */}
         <div className="flex flex-wrap items-center gap-1.5">
           {datePresets
@@ -638,7 +638,7 @@ export default function SalesPage() {
               className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                 activePreset === preset.days
                   ? 'bg-primary text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
               {preset.label}
@@ -647,7 +647,7 @@ export default function SalesPage() {
           <div className="relative">
             <button
               onClick={() => showDatePicker ? setShowDatePicker(false) : handleOpenDatePicker()}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -655,24 +655,24 @@ export default function SalesPage() {
               Custom
             </button>
             {showDatePicker && (
-              <div className="absolute left-0 top-full mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-200 p-4 z-50">
+              <div className="absolute left-0 top-full mt-2 w-64 bg-white rounded-xl shadow-lg border border-slate-200 p-4 z-50">
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-[10px] text-gray-400 mb-1">From</label>
+                    <label className="block text-[10px] text-slate-400 mb-1">From</label>
                     <input
                       type="date"
                       value={draftDateFilter.start}
                       onChange={(e) => setDraftDateFilter((prev) => ({ ...prev, start: e.target.value }))}
-                      className="w-full px-3 py-2 rounded-lg border border-gray-300 text-xs focus:border-primary outline-none"
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:border-primary outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] text-gray-400 mb-1">To</label>
+                    <label className="block text-[10px] text-slate-400 mb-1">To</label>
                     <input
                       type="date"
                       value={draftDateFilter.end}
                       onChange={(e) => setDraftDateFilter((prev) => ({ ...prev, end: e.target.value }))}
-                      className="w-full px-3 py-2 rounded-lg border border-gray-300 text-xs focus:border-primary outline-none"
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:border-primary outline-none"
                     />
                   </div>
                 </div>
@@ -687,18 +687,18 @@ export default function SalesPage() {
           </div>
         </div>
         {/* Summary */}
-        <div className="flex items-center gap-4 text-xs text-neutral-light pt-1 border-t border-gray-50">
+        <div className="flex items-center gap-4 text-xs text-neutral-light pt-1 border-t border-slate-50">
           <span>{filteredSales.length} sales</span>
           <span>{totalQty} items</span>
-          <span className="font-semibold text-gray-900">{formatCedi(totalAmount)}</span>
+          <span className="font-semibold text-slate-900">{formatCedi(totalAmount)}</span>
         </div>
       </div>
 
       {/* Sales list */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
         {!isStaff && !selectMode && (
-          <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-gray-100">
-            <span className="text-sm font-medium text-gray-900">Sales</span>
+          <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-slate-100">
+            <span className="text-sm font-medium text-slate-900">Sales</span>
             <button
               onClick={() => { setSelectMode(true); setSelectedSales(new Set()) }}
               className="text-xs font-medium text-primary hover:text-primary-dark transition-colors flex items-center gap-1.5"
@@ -717,7 +717,7 @@ export default function SalesPage() {
                 type="checkbox"
                 checked={paginatedSales.length > 0 && paginatedSales.every((s) => selectedSales.has(s.id))}
                 onChange={toggleSelectAll}
-                className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary"
               />
               Select all on page
             </label>
@@ -725,7 +725,7 @@ export default function SalesPage() {
               <span className="text-xs font-semibold text-primary">{selectedSales.size} selected</span>
               <button
                 onClick={clearSelection}
-                className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-3 py-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
               >
                 Cancel
               </button>
@@ -749,7 +749,7 @@ export default function SalesPage() {
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-gray-200">
+                  <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-slate-200">
                     {selectMode && (
                       <th className="px-4 py-3 w-10">
                         <input
@@ -757,7 +757,7 @@ export default function SalesPage() {
                           checked={paginatedSales.length > 0 && paginatedSales.every((s) => selectedSales.has(s.id))}
                           onChange={toggleSelectAll}
                           onClick={(e) => e.stopPropagation()}
-                          className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                          className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary"
                         />
                       </th>
                     )}
@@ -778,7 +778,7 @@ export default function SalesPage() {
                     const isBorrow = isPartial || sale.payment_status === 'partial' || sale.payment_status === 'borrowed' || sale.payment_status === 'unpaid'
                     const balance = sale.amount - (sale.amount_paid ?? sale.amount)
                     return (
-                    <tr key={sale.id} className="border-t border-gray-50 hover:bg-gray-50/50 cursor-pointer transition-colors" onClick={() => handleDetail(sale)}>
+                    <tr key={sale.id} className="border-t border-slate-50 hover:bg-slate-50/50 cursor-pointer transition-colors" onClick={() => handleDetail(sale)}>
                     {selectMode && (
                       <td className="px-4 py-3.5 w-10">
                         <input
@@ -786,20 +786,20 @@ export default function SalesPage() {
                           checked={selectedSales.has(sale.id)}
                           onChange={() => toggleSelect(sale.id)}
                           onClick={(e) => e.stopPropagation()}
-                          className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                          className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary"
                         />
                       </td>
                     )}
-                      <td className="px-5 py-3.5 font-medium text-gray-900">
+                      <td className="px-5 py-3.5 font-medium text-slate-900">
                         <div className="flex items-center gap-2">
                           {isBorrow && <span className="w-1.5 h-1.5 rounded-full bg-warning shrink-0" />}
                           {sale.product}
                         </div>
                       </td>
-                      <td className="px-5 py-3.5 text-sm text-gray-600">
+                      <td className="px-5 py-3.5 text-sm text-slate-600">
                         {sale.customer_name ? (
                           <div className="flex flex-col">
-                            <span className="font-medium text-gray-900">{sale.customer_name}</span>
+                            <span className="font-medium text-slate-900">{sale.customer_name}</span>
                             {isBorrow && sale.customer_phone && (
                               <span className="text-xs text-neutral-light">{sale.customer_phone}</span>
                             )}
@@ -808,20 +808,20 @@ export default function SalesPage() {
                           <span className="text-neutral-light text-xs">—</span>
                         )}
                       </td>
-                      <td className="px-5 py-3.5 text-sm text-gray-600">
+                      <td className="px-5 py-3.5 text-sm text-slate-600">
                         {sale.sold_by_name ? (
                           <div className="flex items-center gap-2">
                             <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-primary text-[10px] font-bold shrink-0">
                               {sale.sold_by_name.charAt(0).toUpperCase()}
                             </div>
-                            <span className="font-medium text-gray-900 truncate">{sale.sold_by_name}</span>
+                            <span className="font-medium text-slate-900 truncate">{sale.sold_by_name}</span>
                           </div>
                         ) : (
                           <span className="text-neutral-light text-xs">—</span>
                         )}
                       </td>
                       <td className="px-5 py-3.5 text-center text-neutral-light">{sale.qty}</td>
-                      <td className="px-5 py-3.5 text-right font-semibold text-gray-900">
+                      <td className="px-5 py-3.5 text-right font-semibold text-slate-900">
                         {sale.amount > 0 ? (
                           formatCedi(sale.amount)
                         ) : (
@@ -833,7 +833,7 @@ export default function SalesPage() {
                           sale.payment === 'cash' ? 'bg-success-light text-success'
                             : sale.payment === 'mobile_money' ? 'bg-primary-light text-primary'
                             : sale.payment === 'card' ? 'bg-warning-light text-warning'
-                            : 'bg-gray-100 text-gray-600'
+                            : 'bg-slate-100 text-slate-600'
                         }`}>
                           {formatPayment(sale.payment)}
                         </span>
@@ -852,7 +852,7 @@ export default function SalesPage() {
                         ) : sale.amount_paid != null && sale.amount_paid >= sale.amount ? (
                           <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-success-light text-success">Paid</span>
                         ) : (
-                          <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500">Full</span>
+                          <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-500">Full</span>
                         )}
                       </td>
                       <td className="px-5 py-3.5 text-right text-neutral-light text-xs">{sale.time}</td>
@@ -868,7 +868,7 @@ export default function SalesPage() {
                               </button>
                               <button
                                 onClick={(e) => { e.stopPropagation(); setDeleteConfirm(null) }}
-                                className="px-2 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg"
+                                className="px-2 py-1 text-xs font-medium text-slate-600 bg-slate-100 rounded-lg"
                               >
                                 Cancel
                               </button>
@@ -897,7 +897,7 @@ export default function SalesPage() {
             </div>
 
             {/* Mobile cards */}
-            <div className="md:hidden divide-y divide-gray-50">
+            <div className="md:hidden divide-y divide-slate-50">
               {paginatedSales.map((sale) => {
                 const isPartial = sale.amount_paid != null && sale.amount_paid < sale.amount && sale.amount > 0
                 const isBorrow = isPartial || sale.payment_status === 'partial' || sale.payment_status === 'borrowed' || sale.payment_status === 'unpaid'
@@ -905,7 +905,7 @@ export default function SalesPage() {
                 return (
                   <div
                     key={sale.id}
-                    className="p-4 cursor-pointer hover:bg-gray-50/50 transition-colors active:bg-gray-100"
+                    className="p-4 cursor-pointer hover:bg-slate-50/50 transition-colors active:bg-slate-100"
                     onClick={() => handleDetail(sale)}
                   >
                     <div className="flex items-start justify-between gap-2">
@@ -915,14 +915,14 @@ export default function SalesPage() {
                             type="checkbox"
                             checked={selectedSales.has(sale.id)}
                             onChange={() => toggleSelect(sale.id)}
-                            className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                            className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary"
                           />
                         </div>
                       )}
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
                           {isBorrow && <span className="w-1.5 h-1.5 rounded-full bg-warning shrink-0" />}
-                          <p className="font-medium text-gray-900 truncate text-sm">{sale.product}</p>
+                          <p className="font-medium text-slate-900 truncate text-sm">{sale.product}</p>
                         </div>
                         <p className="text-xs text-neutral-light mt-0.5">{sale.time}</p>
                         {(sale.customer_name || sale.customer_phone) && (
@@ -938,7 +938,7 @@ export default function SalesPage() {
                         {sale.sold_by_name && (
                           <div className="flex items-center gap-1 mt-0.5">
                             <span className="text-[10px] text-neutral-light">by</span>
-                            <span className="text-xs text-gray-600 truncate">{sale.sold_by_name}</span>
+                            <span className="text-xs text-slate-600 truncate">{sale.sold_by_name}</span>
                           </div>
                         )}
                       </div>
@@ -948,7 +948,7 @@ export default function SalesPage() {
                           <p className="text-sm font-bold text-danger">{formatCedi(balance)} left</p>
                         </div>
                       ) : (
-                        <p className="font-bold text-gray-900 shrink-0">
+                        <p className="font-bold text-slate-900 shrink-0">
                           {sale.amount > 0 ? (
                             formatCedi(sale.amount)
                           ) : (
@@ -963,7 +963,7 @@ export default function SalesPage() {
                           sale.payment === 'cash' ? 'bg-success-light text-success'
                             : sale.payment === 'mobile_money' ? 'bg-primary-light text-primary'
                             : sale.payment === 'card' ? 'bg-warning-light text-warning'
-                            : 'bg-gray-100 text-gray-600'
+                            : 'bg-slate-100 text-slate-600'
                         }`}>
                           {formatPayment(sale.payment)}
                         </span>
@@ -1004,7 +1004,7 @@ export default function SalesPage() {
                         </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); setDeleteConfirm(null) }}
-                          className="flex-1 py-2 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg"
+                          className="flex-1 py-2 text-xs font-medium text-slate-600 bg-slate-100 rounded-lg"
                         >
                           Cancel
                         </button>
@@ -1017,7 +1017,7 @@ export default function SalesPage() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="px-4 py-3 border-t border-gray-200 flex items-center justify-between">
+              <div className="px-4 py-3 border-t border-slate-200 flex items-center justify-between">
                 <p className="text-xs text-neutral-light">
                   Page {currentPage} of {totalPages}
                 </p>
@@ -1025,14 +1025,14 @@ export default function SalesPage() {
                   <button
                     onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
-                    className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-40"
+                    className="px-3 py-1.5 text-xs font-medium text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors disabled:opacity-40"
                   >
                     Prev
                   </button>
                   <button
                     onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                     disabled={currentPage === totalPages}
-                    className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-40"
+                    className="px-3 py-1.5 text-xs font-medium text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors disabled:opacity-40"
                   >
                     Next
                   </button>
@@ -1093,14 +1093,14 @@ export default function SalesPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
             </div>
-            <h3 className="font-semibold text-gray-900 text-lg mb-1">Delete Sales</h3>
+            <h3 className="font-semibold text-slate-900 text-lg mb-1">Delete Sales</h3>
             <p className="text-sm text-neutral-light mb-5">
               Are you sure you want to delete <strong>{selectedSales.size}</strong> selected sale{selectedSales.size > 1 ? 's' : ''}? This cannot be undone.
             </p>
             <div className="flex gap-2">
               <button
                 onClick={() => setBulkDeleteConfirm(false)}
-                className="flex-1 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors"
+                className="flex-1 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors"
               >
                 Cancel
               </button>
@@ -1119,41 +1119,41 @@ export default function SalesPage() {
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
           <div className="absolute inset-0 bg-black/40" onClick={() => setShowCustomerPicker(false)} />
           <div className="relative bg-white rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md max-h-[80vh] flex flex-col shadow-xl">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
               <div>
-                <h3 className="font-semibold text-gray-900">Select Customer</h3>
+                <h3 className="font-semibold text-slate-900">Select Customer</h3>
                 <p className="text-xs text-neutral-light mt-0.5">{existingCustomers.length} customers available</p>
               </div>
-              <button onClick={() => setShowCustomerPicker(false)} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-gray-100 transition-colors">
-                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+              <button onClick={() => setShowCustomerPicker(false)} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-slate-100 transition-colors">
+                <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
-            <div className="px-5 py-3 border-b border-gray-100">
+            <div className="px-5 py-3 border-b border-slate-100">
               <input
                 type="text"
                 value={customerSearch}
                 onChange={(e) => setCustomerSearch(e.target.value)}
                 placeholder="Search by name, phone, or email..."
                 autoFocus
-                className="w-full px-3 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                className="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
               />
             </div>
             <div className="flex-1 overflow-y-auto">
               {filteredCustomers.length > 0 ? (
-                <div className="divide-y divide-gray-50">
+                <div className="divide-y divide-slate-50">
                   {filteredCustomers.map((c: any) => (
                     <button
                       key={c.customer_id ?? c.id}
                       onClick={() => selectCustomer(c)}
-                      className="w-full text-left px-5 py-3.5 hover:bg-gray-50 active:bg-gray-100 transition-colors flex items-center gap-3"
+                      className="w-full text-left px-5 py-3.5 hover:bg-slate-50 active:bg-slate-100 transition-colors flex items-center gap-3"
                     >
                       <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm shrink-0">
                         {(c.name || '?').charAt(0).toUpperCase()}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="font-medium text-gray-900 text-sm truncate">{c.name}</p>
+                        <p className="font-medium text-slate-900 text-sm truncate">{c.name}</p>
                         <div className="flex items-center gap-2 mt-0.5">
                           {(c.phone || c.phone_number) && (
                             <span className="text-xs text-neutral-light">{c.phone || c.phone_number}</span>
@@ -1163,7 +1163,7 @@ export default function SalesPage() {
                           )}
                         </div>
                       </div>
-                      <svg className="w-4 h-4 text-gray-300 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                      <svg className="w-4 h-4 text-slate-300 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                       </svg>
                     </button>
@@ -1178,11 +1178,11 @@ export default function SalesPage() {
                 </div>
               )}
             </div>
-            <div className="px-5 py-3 border-t border-gray-200 bg-gray-50 rounded-b-2xl sm:rounded-b-2xl">
+            <div className="px-5 py-3 border-t border-slate-200 bg-slate-50 rounded-b-2xl sm:rounded-b-2xl">
               <button
                 type="button"
                 onClick={() => { setCustomerName(''); setCustomerPhone(''); setCustomerEmail(''); setShowCustomerPicker(false) }}
-                className="w-full py-2.5 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+                className="w-full py-2.5 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
               >
                 Enter manually instead
               </button>

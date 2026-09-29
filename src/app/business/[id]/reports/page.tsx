@@ -252,7 +252,7 @@ export default function ReportsPage() {
           <div className="relative">
             <button
               onClick={() => showDatePicker ? setShowDatePicker(false) : handleOpenDatePicker()}
-              className="flex items-center gap-2 px-4 py-2.5 bg-surface border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-surfaceAlt transition-colors min-h-[44px]"
+              className="flex items-center gap-2 px-4 py-2.5 bg-surface border border-slate-200 rounded-xl text-sm font-medium text-slate-700 hover:bg-surfaceAlt transition-colors min-h-[44px]"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -264,8 +264,8 @@ export default function ReportsPage() {
             </button>
 
             {showDatePicker && (
-              <div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-xl shadow-lg border border-gray-200 p-4 z-50">
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">Quick Select</p>
+              <div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-xl shadow-lg border border-slate-200 p-4 z-50">
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-3">Quick Select</p>
                 <div className="flex flex-wrap gap-2 mb-4">
                   {datePresets.map((preset) => (
                     <button
@@ -274,31 +274,31 @@ export default function ReportsPage() {
                       className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                         activePreset === preset.days
                           ? 'bg-primary text-white'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                       }`}
                     >
                       {preset.label}
                     </button>
                   ))}
                 </div>
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Custom Range</p>
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">Custom Range</p>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-[10px] text-gray-400 mb-1">From</label>
+                    <label className="block text-[10px] text-slate-400 mb-1">From</label>
                     <input
                       type="date"
                       value={draftDateRange.start}
                       onChange={(e) => handleCustomDateChange('start', e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg border border-gray-300 text-xs focus:border-primary outline-none"
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:border-primary outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] text-gray-400 mb-1">To</label>
+                    <label className="block text-[10px] text-slate-400 mb-1">To</label>
                     <input
                       type="date"
                       value={draftDateRange.end}
                       onChange={(e) => handleCustomDateChange('end', e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg border border-gray-300 text-xs focus:border-primary outline-none"
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:border-primary outline-none"
                     />
                   </div>
                 </div>
@@ -333,14 +333,14 @@ export default function ReportsPage() {
         <>
           {profit && (
             <div className="grid grid-cols-2 gap-3 mb-6">
-              <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-5">
+              <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-5">
                 <p className="text-xs text-neutral-light uppercase tracking-wider">Revenue</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">
+                <p className="text-2xl font-bold text-slate-900 mt-1">
                   {formatCedi(profit.total_revenue)}
                 </p>
                 <p className="text-[10px] text-neutral-light mt-1">{dateSubtitle}</p>
               </div>
-              <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-5">
+              <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-5">
                 <p className="text-xs text-neutral-light uppercase tracking-wider">Profit</p>
                 <p className="text-2xl font-bold text-success mt-1">
                   {formatCedi(profit.total_profit)}
@@ -349,16 +349,16 @@ export default function ReportsPage() {
                   <p className="text-[10px] text-neutral-light mt-1">{profitMargin}% margin</p>
                 )}
               </div>
-              <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-5">
+              <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-5">
                 <p className="text-xs text-neutral-light uppercase tracking-wider">Cost</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">
+                <p className="text-2xl font-bold text-slate-900 mt-1">
                   {formatCedi(profit.total_cost)}
                 </p>
               </div>
               {summary && (
-                <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-5">
+                <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-5">
                   <p className="text-xs text-neutral-light uppercase tracking-wider">Sales Count</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">
+                  <p className="text-2xl font-bold text-slate-900 mt-1">
                     {summary.total_sales.toLocaleString()}
                   </p>
                 </div>
@@ -368,13 +368,13 @@ export default function ReportsPage() {
 
           {summary && !profit && (
             <div className="grid grid-cols-2 gap-3 mb-6">
-              <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-5">
+              <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-5">
                 <p className="text-xs text-neutral-light uppercase tracking-wider">Revenue</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">
+                <p className="text-2xl font-bold text-slate-900 mt-1">
                   {formatCedi(summary.total_revenue)}
                 </p>
               </div>
-              <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-5">
+              <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-5">
                 <p className="text-xs text-neutral-light uppercase tracking-wider">Profit</p>
                 <p className="text-2xl font-bold text-success mt-1">
                   {formatCedi(summary.total_profit)}
@@ -385,32 +385,32 @@ export default function ReportsPage() {
 
           {saleSummary && (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
-              <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-4">
+              <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-4">
                 <p className="text-xs text-neutral-light uppercase tracking-wider">Units Sold</p>
-                <p className="text-xl font-bold text-gray-900 mt-1">
+                <p className="text-xl font-bold text-slate-900 mt-1">
                   {(saleSummary.sold_quantity ?? 0).toLocaleString()}
                 </p>
               </div>
-              <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-4">
+              <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-4">
                 <p className="text-xs text-neutral-light uppercase tracking-wider">Cash</p>
-                <p className="text-xl font-bold text-gray-900 mt-1">
+                <p className="text-xl font-bold text-slate-900 mt-1">
                   {formatCedi(saleSummary.cash_total ?? 0)}
                 </p>
               </div>
-              <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-4">
+              <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-4">
                 <p className="text-xs text-neutral-light uppercase tracking-wider">Mobile Money</p>
-                <p className="text-xl font-bold text-gray-900 mt-1">
+                <p className="text-xl font-bold text-slate-900 mt-1">
                   {formatCedi(saleSummary.momo_total ?? 0)}
                 </p>
               </div>
-              <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-4">
+              <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-4">
                 <p className="text-xs text-neutral-light uppercase tracking-wider">Card</p>
-                <p className="text-xl font-bold text-gray-900 mt-1">
+                <p className="text-xl font-bold text-slate-900 mt-1">
                   {formatCedi(saleSummary.card_total ?? 0)}
                 </p>
               </div>
               {saleSummary.best_selling_product && (
-                <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-4 col-span-2 sm:col-span-1">
+                <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-4 col-span-2 sm:col-span-1">
                   <p className="text-xs text-neutral-light uppercase tracking-wider">Best Seller</p>
                   <p className="text-xl font-bold text-primary mt-1 truncate">
                     {saleSummary.best_selling_product}
@@ -427,9 +427,9 @@ export default function ReportsPage() {
           {debtsLoading ? (
             <div className="skeleton h-40 rounded-2xl mb-6" />
           ) : debts.length > 0 ? (
-            <section className="bg-surface rounded-2xl border border-gray-200 shadow-sm overflow-hidden mb-6">
-              <div className="px-5 py-4 border-b border-gray-200">
-                <h3 className="font-semibold text-gray-900">Debts Report</h3>
+            <section className="bg-surface rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-6">
+              <div className="px-5 py-4 border-b border-slate-200">
+                <h3 className="font-semibold text-slate-900">Debts Report</h3>
                 <p className="text-xs text-neutral-light mt-0.5">
                   {debts.filter((d) => !d.is_paid).length} unpaid ·{' '}
                   {formatCedi(debts.filter((d) => !d.is_paid).reduce((sum, d) => sum + Number(d.amount || 0), 0))} outstanding
@@ -438,7 +438,7 @@ export default function ReportsPage() {
               <div className="hidden sm:block">
                 <table className="w-full">
                   <thead>
-                    <tr className="text-left text-[11px] uppercase tracking-wider text-neutral-light border-b border-gray-200">
+                    <tr className="text-left text-[11px] uppercase tracking-wider text-neutral-light border-b border-slate-200">
                       <th className="px-5 py-3">Customer</th>
                       <th className="px-5 py-3">Amount</th>
                       <th className="px-5 py-3">Due Date</th>
@@ -450,17 +450,17 @@ export default function ReportsPage() {
                       const customer = customersById[d.customer_id]
                       const overdue = d.due_date && !d.is_paid && new Date(d.due_date) < new Date()
                       return (
-                        <tr key={d.debt_id ?? idx} className="border-b border-gray-100 last:border-0">
+                        <tr key={d.debt_id ?? idx} className="border-b border-slate-100 last:border-0">
                           <td className="px-5 py-3">
-                            <span className="font-medium text-gray-900">{customer?.name || 'Customer'}</span>
+                            <span className="font-medium text-slate-900">{customer?.name || 'Customer'}</span>
                             <span className="text-xs text-neutral-light"> · #{d.customer_id}</span>
                           </td>
                           <td className="px-5 py-3">
-                            <span className={`font-semibold ${d.is_paid ? 'text-gray-400 line-through' : 'text-danger'}`}>
+                            <span className={`font-semibold ${d.is_paid ? 'text-slate-400 line-through' : 'text-danger'}`}>
                               {formatCedi(d.amount)}
                             </span>
                           </td>
-                          <td className="px-5 py-3 text-sm text-gray-700">
+                          <td className="px-5 py-3 text-sm text-slate-700">
                             {d.due_date ? new Date(d.due_date).toLocaleDateString() : '—'}
                           </td>
                           <td className="px-5 py-3">
@@ -478,15 +478,15 @@ export default function ReportsPage() {
                   </tbody>
                 </table>
               </div>
-              <div className="sm:hidden divide-y divide-gray-100 px-4">
+              <div className="sm:hidden divide-y divide-slate-100 px-4">
                 {debts.map((d, idx) => {
                   const customer = customersById[d.customer_id]
                   const overdue = d.due_date && !d.is_paid && new Date(d.due_date) < new Date()
                   return (
                     <div key={d.debt_id ?? idx} className="py-3">
                       <div className="flex items-center justify-between">
-                        <span className="font-medium text-gray-900">{customer?.name || 'Customer'}</span>
-                        <span className={`font-semibold ${d.is_paid ? 'text-gray-400 line-through' : 'text-danger'}`}>
+                        <span className="font-medium text-slate-900">{customer?.name || 'Customer'}</span>
+                        <span className={`font-semibold ${d.is_paid ? 'text-slate-400 line-through' : 'text-danger'}`}>
                           {formatCedi(d.amount)}
                         </span>
                       </div>

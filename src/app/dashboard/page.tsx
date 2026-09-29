@@ -274,13 +274,13 @@ export default function DashboardPage() {
 
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+          <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
           <p className="text-sm text-neutral-light mt-1">{currentBusiness?.name || 'Overview'}</p>
         </div>
         <div className="relative">
           <button
             onClick={() => showDatePicker ? setShowDatePicker(false) : handleOpenDatePicker()}
-            className="flex items-center gap-2 px-4 py-2.5 bg-surface border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+            className="flex items-center gap-2 px-4 py-2.5 bg-surface border border-slate-200 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -292,8 +292,8 @@ export default function DashboardPage() {
           </button>
 
           {showDatePicker && (
-            <div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-xl shadow-lg border border-gray-200 p-4 z-50">
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">Quick Select</p>
+            <div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-xl shadow-lg border border-slate-200 p-4 z-50">
+              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-3">Quick Select</p>
               <div className="flex flex-wrap gap-2 mb-4">
                 {datePresets.map((preset) => (
                   <button
@@ -302,31 +302,31 @@ export default function DashboardPage() {
                     className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                       activePreset === preset.days
                         ? 'bg-primary text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                     }`}
                   >
                     {preset.label}
                   </button>
                 ))}
               </div>
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Custom Range</p>
+              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">Custom Range</p>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-[10px] text-gray-400 mb-1">From</label>
+                  <label className="block text-[10px] text-slate-400 mb-1">From</label>
                   <input
                     type="date"
                     value={draftDateRange.start}
                     onChange={(e) => handleCustomDateChange('start', e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-gray-300 text-xs focus:border-primary outline-none"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:border-primary outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] text-gray-400 mb-1">To</label>
+                  <label className="block text-[10px] text-slate-400 mb-1">To</label>
                   <input
                     type="date"
                     value={draftDateRange.end}
                     onChange={(e) => handleCustomDateChange('end', e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-gray-300 text-xs focus:border-primary outline-none"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:border-primary outline-none"
                   />
                 </div>
               </div>

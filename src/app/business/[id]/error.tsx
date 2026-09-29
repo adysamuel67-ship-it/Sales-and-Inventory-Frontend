@@ -15,8 +15,8 @@ export default function BusinessError({
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
           </svg>
         </div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-2">Business page error</h2>
-        <p className="text-sm text-gray-500 mb-6">
+        <h2 className="text-lg font-semibold text-slate-900 mb-2">Business page error</h2>
+        <p className="text-sm text-slate-500 mb-6">
           Failed to load this business page. The data may be temporarily unavailable.
         </p>
         <button

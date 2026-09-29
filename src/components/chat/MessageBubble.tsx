@@ -103,12 +103,12 @@ export default function MessageBubble({ message, self, showSender, showAvatar = 
         <div className="relative">
           {canManage && (
             <div className="absolute -top-2.5 right-1 z-10 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-              <div className="flex items-center gap-0.5 rounded-lg bg-white/95 backdrop-blur px-1 py-0.5 shadow-lg border border-gray-200/60">
+              <div className="flex items-center gap-0.5 rounded-lg bg-white/95 backdrop-blur px-1 py-0.5 shadow-lg border border-slate-200/60">
                 {onEdit && (
                   <button
                     type="button"
                     onClick={() => onEdit(message)}
-                    className="p-1.5 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+                    className="p-1.5 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
                     aria-label="Edit message"
                   >
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>

@@ -95,7 +95,7 @@ export default function AdminLowStockPage() {
   return (
     <DashboardLayout>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Platform Low Stock</h1>
+        <h1 className="text-2xl font-bold text-slate-900">Platform Low Stock</h1>
         <p className="text-sm text-neutral-light mt-1">Products running low across all businesses</p>
       </div>
 
@@ -103,7 +103,7 @@ export default function AdminLowStockPage() {
         <div className="mb-4 bg-danger-light text-danger text-sm p-3 rounded-xl">{error}</div>
       )}
 
-      <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm">
+      <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm">
         {loading ? (
           <div className="px-5 py-12 text-center">
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
@@ -112,7 +112,7 @@ export default function AdminLowStockPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-gray-200">
+                <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-slate-200">
                   <th className="text-left px-5 py-3 font-medium">Product</th>
                   <th className="text-left px-5 py-3 font-medium">Business</th>
                   <th className="text-center px-5 py-3 font-medium">Stock</th>
@@ -122,8 +122,8 @@ export default function AdminLowStockPage() {
               </thead>
               <tbody>
                 {items.map((item, i) => (
-                  <tr key={i} className="border-t border-gray-50 table-row-hover">
-                    <td className="px-5 py-3.5 font-medium text-gray-900">{item.name}</td>
+                  <tr key={i} className="border-t border-slate-50 table-row-hover">
+                    <td className="px-5 py-3.5 font-medium text-slate-900">{item.name}</td>
                     <td className="px-5 py-3.5 text-neutral-light">{item.business_name}</td>
                     <td className="px-5 py-3.5 text-center font-medium text-danger">{item.stock}</td>
                     <td className="px-5 py-3.5 text-center text-neutral-light">{item.threshold}</td>

@@ -1,44 +1,49 @@
-export default function Card({
+const base =
+  'rounded-2xl border border-slate-200 bg-white'
+
+export function Card({
   children,
   className = '',
   padded = true,
+  as: As = 'div',
 }: {
   children: React.ReactNode
   className?: string
   padded?: boolean
+  as?: 'div' | 'section' | 'article'
 }) {
-  return (
-    <div className={`bg-surface rounded-2xl border border-gray-200 shadow-sm ${padded ? 'p-5 sm:p-6' : ''} ${className}`}>
-      {children}
-    </div>
-  )
+  return <As className={`${base} ${padded ? 'p-5 sm:p-6' : ''} ${className}`}>{children}</As>
 }
 
 export function CardHeader({
   title,
   subtitle,
   icon,
-  iconBg = 'bg-blue-50 text-blue-600',
   action,
+  className = '',
 }: {
   title: string
   subtitle?: string
   icon?: React.ReactNode
-  iconBg?: string
   action?: React.ReactNode
+  className?: string
 }) {
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
-      <div className="flex items-center gap-3">
+    <div className={`flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between ${className}`}>
+      <div className="flex min-w-0 items-center gap-3">
         {icon && (
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${iconBg}`}>{icon}</div>
+          <div className="flex w-10 h-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            {icon}
+          </div>
         )}
-        <div>
-          <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
-          {subtitle && <p className="text-xs text-neutral-light mt-0.5">{subtitle}</p>}
+        <div className="min-w-0">
+          <h3 className="text-sm font-semibold tracking-tight text-slate-900">{title}</h3>
+          {subtitle && <p className="mt-0.5 text-xs text-slate-500">{subtitle}</p>}
         </div>
       </div>
-      {action}
+      {action && <div className="flex shrink-0 items-center gap-2">{action}</div>}
     </div>
   )
 }
+
+export default Card

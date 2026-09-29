@@ -336,20 +336,20 @@ export default function BusinessesPage() {
     if (role === 'admin' || role === 'owner') return 'bg-purple-100 text-purple-700'
     if (role === 'manager') return 'bg-primary/10 text-primary'
     if (role === 'cashier') return 'bg-emerald-100 text-emerald-700'
-    return 'bg-gray-100 text-gray-600'
+    return 'bg-slate-100 text-slate-600'
   }
 
   return (
     <DashboardLayout>
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Businesses</h1>
+          <h1 className="text-2xl font-bold text-slate-900">Businesses</h1>
           <p className="text-sm text-neutral-light mt-1">Manage your businesses and teams</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => router.push('/businesses/requests')}
-            className="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors flex items-center gap-2 min-h-[44px]"
+            className="px-4 py-2.5 bg-slate-100 text-slate-700 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors flex items-center gap-2 min-h-[44px]"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -358,7 +358,7 @@ export default function BusinessesPage() {
           </button>
           <button
             onClick={() => { setShowJoin(!showJoin); setShowCreate(false) }}
-            className="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors flex items-center gap-2 min-h-[44px]"
+            className="px-4 py-2.5 bg-slate-100 text-slate-700 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors flex items-center gap-2 min-h-[44px]"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
@@ -395,8 +395,8 @@ export default function BusinessesPage() {
       )}
 
       {showCreate && (
-        <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-6 mb-6">
-          <h3 className="font-semibold text-gray-900 mb-4">Create New Business</h3>
+        <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-6 mb-6">
+          <h3 className="font-semibold text-slate-900 mb-4">Create New Business</h3>
           <form onSubmit={handleCreate} className="flex flex-col sm:flex-row gap-3">
             <input
               type="text"
@@ -404,7 +404,7 @@ export default function BusinessesPage() {
               onChange={(e) => setNewName(e.target.value)}
               placeholder="Business name"
               required
-              className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+              className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
             />
             <div className="flex gap-2 sm:gap-3 shrink-0">
               <button
@@ -417,7 +417,7 @@ export default function BusinessesPage() {
               <button
                 type="button"
                 onClick={() => setShowCreate(false)}
-                className="px-4 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors min-h-[44px]"
+                className="px-4 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors min-h-[44px]"
               >
                 Cancel
               </button>
@@ -427,27 +427,27 @@ export default function BusinessesPage() {
       )}
 
       {showJoin && (
-        <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-6 mb-6">
-          <h3 className="font-semibold text-gray-900 mb-4">Join a Business</h3>
+        <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-6 mb-6">
+          <h3 className="font-semibold text-slate-900 mb-4">Join a Business</h3>
           <form onSubmit={handleJoin} className="space-y-3">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Business Key</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Business Key</label>
                 <input
                   type="text"
                   value={joinKey}
                   onChange={(e) => setJoinKey(e.target.value)}
                   placeholder="Paste the business key here"
                   required
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Role</label>
                 <select
                   value={joinRole}
                   onChange={(e) => setJoinRole(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-white min-h-[44px]"
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-white min-h-[44px]"
                 >
                   <option value="viewer">Viewer</option>
                   <option value="cashier">Cashier</option>
@@ -457,13 +457,13 @@ export default function BusinessesPage() {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Reason (optional)</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Reason (optional)</label>
               <input
                 type="text"
                 value={joinReason}
                 onChange={(e) => setJoinReason(e.target.value)}
                 placeholder="Why do you want to join?"
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
               />
             </div>
             <div className="flex flex-wrap gap-3">
@@ -477,7 +477,7 @@ export default function BusinessesPage() {
               <button
                 type="button"
                 onClick={() => setShowJoin(false)}
-                className="px-4 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors min-h-[44px]"
+                className="px-4 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors min-h-[44px]"
               >
                 Cancel
               </button>
@@ -486,13 +486,13 @@ export default function BusinessesPage() {
         </div>
       )}
 
-      <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm">
+      <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm">
         {loading ? (
           <div className="px-5 py-12 text-center">
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
           </div>
         ) : businesses.length > 0 ? (
-          <div className="divide-y divide-gray-50">
+          <div className="divide-y divide-slate-50">
             {businesses.map((biz) => {
               const isActive = currentBusiness?.business_id === biz.business_id
               const canManage = canManageBiz(biz)
@@ -507,7 +507,7 @@ export default function BusinessesPage() {
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-gray-900">{biz.name}</h3>
+                          <h3 className="font-semibold text-slate-900">{biz.name}</h3>
                           {isActive && (
                             <span className="text-[10px] font-medium uppercase tracking-wider bg-primary/10 text-primary px-2 py-0.5 rounded-full">
                               Active
@@ -526,14 +526,14 @@ export default function BusinessesPage() {
                       </button>
                       <button
                         onClick={() => loadBusinessKey(biz.business_id)}
-                        className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors min-h-[36px]"
+                        className="px-3 py-1.5 text-xs font-medium text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors min-h-[36px]"
                         title="Get business key to share"
                       >
                         Get Key
                       </button>
                       <button
                         onClick={() => router.push('/businesses/requests')}
-                        className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors min-h-[36px]"
+                        className="px-3 py-1.5 text-xs font-medium text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors min-h-[36px]"
                         title="View all requests"
                       >
                         Requests
@@ -548,10 +548,10 @@ export default function BusinessesPage() {
                   </div>
 
                   {businessKeys[biz.business_id] && (
-                    <div className="mt-3 p-3 bg-gray-50 rounded-xl">
-                      <p className="text-xs font-medium text-gray-500 mb-1">Business Key (share with members to join)</p>
+                    <div className="mt-3 p-3 bg-slate-50 rounded-xl">
+                      <p className="text-xs font-medium text-slate-500 mb-1">Business Key (share with members to join)</p>
                       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                        <code className="flex-1 text-sm text-gray-900 bg-white px-3 py-2 rounded-lg border border-gray-300 truncate">
+                        <code className="flex-1 text-sm text-slate-900 bg-white px-3 py-2 rounded-lg border border-slate-300 truncate">
                           {businessKeys[biz.business_id]}
                         </code>
                         <button
@@ -565,7 +565,7 @@ export default function BusinessesPage() {
                   )}
 
                   {/* Members */}
-                  <div className="mt-4 pt-4 border-t border-gray-100">
+                  <div className="mt-4 pt-4 border-t border-slate-100">
                     <div className="flex items-center gap-2 mb-2">
                       <svg className="w-4 h-4 text-neutral-light" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
@@ -573,7 +573,7 @@ export default function BusinessesPage() {
                         <path d="M23 21v-2a4 4 0 00-3-3.87" />
                         <path d="M16 3.13a4 4 0 010 7.75" />
                       </svg>
-                      <h4 className="text-sm font-semibold text-gray-900">Members</h4>
+                      <h4 className="text-sm font-semibold text-slate-900">Members</h4>
                       {bizMembers.length > 0 && (
                         <span className="text-[10px] font-medium uppercase tracking-wider bg-primary/10 text-primary px-2 py-0.5 rounded-full">
                           {bizMembers.length}
@@ -601,13 +601,13 @@ export default function BusinessesPage() {
                             >
                               <div
                                 onClick={() => toggleMember(biz.business_id, m.user_id)}
-                                className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors hover:bg-gray-50 ${isExpanded ? 'bg-gray-50' : ''}`}
+                                className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors hover:bg-slate-50 ${isExpanded ? 'bg-slate-50' : ''}`}
                               >
                                 <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-semibold text-primary shrink-0">
                                   {m.name?.charAt(0)?.toUpperCase() || '?'}
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                  <p className="text-sm font-medium text-gray-900 truncate">
+                                  <p className="text-sm font-medium text-slate-900 truncate">
                                     {m.name} {isSelf && <span className="text-xs font-normal text-neutral-light">(you)</span>}
                                   </p>
                                   <p className="text-xs text-neutral-light truncate">{m.email || 'No email'}</p>
@@ -623,28 +623,28 @@ export default function BusinessesPage() {
                               {isExpanded && (
                                 <div className="px-3 pb-3">
                                   {isEditing && canManage ? (
-                                    <div className="bg-white rounded-xl border border-gray-200 p-3 space-y-3">
+                                    <div className="bg-white rounded-xl border border-slate-200 p-3 space-y-3">
                                       <div className="flex items-center gap-2">
-                                        <p className="text-sm font-medium text-gray-900 truncate">{m.name}</p>
+                                        <p className="text-sm font-medium text-slate-900 truncate">{m.name}</p>
                                         <span className="text-xs text-neutral-light">({m.email})</span>
                                       </div>
                                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                                         <select
                                           value={editRole}
                                           onChange={(e) => setEditRole(e.target.value)}
-                                          className="px-3 py-2 rounded-lg border border-gray-300 text-sm min-h-[40px] bg-white focus:border-primary focus:outline-none"
+                                          className="px-3 py-2 rounded-lg border border-slate-300 text-sm min-h-[40px] bg-white focus:border-primary focus:outline-none"
                                         >
                                           <option value="admin">Admin</option>
                                           <option value="manager">Manager</option>
                                           <option value="cashier">Cashier</option>
                                           <option value="viewer">Viewer</option>
                                         </select>
-                                        <label className="flex items-center gap-2 text-sm text-gray-700 sm:col-span-2">
+                                        <label className="flex items-center gap-2 text-sm text-slate-700 sm:col-span-2">
                                           <input
                                             type="checkbox"
                                             checked={editActive}
                                             onChange={(e) => setEditActive(e.target.checked)}
-                                            className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                            className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary"
                                           />
                                           Active
                                         </label>
@@ -659,7 +659,7 @@ export default function BusinessesPage() {
                                         </button>
                                         <button
                                           onClick={() => setEditingMember(null)}
-                                          className="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg text-xs font-medium hover:bg-gray-200 transition-colors min-h-[40px]"
+                                          className="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg text-xs font-medium hover:bg-slate-200 transition-colors min-h-[40px]"
                                         >
                                           Cancel
                                         </button>
@@ -669,7 +669,7 @@ export default function BusinessesPage() {
                                     <div className="mt-2">
                                       {confirmRemoveId === key ? (
                                         <div className="flex flex-wrap items-center gap-2 bg-white rounded-xl border border-red-200 p-3">
-                                          <p className="text-xs text-gray-700 flex-1 min-w-[140px]">
+                                          <p className="text-xs text-slate-700 flex-1 min-w-[140px]">
                                             Remove <strong>{m.name}</strong> from this business?
                                           </p>
                                           <button
@@ -684,14 +684,14 @@ export default function BusinessesPage() {
                                           <button
                                             onClick={() => setConfirmRemoveId(null)}
                                             disabled={removingId === key}
-                                            className="px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-xs font-medium hover:bg-gray-200 transition-colors min-h-[36px]"
+                                            className="px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-xs font-medium hover:bg-slate-200 transition-colors min-h-[36px]"
                                           >
                                             Cancel
                                           </button>
                                         </div>
                                       ) : confirmToggleId === key ? (
                                         <div className="flex flex-wrap items-center gap-2 bg-white rounded-xl border border-amber-200 p-3">
-                                          <p className="text-xs text-gray-700 flex-1 min-w-[140px]">
+                                          <p className="text-xs text-slate-700 flex-1 min-w-[140px]">
                                             {m.is_active === false ? 'Activate' : 'Deactivate'} <strong>{m.name}</strong>?
                                           </p>
                                           <button
@@ -706,7 +706,7 @@ export default function BusinessesPage() {
                                           <button
                                             onClick={() => setConfirmToggleId(null)}
                                             disabled={togglingId === key}
-                                            className="px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-xs font-medium hover:bg-gray-200 transition-colors min-h-[36px]"
+                                            className="px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-xs font-medium hover:bg-slate-200 transition-colors min-h-[36px]"
                                           >
                                             Cancel
                                           </button>
@@ -715,7 +715,7 @@ export default function BusinessesPage() {
                                         <div className="flex flex-wrap items-center gap-2">
                                           <button
                                             onClick={() => startEdit(biz.business_id, m)}
-                                            className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors min-h-[36px]"
+                                            className="px-3 py-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors min-h-[36px]"
                                           >
                                             Edit
                                           </button>
@@ -737,7 +737,7 @@ export default function BusinessesPage() {
                                           </button>
                                         </div>
                                       ) : (
-                                        <div className="bg-white rounded-xl border border-gray-200 p-3 text-xs text-neutral-light">
+                                        <div className="bg-white rounded-xl border border-slate-200 p-3 text-xs text-neutral-light">
                                           {isSelf
                                             ? 'This is you — you can manage this member from your business settings.'
                                             : 'You do not have permission to manage this member.'}
@@ -768,7 +768,7 @@ export default function BusinessesPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
             </div>
-            <p className="text-sm font-medium text-gray-900 mb-1">No businesses yet</p>
+            <p className="text-sm font-medium text-slate-900 mb-1">No businesses yet</p>
             <p className="text-xs text-neutral-light mb-4">Create one or join an existing business to get started</p>
 
             <div className="max-w-sm mx-auto mb-6 bg-primary/5 border border-primary/10 rounded-2xl p-5 text-left">
@@ -777,21 +777,21 @@ export default function BusinessesPage() {
                 <div className="flex items-start gap-3">
                   <div className="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">1</div>
                   <div>
-                    <p className="text-sm font-medium text-gray-900">Create a business</p>
+                    <p className="text-sm font-medium text-slate-900">Create a business</p>
                     <p className="text-xs text-neutral-light">Set up your store, inventory, and team</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">2</div>
                   <div>
-                    <p className="text-sm font-medium text-gray-900">Add products</p>
+                    <p className="text-sm font-medium text-slate-900">Add products</p>
                     <p className="text-xs text-neutral-light">Stock your inventory with items to sell</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">3</div>
                   <div>
-                    <p className="text-sm font-medium text-gray-900">Record sales</p>
+                    <p className="text-sm font-medium text-slate-900">Record sales</p>
                     <p className="text-xs text-neutral-light">Track every transaction and payment</p>
                   </div>
                 </div>
@@ -801,7 +801,7 @@ export default function BusinessesPage() {
             <div className="flex flex-wrap justify-center gap-3">
               <button
                 onClick={() => setShowJoin(true)}
-                className="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors min-h-[44px]"
+                className="px-4 py-2.5 bg-slate-100 text-slate-700 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors min-h-[44px]"
               >
                 Join Business
               </button>

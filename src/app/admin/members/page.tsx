@@ -122,7 +122,7 @@ export default function AdminMembersPage() {
     <DashboardLayout>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Members</h1>
+          <h1 className="text-2xl font-bold text-slate-900">Members</h1>
           <p className="text-sm text-neutral-light mt-1">View and manage all platform members</p>
         </div>
       </div>
@@ -150,11 +150,11 @@ export default function AdminMembersPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search members by name or email..."
-          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+          className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
         />
       </div>
 
-      <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm">
+      <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm">
         {loading ? (
           <div className="px-5 py-12 text-center">
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
@@ -164,7 +164,7 @@ export default function AdminMembersPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-gray-200">
+                <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-slate-200">
                   <th className="text-left px-5 py-3 font-medium">Name</th>
                   <th className="text-left px-5 py-3 font-medium">Email</th>
                   <th className="text-center px-5 py-3 font-medium">Role</th>
@@ -174,14 +174,14 @@ export default function AdminMembersPage() {
               </thead>
               <tbody>
                 {filteredMembers.map((m) => (
-                  <tr key={m.user_id} className="border-t border-gray-50">
+                  <tr key={m.user_id} className="border-t border-slate-50">
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center text-sm font-bold shrink-0">
                           {m.name?.charAt(0)?.toUpperCase() || '?'}
                         </div>
                         <div>
-                          <span className="font-medium text-gray-900">{m.name}</span>
+                          <span className="font-medium text-slate-900">{m.name}</span>
                           {m.business_name && (
                             <p className="text-xs text-neutral-light">{m.business_name}</p>
                           )}
@@ -194,7 +194,7 @@ export default function AdminMembersPage() {
                         value={m.role || 'user'}
                         onChange={(e) => handleRoleChange(m.user_id, e.target.value)}
                         disabled={m.user_id === user?.id}
-                        className="text-xs font-medium rounded-lg border border-gray-200 px-2 py-1 focus:border-primary outline-none bg-white disabled:opacity-50"
+                        className="text-xs font-medium rounded-lg border border-slate-200 px-2 py-1 focus:border-primary outline-none bg-white disabled:opacity-50"
                       >
                         <option value="user">User</option>
                         <option value="cashier">Cashier</option>

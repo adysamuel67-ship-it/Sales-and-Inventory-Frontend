@@ -17,8 +17,8 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload || !payload.length) return null
   const rev = payload[0]?.value ?? 0
   return (
-    <div className="bg-white p-3 rounded-xl shadow-lg border border-gray-200 text-sm">
-      <p className="font-bold text-gray-900 mb-1">{label}</p>
+    <div className="bg-white p-3 rounded-xl shadow-lg border border-slate-200 text-sm">
+      <p className="font-bold text-slate-900 mb-1">{label}</p>
       <p className="text-primary font-medium">
         Revenue: GH₵{rev.toLocaleString(undefined, { minimumFractionDigits: 2 })}
       </p>
@@ -49,13 +49,13 @@ export default memo(function FluctuationChart({ data }: Props) {
 
   if (!data.length) {
     return (
-      <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-5">
+      <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-5">
         <div className="mb-5">
-          <h3 className="font-semibold text-gray-900">Revenue Fluctuations</h3>
+          <h3 className="font-semibold text-slate-900">Revenue Fluctuations</h3>
           <p className="text-xs text-neutral-light mt-0.5">Daily revenue trend</p>
         </div>
         <div className="h-56 flex flex-col items-center justify-center text-neutral-light">
-          <svg className="w-10 h-10 mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-10 h-10 mb-2 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
           </svg>
           <p className="text-sm">No data to visualize fluctuations</p>
@@ -65,16 +65,16 @@ export default memo(function FluctuationChart({ data }: Props) {
   }
 
   return (
-    <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-5">
+    <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-5">
       <div className="flex items-start justify-between mb-5">
         <div>
-          <h3 className="font-semibold text-gray-900">Revenue Fluctuations</h3>
+          <h3 className="font-semibold text-slate-900">Revenue Fluctuations</h3>
           <p className="text-xs text-neutral-light mt-0.5">Daily revenue trend with average line</p>
         </div>
         <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold ${
           stats.trend > 0 ? 'bg-emerald-50 text-emerald-700'
             : stats.trend < 0 ? 'bg-red-50 text-red-600'
-            : 'bg-gray-100 text-gray-600'
+            : 'bg-slate-100 text-slate-600'
         }`}>
           {stats.trend > 0 ? (
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
@@ -92,7 +92,7 @@ export default memo(function FluctuationChart({ data }: Props) {
       <div className="grid grid-cols-3 gap-3 mb-4">
         <div className="bg-surfaceAlt rounded-xl px-3 py-2">
           <p className="text-[10px] text-neutral-light uppercase tracking-wider">Average</p>
-          <p className="text-sm font-bold text-gray-900">GH₵{stats.avg.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+          <p className="text-sm font-bold text-slate-900">GH₵{stats.avg.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
         </div>
         <div className="bg-surfaceAlt rounded-xl px-3 py-2">
           <p className="text-[10px] text-neutral-light uppercase tracking-wider">Highest</p>

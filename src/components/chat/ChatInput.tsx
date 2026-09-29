@@ -196,7 +196,7 @@ export default function ChatInput({
           <div className={`flex-1 flex items-end rounded-3xl border bg-white pl-3 pr-2 py-1.5 transition-all ${
             editing
               ? 'border-amber-300 ring-2 ring-amber-200/50'
-              : 'border-gray-300 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20'
+              : 'border-slate-300 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20'
           }`}>
             <textarea
               ref={textareaRef}

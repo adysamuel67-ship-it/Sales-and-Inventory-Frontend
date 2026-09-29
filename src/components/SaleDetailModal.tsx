@@ -33,13 +33,13 @@ export default function SaleDetailModal({ sale, onClose, canEdit, onEdit }: Prop
         className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
-          <h3 className="font-semibold text-gray-900">Sale Details</h3>
+        <div className="sticky top-0 bg-white border-b border-slate-200 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
+          <h3 className="font-semibold text-slate-900">Sale Details</h3>
           <button
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
+            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
           >
-            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -57,7 +57,7 @@ export default function SaleDetailModal({ sale, onClose, canEdit, onEdit }: Prop
               {isPartial ? (
                 <p className="text-lg font-bold text-danger">GH₵{balance.toLocaleString(undefined, { minimumFractionDigits: 2 })} <span className="text-sm font-medium text-neutral-light">remaining</span></p>
               ) : (
-                <p className="text-lg font-bold text-gray-900">GH₵{sale.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                <p className="text-lg font-bold text-slate-900">GH₵{sale.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
               )}
             </div>
           </div>
@@ -65,7 +65,7 @@ export default function SaleDetailModal({ sale, onClose, canEdit, onEdit }: Prop
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-surfaceAlt rounded-xl p-4">
               <p className="text-xs text-neutral-light mb-1">Payment Method</p>
-              <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${paymentColorMap[sale.payment] || 'bg-gray-100 text-gray-600'}`}>
+              <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${paymentColorMap[sale.payment] || 'bg-slate-100 text-slate-600'}`}>
                 {formatPayment(sale.payment)}
               </span>
             </div>
@@ -82,7 +82,7 @@ export default function SaleDetailModal({ sale, onClose, canEdit, onEdit }: Prop
           {isPartial && (
             <div className="bg-surfaceAlt rounded-xl p-4">
               <p className="text-xs text-neutral-light uppercase tracking-wider mb-2">Payment Progress</p>
-              <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden mb-2">
+              <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden mb-2">
                 <div
                   className="h-full bg-success rounded-full transition-all"
                   style={{ width: `${Math.min(100, ((sale.amount_paid ?? 0) / sale.amount) * 100)}%` }}
@@ -104,11 +104,11 @@ export default function SaleDetailModal({ sale, onClose, canEdit, onEdit }: Prop
                     <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold shrink-0">
                       {sale.customer_name.charAt(0).toUpperCase()}
                     </div>
-                    <span className="text-sm font-medium text-gray-900">{sale.customer_name}</span>
+                    <span className="text-sm font-medium text-slate-900">{sale.customer_name}</span>
                   </div>
                 )}
                 {sale.customer_phone && (
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <div className="flex items-center gap-2 text-sm text-slate-600">
                     <svg className="w-3.5 h-3.5 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
                     </svg>
@@ -116,7 +116,7 @@ export default function SaleDetailModal({ sale, onClose, canEdit, onEdit }: Prop
                   </div>
                 )}
                 {sale.customer_email && (
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <div className="flex items-center gap-2 text-sm text-slate-600">
                     <svg className="w-3.5 h-3.5 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
                     </svg>
@@ -134,7 +134,7 @@ export default function SaleDetailModal({ sale, onClose, canEdit, onEdit }: Prop
                 <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold shrink-0">
                   {sale.sold_by_name.charAt(0).toUpperCase()}
                 </div>
-                <span className="text-sm font-medium text-gray-900">{sale.sold_by_name}</span>
+                <span className="text-sm font-medium text-slate-900">{sale.sold_by_name}</span>
               </div>
             </div>
           )}
@@ -146,27 +146,27 @@ export default function SaleDetailModal({ sale, onClose, canEdit, onEdit }: Prop
                 sale.sales_items.map((item: any, idx: number) => (
                   <div key={idx} className="flex items-center justify-between py-2 px-3 bg-surfaceAlt rounded-lg text-sm">
                     <div className="flex flex-col">
-                      <span className="font-medium text-gray-900">{item.product_name || item.name || 'Unknown Product'}</span>
+                      <span className="font-medium text-slate-900">{item.product_name || item.name || 'Unknown Product'}</span>
                       <span className="text-neutral-light text-xs">× {item.quantity}</span>
                     </div>
                     {item.unit_price != null && (
-                      <span className="font-medium text-gray-900">GH₵{(Number(item.unit_price) * item.quantity).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                      <span className="font-medium text-slate-900">GH₵{(Number(item.unit_price) * item.quantity).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                     )}
                   </div>
                 ))
               ) : (
                 <div className="py-2 px-3 bg-surfaceAlt rounded-lg text-sm">
-                  <span className="font-medium text-gray-900">{sale.product}</span>
+                  <span className="font-medium text-slate-900">{sale.product}</span>
                   <span className="text-neutral-light ml-2">× {sale.qty}</span>
                 </div>
               )}
             </div>
           </div>
 
-          <div className="border-t border-gray-200 pt-4 space-y-2">
+          <div className="border-t border-slate-200 pt-4 space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span className="text-neutral-light">Total Sale Amount</span>
-              <span className="font-semibold text-gray-900">GH₵{sale.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+              <span className="font-semibold text-slate-900">GH₵{sale.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
             </div>
             {sale.amount_paid != null && (
               <div className="flex items-center justify-between text-sm">
@@ -187,20 +187,20 @@ export default function SaleDetailModal({ sale, onClose, canEdit, onEdit }: Prop
               <svg className="w-4 h-4 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
               </svg>
-              <span className="text-gray-700">{sale.time || 'No date'}</span>
+              <span className="text-slate-700">{sale.time || 'No date'}</span>
             </div>
             {sale.note && (
               <div className="flex items-start gap-2 text-sm">
                 <svg className="w-4 h-4 text-neutral-light shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
                 </svg>
-                <span className="text-gray-700">{sale.note}</span>
+                <span className="text-slate-700">{sale.note}</span>
               </div>
             )}
           </div>
         </div>
 
-        <div className="sticky bottom-0 bg-white border-t border-gray-200 px-4 sm:px-6 py-4 rounded-b-2xl space-y-2">
+        <div className="sticky bottom-0 bg-white border-t border-slate-200 px-4 sm:px-6 py-4 rounded-b-2xl space-y-2">
           {onEdit && (
             <button
               onClick={onEdit}
@@ -211,7 +211,7 @@ export default function SaleDetailModal({ sale, onClose, canEdit, onEdit }: Prop
           )}
           <button
             onClick={onClose}
-            className="w-full py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors"
+            className="w-full py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors"
           >
             Close
           </button>

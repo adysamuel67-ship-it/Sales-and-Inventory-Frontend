@@ -9,5 +9,16 @@
   "background_color": "#FFFFFF",
   "theme_color": "#14213D",
   "lang": "en-GH",
-  "categories": ["business", "productivity", "finance"]
+  "dir": "ltr",
+  "categories": ["business", "productivity", "finance"],
+  "shortcuts": [
+    {
+      "name": "Record a Sale",
+      "url": "/businesses"
+    },
+    {
+      "name": "My Profile",
+      "url": "/profile"
+    }
+  ]
 }

@@ -409,9 +409,9 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
               <div className="relative">
                 <BusinessBotLogo size={36} />
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-white font-semibold text-[13px] tracking-tight">Business Bot</p>
-                <p className="text-white/35 text-[11px]">Sales & Inventory</p>
+                <p className="text-white/35 text-[11px]">Sales &amp; Inventory</p>
               </div>
             </div>
           </div>
@@ -439,20 +439,20 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
                 </button>
 
                 {bizSwitcherOpen && (
-                  <div className="absolute top-full left-0 right-0 mt-1.5 bg-white rounded-xl shadow-xl border border-gray-200 py-1.5 z-50 max-h-64 overflow-y-auto">
-                    <p className="px-3.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400">Switch Business</p>
+                  <div className="absolute top-full left-0 right-0 mt-1.5 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 z-50 max-h-64 overflow-y-auto">
+                    <p className="px-3.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Switch Business</p>
                     {businesses.map((biz) => (
                       <button
                         key={biz.business_id}
                         onClick={() => handleSwitchBusiness(biz)}
-                        className={`w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] hover:bg-gray-50 transition-colors ${
+                        className={`w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] hover:bg-slate-50 transition-colors ${
                           currentBusiness.business_id === biz.business_id ? 'bg-blue-50/80' : ''
                         }`}
                       >
                         <div className="w-7 h-7 bg-gradient-to-br from-blue-100 to-blue-50 rounded-lg flex items-center justify-center text-primary text-[11px] font-bold shrink-0 border border-blue-100">
                           {biz.name.charAt(0).toUpperCase()}
                         </div>
-                        <span className="flex-1 text-left truncate text-gray-700 font-medium">{biz.name}</span>
+                        <span className="flex-1 text-left truncate text-slate-700 font-medium">{biz.name}</span>
                         {currentBusiness.business_id === biz.business_id && (
                           <svg className="w-4 h-4 text-primary shrink-0" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -460,7 +460,7 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
                         )}
                       </button>
                     ))}
-                    <div className="border-t border-gray-200 mt-1 pt-1">
+                    <div className="border-t border-slate-200 mt-1 pt-1">
                       <Link
                         href="/businesses"
                         onClick={() => setBizSwitcherOpen(false)}
@@ -498,9 +498,9 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
                 </button>
 
                 {notificationsOpen && (
-                  <div className="absolute left-0 right-0 mt-1 bg-white rounded-xl shadow-xl border border-gray-200 z-50 overflow-hidden">
-                    <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-                      <h3 className="text-sm font-semibold text-gray-900">
+                  <div className="absolute left-0 right-0 mt-1 bg-white rounded-xl shadow-xl border border-slate-200 z-50 overflow-hidden">
+                    <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between">
+                      <h3 className="text-sm font-semibold text-slate-900">
                         {(unreadCount + pendingApprovals.length) > 0 && (
                           <span className="text-primary">({unreadCount + pendingApprovals.length})</span>
                         )}
@@ -508,20 +508,20 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
                       </h3>
                       <div className="flex items-center gap-2">
                         {notificationsLoading && (
-                          <span className="text-[10px] text-gray-400 flex items-center gap-1">
+                          <span className="text-[10px] text-slate-400 flex items-center gap-1">
                             <span className="inline-block w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                             Syncing
                           </span>
                         )}
                         <button
                           onClick={() => { setActiveTab('all'); fetchNotifications(true) }}
-                          className={`text-xs font-medium px-2 py-1 rounded-md transition-colors ${activeTab === 'all' ? 'bg-primary/10 text-primary' : 'text-gray-400 hover:text-gray-600'}`}
+                          className={`text-xs font-medium px-2 py-1 rounded-md transition-colors ${activeTab === 'all' ? 'bg-primary/10 text-primary' : 'text-slate-400 hover:text-slate-600'}`}
                         >
                           All
                         </button>
                         <button
                           onClick={() => { setActiveTab('approvals'); fetchNotifications(true) }}
-                          className={`text-xs font-medium px-2 py-1 rounded-md transition-colors ${activeTab === 'approvals' ? 'bg-primary/10 text-primary' : 'text-gray-400 hover:text-gray-600'}`}
+                          className={`text-xs font-medium px-2 py-1 rounded-md transition-colors ${activeTab === 'approvals' ? 'bg-primary/10 text-primary' : 'text-slate-400 hover:text-slate-600'}`}
                         >
                           Requests {pendingApprovals.length > 0 && <span>({pendingApprovals.length})</span>}
                         </button>
@@ -538,25 +538,25 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
                             return (
                               <div
                                 key={n.notification_id}
-                                className={`px-4 py-3 border-b border-gray-50 last:border-0 group flex items-start gap-3 transition-colors ${isRead ? 'hover:bg-gray-50' : 'bg-blue-50/50 hover:bg-blue-50'}`}
+                                className={`px-4 py-3 border-b border-slate-50 last:border-0 group flex items-start gap-3 transition-colors ${isRead ? 'hover:bg-slate-50' : 'bg-blue-50/50 hover:bg-blue-50'}`}
                               >
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${isRead ? 'bg-gray-100' : 'bg-primary/10'}`}>
-                                  <svg className={`w-4 h-4 ${isRead ? 'text-gray-400' : 'text-primary'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${isRead ? 'bg-slate-100' : 'bg-primary/10'}`}>
+                                  <svg className={`w-4 h-4 ${isRead ? 'text-slate-400' : 'text-primary'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
                                     <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                                   </svg>
                                 </div>
                                 <div className="min-w-0 flex-1">
                                   <div className="flex items-center justify-between gap-2">
-                                    <p className="text-sm font-medium text-gray-900 truncate">{title}</p>
+                                    <p className="text-sm font-medium text-slate-900 truncate">{title}</p>
                                     {!isRead && <span className="w-2 h-2 rounded-full bg-primary shrink-0" />}
                                   </div>
-                                  <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{n.message}</p>
-                                  <p className="text-[10px] text-gray-400 mt-1">{time}</p>
+                                  <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{n.message}</p>
+                                  <p className="text-[10px] text-slate-400 mt-1">{time}</p>
                                 </div>
                                 <button
                                   onClick={() => handleDismissNotification(n.notification_id)}
                                   title="Dismiss"
-                                  className="text-gray-300 hover:text-gray-600 transition-colors shrink-0 opacity-0 group-hover:opacity-100"
+                                  className="text-slate-300 hover:text-slate-600 transition-colors shrink-0 opacity-0 group-hover:opacity-100"
                                 >
                                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                                     <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
@@ -568,14 +568,14 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
                         ) : notificationsLoading ? (
                           <div className="px-4 py-8 text-center">
                             <span className="inline-block w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                            <p className="text-sm text-gray-500 mt-3">Loading notifications...</p>
+                            <p className="text-sm text-slate-500 mt-3">Loading notifications...</p>
                           </div>
                         ) : (
                           <div className="px-4 py-8 text-center">
-                            <svg className="w-8 h-8 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                            <svg className="w-8 h-8 text-slate-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
                             </svg>
-                            <p className="text-sm text-gray-500">No notifications</p>
+                            <p className="text-sm text-slate-500">No notifications</p>
                           </div>
                         )}
                       </div>
@@ -591,32 +591,32 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
                               <button
                                 key={approval.approval_id || approval.id || idx}
                                 onClick={() => { setSelectedApproval(approval); setNotificationsOpen(false) }}
-                                className="w-full text-left px-4 py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors cursor-pointer"
+                                className="w-full text-left px-4 py-3 border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors cursor-pointer"
                               >
                                 <div className="flex items-center gap-3">
                                   <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                                     <span className="text-xs font-semibold text-primary">{requesterName.charAt(0).toUpperCase()}</span>
                                   </div>
                                   <div className="min-w-0 flex-1">
-                                    <p className="text-sm font-medium text-gray-900 truncate">{requesterName}</p>
-                                    <p className="text-xs text-gray-400 truncate">{requesterEmail}</p>
+                                    <p className="text-sm font-medium text-slate-900 truncate">{requesterName}</p>
+                                    <p className="text-xs text-slate-400 truncate">{requesterEmail}</p>
                                   </div>
                                   <span className="text-[10px] font-medium uppercase tracking-wider bg-primary/10 text-primary px-2 py-0.5 rounded-full shrink-0">
                                     {role}
                                   </span>
                                 </div>
                                 {reason && (
-                                  <p className="text-xs text-gray-400 mt-1.5 ml-11 line-clamp-2">{reason}</p>
+                                  <p className="text-xs text-slate-400 mt-1.5 ml-11 line-clamp-2">{reason}</p>
                                 )}
                               </button>
                             )
                           })
                         ) : (
                           <div className="px-4 py-8 text-center">
-                            <svg className="w-8 h-8 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                            <svg className="w-8 h-8 text-slate-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
                             </svg>
-                            <p className="text-sm text-gray-500">No pending requests</p>
+                            <p className="text-sm text-slate-500">No pending requests</p>
                           </div>
                         )}
                       </div>
@@ -777,9 +777,9 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
               </button>
 
               {sidebarProfileOpen && (
-                <div className="absolute bottom-full left-0 right-0 mb-2 mx-1 bg-white rounded-xl shadow-xl border border-gray-200 py-1.5 z-50">
-                  <div className="px-3.5 py-2.5 border-b border-gray-200">
-                    <p className="text-[13px] font-semibold text-gray-900 truncate">{user?.name || 'User'}</p>
+                <div className="absolute bottom-full left-0 right-0 mb-2 mx-1 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 z-50">
+                  <div className="px-3.5 py-2.5 border-b border-slate-200">
+                    <p className="text-[13px] font-semibold text-slate-900 truncate">{user?.name || 'User'}</p>
                     <div className="flex items-center gap-1.5 mt-1.5">
                       <span className="text-[10px] font-semibold uppercase tracking-wider bg-blue-50 text-primary px-2 py-0.5 rounded-md">
                         {(user?.business_role || user?.role || 'user').replace('_', ' ')}
@@ -797,9 +797,9 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
                   <Link
                     href="/profile"
                     onClick={() => setSidebarProfileOpen(false)}
-                    className="flex items-center gap-2.5 px-3.5 py-2.5 text-[13px] text-gray-700 hover:bg-gray-50 transition-colors min-h-[40px]"
+                    className="flex items-center gap-2.5 px-3.5 py-2.5 text-[13px] text-slate-700 hover:bg-slate-50 transition-colors min-h-[40px]"
                   >
-                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                     My Profile
@@ -821,18 +821,18 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
       </aside>
 
       <div className="lg:pl-[260px]">
-        <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-xl border-b border-gray-200/60">
+        <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-xl border-b border-slate-200/60">
           <div className="flex items-center justify-between px-4 sm:px-6 h-[60px]">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="lg:hidden p-2 -ml-2 rounded-lg hover:bg-gray-100 min-h-[40px] min-w-[40px] flex items-center justify-center"
+                className="lg:hidden p-2 -ml-2 rounded-lg hover:bg-slate-100 min-h-[40px] min-w-[40px] flex items-center justify-center"
               >
-                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               </button>
-              <h1 className="text-[17px] font-bold text-gray-900 lg:hidden">
+              <h1 className="text-[17px] font-bold text-slate-900 lg:hidden">
                 {visibleNavItems.find((item) => isNavItemActive(item.href))?.label || 'Dashboard'}
               </h1>
             </div>
@@ -893,14 +893,14 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
                     <svg className="w-4 h-4 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
                     </svg>
-                    <span className="text-gray-700">{phone}</span>
+                    <span className="text-slate-700">{phone}</span>
                   </div>
                 )}
 
                 {reason && (
                   <div className="bg-surfaceAlt rounded-xl p-3">
                     <p className="text-[10px] text-neutral-light uppercase tracking-wider mb-1">Reason</p>
-                    <p className="text-sm text-gray-700">{reason}</p>
+                    <p className="text-sm text-slate-700">{reason}</p>
                   </div>
                 )}
 
@@ -914,7 +914,7 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
                 )}
               </div>
 
-              <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-gray-200 flex items-center gap-3">
+              <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-slate-200 flex items-center gap-3">
                 <Link
                   href="/businesses/requests"
                   onClick={() => setSelectedApproval(null)}
@@ -924,7 +924,7 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
                 </Link>
                 <button
                   onClick={() => setSelectedApproval(null)}
-                  className="px-4 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors"
+                  className="px-4 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors"
                 >
                   Close
                 </button>

@@ -75,7 +75,7 @@ export default function AdminDashboardPage() {
   return (
     <DashboardLayout>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+        <h1 className="text-2xl font-bold text-slate-900">Admin Dashboard</h1>
         <p className="text-sm text-neutral-light mt-1">Platform overview and management</p>
       </div>
 
@@ -107,9 +107,9 @@ export default function AdminDashboardPage() {
         />
       </div>
 
-      <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm">
-        <div className="px-5 py-4 border-b border-gray-200">
-          <h2 className="font-semibold text-gray-900">Recent Users</h2>
+      <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm">
+        <div className="px-5 py-4 border-b border-slate-200">
+          <h2 className="font-semibold text-slate-900">Recent Users</h2>
         </div>
         {loading ? (
           <div className="px-5 py-12 text-center">
@@ -119,7 +119,7 @@ export default function AdminDashboardPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-gray-200">
+                <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-slate-200">
                   <th className="text-left px-5 py-3 font-medium">Name</th>
                   <th className="text-left px-5 py-3 font-medium">Email</th>
                   <th className="text-center px-5 py-3 font-medium">Role</th>
@@ -128,14 +128,14 @@ export default function AdminDashboardPage() {
               </thead>
               <tbody>
                 {recentUsers.map((u: any) => (
-                  <tr key={u.user_id ?? u.id} className="border-t border-gray-50 table-row-hover">
-                    <td className="px-5 py-3.5 font-medium text-gray-900">{u.name}</td>
+                  <tr key={u.user_id ?? u.id} className="border-t border-slate-50 table-row-hover">
+                    <td className="px-5 py-3.5 font-medium text-slate-900">{u.name}</td>
                     <td className="px-5 py-3.5 text-neutral-light">{u.email}</td>
                     <td className="px-5 py-3.5 text-center">
                       <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
                         u.role === 'super_admin' ? 'bg-warning-light text-warning'
                           : u.role === 'admin' ? 'bg-primary/10 text-primary'
-                          : 'bg-gray-100 text-gray-600'
+                          : 'bg-slate-100 text-slate-600'
                       }`}>
                         {u.role || 'user'}
                       </span>

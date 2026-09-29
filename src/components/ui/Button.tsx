@@ -21,19 +21,19 @@ export default function Button({
   leftIcon?: React.ReactNode
 }) {
   const base =
-    'inline-flex items-center justify-center gap-2 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-60 disabled:cursor-not-allowed'
+    'inline-flex items-center justify-center gap-2 font-semibold rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-60 disabled:cursor-not-allowed'
 
   const variants: Record<Variant, string> = {
-    primary: 'bg-primary text-white hover:bg-primary-dark',
-    secondary: 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50',
-    ghost: 'text-gray-600 hover:bg-gray-100',
+    primary: 'bg-primary text-white shadow-sm shadow-primary/20 hover:bg-primary-dark',
+    secondary: 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50',
+    ghost: 'text-slate-600 hover:bg-slate-100',
     danger: 'bg-danger text-white hover:bg-red-700',
     dangerOutline: 'text-danger bg-danger-light border border-red-200 hover:bg-red-100',
     success: 'bg-success text-white hover:bg-emerald-700',
   }
 
   const sizes: Record<Size, string> = {
-    sm: 'px-3 py-1.5 text-xs',
+    sm: 'px-3.5 py-2 text-xs',
     md: 'px-4 py-2.5 text-sm',
   }
 

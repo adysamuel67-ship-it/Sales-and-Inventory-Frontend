@@ -220,16 +220,16 @@ export default function SaleEditModal({ sale, businessId, onClose, onSaved }: Pr
         className="relative bg-white rounded-2xl shadow-xl w-full max-w-xl max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
+        <div className="sticky top-0 bg-white border-b border-slate-200 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
           <div>
-            <h3 className="font-semibold text-gray-900">Edit Sale #{sale.id}</h3>
+            <h3 className="font-semibold text-slate-900">Edit Sale #{sale.id}</h3>
             <p className="text-xs text-neutral-light">Adjust items, payment or customer details</p>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
+            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
           >
-            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -246,7 +246,7 @@ export default function SaleEditModal({ sale, businessId, onClose, onSaved }: Pr
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Products</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Products</label>
               <div className="space-y-3">
                 {lineItems.map((item, idx) => {
                   const selectedIds = lineItems.filter((li) => li.product_id).map((li) => li.product_id)
@@ -260,7 +260,7 @@ export default function SaleEditModal({ sale, businessId, onClose, onSaved }: Pr
                           updated[idx] = { ...updated[idx], product_id: e.target.value }
                           setLineItems(updated)
                         }}
-                        className="flex-1 px-3 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-white min-h-[44px]"
+                        className="flex-1 px-3 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-white min-h-[44px]"
                       >
                         <option value="">Select a product</option>
                         {allProductOptions
@@ -281,7 +281,7 @@ export default function SaleEditModal({ sale, businessId, onClose, onSaved }: Pr
                           setLineItems(updated)
                         }}
                         placeholder="Qty"
-                        className="w-20 px-3 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                        className="w-20 px-3 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                       />
                       {lineItems.length > 1 && (
                         <button
@@ -308,7 +308,7 @@ export default function SaleEditModal({ sale, businessId, onClose, onSaved }: Pr
                 <button
                   type="button"
                   onClick={() => setLineItems([...lineItems, { product_id: '', quantity: '' }])}
-                  className="w-full py-2.5 rounded-xl border border-dashed border-gray-300 text-sm font-medium text-neutral-light hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-1.5"
+                  className="w-full py-2.5 rounded-xl border border-dashed border-slate-300 text-sm font-medium text-neutral-light hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-1.5"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -319,7 +319,7 @@ export default function SaleEditModal({ sale, businessId, onClose, onSaved }: Pr
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Payment Method</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Payment Method</label>
               <div className="flex gap-2">
                 {[
                   { value: 'cash', label: 'Cash' },
@@ -335,7 +335,7 @@ export default function SaleEditModal({ sale, businessId, onClose, onSaved }: Pr
                         ? value === 'cash' ? 'bg-success text-white'
                           : value === 'mobile_money' ? 'bg-primary text-white'
                           : 'bg-warning text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                     }`}
                   >
                     {label}
@@ -345,7 +345,7 @@ export default function SaleEditModal({ sale, businessId, onClose, onSaved }: Pr
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Payment Status</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Payment Status</label>
               <div className="flex gap-2">
                 <button
                   type="button"
@@ -353,7 +353,7 @@ export default function SaleEditModal({ sale, businessId, onClose, onSaved }: Pr
                   className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all min-h-[44px] ${
                     paymentStatus === 'fully_paid'
                       ? 'bg-success text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
                 >
                   Fully Paid
@@ -364,7 +364,7 @@ export default function SaleEditModal({ sale, businessId, onClose, onSaved }: Pr
                   className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all min-h-[44px] ${
                     paymentStatus === 'partial'
                       ? 'bg-warning text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
                 >
                   Partial Payment
@@ -375,7 +375,7 @@ export default function SaleEditModal({ sale, businessId, onClose, onSaved }: Pr
             {paymentStatus === 'partial' && (
               <>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Amount Paid (GH₵)</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Amount Paid (GH₵)</label>
                   <input
                     type="number"
                     step="0.01"
@@ -385,11 +385,11 @@ export default function SaleEditModal({ sale, businessId, onClose, onSaved }: Pr
                     onChange={(e) => setAmountPaid(e.target.value)}
                     placeholder="0.00"
                     required
-                    className="w-full px-3 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                    className="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                   />
                 </div>
                 <div className="flex items-center justify-between">
-                  <label className="block text-sm font-medium text-gray-700">Customer</label>
+                  <label className="block text-sm font-medium text-slate-700">Customer</label>
                   <button
                     type="button"
                     onClick={() => {
@@ -409,21 +409,21 @@ export default function SaleEditModal({ sale, businessId, onClose, onSaved }: Pr
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
                   placeholder="Customer's full name"
-                  className="w-full px-3 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                  className="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                 />
                 <input
                   type="email"
                   value={customerEmail}
                   onChange={(e) => setCustomerEmail(e.target.value)}
                   placeholder="customer@example.com (optional)"
-                  className="w-full px-3 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                  className="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                 />
                 <input
                   type="tel"
                   value={customerPhone}
                   onChange={(e) => setCustomerPhone(e.target.value)}
                   placeholder="024XXXXXXX"
-                  className="w-full px-3 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                  className="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                 />
                 {isPartialPayment && (
                   <div className="px-4 py-3 rounded-xl bg-warning-light border border-warning/20">
@@ -451,15 +451,15 @@ export default function SaleEditModal({ sale, businessId, onClose, onSaved }: Pr
                   }
                   return (
                     <div key={idx} className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">{p.name} × {qty}</span>
-                      <span className="font-medium text-gray-900">{formatCedi(price * qty)}</span>
+                      <span className="text-slate-600">{p.name} × {qty}</span>
+                      <span className="font-medium text-slate-900">{formatCedi(price * qty)}</span>
                     </div>
                   )
                 })}
               </div>
-              <div className="border-t border-gray-200 mt-2 pt-2">
+              <div className="border-t border-slate-200 mt-2 pt-2">
                 <p className="text-xs text-neutral-light uppercase tracking-wider">Total Amount</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">{formatCedi(totalAmount)}</p>
+                <p className="text-2xl font-bold text-slate-900 mt-1">{formatCedi(totalAmount)}</p>
               </div>
               {paymentStatus === 'partial' && effectiveAmountPaid > 0 && (
                 <div className="flex items-center justify-between mt-2">
@@ -480,7 +480,7 @@ export default function SaleEditModal({ sale, businessId, onClose, onSaved }: Pr
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors min-h-[44px]"
+                className="px-4 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors min-h-[44px]"
               >
                 Cancel
               </button>
@@ -493,15 +493,15 @@ export default function SaleEditModal({ sale, businessId, onClose, onSaved }: Pr
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" onClick={() => setShowCustomerPicker(false)}>
           <div className="absolute inset-0 bg-black/40" />
           <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-sm max-h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
-            <div className="px-4 py-3 border-b border-gray-200">
-              <p className="font-semibold text-gray-900 text-sm mb-2">Pick a Customer</p>
+            <div className="px-4 py-3 border-b border-slate-200">
+              <p className="font-semibold text-slate-900 text-sm mb-2">Pick a Customer</p>
               <input
                 type="text"
                 value={customerSearch}
                 onChange={(e) => setCustomerSearch(e.target.value)}
                 placeholder="Search by name or phone..."
                 autoFocus
-                className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
               />
             </div>
             <div className="overflow-y-auto max-h-64">
@@ -513,13 +513,13 @@ export default function SaleEditModal({ sale, businessId, onClose, onSaved }: Pr
                     key={c.customer_id ?? c.id}
                     type="button"
                     onClick={() => selectCustomer(c)}
-                    className="w-full px-4 py-3 flex items-center gap-3 border-b border-gray-50 hover:bg-gray-50 transition-colors text-left"
+                    className="w-full px-4 py-3 flex items-center gap-3 border-b border-slate-50 hover:bg-slate-50 transition-colors text-left"
                   >
                     <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold shrink-0">
                       {(c.name || '?').charAt(0).toUpperCase()}
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">{c.name || 'Unknown'}</p>
+                      <p className="text-sm font-medium text-slate-900 truncate">{c.name || 'Unknown'}</p>
                       <p className="text-xs text-neutral-light truncate">{c.phone || c.phone_number || c.mobile || c.email || 'No contact'}</p>
                     </div>
                   </button>

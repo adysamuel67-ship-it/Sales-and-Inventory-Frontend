@@ -215,13 +215,13 @@ export default function ScheduleReminderModal({ businessId, customer, defaultDeb
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
-          <h3 className="font-semibold text-gray-900">Schedule Reminder</h3>
+        <div className="sticky top-0 bg-white border-b border-slate-200 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
+          <h3 className="font-semibold text-slate-900">Schedule Reminder</h3>
           <button
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
+            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
           >
-            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -234,13 +234,13 @@ export default function ScheduleReminderModal({ businessId, customer, defaultDeb
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <p className="text-sm font-medium text-gray-900 mb-1">Debt settled</p>
+            <p className="text-sm font-medium text-slate-900 mb-1">Debt settled</p>
             <p className="text-xs text-neutral-light">
               {customer.customer_name} has no outstanding debt to remind about.
             </p>
             <button
               onClick={onClose}
-              className="mt-5 px-4 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors min-h-[44px]"
+              className="mt-5 px-4 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors min-h-[44px]"
             >
               Close
             </button>
@@ -253,7 +253,7 @@ export default function ScheduleReminderModal({ businessId, customer, defaultDeb
                   {customer.customer_name?.charAt(0)?.toUpperCase() || '?'}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-gray-900 truncate">{customer.customer_name}</p>
+                  <p className="text-sm font-semibold text-slate-900 truncate">{customer.customer_name}</p>
                   {customer.customer_phone && (
                     <p className="text-xs text-neutral-light mt-0.5">{customer.customer_phone}</p>
                   )}
@@ -270,12 +270,12 @@ export default function ScheduleReminderModal({ businessId, customer, defaultDeb
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Debt / Amount *</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Debt / Amount *</label>
               <select
                 value={selectedDebtId}
                 onChange={(e) => handleDebtChange(e.target.value)}
                 required
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-white min-h-[44px]"
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-white min-h-[44px]"
               >
                 {outstandingDebts.map((debt) => (
                   <option key={debt.debt_id} value={debt.debt_id}>
@@ -288,41 +288,41 @@ export default function ScheduleReminderModal({ businessId, customer, defaultDeb
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Start Date *</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Start Date *</label>
                 <input
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
                   required
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">End Date *</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">End Date *</label>
                 <input
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
                   required
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Time of Day</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Time of Day</label>
               <input
                 type="time"
                 value={timeOfDay}
                 onChange={(e) => setTimeOfDay(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
               />
               <p className="text-[11px] text-neutral-light mt-1">Used when the reminder fires today (defaults 09:00).</p>
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-sm font-medium text-gray-700">Note</label>
+                <label className="block text-sm font-medium text-slate-700">Note</label>
                 <span className={`text-[11px] ${note.length > 150 ? 'text-danger' : 'text-neutral-light'}`}>
                   {note.length}/150
                 </span>
@@ -333,7 +333,7 @@ export default function ScheduleReminderModal({ businessId, customer, defaultDeb
                 maxLength={150}
                 rows={2}
                 placeholder="e.g. Friendly follow-up on your balance"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all resize-none"
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all resize-none"
               />
             </div>
 
@@ -348,7 +348,7 @@ export default function ScheduleReminderModal({ businessId, customer, defaultDeb
                 </span>
                 <span className="text-[11px] text-neutral-light">{smsPreview.length} chars</span>
               </div>
-              <div className="bg-white rounded-2xl rounded-tl-sm border border-gray-200 p-3 text-sm text-gray-700 leading-relaxed">
+              <div className="bg-white rounded-2xl rounded-tl-sm border border-slate-200 p-3 text-sm text-slate-700 leading-relaxed">
                 {smsPreview}
               </div>
             </div>
@@ -382,7 +382,7 @@ export default function ScheduleReminderModal({ businessId, customer, defaultDeb
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-3 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors min-h-[44px]"
+                className="px-4 py-3 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors min-h-[44px]"
               >
                 Cancel
               </button>
@@ -400,14 +400,14 @@ export default function ScheduleReminderModal({ businessId, customer, defaultDeb
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
               </svg>
             </div>
-            <h4 className="text-base font-semibold text-gray-900 text-center mb-1">This reminder window already ended</h4>
+            <h4 className="text-base font-semibold text-slate-900 text-center mb-1">This reminder window already ended</h4>
             <p className="text-sm text-neutral-light text-center mb-5">
               The window runs {startDate} to {endDate}, so no SMS will go out. You can still schedule it, or go back and adjust the dates.
             </p>
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setShowPastConfirm(false)}
-                className="flex-1 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors min-h-[44px]"
+                className="flex-1 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors min-h-[44px]"
               >
                 Go Back
               </button>

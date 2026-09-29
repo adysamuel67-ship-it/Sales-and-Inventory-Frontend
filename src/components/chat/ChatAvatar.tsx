@@ -29,7 +29,7 @@ const NAME_COLORS = [
 ]
 
 export function memberColor(userId?: number | null): string {
-  if (!userId) return 'text-gray-600'
+  if (!userId) return 'text-slate-600'
   return NAME_COLORS[userId % NAME_COLORS.length]
 }
 

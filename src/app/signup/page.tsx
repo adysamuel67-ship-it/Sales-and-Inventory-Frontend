@@ -87,43 +87,43 @@ export default function SignUpPage() {
         )}
 
         <div className="auth-animate-fade-up auth-delay-1">
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Full Name</label>
+          <label className="block text-sm font-medium text-slate-700 mb-1.5">Full Name</label>
           <input
             type="text"
             required
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-gray-50 focus:bg-white"
+            className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-slate-50 focus:bg-white"
             placeholder="e.g. Ama Mensah"
           />
         </div>
 
         <div className="auth-animate-fade-up auth-delay-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Email Address</label>
+          <label className="block text-sm font-medium text-slate-700 mb-1.5">Email Address</label>
           <input
             type="email"
             required
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-gray-50 focus:bg-white"
+            className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-slate-50 focus:bg-white"
             placeholder="you@example.com"
           />
         </div>
 
         <div className="auth-animate-fade-up auth-delay-3">
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone Number</label>
+          <label className="block text-sm font-medium text-slate-700 mb-1.5">Phone Number</label>
           <input
             type="tel"
             required
             value={form.phone}
             onChange={(e) => setForm({ ...form, phone: e.target.value })}
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-gray-50 focus:bg-white"
+            className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-slate-50 focus:bg-white"
             placeholder="+233 XX XXX XXXX"
           />
         </div>
 
         <div className="auth-animate-fade-up auth-delay-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
+          <label className="block text-sm font-medium text-slate-700 mb-1.5">Password</label>
           <div className="relative">
             <input
               type={showPassword ? 'text' : 'password'}
@@ -131,13 +131,13 @@ export default function SignUpPage() {
               minLength={8}
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
-              className="w-full px-4 py-3 pr-11 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-gray-50 focus:bg-white"
+              className="w-full px-4 py-3 pr-11 rounded-xl border border-slate-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-slate-50 focus:bg-white"
               placeholder="Min 8 characters"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-light hover:text-gray-600 transition-colors p-1"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-light hover:text-slate-600 transition-colors p-1"
             >
               {showPassword ? (
                 <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -158,7 +158,7 @@ export default function SignUpPage() {
                   <div
                     key={i}
                     className={`h-1 flex-1 rounded-full transition-all duration-300 ${
-                      i <= passwordStrength.level ? passwordStrength.color : 'bg-gray-200'
+                      i <= passwordStrength.level ? passwordStrength.color : 'bg-slate-200'
                     }`}
                   />
                 ))}
@@ -177,7 +177,7 @@ export default function SignUpPage() {
             className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all shrink-0 mt-0.5 ${
               agreedToTerms
                 ? 'bg-primary border-primary'
-                : 'border-gray-300 bg-white hover:border-gray-400'
+                : 'border-slate-300 bg-white hover:border-slate-400'
             }`}
           >
             {agreedToTerms && (
@@ -186,7 +186,7 @@ export default function SignUpPage() {
               </svg>
             )}
           </button>
-          <span className="text-xs text-gray-500 leading-relaxed">
+          <span className="text-xs text-slate-500 leading-relaxed">
             I agree to the{' '}
             <span className="text-primary font-medium cursor-pointer hover:underline">Terms of Service</span>
             {' '}and{' '}

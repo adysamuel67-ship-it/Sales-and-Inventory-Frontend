@@ -29,9 +29,9 @@ export default function EmptyState({ icon, title, description, action, secondary
           </svg>
         )}
       </div>
-      <h3 className="text-base font-semibold text-gray-900 mb-1">{title}</h3>
+      <h3 className="text-base font-semibold text-slate-900 mb-1">{title}</h3>
       {description && (
-        <p className="text-sm text-gray-500 mb-4 max-w-xs">{description}</p>
+        <p className="text-sm text-slate-500 mb-4 max-w-xs">{description}</p>
       )}
       {children}
       {(action || secondaryAction) && (
@@ -57,14 +57,14 @@ export default function EmptyState({ icon, title, description, action, secondary
             secondaryAction.href ? (
               <Link
                 href={secondaryAction.href}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-100 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-100 text-slate-700 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors"
               >
                 {secondaryAction.label}
               </Link>
             ) : (
               <button
                 onClick={secondaryAction.onClick}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-100 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-100 text-slate-700 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors"
               >
                 {secondaryAction.label}
               </button>

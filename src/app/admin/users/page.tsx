@@ -156,7 +156,7 @@ export default function AdminUsersPage() {
     <DashboardLayout>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
+          <h1 className="text-2xl font-bold text-slate-900">User Management</h1>
           <p className="text-sm text-neutral-light mt-1">Manage platform users and roles</p>
         </div>
       </div>
@@ -184,11 +184,11 @@ export default function AdminUsersPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search users by name, email, or phone..."
-          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+          className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
         />
       </div>
 
-      <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm">
+      <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm">
         {loading ? (
           <div className="px-5 py-12 text-center">
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
@@ -197,7 +197,7 @@ export default function AdminUsersPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-gray-200">
+                <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-slate-200">
                   <th className="text-left px-5 py-3 font-medium">Name</th>
                   <th className="text-left px-5 py-3 font-medium">Email</th>
                   <th className="text-left px-5 py-3 font-medium">Phone</th>
@@ -208,8 +208,8 @@ export default function AdminUsersPage() {
               </thead>
               <tbody>
                 {filteredUsers.map((u) => (
-                  <tr key={u.user_id} className="border-t border-gray-50 table-row-hover cursor-pointer" onClick={() => handleUserClick(u)}>
-                    <td className="px-5 py-3.5 font-medium text-gray-900">{u.name}</td>
+                  <tr key={u.user_id} className="border-t border-slate-50 table-row-hover cursor-pointer" onClick={() => handleUserClick(u)}>
+                    <td className="px-5 py-3.5 font-medium text-slate-900">{u.name}</td>
                     <td className="px-5 py-3.5 text-neutral-light">{u.email}</td>
                     <td className="px-5 py-3.5 text-neutral-light">{u.phone || '—'}</td>
                     <td className="px-5 py-3.5 text-center">
@@ -217,7 +217,7 @@ export default function AdminUsersPage() {
                         value={u.role || 'user'}
                         onChange={(e) => { e.stopPropagation(); handleRoleChange(u.user_id, e.target.value) }}
                         disabled={u.user_id === user?.id}
-                        className="text-xs font-medium rounded-lg border border-gray-200 px-2 py-1 focus:border-primary outline-none bg-white disabled:opacity-50"
+                        className="text-xs font-medium rounded-lg border border-slate-200 px-2 py-1 focus:border-primary outline-none bg-white disabled:opacity-50"
                       >
                         <option value="user">User</option>
                         <option value="cashier">Cashier</option>
@@ -331,7 +331,7 @@ export default function AdminUsersPage() {
                       </svg>
                       <div>
                         <p className="text-[10px] text-neutral-light">Phone</p>
-                        <span className="text-gray-700 font-medium">{selectedUser.phone || '—'}</span>
+                        <span className="text-slate-700 font-medium">{selectedUser.phone || '—'}</span>
                       </div>
                     </div>
 
@@ -341,7 +341,7 @@ export default function AdminUsersPage() {
                       </svg>
                       <div>
                         <p className="text-[10px] text-neutral-light">User ID</p>
-                        <span className="text-gray-700 font-medium">#{selectedUser.user_id}</span>
+                        <span className="text-slate-700 font-medium">#{selectedUser.user_id}</span>
                       </div>
                     </div>
 
@@ -351,7 +351,7 @@ export default function AdminUsersPage() {
                       </svg>
                       <div>
                         <p className="text-[10px] text-neutral-light">Joined</p>
-                        <span className="text-gray-700 font-medium">
+                        <span className="text-slate-700 font-medium">
                           {selectedUser.date_joined || selectedUser.created_at
                             ? new Date(selectedUser.date_joined || selectedUser.created_at!).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
                             : '—'}
@@ -366,7 +366,7 @@ export default function AdminUsersPage() {
                         </svg>
                         <div>
                           <p className="text-[10px] text-neutral-light">Last Login</p>
-                          <span className="text-gray-700 font-medium">
+                          <span className="text-slate-700 font-medium">
                             {new Date(selectedUser.last_login).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </div>
@@ -382,7 +382,7 @@ export default function AdminUsersPage() {
                               <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center text-primary text-[10px] font-bold shrink-0">
                                 {(biz.name || biz.business_name || '?').charAt(0).toUpperCase()}
                               </div>
-                              <span className="text-gray-700 font-medium truncate">{biz.name || biz.business_name || `Business #${biz.business_id || idx}`}</span>
+                              <span className="text-slate-700 font-medium truncate">{biz.name || biz.business_name || `Business #${biz.business_id || idx}`}</span>
                               {biz.role && (
                                 <span className="text-[10px] text-neutral-light capitalize ml-auto shrink-0">{biz.role}</span>
                               )}
@@ -396,7 +396,7 @@ export default function AdminUsersPage() {
               )}
             </div>
 
-            <div className="px-6 py-4 border-t border-gray-200 flex items-center gap-3 rounded-b-2xl">
+            <div className="px-6 py-4 border-t border-slate-200 flex items-center gap-3 rounded-b-2xl">
               {!selectedUser.is_verified && (
                 <button
                   onClick={() => { handleVerifyUser(selectedUser.email); setSelectedUser(null) }}
@@ -415,7 +415,7 @@ export default function AdminUsersPage() {
               </button>
               <button
                 onClick={() => setSelectedUser(null)}
-                className="px-4 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors ml-auto"
+                className="px-4 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors ml-auto"
               >
                 Close
               </button>

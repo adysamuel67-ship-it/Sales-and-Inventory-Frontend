@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { AuthProvider } from '@/lib/auth'
-import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '@/lib/site'
+import { COMPANY_NAME, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '@/lib/site'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: SITE_NAME }],
   creator: SITE_NAME,
-  publisher: SITE_NAME,
+  publisher: COMPANY_NAME,
   formatDetection: { telephone: false },
   openGraph: {
     type: 'website',
@@ -50,6 +50,9 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: `${SITE_NAME} — Sales & Inventory Tracking for Ghanaian Businesses`,
     description: SITE_DESCRIPTION,
+  },
+  verification: {
+    google: 'oSKW41r6fdiGmV20g0tU6jMjxNmN40NJ4erkj80EmC8',
   },
   robots: {
     index: true,

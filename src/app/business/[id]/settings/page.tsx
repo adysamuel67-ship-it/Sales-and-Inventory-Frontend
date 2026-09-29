@@ -295,18 +295,18 @@ export default function SettingsPage() {
       ) : (
         <>
           {isOwner && (
-            <form onSubmit={handleSave} className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-6 mb-4">
-              <h3 className="font-semibold text-gray-900 mb-4">Business Name</h3>
+            <form onSubmit={handleSave} className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6 mb-4">
+              <h3 className="font-semibold text-slate-900 mb-4">Business Name</h3>
               <div className="flex flex-col sm:flex-row items-end gap-3">
                 <div className="flex-1 w-full">
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Name</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Name</label>
                   <input
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Business name"
                     required
-                    className="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                    className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                   />
                 </div>
                 <button
@@ -321,17 +321,17 @@ export default function SettingsPage() {
           )}
 
           {isOwner && (
-            <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-6 mb-4">
-              <h3 className="font-semibold text-gray-900 mb-1">Business Key</h3>
+            <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6 mb-4">
+              <h3 className="font-semibold text-slate-900 mb-1">Business Key</h3>
               <p className="text-xs text-neutral-light mb-4">Share this key with team members so they can request to join.</p>
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                <div className="flex-1 px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 font-mono text-sm text-gray-400 truncate">
+                <div className="flex-1 px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 font-mono text-sm text-slate-400 truncate">
                   {businessKey ? '••••••••••••••••••••' : 'No key available'}
                 </div>
                 {businessKey && (
                   <button
                     onClick={handleCopyKey}
-                    className="px-4 py-3 bg-gray-100 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors min-h-[44px] shrink-0 flex items-center justify-center gap-1.5"
+                    className="px-4 py-3 bg-slate-100 text-slate-700 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors min-h-[44px] shrink-0 flex items-center justify-center gap-1.5"
                   >
                     {copied ? (
                       <>
@@ -355,10 +355,10 @@ export default function SettingsPage() {
           )}
 
           {isOwner && (
-            <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-6 mb-4">
+            <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6 mb-4">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="font-semibold text-gray-900">Team Members</h3>
+                  <h3 className="font-semibold text-slate-900">Team Members</h3>
                   <p className="text-xs text-neutral-light mt-0.5">Manage roles and access for team members</p>
                 </div>
               </div>
@@ -375,25 +375,25 @@ export default function SettingsPage() {
                       {editingMember === m.member_id ? (
                         <div className="flex-1 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900">{m.name}</p>
+                            <p className="text-sm font-medium text-slate-900">{m.name}</p>
                             <p className="text-xs text-neutral-light">{m.email}</p>
                           </div>
                           <select
                             value={editRole}
                             onChange={(e) => setEditRole(e.target.value)}
-                            className="px-3 py-2 rounded-lg border border-gray-300 text-sm min-h-[40px]"
+                            className="px-3 py-2 rounded-lg border border-slate-300 text-sm min-h-[40px]"
                           >
                             <option value="admin">Admin</option>
                             <option value="manager">Manager</option>
                             <option value="cashier">Cashier</option>
                             <option value="viewer">Viewer</option>
                           </select>
-                          <label className="flex items-center gap-2 text-sm text-gray-700">
+                          <label className="flex items-center gap-2 text-sm text-slate-700">
                             <input
                               type="checkbox"
                               checked={editActive}
                               onChange={(e) => setEditActive(e.target.checked)}
-                              className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                              className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary"
                             />
                             Active
                           </label>
@@ -407,7 +407,7 @@ export default function SettingsPage() {
                             </button>
                             <button
                               onClick={() => setEditingMember(null)}
-                              className="px-3 py-2 bg-gray-100 text-gray-600 rounded-lg text-xs font-medium hover:bg-gray-200 transition-colors min-h-[40px]"
+                              className="px-3 py-2 bg-slate-100 text-slate-600 rounded-lg text-xs font-medium hover:bg-slate-200 transition-colors min-h-[40px]"
                             >
                               Cancel
                             </button>
@@ -416,11 +416,11 @@ export default function SettingsPage() {
                       ) : (
                         <>
                           <div className="flex items-center gap-3 min-w-0 flex-1">
-                            <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold shrink-0 ${m.role === 'admin' ? 'bg-purple-100 text-purple-700' : m.role === 'manager' ? 'bg-primary/10 text-primary' : 'bg-gray-100 text-gray-600'}`}>
+                            <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold shrink-0 ${m.role === 'admin' ? 'bg-purple-100 text-purple-700' : m.role === 'manager' ? 'bg-primary/10 text-primary' : 'bg-slate-100 text-slate-600'}`}>
                               {m.name?.charAt(0)?.toUpperCase() || '?'}
                             </div>
                             <div className="min-w-0">
-                              <p className="text-sm font-medium text-gray-900 truncate">{m.name}</p>
+                              <p className="text-sm font-medium text-slate-900 truncate">{m.name}</p>
                               <p className="text-xs text-neutral-light truncate">{m.email}</p>
                             </div>
                           </div>
@@ -429,12 +429,12 @@ export default function SettingsPage() {
                               m.role === 'admin' ? 'bg-purple-100 text-purple-700' :
                               m.role === 'manager' ? 'bg-primary/10 text-primary' :
                               m.role === 'cashier' ? 'bg-emerald-100 text-emerald-700' :
-                              'bg-gray-100 text-gray-600'
+                              'bg-slate-100 text-slate-600'
                             }`}>
                               {m.role}
                             </span>
                             {m.is_active === false && (
-                              <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-600">
+                              <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-200 text-slate-600">
                                 Inactive
                               </span>
                             )}
@@ -452,7 +452,7 @@ export default function SettingsPage() {
                                     <button
                                       onClick={() => setConfirmRemoveId(null)}
                                       disabled={removingMemberId === m.user_id}
-                                      className="px-2.5 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-xs font-medium hover:bg-gray-200 transition-colors min-h-[32px]"
+                                      className="px-2.5 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-xs font-medium hover:bg-slate-200 transition-colors min-h-[32px]"
                                     >
                                       No
                                     </button>
@@ -471,7 +471,7 @@ export default function SettingsPage() {
                                     <button
                                       onClick={() => setConfirmToggleId(null)}
                                       disabled={togglingActiveId === m.member_id}
-                                      className="px-2.5 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-xs font-medium hover:bg-gray-200 transition-colors min-h-[32px]"
+                                      className="px-2.5 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-xs font-medium hover:bg-slate-200 transition-colors min-h-[32px]"
                                     >
                                       No
                                     </button>
@@ -484,7 +484,7 @@ export default function SettingsPage() {
                                         setEditRole(m.role || 'viewer')
                                         setEditActive(m.is_active !== false)
                                       }}
-                                      className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                                      className="px-3 py-1.5 text-xs font-medium text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors"
                                     >
                                       Edit
                                     </button>
@@ -528,7 +528,7 @@ export default function SettingsPage() {
           {/* Change Password — all members */}
           <Link
             href="/settings/change-password"
-            className="block bg-surface rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-6 mb-4 hover:shadow-md hover:border-gray-300 transition-all group"
+            className="block bg-surface rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6 mb-4 hover:shadow-md hover:border-slate-300 transition-all group"
           >
             <div className="flex items-center gap-4">
               <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
@@ -536,7 +536,7 @@ export default function SettingsPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <h3 className="font-semibold text-gray-900">Change Password</h3>
+                  <h3 className="font-semibold text-slate-900">Change Password</h3>
                   <span className="text-[10px] font-semibold uppercase tracking-wider text-primary bg-primary/10 px-2 py-0.5 rounded-md">
                     Security
                   </span>
@@ -545,7 +545,7 @@ export default function SettingsPage() {
                   Update your account password with email verification
                 </p>
               </div>
-              <ChevronRightIcon className="w-5 h-5 text-gray-300 group-hover:text-gray-500 transition-colors shrink-0" />
+              <ChevronRightIcon className="w-5 h-5 text-slate-300 group-hover:text-slate-500 transition-colors shrink-0" />
             </div>
           </Link>
 
@@ -558,7 +558,7 @@ export default function SettingsPage() {
                 </svg>
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-gray-900 mb-1">Leave Business</h3>
+                <h3 className="font-semibold text-slate-900 mb-1">Leave Business</h3>
                 <p className="text-xs text-neutral-light mb-3">
                   You will lose access to this business and all its data. You can request to rejoin later using the business key.
                 </p>
@@ -597,7 +597,7 @@ export default function SettingsPage() {
                       <button
                         onClick={() => setShowLeaveConfirm(false)}
                         disabled={leaving}
-                        className="px-4 py-2.5 bg-white text-gray-600 border border-gray-200 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors min-h-[44px]"
+                        className="px-4 py-2.5 bg-white text-slate-600 border border-slate-200 rounded-xl text-sm font-medium hover:bg-slate-50 transition-colors min-h-[44px]"
                       >
                         Cancel
                       </button>
@@ -646,7 +646,7 @@ export default function SettingsPage() {
                       <button
                         onClick={() => { setShowDeleteConfirm(false); setDeleteInput('') }}
                         disabled={deleting}
-                        className="px-4 py-3 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors min-h-[44px]"
+                        className="px-4 py-3 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors min-h-[44px]"
                       >
                         Cancel
                       </button>

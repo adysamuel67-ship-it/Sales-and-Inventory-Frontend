@@ -28,7 +28,7 @@ export function StatCardsSkeleton({ count = 4 }: { count?: number }) {
 
 export function ListSkeleton({ rows = 5, className = 'h-14 rounded-xl' }: { rows?: number; className?: string }) {
   return (
-    <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-5">
+    <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-5">
       <div className="space-y-4">
         {Array.from({ length: rows }).map((_, i) => (
           <Skeleton key={i} className={className} />

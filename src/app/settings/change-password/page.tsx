@@ -10,12 +10,12 @@ import { useAuth } from '@/lib/auth'
 import { authAPI } from '@/lib/api'
 
 const inputCls =
-  'w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]'
+  'w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]'
 
 function PasswordCheck({ met, label }: { met: boolean; label: string }) {
   return (
-    <li className={`flex items-center gap-1.5 text-xs font-medium ${met ? 'text-success' : 'text-gray-400'}`}>
-      <CheckCircleIcon className={`w-4 h-4 ${met ? 'text-success' : 'text-gray-300'}`} />
+    <li className={`flex items-center gap-1.5 text-xs font-medium ${met ? 'text-success' : 'text-slate-400'}`}>
+      <CheckCircleIcon className={`w-4 h-4 ${met ? 'text-success' : 'text-slate-300'}`} />
       {label}
     </li>
   )
@@ -237,15 +237,15 @@ export default function ChangePasswordPage() {
           </div>
         )}
 
-        <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-          <div className="px-5 sm:px-6 py-5 border-b border-gray-200 bg-primary/5 flex items-center gap-4">
+        <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="px-5 sm:px-6 py-5 border-b border-slate-200 bg-primary/5 flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
               <LockIcon className="w-6 h-6 text-primary" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-900">Account Security</h2>
+              <h2 className="text-lg font-bold text-slate-900">Account Security</h2>
               <p className="text-xs text-neutral-light mt-0.5">
-                We&apos;ll send a one-time code to <span className="font-medium text-gray-600">{email}</span> to confirm it&apos;s really you.
+                We&apos;ll send a one-time code to <span className="font-medium text-slate-600">{email}</span> to confirm it&apos;s really you.
               </p>
             </div>
           </div>
@@ -270,17 +270,17 @@ export default function ChangePasswordPage() {
                             ? 'bg-success text-white'
                             : active
                             ? 'bg-primary text-white ring-4 ring-primary/15'
-                            : 'bg-gray-100 text-gray-400'
+                            : 'bg-slate-100 text-slate-400'
                         }`}
                       >
                         {done ? <CheckCircleIcon className="w-4 h-4" /> : s.id}
                       </span>
-                      <span className={`text-xs font-semibold ${active ? 'text-gray-900' : 'text-gray-500'}`}>
+                      <span className={`text-xs font-semibold ${active ? 'text-slate-900' : 'text-slate-500'}`}>
                         {s.label}
                       </span>
                     </button>
                     {i < steps.length - 1 && (
-                      <div className={`flex-1 h-px mx-3 ${done ? 'bg-success' : 'bg-gray-200'}`} />
+                      <div className={`flex-1 h-px mx-3 ${done ? 'bg-success' : 'bg-slate-200'}`} />
                     )}
                   </div>
                 )
@@ -292,7 +292,7 @@ export default function ChangePasswordPage() {
             {step === 1 && (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Current Password</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Current Password</label>
                   <input
                     type="password"
                     value={oldPassword}
@@ -326,7 +326,7 @@ export default function ChangePasswordPage() {
             {step === 2 && (
               <div className="space-y-5">
                 <div>
-                  <p className="text-sm font-medium text-gray-900 mb-1.5">Enter Verification Code</p>
+                  <p className="text-sm font-medium text-slate-900 mb-1.5">Enter Verification Code</p>
                   <p className="text-xs text-neutral-light mb-3">
                     Enter the 7-digit code sent to {email}
                     {resendTimer > 0 && (
@@ -352,7 +352,7 @@ export default function ChangePasswordPage() {
                         className={`w-10 h-12 sm:w-12 text-center text-lg font-bold rounded-xl border-2 outline-none transition-all ${
                           otp[i]
                             ? 'border-primary bg-primary-light text-primary'
-                            : 'border-gray-200 bg-gray-50 focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/20'
+                            : 'border-slate-200 bg-slate-50 focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/20'
                         }`}
                       />
                     ))}
@@ -389,7 +389,7 @@ export default function ChangePasswordPage() {
             {step === 3 && (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">New Password</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">New Password</label>
                   <input
                     type="password"
                     value={newPassword}
@@ -405,7 +405,7 @@ export default function ChangePasswordPage() {
                   </ul>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Confirm New Password</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Confirm New Password</label>
                   <input
                     type="password"
                     value={confirmPassword}

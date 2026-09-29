@@ -172,7 +172,7 @@ export default function AdminBusinessesPage() {
     <DashboardLayout>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Business Management</h1>
+          <h1 className="text-2xl font-bold text-slate-900">Business Management</h1>
           <p className="text-sm text-neutral-light mt-1">All businesses on the platform</p>
         </div>
       </div>
@@ -200,11 +200,11 @@ export default function AdminBusinessesPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search businesses..."
-          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+          className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
         />
       </div>
 
-      <div className="bg-surface rounded-2xl border border-gray-200 shadow-sm">
+      <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm">
         {loading ? (
           <div className="px-5 py-12 text-center">
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
@@ -213,7 +213,7 @@ export default function AdminBusinessesPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-gray-200">
+                <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-slate-200">
                   <th className="text-left px-5 py-3 font-medium">Name</th>
                   <th className="text-left px-5 py-3 font-medium">ID</th>
                   <th className="text-center px-5 py-3 font-medium">Members</th>
@@ -228,21 +228,21 @@ export default function AdminBusinessesPage() {
                     <tr
                       key={biz.business_id}
                       onClick={() => openProfile(biz)}
-                      className="border-t border-gray-50 table-row-hover cursor-pointer hover:bg-primary/5 transition-colors"
+                      className="border-t border-slate-50 table-row-hover cursor-pointer hover:bg-primary/5 transition-colors"
                     >
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center text-sm font-bold shrink-0">
                             {biz.name?.charAt(0)?.toUpperCase() || '?'}
                           </div>
-                          <span className="font-medium text-gray-900">{biz.name}</span>
+                          <span className="font-medium text-slate-900">{biz.name}</span>
                         </div>
                       </td>
                       <td className="px-5 py-3.5 text-neutral-light">#{biz.business_id}</td>
                       <td className="px-5 py-3.5 text-center text-neutral-light">{biz.members}</td>
                       <td className="px-5 py-3.5 text-center">
                         <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
-                          isActive ? 'bg-success-light text-success' : 'bg-gray-100 text-gray-600'
+                          isActive ? 'bg-success-light text-success' : 'bg-slate-100 text-slate-600'
                         }`}>
                           {isActive ? 'Active' : 'Inactive'}
                         </span>
@@ -275,13 +275,13 @@ export default function AdminBusinessesPage() {
             className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-2xl flex items-center justify-between">
-              <h3 className="font-semibold text-gray-900">Business Profile</h3>
+            <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 rounded-t-2xl flex items-center justify-between">
+              <h3 className="font-semibold text-slate-900">Business Profile</h3>
               <button
                 onClick={() => setShowProfile(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
               >
-                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
@@ -293,12 +293,12 @@ export default function AdminBusinessesPage() {
                   {profileBiz.name?.charAt(0)?.toUpperCase() || '?'}
                 </div>
                 <div>
-                  <h4 className="text-lg font-semibold text-gray-900">{profileBiz.name}</h4>
+                  <h4 className="text-lg font-semibold text-slate-900">{profileBiz.name}</h4>
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
                       profileBiz.is_active !== false
                         ? 'bg-success-light text-success'
-                        : 'bg-gray-100 text-gray-500'
+                        : 'bg-slate-100 text-slate-500'
                     }`}>
                       {profileBiz.is_active !== false ? 'Active' : 'Inactive'}
                     </span>
@@ -316,15 +316,15 @@ export default function AdminBusinessesPage() {
                   <div className="grid grid-cols-2 gap-3 mb-6">
                     <div className="bg-surfaceAlt rounded-xl p-4">
                       <p className="text-xs text-neutral-light mb-1">Members</p>
-                      <p className="text-lg font-semibold text-gray-900">{profileMembers.length}</p>
+                      <p className="text-lg font-semibold text-slate-900">{profileMembers.length}</p>
                     </div>
                     <div className="bg-surfaceAlt rounded-xl p-4">
                       <p className="text-xs text-neutral-light mb-1">Products</p>
-                      <p className="text-lg font-semibold text-gray-900">{profileProductCount ?? '---'}</p>
+                      <p className="text-lg font-semibold text-slate-900">{profileProductCount ?? '---'}</p>
                     </div>
                     <div className="bg-surfaceAlt rounded-xl p-4">
                       <p className="text-xs text-neutral-light mb-1">Total Sales</p>
-                      <p className="text-lg font-semibold text-gray-900">
+                      <p className="text-lg font-semibold text-slate-900">
                         {profileSalesTotal !== null ? `GH₵${profileSalesTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '---'}
                       </p>
                     </div>
@@ -338,9 +338,9 @@ export default function AdminBusinessesPage() {
 
                   {profileBusinessKey && (
                     <div className="mb-6">
-                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Business Key</p>
-                      <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-xl">
-                        <code className="flex-1 text-sm text-gray-900 bg-white px-3 py-2 rounded-lg border border-gray-300 truncate">
+                      <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">Business Key</p>
+                      <div className="flex items-center gap-2 p-3 bg-slate-50 rounded-xl">
+                        <code className="flex-1 text-sm text-slate-900 bg-white px-3 py-2 rounded-lg border border-slate-300 truncate">
                           {profileBusinessKey}
                         </code>
                         <button
@@ -367,7 +367,7 @@ export default function AdminBusinessesPage() {
 
                   {profileMembers.length > 0 && (
                     <div>
-                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Members</p>
+                      <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">Members</p>
                       <div className="space-y-2">
                         {profileMembers.map((m) => (
                           <div key={m.user_id} className="flex items-center justify-between py-2.5 px-3 bg-surfaceAlt rounded-lg">
@@ -376,14 +376,14 @@ export default function AdminBusinessesPage() {
                                 {m.name?.charAt(0)?.toUpperCase() || '?'}
                               </div>
                               <div>
-                                <p className="text-sm font-medium text-gray-900">{m.name}</p>
+                                <p className="text-sm font-medium text-slate-900">{m.name}</p>
                                 <p className="text-xs text-neutral-light">{m.email}</p>
                               </div>
                             </div>
                             <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
                               m.role === 'admin' ? 'bg-primary/10 text-primary'
                                 : m.role === 'manager' ? 'bg-warning-light text-warning'
-                                : 'bg-gray-100 text-gray-600'
+                                : 'bg-slate-100 text-slate-600'
                             }`}>
                               {m.role}
                             </span>
@@ -400,7 +400,7 @@ export default function AdminBusinessesPage() {
               )}
             </div>
 
-            <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 rounded-b-2xl flex items-center gap-3">
+            <div className="sticky bottom-0 bg-white border-t border-slate-200 px-6 py-4 rounded-b-2xl flex items-center gap-3">
               <button
                 onClick={() => {
                   router.push(`/business/${profileBiz.business_id}/dashboard`)
@@ -417,7 +417,7 @@ export default function AdminBusinessesPage() {
               </button>
               <button
                 onClick={() => setShowProfile(false)}
-                className="px-4 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors min-h-[44px]"
+                className="px-4 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors min-h-[44px]"
               >
                 Close
               </button>

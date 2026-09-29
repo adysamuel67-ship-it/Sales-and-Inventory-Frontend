@@ -312,19 +312,19 @@ export default function ProductsPage() {
                 {exporting ? 'Exporting...' : 'Export'}
               </Button>
               {showExportDropdown && (
-                <div className="absolute right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 w-40 py-1">
+                <div className="absolute right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-50 w-40 py-1">
                   <button
                     onClick={() => handleExport('csv')}
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2"
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-slate-50 flex items-center gap-2"
                   >
-                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
+                    <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                     </svg>
                     CSV
                   </button>
                   <button
                     onClick={() => handleExport('excel')}
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2"
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-slate-50 flex items-center gap-2"
                   >
                     <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
@@ -355,12 +355,12 @@ export default function ProductsPage() {
       {/* Stats cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'Total Products', value: stats.total, color: 'text-gray-900' },
-          { label: 'Low Stock', value: stats.lowStock, color: stats.lowStock > 0 ? 'text-warning' : 'text-gray-900' },
-          { label: 'Out of Stock', value: stats.outOfStock, color: stats.outOfStock > 0 ? 'text-danger' : 'text-gray-900' },
+          { label: 'Total Products', value: stats.total, color: 'text-slate-900' },
+          { label: 'Low Stock', value: stats.lowStock, color: stats.lowStock > 0 ? 'text-warning' : 'text-slate-900' },
+          { label: 'Out of Stock', value: stats.outOfStock, color: stats.outOfStock > 0 ? 'text-danger' : 'text-slate-900' },
           { label: 'Inventory Value', value: formatCedi(stats.totalValue), color: 'text-primary' },
         ].map((s, i) => (
-          <div key={i} className="bg-surface rounded-2xl border border-gray-200 shadow-sm p-5">
+          <div key={i} className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-5">
             <p className="text-xs font-medium text-neutral-light">{s.label}</p>
             <p className={`text-xl sm:text-2xl font-bold mt-1 ${s.color}`}>{s.value}</p>
           </div>
@@ -368,25 +368,25 @@ export default function ProductsPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl border border-gray-200 p-3 sm:p-4">
+      <div className="bg-white rounded-xl border border-slate-200 p-3 sm:p-4">
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search products..."
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+            className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
           />
           <select
             value={selectedCategory}
             onChange={e => setSelectedCategory(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
           >
             <option value="">All Categories</option>
             {categories.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
           <button
             onClick={() => setLowStockOnly(!lowStockOnly)}
-            className={`px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${lowStockOnly ? 'bg-warning-light border-warning text-warning' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+            className={`px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${lowStockOnly ? 'bg-warning-light border-warning text-warning' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
           >
             Low Stock
           </button>
@@ -395,13 +395,13 @@ export default function ProductsPage() {
 
       {/* Bulk selection bar */}
       {canEdit && !loading && displayed.length > 0 && (
-        <div className={`flex flex-wrap items-center gap-3 bg-white rounded-xl border p-3 transition-colors ${selectMode || selected.size > 0 ? 'border-primary/40 ring-2 ring-primary/10' : 'border-gray-200'}`}>
-          <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer select-none">
+        <div className={`flex flex-wrap items-center gap-3 bg-white rounded-xl border p-3 transition-colors ${selectMode || selected.size > 0 ? 'border-primary/40 ring-2 ring-primary/10' : 'border-slate-200'}`}>
+          <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer select-none">
             <input
               type="checkbox"
               checked={displayed.length > 0 && displayed.every((p: any) => selected.has(p.product_id))}
               onChange={toggleSelectAll}
-              className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary/30"
+              className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary/30"
             />
             <span className="font-medium">Select all</span>
           </label>
@@ -409,7 +409,7 @@ export default function ProductsPage() {
           {selected.size > 0 && (
             <>
               <span className="text-sm text-neutral-light">
-                <span className="font-semibold text-gray-900">{selected.size}</span> selected
+                <span className="font-semibold text-slate-900">{selected.size}</span> selected
               </span>
               <div className="ml-auto flex items-center gap-2">
                 <Button
@@ -472,10 +472,10 @@ export default function ProductsPage() {
 
       {/* Desktop table (md+) */}
       {!loading && displayed.length > 0 && (
-        <div className="hidden md:block bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="hidden md:block bg-white rounded-xl border border-slate-200 overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-200 text-left text-xs text-neutral-light uppercase tracking-wider">
+              <tr className="border-b border-slate-200 text-left text-xs text-neutral-light uppercase tracking-wider">
                 {canEdit && (
                   <th className="px-4 py-3 w-10">
                     <input
@@ -483,7 +483,7 @@ export default function ProductsPage() {
                       checked={displayed.length > 0 && displayed.every((p: any) => selected.has(p.product_id))}
                       onChange={toggleSelectAll}
                       onClick={(e) => e.stopPropagation()}
-                      className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary/30"
+                      className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary/30"
                     />
                   </th>
                 )}
@@ -496,7 +496,7 @@ export default function ProductsPage() {
                 ].map(col => (
                   <th
                     key={col.key}
-                    className="px-4 py-3 cursor-pointer hover:text-gray-900 transition-colors select-none"
+                    className="px-4 py-3 cursor-pointer hover:text-slate-900 transition-colors select-none"
                     onClick={() => handleSort(col.key)}
                   >
                     {col.label} {sortKey === col.key ? (sortAsc ? '↑' : '↓') : ''}
@@ -512,7 +512,7 @@ export default function ProductsPage() {
                 return (
                   <tr
                     key={p.product_id}
-                    className={`border-b border-gray-50 hover:bg-gray-50/50 cursor-pointer transition-colors ${selected.has(p.product_id) ? 'bg-primary-light/60' : ''}`}
+                    className={`border-b border-slate-50 hover:bg-slate-50/50 cursor-pointer transition-colors ${selected.has(p.product_id) ? 'bg-primary-light/60' : ''}`}
                     onClick={() => setDetailProduct(p)}
                   >
                     {canEdit && (
@@ -522,34 +522,34 @@ export default function ProductsPage() {
                           checked={selected.has(p.product_id)}
                           onChange={() => toggleSelect(p.product_id)}
                           onClick={(e) => e.stopPropagation()}
-                          className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary/30"
+                          className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary/30"
                         />
                       </td>
                     )}
                     <td className="px-4 py-3">
-                      <div className="font-medium text-gray-900">{p.name}</div>
+                      <div className="font-medium text-slate-900">{p.name}</div>
                       {p.sku && <div className="text-xs text-neutral-light font-mono mt-0.5">SKU: {p.sku}</div>}
                       {p.is_active === false && (
-                        <span className="inline-block px-1.5 py-0.5 mt-1 text-[10px] font-medium uppercase tracking-wider bg-gray-100 text-gray-500 rounded">Inactive</span>
+                        <span className="inline-block px-1.5 py-0.5 mt-1 text-[10px] font-medium uppercase tracking-wider bg-slate-100 text-slate-500 rounded">Inactive</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 font-medium text-gray-900">{formatCedi(p.price)}</td>
-                    <td className="px-4 py-3 text-gray-600">{formatCedi(p.cost_price)}</td>
+                    <td className="px-4 py-3 font-medium text-slate-900">{formatCedi(p.price)}</td>
+                    <td className="px-4 py-3 text-slate-600">{formatCedi(p.cost_price)}</td>
                     <td className="px-4 py-3">
-                      <span className={`font-medium ${isOut ? 'text-danger' : isLow ? 'text-warning' : 'text-gray-900'}`}>
+                      <span className={`font-medium ${isOut ? 'text-danger' : isLow ? 'text-warning' : 'text-slate-900'}`}>
                         {p.quantity}
                       </span>
                       <span className="text-neutral-light ml-1 text-xs">{p.unit}</span>
                       {isLow && !isOut && <span className="ml-1.5 text-xs text-warning">⚠</span>}
                     </td>
-                    <td className="px-4 py-3 text-gray-600">{p.category || '—'}</td>
+                    <td className="px-4 py-3 text-slate-600">{p.category || '—'}</td>
                     <td className="px-4 py-3 text-right">
                       {canEdit && (
                         <div className="flex items-center justify-end gap-1">
                           <button
                             onClick={(e) => openRestock(p, e)}
                             title="Restock"
-                            className="p-1.5 rounded-lg hover:bg-success-light text-gray-500 hover:text-success transition-colors"
+                            className="p-1.5 rounded-lg hover:bg-success-light text-slate-500 hover:text-success transition-colors"
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 15a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5zm10.5 0a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5zM6.75 15V12a6 6 0 017.032-5.888l2.25-3.038a.75.75 0 011.006-.275l1.5.866a.75.75 0 01.274 1.006l-2.25 3.038A6 6 0 0118 12v3M3 21h18" />
@@ -559,7 +559,7 @@ export default function ProductsPage() {
                           <button
                             onClick={(e) => handleToggleActive(p, e)}
                             title={p.is_active === false ? 'Activate' : 'Deactivate'}
-                            className={`p-1.5 rounded-lg transition-colors ${p.is_active === false ? 'text-gray-400 hover:bg-success-light hover:text-success' : 'text-gray-500 hover:bg-warning-light hover:text-warning'}`}
+                            className={`p-1.5 rounded-lg transition-colors ${p.is_active === false ? 'text-slate-400 hover:bg-success-light hover:text-success' : 'text-slate-500 hover:bg-warning-light hover:text-warning'}`}
                           >
                             {p.is_active === false ? (
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
@@ -572,12 +572,12 @@ export default function ProductsPage() {
                               </svg>
                             )}
                           </button>
-                          <button onClick={(e) => openEdit(p, e)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors">
+                          <button onClick={(e) => openEdit(p, e)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors">
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
                             </svg>
                           </button>
-                          <button onClick={(e) => { e.stopPropagation(); setDeleteConfirm({ open: true, product: p }) }} className="p-1.5 rounded-lg hover:bg-danger-light text-gray-500 hover:text-danger transition-colors">
+                          <button onClick={(e) => { e.stopPropagation(); setDeleteConfirm({ open: true, product: p }) }} className="p-1.5 rounded-lg hover:bg-danger-light text-slate-500 hover:text-danger transition-colors">
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
                             </svg>
@@ -602,7 +602,7 @@ export default function ProductsPage() {
             return (
               <div
                 key={p.product_id}
-                className={`bg-white rounded-xl border border-gray-200 p-4 cursor-pointer hover:shadow-sm transition-shadow ${selected.has(p.product_id) ? 'border-primary/50 ring-2 ring-primary/10' : ''}`}
+                className={`bg-white rounded-xl border border-slate-200 p-4 cursor-pointer hover:shadow-sm transition-shadow ${selected.has(p.product_id) ? 'border-primary/50 ring-2 ring-primary/10' : ''}`}
                 onClick={() => setDetailProduct(p)}
               >
                 <div className="flex items-start justify-between gap-2">
@@ -612,11 +612,11 @@ export default function ProductsPage() {
                       checked={selected.has(p.product_id)}
                       onChange={() => toggleSelect(p.product_id)}
                       onClick={(e) => e.stopPropagation()}
-                      className="w-4 h-4 mt-1 rounded border-gray-300 text-primary focus:ring-primary/30 shrink-0"
+                      className="w-4 h-4 mt-1 rounded border-slate-300 text-primary focus:ring-primary/30 shrink-0"
                     />
                   )}
                   <div className="min-w-0 flex-1">
-                    <h3 className="font-medium text-gray-900 truncate">{p.name}</h3>
+                    <h3 className="font-medium text-slate-900 truncate">{p.name}</h3>
                     {p.sku && <p className="text-xs text-neutral-light font-mono mt-0.5">SKU: {p.sku}</p>}
                   </div>
                   {isOut ? (
@@ -624,27 +624,27 @@ export default function ProductsPage() {
                   ) : isLow ? (
                     <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-warning-light text-warning shrink-0">Low</span>
                   ) : p.is_active === false ? (
-                    <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500 shrink-0">Inactive</span>
+                    <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-500 shrink-0">Inactive</span>
                   ) : null}
                 </div>
                 <div className="mt-3 grid grid-cols-3 gap-2 text-sm">
                   <div>
                     <p className="text-xs text-neutral-light">Price</p>
-                    <p className="font-medium text-gray-900">{formatCedi(p.price)}</p>
+                    <p className="font-medium text-slate-900">{formatCedi(p.price)}</p>
                   </div>
                   <div>
                     <p className="text-xs text-neutral-light">Stock</p>
-                    <p className={`font-medium ${isOut ? 'text-danger' : isLow ? 'text-warning' : 'text-gray-900'}`}>
+                    <p className={`font-medium ${isOut ? 'text-danger' : isLow ? 'text-warning' : 'text-slate-900'}`}>
                       {p.quantity} <span className="text-xs font-normal text-neutral-light">{p.unit}</span>
                     </p>
                   </div>
                   <div>
                     <p className="text-xs text-neutral-light">Category</p>
-                    <p className="font-medium text-gray-900">{p.category || '—'}</p>
+                    <p className="font-medium text-slate-900">{p.category || '—'}</p>
                   </div>
                 </div>
                 {canEdit && (
-                  <div className="mt-3 pt-3 border-t border-gray-200 grid grid-cols-2 gap-2">
+                  <div className="mt-3 pt-3 border-t border-slate-200 grid grid-cols-2 gap-2">
                     <button onClick={(e) => openEdit(p, e)} className="py-2 text-xs font-medium text-primary bg-primary-light rounded-lg hover:bg-primary/15 transition-colors">Edit</button>
                     <button onClick={(e) => openRestock(p, e)} className="py-2 text-xs font-medium text-success bg-success-light rounded-lg hover:bg-success/15 transition-colors">Restock</button>
                     <button onClick={(e) => handleToggleActive(p, e)} className={`py-2 text-xs font-medium rounded-lg transition-colors ${p.is_active === false ? 'text-success bg-success-light hover:bg-success/15' : 'text-warning bg-warning-light hover:bg-warning/15'}`}>
@@ -703,16 +703,16 @@ export default function ProductsPage() {
           <div className="absolute inset-0 bg-black/40" />
           <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4">
             <div>
-              <h3 className="font-semibold text-gray-900">Restock Product</h3>
+              <h3 className="font-semibold text-slate-900">Restock Product</h3>
               <p className="text-sm text-neutral-light mt-1">
-                Add stock to <span className="font-medium text-gray-900">{restockProduct.name}</span>.
+                Add stock to <span className="font-medium text-slate-900">{restockProduct.name}</span>.
                 Current quantity:{' '}
-                <span className="font-medium text-gray-900">{restockProduct.quantity || 0}</span>
+                <span className="font-medium text-slate-900">{restockProduct.quantity || 0}</span>
               </p>
             </div>
             <form onSubmit={handleRestock} className="space-y-4">
               <div>
-                <label htmlFor="restock-qty" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="restock-qty" className="block text-sm font-medium text-slate-700 mb-1">
                   Quantity to add
                 </label>
                 <input
@@ -722,14 +722,14 @@ export default function ProductsPage() {
                   value={restockQty}
                   onChange={(e) => setRestockQty(e.target.value)}
                   placeholder="e.g. 50"
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+                  className="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
                 />
               </div>
               <div className="flex items-center gap-3 pt-1">
                 <button
                   type="button"
                   onClick={() => setShowRestockModal(false)}
-                  className="flex-1 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors"
+                  className="flex-1 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors"
                 >
                   Cancel
                 </button>
@@ -751,35 +751,35 @@ export default function ProductsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowAdd(false)}>
           <div className="absolute inset-0 bg-black/40" />
           <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
-              <h3 className="font-semibold text-gray-900">{editProduct ? 'Edit Product' : 'Add Product'}</h3>
-              <button onClick={() => setShowAdd(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors">
-                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
+              <h3 className="font-semibold text-slate-900">{editProduct ? 'Edit Product' : 'Add Product'}</h3>
+              <button onClick={() => setShowAdd(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors">
+                <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
             <form onSubmit={saveProduct} className="px-6 py-5 space-y-4">
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Name *</label>
-                <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+                <label className="block text-xs font-medium text-slate-700 mb-1">Name *</label>
+                <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Selling Price *</label>
-                  <input type="number" step="0.01" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} required className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+                  <label className="block text-xs font-medium text-slate-700 mb-1">Selling Price *</label>
+                  <input type="number" step="0.01" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} required className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Cost Price *</label>
-                  <input type="number" step="0.01" value={form.cost_price} onChange={e => setForm({ ...form, cost_price: e.target.value })} required className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+                  <label className="block text-xs font-medium text-slate-700 mb-1">Cost Price *</label>
+                  <input type="number" step="0.01" value={form.cost_price} onChange={e => setForm({ ...form, cost_price: e.target.value })} required className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Quantity *</label>
-                  <input type="number" value={form.quantity} onChange={e => setForm({ ...form, quantity: e.target.value })} required className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+                  <label className="block text-xs font-medium text-slate-700 mb-1">Quantity *</label>
+                  <input type="number" value={form.quantity} onChange={e => setForm({ ...form, quantity: e.target.value })} required className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Unit</label>
-                  <select value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+                  <label className="block text-xs font-medium text-slate-700 mb-1">Unit</label>
+                  <select value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
                     <option value="units">Units</option>
                     <option value="kg">Kilograms</option>
                     <option value="g">Grams</option>
@@ -792,24 +792,24 @@ export default function ProductsPage() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Low Stock Threshold</label>
-                  <input type="number" value={form.low_stock_threshold} onChange={e => setForm({ ...form, low_stock_threshold: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+                  <label className="block text-xs font-medium text-slate-700 mb-1">Low Stock Threshold</label>
+                  <input type="number" value={form.low_stock_threshold} onChange={e => setForm({ ...form, low_stock_threshold: e.target.value })} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Category</label>
-                  <input value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} placeholder="e.g. Beverages" className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+                  <label className="block text-xs font-medium text-slate-700 mb-1">Category</label>
+                  <input value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} placeholder="e.g. Beverages" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">SKU</label>
-                <input value={form.sku} onChange={e => setForm({ ...form, sku: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+                <label className="block text-xs font-medium text-slate-700 mb-1">SKU</label>
+                <input value={form.sku} onChange={e => setForm({ ...form, sku: e.target.value })} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Description</label>
-                <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} rows={3} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none" />
+                <label className="block text-xs font-medium text-slate-700 mb-1">Description</label>
+                <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} rows={3} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none" />
               </div>
               <div className="flex gap-2 pt-2">
-                <button type="button" onClick={() => setShowAdd(false)} className="flex-1 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors">Cancel</button>
+                <button type="button" onClick={() => setShowAdd(false)} className="flex-1 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors">Cancel</button>
                 <button type="submit" disabled={saving} className="flex-1 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-50">
                   {saving ? 'Saving...' : editProduct ? 'Update' : 'Add Product'}
                 </button>
@@ -829,10 +829,10 @@ export default function ProductsPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
               </svg>
             </div>
-            <h3 className="font-semibold text-gray-900 mb-1">Delete Product</h3>
+            <h3 className="font-semibold text-slate-900 mb-1">Delete Product</h3>
             <p className="text-sm text-neutral-light mb-5">Are you sure you want to delete <strong>{deleteConfirm.product?.name}</strong>? This cannot be undone.</p>
             <div className="flex gap-2">
-              <button onClick={() => setDeleteConfirm({ open: false, product: null })} className="flex-1 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors">Cancel</button>
+              <button onClick={() => setDeleteConfirm({ open: false, product: null })} className="flex-1 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors">Cancel</button>
               <button onClick={handleDelete} className="flex-1 py-2.5 bg-danger text-white rounded-xl text-sm font-medium hover:bg-red-600 transition-colors">Delete</button>
             </div>
           </div>
@@ -849,12 +849,12 @@ export default function ProductsPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
               </svg>
             </div>
-            <h3 className="font-semibold text-gray-900 mb-1">Delete Products</h3>
+            <h3 className="font-semibold text-slate-900 mb-1">Delete Products</h3>
             <p className="text-sm text-neutral-light mb-5">
               Are you sure you want to delete <strong>{selected.size}</strong> selected product{selected.size > 1 ? 's' : ''}? This cannot be undone.
             </p>
             <div className="flex gap-2">
-              <button onClick={() => setBulkDeleteConfirm(false)} className="flex-1 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors">Cancel</button>
+              <button onClick={() => setBulkDeleteConfirm(false)} className="flex-1 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors">Cancel</button>
               <button onClick={handleBulkDelete} className="flex-1 py-2.5 bg-danger text-white rounded-xl text-sm font-medium hover:bg-red-600 transition-colors">
                 Delete {selected.size}
               </button>

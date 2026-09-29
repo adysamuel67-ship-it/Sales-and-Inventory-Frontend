@@ -149,13 +149,13 @@ export default function ForgotPasswordPage() {
   if (step === 'success') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background px-4">
-        <div className="w-full max-w-md bg-surface rounded-2xl border border-gray-200 shadow-sm p-8 text-center">
+        <div className="w-full max-w-md bg-surface rounded-2xl border border-slate-200 shadow-sm p-8 text-center">
           <div className="w-14 h-14 bg-success-light rounded-2xl flex items-center justify-center mx-auto mb-5">
             <svg className="w-7 h-7 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h1 className="text-xl font-bold text-gray-900 mb-2">Password Reset Successful</h1>
+          <h1 className="text-xl font-bold text-slate-900 mb-2">Password Reset Successful</h1>
           <p className="text-sm text-neutral-light mb-6">
             Your password has been reset successfully. You can now sign in with your new password.
           </p>
@@ -204,7 +204,7 @@ export default function ForgotPasswordPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Verification Code</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">Verification Code</label>
             <div className="flex justify-center gap-2 sm:gap-3" onPaste={handlePaste}>
               {[0,1,2,3,4,5,6].map((i) => (
                 <input
@@ -219,7 +219,7 @@ export default function ForgotPasswordPage() {
                   className={`w-10 h-12 sm:w-12 sm:h-14 text-center text-lg sm:text-xl font-bold rounded-xl border-2 outline-none transition-all ${
                     code[i]
                       ? 'border-primary bg-primary-light text-primary'
-                      : 'border-gray-200 bg-gray-50 focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/20'
+                      : 'border-slate-200 bg-slate-50 focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/20'
                   }`}
                 />
               ))}
@@ -227,7 +227,7 @@ export default function ForgotPasswordPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">New Password</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">New Password</label>
             <div className="relative">
               <input
                 type={showPassword ? 'text' : 'password'}
@@ -235,13 +235,13 @@ export default function ForgotPasswordPage() {
                 minLength={8}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 pr-11 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-gray-50 focus:bg-white"
+                className="w-full px-4 py-3 pr-11 rounded-xl border border-slate-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-slate-50 focus:bg-white"
                 placeholder="Min 8 characters, 1 uppercase, 1 number"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-light hover:text-gray-600 transition-colors p-1"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-light hover:text-slate-600 transition-colors p-1"
               >
                 {showPassword ? (
                   <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -262,7 +262,7 @@ export default function ForgotPasswordPage() {
                     <div
                       key={i}
                       className={`h-1 flex-1 rounded-full transition-all duration-300 ${
-                        i <= passwordStrength.level ? passwordStrength.color : 'bg-gray-200'
+                        i <= passwordStrength.level ? passwordStrength.color : 'bg-slate-200'
                       }`}
                     />
                   ))}
@@ -318,7 +318,7 @@ export default function ForgotPasswordPage() {
             <button
               type="button"
               onClick={() => setStep('email')}
-              className="text-sm text-neutral-light hover:text-gray-700 transition-colors flex items-center justify-center gap-1.5 mx-auto"
+              className="text-sm text-neutral-light hover:text-slate-700 transition-colors flex items-center justify-center gap-1.5 mx-auto"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -352,13 +352,13 @@ export default function ForgotPasswordPage() {
         )}
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Email Address</label>
+          <label className="block text-sm font-medium text-slate-700 mb-1.5">Email Address</label>
           <input
             type="email"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-gray-50 focus:bg-white"
+            className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-slate-50 focus:bg-white"
             placeholder="you@example.com"
           />
         </div>
