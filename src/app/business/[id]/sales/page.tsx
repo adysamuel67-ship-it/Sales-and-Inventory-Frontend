@@ -12,6 +12,7 @@ import PageHeader from '@/components/ui/PageHeader'
 import Alert from '@/components/ui/Alert'
 import Button from '@/components/ui/Button'
 import EmptyState from '@/components/ui/EmptyState'
+import ProductCombobox from '@/components/ui/ProductCombobox'
 import { PlusIcon, ChartIcon } from '@/components/ui/Icons'
 type SaleRecord = MappedSale
 
@@ -386,57 +387,83 @@ export default function SalesPage() {
 
       {/* Record Sale Form */}
       {showForm && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6">
-          <h3 className="font-semibold text-slate-900 mb-4">Record New Sale</h3>
-          <form onSubmit={handleCreate} className="space-y-4">
+        <div className="surface-card animate-fade-up p-4 sm:p-6">
+          <div className="mb-5 flex items-start justify-between gap-3">
+            <div>
+              <h2 className="text-section-title text-slate-900">Record New Sale</h2>
+              <p className="mt-0.5 text-xs text-neutral-light">
+                Search your inventory and set a quantity for each item.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowForm(false)}
+              aria-label="Close sale form"
+              className="-mr-1 -mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-neutral-light transition-colors hover:bg-slate-100 hover:text-slate-900"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <form onSubmit={handleCreate} className="space-y-5">
             <div className="space-y-3">
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Products</label>
+              <label className="mb-1.5 block text-[13px] font-medium text-slate-700">Products</label>
               {lineItems.map((item, idx) => {
                 const selectedIds = lineItems.filter((li) => li.product_id).map((li) => li.product_id)
                 const availableProducts = products.filter((p) => !selectedIds.includes(String(p.product_id)) || p.product_id === parseInt(item.product_id))
                 const currentItemProduct = products.find((p) => p.product_id === parseInt(item.product_id))
                 return (
-                  <div key={idx} className="flex items-center gap-2">
-                    <select
+                  <div key={idx} className="flex flex-col gap-2 sm:flex-row sm:items-start">
+                    <ProductCombobox
+                      id={`line-product-${idx}`}
+                      className="flex-1"
+                      products={availableProducts}
                       value={item.product_id}
-                      onChange={(e) => {
+                      onChange={(pid) => {
                         const updated = [...lineItems]
-                        updated[idx] = { ...updated[idx], product_id: e.target.value }
+                        updated[idx] = { ...updated[idx], product_id: pid }
                         setLineItems(updated)
                       }}
-                      className="flex-1 px-3 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-white min-h-[44px]"
-                    >
-                      <option value="">Select a product</option>
-                      {availableProducts.map((p) => (
-                        <option key={p.product_id} value={p.product_id}>
-                          {p.name} — {formatCedi(p.price ?? 0)} ({p.quantity ?? 0} in stock)
-                        </option>
-                      ))}
-                    </select>
-                    <input
-                      type="number"
-                      min="1"
-                      max={currentItemProduct?.quantity ?? undefined}
-                      value={item.quantity}
-                      onChange={(e) => {
-                        const updated = [...lineItems]
-                        updated[idx] = { ...updated[idx], quantity: e.target.value }
-                        setLineItems(updated)
-                      }}
-                      placeholder="Qty"
-                      className="w-20 px-3 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                      excludeIds={selectedIds}
+                      placeholder={idx === 0 ? 'Search products by name, SKU or category' : 'Search for another product'}
                     />
-                    {lineItems.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => setLineItems(lineItems.filter((_, i) => i !== idx))}
-                        className="shrink-0 w-10 h-10 rounded-xl flex items-center justify-center text-neutral-light hover:text-danger hover:bg-danger-light transition-colors"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    )}
+                    <div className="flex items-center gap-2">
+                      <div className="relative">
+                        <input
+                          id={`line-qty-${idx}`}
+                          type="number"
+                          min="1"
+                          max={currentItemProduct?.quantity ?? undefined}
+                          value={item.quantity}
+                          onChange={(e) => {
+                            const updated = [...lineItems]
+                            updated[idx] = { ...updated[idx], quantity: e.target.value }
+                            setLineItems(updated)
+                          }}
+                          placeholder="Qty"
+                          aria-label={`Quantity for ${currentItemProduct?.name || `item ${idx + 1}`}`}
+                          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-xs transition-all duration-150 placeholder:text-slate-400 hover:border-slate-400 focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/10 sm:w-20"
+                        />
+                        {currentItemProduct && (
+                          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-medium text-neutral-light">
+                            /{currentItemProduct.quantity ?? 0}
+                          </span>
+                        )}
+                      </div>
+                      {lineItems.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => setLineItems(lineItems.filter((_, i) => i !== idx))}
+                          aria-label={`Remove item ${idx + 1}`}
+                          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-neutral-light transition-colors hover:bg-rose-50 hover:text-danger"
+                        >
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
                   </div>
                 )
               })}
@@ -444,12 +471,20 @@ export default function SalesPage() {
                 const product = products.find((p) => p.product_id === parseInt(item.product_id))
                 return product && parseInt(item.quantity) > (product.quantity ?? 0)
               }) && (
-                <p className="text-xs text-danger">One or more items exceed available stock</p>
+                <p
+                  role="alert"
+                  className="flex items-center gap-1.5 text-xs font-medium text-danger"
+                >
+                  <svg className="h-3.5 w-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                    <path fillRule="evenodd" d="M18 10A8 8 0 112 10a8 8 0 0116 0zm-8-4a1 1 0 00-1 1v3a1 1 0 102 0V7a1 1 0 00-1-1zm-1 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                  </svg>
+                  One or more items exceed available stock
+                </p>
               )}
               <button
                 type="button"
                 onClick={() => setLineItems([...lineItems, { product_id: '', quantity: '' }])}
-                className="w-full py-2.5 rounded-xl border border-dashed border-slate-300 text-sm font-medium text-neutral-light hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-1.5"
+                className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 py-2.5 text-sm font-medium text-neutral-light transition-all duration-150 hover:border-primary hover:bg-primary-light/40 hover:text-primary"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { saleAPI, productAPI, customerAPI } from '@/lib/api'
 import { extractArray, normalizeProduct, MappedSale, formatCedi } from '@/lib/utils'
+import ProductCombobox from '@/components/ui/ProductCombobox'
 
 interface Props {
   sale: MappedSale
@@ -252,48 +253,55 @@ export default function SaleEditModal({ sale, businessId, onClose, onSaved }: Pr
                   const selectedIds = lineItems.filter((li) => li.product_id).map((li) => li.product_id)
                   const currentItemProduct = products.find((p) => p.product_id === parseInt(item.product_id))
                   return (
-                    <div key={idx} className="flex items-center gap-2">
-                      <select
+                    <div key={idx} className="flex flex-col gap-2 sm:flex-row sm:items-start">
+                      <ProductCombobox
+                        id={`edit-product-${idx}`}
+                        className="flex-1"
+                        products={allProductOptions}
                         value={item.product_id}
-                        onChange={(e) => {
+                        onChange={(pid) => {
                           const updated = [...lineItems]
-                          updated[idx] = { ...updated[idx], product_id: e.target.value }
+                          updated[idx] = { ...updated[idx], product_id: pid }
                           setLineItems(updated)
                         }}
-                        className="flex-1 px-3 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-white min-h-[44px]"
-                      >
-                        <option value="">Select a product</option>
-                        {allProductOptions
-                          .filter((p) => !selectedIds.includes(String(p.product_id)) || p.product_id === parseInt(item.product_id))
-                          .map((p) => (
-                            <option key={p.product_id} value={p.product_id}>
-                              {p.name} — {formatCedi(p.price ?? 0)} ({p.quantity ?? 0} in stock)
-                            </option>
-                          ))}
-                      </select>
-                      <input
-                        type="number"
-                        min="1"
-                        value={item.quantity}
-                        onChange={(e) => {
-                          const updated = [...lineItems]
-                          updated[idx] = { ...updated[idx], quantity: e.target.value }
-                          setLineItems(updated)
-                        }}
-                        placeholder="Qty"
-                        className="w-20 px-3 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                        excludeIds={selectedIds}
+                        placeholder="Search products by name, SKU or category"
                       />
-                      {lineItems.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => setLineItems(lineItems.filter((_, i) => i !== idx))}
-                          className="shrink-0 w-10 h-10 rounded-xl flex items-center justify-center text-neutral-light hover:text-danger hover:bg-danger-light transition-colors"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
-                      )}
+                      <div className="flex items-center gap-2">
+                        <div className="relative">
+                          <input
+                            id={`edit-qty-${idx}`}
+                            type="number"
+                            min="1"
+                            value={item.quantity}
+                            onChange={(e) => {
+                              const updated = [...lineItems]
+                              updated[idx] = { ...updated[idx], quantity: e.target.value }
+                              setLineItems(updated)
+                            }}
+                            placeholder="Qty"
+                            aria-label={`Quantity for ${currentItemProduct?.name || `item ${idx + 1}`}`}
+                            className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-xs transition-all duration-150 placeholder:text-slate-400 hover:border-slate-400 focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/10 sm:w-20"
+                          />
+                          {currentItemProduct && (
+                            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-medium text-neutral-light">
+                              /{currentItemProduct.quantity ?? 0}
+                            </span>
+                          )}
+                        </div>
+                        {lineItems.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => setLineItems(lineItems.filter((_, i) => i !== idx))}
+                            aria-label={`Remove item ${idx + 1}`}
+                            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-neutral-light transition-colors hover:bg-rose-50 hover:text-danger"
+                          >
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
                     </div>
                   )
                 })}

@@ -37,7 +37,8 @@ import KpiCard from '@/components/KpiCard'
 import RevenueChart from '@/components/RevenueChart'
 import RecentSales from '@/components/RecentSales'
 import LowStockAlerts from '@/components/LowStockAlerts'
-import { render, screen } from '@testing-library/react'
+import ProductCombobox from '@/components/ui/ProductCombobox'
+import { render, screen, fireEvent } from '@testing-library/react'
 
 describe('KpiCard', () => {
   const testIcon = <span data-testid="test-icon">ICON</span>
@@ -355,5 +356,115 @@ describe('Payment color mapping', () => {
   it('unknown payment falls back to gray', () => {
     const color = paymentColors['Cheque'] || 'bg-gray-100 text-gray-600'
     expect(color).toContain('gray')
+  })
+})
+
+describe('ProductCombobox', () => {
+  const products = [
+    { product_id: 1, name: 'Rice 50kg', price: 120, quantity: 8, sku: 'RC-50', category: 'Grains' },
+    { product_id: 2, name: 'Beans 1kg', price: 15, quantity: 40, sku: 'BN-1', category: 'Grains' },
+    { product_id: 3, name: 'Cooking Oil', price: 35, quantity: 0, category: 'Liquids' },
+    { product_id: 4, name: 'Tomato Paste', price: 22, quantity: 3, sku: 'TP-24', category: 'Canned' },
+  ]
+
+  function setup(props: Partial<React.ComponentProps<typeof ProductCombobox>> = {}) {
+    const onChange = jest.fn()
+    render(<ProductCombobox products={products} value="" onChange={onChange} {...props} />)
+    return { onChange, input: screen.getByRole('combobox') as HTMLInputElement }
+  }
+
+  it('starts closed and renders a search input', () => {
+    const { input } = setup()
+    expect(input).toBeTruthy()
+    expect(screen.queryByRole('listbox')).toBeNull()
+  })
+
+  it('opens the list on focus and shows all products', () => {
+    const { input } = setup()
+    fireEvent.focus(input)
+    expect(screen.getByRole('listbox')).toBeTruthy()
+    expect(screen.getByText('Rice 50kg')).toBeTruthy()
+    expect(screen.getByText('Beans 1kg')).toBeTruthy()
+  })
+
+  it('filters by product name as the user types', () => {
+    const { input } = setup()
+    fireEvent.focus(input)
+    fireEvent.change(input, { target: { value: 'bean' } })
+    expect(screen.getByText('Beans 1kg')).toBeTruthy()
+    expect(screen.queryByText('Rice 50kg')).toBeNull()
+  })
+
+  it('filters by SKU as well as name', () => {
+    const { input } = setup()
+    fireEvent.focus(input)
+    fireEvent.change(input, { target: { value: 'TP-24' } })
+    expect(screen.getByText('Tomato Paste')).toBeTruthy()
+    expect(screen.queryByText('Rice 50kg')).toBeNull()
+  })
+
+  it('filters by category', () => {
+    const { input } = setup()
+    fireEvent.focus(input)
+    fireEvent.change(input, { target: { value: 'liquids' } })
+    expect(screen.getByText('Cooking Oil')).toBeTruthy()
+    expect(screen.queryByText('Rice 50kg')).toBeNull()
+  })
+
+  it('shows a no-match message when nothing matches', () => {
+    const { input } = setup()
+    fireEvent.focus(input)
+    fireEvent.change(input, { target: { value: 'zzzz' } })
+    expect(screen.getByText(/No products match/)).toBeTruthy()
+  })
+
+  it('calls onChange with the product id when an option is clicked', () => {
+    const { onChange, input } = setup()
+    fireEvent.focus(input)
+    fireEvent.click(screen.getByText('Beans 1kg'))
+    expect(onChange).toHaveBeenCalledWith('2')
+  })
+
+  it('selects the highlighted option with Enter', () => {
+    const { onChange, input } = setup()
+    fireEvent.focus(input)
+    fireEvent.keyDown(input, { key: 'ArrowDown' })
+    fireEvent.keyDown(input, { key: 'Enter' })
+    expect(onChange).toHaveBeenCalledWith('1')
+  })
+
+  it('closes on Escape without selecting', () => {
+    const { onChange, input } = setup()
+    fireEvent.focus(input)
+    fireEvent.keyDown(input, { key: 'Escape' })
+    expect(screen.queryByRole('listbox')).toBeNull()
+    expect(onChange).not.toHaveBeenCalled()
+  })
+
+  it('hides products already used by another line item', () => {
+    const { input } = setup({ excludeIds: ['1', '2'] })
+    fireEvent.focus(input)
+    expect(screen.queryByText('Rice 50kg')).toBeNull()
+    expect(screen.queryByText('Beans 1kg')).toBeNull()
+    expect(screen.getByText('Tomato Paste')).toBeTruthy()
+  })
+
+  it('shows the selected product name when closed', () => {
+    setup({ value: '1' })
+    // jest-dom matchers are not loaded in this suite, so assert the DOM value.
+    expect((screen.getByRole('combobox') as HTMLInputElement).value).toBe('Rice 50kg')
+  })
+
+  it('marks out-of-stock products', () => {
+    const { input } = setup()
+    fireEvent.focus(input)
+    expect(screen.getByText('Out of stock')).toBeTruthy()
+  })
+
+  it('reports the listbox to assistive tech via aria-expanded', () => {
+    const { input } = setup()
+    expect(input.getAttribute('aria-expanded')).toBe('false')
+    fireEvent.focus(input)
+    expect(input.getAttribute('aria-expanded')).toBe('true')
   })
 })
