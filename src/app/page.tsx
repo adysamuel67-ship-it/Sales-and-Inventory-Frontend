@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import BusinessBotLogo from '@/components/BusinessBotLogo'
-import LandingRedirect from '@/components/LandingRedirect'
+import LandingAuthActions from '@/components/LandingAuthActions'
 import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, absoluteUrl } from '@/lib/site'
 
 export const metadata: Metadata = {
@@ -156,229 +156,214 @@ export default function Home() {
   }
 
   return (
-    <LandingRedirect>
-      <main className="min-h-screen bg-background">
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
+    <main className="min-h-screen bg-background">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
 
-        {/* Header */}
-        <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-4">
-            <Link href="/" className="flex items-center gap-3 shrink-0">
-              <BusinessBotLogo size={38} />
-              <div>
-                <p className="font-semibold text-gray-900 text-[15px] leading-tight">{SITE_NAME}</p>
-                <p className="text-[11px] text-neutral-light">{SITE_TAGLINE}</p>
-              </div>
+      {/* Header */}
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-4">
+          <Link href="/" className="flex items-center gap-3 shrink-0">
+            <BusinessBotLogo size={38} />
+            <div>
+              <p className="font-semibold text-gray-900 text-[15px] leading-tight">{SITE_NAME}</p>
+              <p className="text-[11px] text-neutral-light">{SITE_TAGLINE}</p>
+            </div>
+          </Link>
+          <LandingAuthActions />
+        </div>
+      </header>
+
+      {/* Hero */}
+      <section className="auth-gradient relative overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute -top-24 -right-24 w-96 h-96 bg-white/5 rounded-full blur-3xl" />
+          <div className="absolute -bottom-32 -left-24 w-[28rem] h-[28rem] bg-white/5 rounded-full blur-3xl" />
+        </div>
+
+        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 py-16 sm:py-24 text-center">
+          <p className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white text-xs sm:text-sm font-medium px-4 py-1.5 rounded-full mb-6">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
+            Free to use &middot; Works on any phone
+          </p>
+
+          <h1 className="text-white font-bold text-3xl sm:text-5xl tracking-tight leading-tight">
+            Business Bot GH: Sales &amp; Inventory Tracking for Ghanaian Businesses
+          </h1>
+
+          <p className="text-blue-100 text-base sm:text-lg leading-relaxed mt-6 max-w-2xl mx-auto">
+            Business Bot GH is a free sales and inventory tracking platform built for Ghanaian traders,
+            market shops and small businesses. Record sales as they happen, track what is left in your
+            stock, follow up on customer debts and see your real profit &mdash; all from one dashboard
+            that works on the phone already in your pocket.
+          </p>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-9">
+            <Link
+              href="/signup"
+              className="w-full sm:w-auto px-7 py-3.5 text-base font-semibold text-primary bg-white rounded-xl hover:bg-blue-50 transition-all shadow-xl shadow-black/20 active:scale-[0.98]"
+            >
+              Create Your Free Account
             </Link>
-            <nav className="flex items-center gap-2 sm:gap-3">
-              <Link
-                href="/login"
-                className="px-3 sm:px-4 py-2 text-sm font-medium text-gray-700 hover:text-primary transition-colors"
+            <Link
+              href="/login"
+              className="w-full sm:w-auto px-7 py-3.5 text-base font-semibold text-white border border-white/30 rounded-xl hover:bg-white/10 transition-all"
+            >
+              Sign In
+            </Link>
+          </div>
+
+          <p className="text-blue-200/80 text-sm mt-5">
+            No credit card needed &middot; Set up in under two minutes
+          </p>
+        </div>
+      </section>
+
+      {/* Who it is for */}
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
+        <SectionHeading eyebrow="Who it is for" title="Made for the way small businesses in Ghana actually trade" />
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {audiences.map((item) => (
+            <div
+              key={item.title}
+              className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm"
+            >
+              <h3 className="text-base font-semibold text-gray-900 mb-2">{item.title}</h3>
+              <p className="text-sm text-gray-600 leading-relaxed">{item.body}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Features */}
+      <section className="bg-white border-y border-gray-200">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
+          <SectionHeading
+            eyebrow="What it does"
+            title="Everything you need to run your shop, in one place"
+          />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {features.map((feature) => (
+              <div
+                key={feature.title}
+                className="bg-background rounded-2xl border border-gray-200 p-6"
               >
+                <div className="w-11 h-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-4">
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.8}
+                  >
+                    {feature.icon}
+                  </svg>
+                </div>
+                <h3 className="text-base font-semibold text-gray-900 mb-2">{feature.title}</h3>
+                <p className="text-sm text-gray-600 leading-relaxed">{feature.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How it works */}
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
+        <SectionHeading eyebrow="Getting started" title="Up and running in three steps" />
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {steps.map((item) => (
+            <div key={item.step} className="relative bg-white rounded-2xl border border-gray-200 p-6">
+              <div className="w-10 h-10 rounded-full bg-primary text-white font-bold flex items-center justify-center mb-4">
+                {item.step}
+              </div>
+              <h3 className="text-base font-semibold text-gray-900 mb-2">{item.title}</h3>
+              <p className="text-sm text-gray-600 leading-relaxed">{item.body}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="bg-white border-y border-gray-200">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
+          <SectionHeading eyebrow="Questions" title="Common questions" />
+
+          <div className="space-y-3">
+            {faqs.map((faq) => (
+              <details
+                key={faq.q}
+                className="bg-background rounded-xl border border-gray-200 px-5 py-4"
+              >
+                <summary className="cursor-pointer font-semibold text-gray-900 text-sm">
+                  {faq.q}
+                </summary>
+                <p className="text-sm text-gray-600 leading-relaxed mt-3">{faq.a}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA */}
+      <section className="max-w-4xl mx-auto px-4 sm:px-6 py-16 sm:py-20 text-center">
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
+          Start keeping track of your business today
+        </h2>
+        <p className="text-gray-600 leading-relaxed mt-4 max-w-xl mx-auto">
+          Create your free Business Bot GH account and record your first sale in the next two minutes.
+        </p>
+        <div className="mt-8">
+          <Link
+            href="/signup"
+            className="inline-block px-8 py-4 text-base font-semibold text-white bg-primary rounded-xl hover:bg-primary-dark transition-all shadow-lg shadow-primary/25 active:scale-[0.98]"
+          >
+            Sign Up Free
+          </Link>
+        </div>
+        <p className="text-sm text-neutral-light mt-4">
+          Already have an account?{' '}
+          <Link href="/login" className="text-primary font-semibold hover:underline">
+            Sign in
+          </Link>
+        </p>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-navy text-slate-300">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-3">
+              <BusinessBotLogo size={36} />
+              <div>
+                <p className="text-white font-semibold text-sm">{SITE_NAME}</p>
+                <p className="text-xs text-slate-400">{SITE_TAGLINE}</p>
+              </div>
+            </div>
+            <nav className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm">
+              <Link href="/signup" className="hover:text-white transition-colors">
+                Sign Up
+              </Link>
+              <Link href="/login" className="hover:text-white transition-colors">
                 Sign In
               </Link>
-              <Link
-                href="/signup"
-                className="px-3 sm:px-5 py-2.5 text-sm font-semibold text-white bg-primary rounded-lg hover:bg-primary-dark transition-colors shadow-sm shadow-primary/25"
-              >
-                Get Started Free
+              <Link href="/privacy" className="hover:text-white transition-colors">
+                Privacy Policy
+              </Link>
+              <Link href="/terms" className="hover:text-white transition-colors">
+                Terms of Service
               </Link>
             </nav>
           </div>
-        </header>
-
-        {/* Hero */}
-        <section className="auth-gradient relative overflow-hidden">
-          <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute -top-24 -right-24 w-96 h-96 bg-white/5 rounded-full blur-3xl" />
-            <div className="absolute -bottom-32 -left-24 w-[28rem] h-[28rem] bg-white/5 rounded-full blur-3xl" />
-          </div>
-
-          <div className="relative max-w-4xl mx-auto px-4 sm:px-6 py-16 sm:py-24 text-center">
-            <p className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white text-xs sm:text-sm font-medium px-4 py-1.5 rounded-full mb-6">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
-              Free to use &middot; Works on any phone
-            </p>
-
-            <h1 className="text-white font-bold text-3xl sm:text-5xl tracking-tight leading-tight">
-              Business Bot GH: Sales &amp; Inventory Tracking for Ghanaian Businesses
-            </h1>
-
-            <p className="text-blue-100 text-base sm:text-lg leading-relaxed mt-6 max-w-2xl mx-auto">
-              Business Bot GH is a free sales and inventory tracking platform built for Ghanaian traders,
-              market shops and small businesses. Record sales as they happen, track what is left in your
-              stock, follow up on customer debts and see your real profit &mdash; all from one dashboard
-              that works on the phone already in your pocket.
-            </p>
-
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-9">
-              <Link
-                href="/signup"
-                className="w-full sm:w-auto px-7 py-3.5 text-base font-semibold text-primary bg-white rounded-xl hover:bg-blue-50 transition-all shadow-xl shadow-black/20 active:scale-[0.98]"
-              >
-                Create Your Free Account
-              </Link>
-              <Link
-                href="/login"
-                className="w-full sm:w-auto px-7 py-3.5 text-base font-semibold text-white border border-white/30 rounded-xl hover:bg-white/10 transition-all"
-              >
-                Sign In
-              </Link>
-            </div>
-
-            <p className="text-blue-200/80 text-sm mt-5">
-              No credit card needed &middot; Set up in under two minutes
-            </p>
-          </div>
-        </section>
-
-        {/* Who it is for */}
-        <section className="max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
-          <SectionHeading eyebrow="Who it is for" title="Made for the way small businesses in Ghana actually trade" />
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {audiences.map((item) => (
-              <div
-                key={item.title}
-                className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm"
-              >
-                <h3 className="text-base font-semibold text-gray-900 mb-2">{item.title}</h3>
-                <p className="text-sm text-gray-600 leading-relaxed">{item.body}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Features */}
-        <section className="bg-white border-y border-gray-200">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
-            <SectionHeading
-              eyebrow="What it does"
-              title="Everything you need to run your shop, in one place"
-            />
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {features.map((feature) => (
-                <div
-                  key={feature.title}
-                  className="bg-background rounded-2xl border border-gray-200 p-6"
-                >
-                  <div className="w-11 h-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-4">
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      strokeWidth={1.8}
-                    >
-                      {feature.icon}
-                    </svg>
-                  </div>
-                  <h3 className="text-base font-semibold text-gray-900 mb-2">{feature.title}</h3>
-                  <p className="text-sm text-gray-600 leading-relaxed">{feature.body}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* How it works */}
-        <section className="max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
-          <SectionHeading eyebrow="Getting started" title="Up and running in three steps" />
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {steps.map((item) => (
-              <div key={item.step} className="relative bg-white rounded-2xl border border-gray-200 p-6">
-                <div className="w-10 h-10 rounded-full bg-primary text-white font-bold flex items-center justify-center mb-4">
-                  {item.step}
-                </div>
-                <h3 className="text-base font-semibold text-gray-900 mb-2">{item.title}</h3>
-                <p className="text-sm text-gray-600 leading-relaxed">{item.body}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* FAQ */}
-        <section className="bg-white border-y border-gray-200">
-          <div className="max-w-3xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
-            <SectionHeading eyebrow="Questions" title="Common questions" />
-
-            <div className="space-y-3">
-              {faqs.map((faq) => (
-                <details
-                  key={faq.q}
-                  className="bg-background rounded-xl border border-gray-200 px-5 py-4"
-                >
-                  <summary className="cursor-pointer font-semibold text-gray-900 text-sm">
-                    {faq.q}
-                  </summary>
-                  <p className="text-sm text-gray-600 leading-relaxed mt-3">{faq.a}</p>
-                </details>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Final CTA */}
-        <section className="max-w-4xl mx-auto px-4 sm:px-6 py-16 sm:py-20 text-center">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
-            Start keeping track of your business today
-          </h2>
-          <p className="text-gray-600 leading-relaxed mt-4 max-w-xl mx-auto">
-            Create your free Business Bot GH account and record your first sale in the next two minutes.
+          <p className="text-center sm:text-left text-xs text-slate-500 mt-8 pt-6 border-t border-white/10">
+            &copy; {new Date().getFullYear()} {SITE_NAME}. Made in Ghana.
           </p>
-          <div className="mt-8">
-            <Link
-              href="/signup"
-              className="inline-block px-8 py-4 text-base font-semibold text-white bg-primary rounded-xl hover:bg-primary-dark transition-all shadow-lg shadow-primary/25 active:scale-[0.98]"
-            >
-              Sign Up Free
-            </Link>
-          </div>
-          <p className="text-sm text-neutral-light mt-4">
-            Already have an account?{' '}
-            <Link href="/login" className="text-primary font-semibold hover:underline">
-              Sign in
-            </Link>
-          </p>
-        </section>
-
-        {/* Footer */}
-        <footer className="bg-navy text-slate-300">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
-              <div className="flex items-center gap-3">
-                <BusinessBotLogo size={36} />
-                <div>
-                  <p className="text-white font-semibold text-sm">{SITE_NAME}</p>
-                  <p className="text-xs text-slate-400">{SITE_TAGLINE}</p>
-                </div>
-              </div>
-              <nav className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm">
-                <Link href="/signup" className="hover:text-white transition-colors">
-                  Sign Up
-                </Link>
-                <Link href="/login" className="hover:text-white transition-colors">
-                  Sign In
-                </Link>
-                <Link href="/privacy" className="hover:text-white transition-colors">
-                  Privacy Policy
-                </Link>
-                <Link href="/terms" className="hover:text-white transition-colors">
-                  Terms of Service
-                </Link>
-              </nav>
-            </div>
-            <p className="text-center sm:text-left text-xs text-slate-500 mt-8 pt-6 border-t border-white/10">
-              &copy; {new Date().getFullYear()} {SITE_NAME}. Made in Ghana.
-            </p>
-          </div>
-        </footer>
-      </main>
-    </LandingRedirect>
+        </div>
+      </footer>
+    </main>
   )
 }
