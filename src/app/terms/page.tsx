@@ -1,5 +1,13 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import BusinessBotLogo from '@/components/BusinessBotLogo'
+
+export const metadata: Metadata = {
+  title: 'Terms of Service',
+  description:
+    'The terms that govern your use of Business Bot GH, including accounts, data ownership, acceptable use and liability.',
+  alternates: { canonical: '/terms' },
+}
 
 const sections = [
   {

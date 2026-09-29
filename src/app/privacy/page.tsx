@@ -1,5 +1,13 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import BusinessBotLogo from '@/components/BusinessBotLogo'
+
+export const metadata: Metadata = {
+  title: 'Privacy Policy',
+  description:
+    'What Business Bot GH collects, why we collect it, who we share it with, how long we keep it and what you control.',
+  alternates: { canonical: '/privacy' },
+}
 
 const sections = [
   {

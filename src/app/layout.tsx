@@ -1,9 +1,15 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { AuthProvider } from '@/lib/auth'
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '@/lib/site'
 
 export const dynamic = 'force-dynamic'
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  themeColor: '#14213D',
+}
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -13,6 +19,12 @@ export const metadata: Metadata = {
   },
   description: SITE_DESCRIPTION,
   applicationName: SITE_NAME,
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    title: SITE_NAME,
+    statusBarStyle: 'black-translucent',
+  },
   keywords: [
     'sales tracking app Ghana',
     'inventory management Ghana',
@@ -25,7 +37,7 @@ export const metadata: Metadata = {
   authors: [{ name: SITE_NAME }],
   creator: SITE_NAME,
   publisher: SITE_NAME,
-  alternates: { canonical: '/' },
+  formatDetection: { telephone: false },
   openGraph: {
     type: 'website',
     siteName: SITE_NAME,

@@ -25,6 +25,10 @@ body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, Roboto, 'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* `clip` (not `hidden`) contains stray decorative overflow on small screens
+     without turning <body> into a scroll container, which would break
+     position: sticky headers. */
+  overflow-x: clip;
 }
 
 .auth-gradient {

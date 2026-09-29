@@ -16,29 +16,30 @@ export default function LandingAuthActions() {
 
   if (!mounted || isLoading) {
     return (
-      <nav className="flex items-center gap-2 sm:gap-3" aria-hidden>
-        <div className="hidden sm:block h-9 w-16 rounded-lg bg-gray-100 animate-pulse" />
-        <div className="h-10 w-28 sm:w-36 rounded-lg bg-gray-100 animate-pulse" />
-      </nav>
+      <div className="flex shrink-0 items-center gap-2 sm:gap-3" aria-hidden>
+        <div className="h-9 w-[3.25rem] rounded-lg bg-slate-100 animate-pulse sm:w-16" />
+        <div className="h-9 w-[4.5rem] rounded-lg bg-slate-100 animate-pulse sm:w-36" />
+      </div>
     )
   }
 
   if (!isAuthenticated) {
     return (
-      <nav className="flex items-center gap-2 sm:gap-3">
+      <div className="flex shrink-0 items-center gap-2 sm:gap-3">
         <Link
           href="/login"
-          className="px-3 sm:px-4 py-2 text-sm font-medium text-gray-700 hover:text-primary transition-colors"
+          className="rounded-lg px-2.5 py-2 text-sm font-medium text-slate-700 transition-colors hover:text-primary sm:px-4"
         >
           Sign In
         </Link>
         <Link
           href="/signup"
-          className="px-3 sm:px-5 py-2.5 text-sm font-semibold text-white bg-primary rounded-lg hover:bg-primary-dark transition-colors shadow-sm shadow-primary/25"
+          className="rounded-lg bg-primary px-3.5 py-2.5 text-sm font-semibold leading-none text-white shadow-sm shadow-primary/25 transition-colors hover:bg-primary-dark sm:px-5"
         >
-          Get Started Free
+          <span className="sm:hidden">Sign Up</span>
+          <span className="hidden sm:inline">Get Started Free</span>
         </Link>
-      </nav>
+      </div>
     )
   }
 
@@ -52,17 +53,18 @@ export default function LandingAuthActions() {
   }
 
   return (
-    <nav className="flex items-center gap-2 sm:gap-3">
-      <span className="hidden lg:block text-sm text-neutral-light max-w-[12rem] truncate">
+    <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+      <span className="hidden max-w-[10rem] truncate text-sm text-slate-500 lg:block">
         {user?.name ? `Hi, ${user.name.split(' ')[0]}` : 'Signed in'}
       </span>
       <button
         type="button"
         onClick={() => router.push(destination)}
-        className="px-3 sm:px-5 py-2.5 text-sm font-semibold text-white bg-primary rounded-lg hover:bg-primary-dark transition-colors shadow-sm shadow-primary/25"
+        className="rounded-lg bg-primary px-3.5 py-2.5 text-sm font-semibold leading-none text-white shadow-sm shadow-primary/25 transition-colors hover:bg-primary-dark sm:px-5"
       >
-        Go to Dashboard
+        <span className="sm:hidden">Dashboard</span>
+        <span className="hidden sm:inline">Go to Dashboard</span>
       </button>
-    </nav>
+    </div>
   )
 }
