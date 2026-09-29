@@ -3,6 +3,16 @@
 import { useState, useMemo, memo } from 'react'
 import Link from 'next/link'
 import SaleDetailModal from './SaleDetailModal'
+import Badge from './ui/Badge'
+import EmptyState from './ui/EmptyState'
+import {
+  Table,
+  TableHead,
+  TableHeaderCell,
+  TableBody,
+  TableRow,
+  TableCell,
+} from './ui/Table'
 import { MappedSale, formatPayment } from '@/lib/utils'
 
 type SaleRecord = MappedSale
@@ -12,10 +22,10 @@ interface Props {
   businessId?: number
 }
 
-const paymentColors: Record<string, string> = {
-  cash: 'bg-success-light text-success',
-  mobile_money: 'bg-primary-light text-primary',
-  card: 'bg-warning-light text-warning',
+const paymentBadgeColor: Record<string, 'emerald' | 'indigo' | 'amber' | 'slate'> = {
+  cash: 'emerald',
+  mobile_money: 'indigo',
+  card: 'amber',
 }
 
 function isBorrow(sale: MappedSale): boolean {
@@ -41,117 +51,139 @@ export default memo(function RecentSales({ sales, businessId }: Props) {
 
   const displaySales = view === 'borrows' ? borrowSales : view === 'sales' ? paidSales : sales
 
+  const tabs = [
+    { key: 'all' as const, label: 'All', count: sales.length },
+    { key: 'sales' as const, label: 'Sales', count: paidSales.length },
+    { key: 'borrows' as const, label: 'Borrows', count: borrowSales.length },
+  ]
+
   return (
     <>
-    <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm">
-      <div className="px-5 py-4 border-b border-slate-200">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold text-slate-900">Recent Activity</h3>
-          <Link href={salesLink} className="text-xs text-primary font-medium hover:underline">View All</Link>
-        </div>
-        <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-0.5">
-          {([
-            { key: 'all' as const, label: 'All', count: sales.length },
-            { key: 'sales' as const, label: 'Sales', count: paidSales.length },
-            { key: 'borrows' as const, label: 'Borrows', count: borrowSales.length },
-          ]).map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setView(tab.key)}
-              className={`flex-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                view === tab.key
-                  ? 'bg-white text-slate-900 shadow-sm'
-                  : 'text-slate-500 hover:text-slate-700'
-              }`}
+      <section className="surface-card overflow-hidden">
+        <header className="border-b border-slate-200 px-5 py-4 sm:px-6">
+          <div className="mb-3.5 flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-section-title text-slate-900">Recent Activity</h2>
+              <p className="mt-0.5 text-xs text-neutral-light">Your latest recorded transactions</p>
+            </div>
+            <Link
+              href={salesLink}
+              className="group inline-flex shrink-0 items-center gap-1 text-[13px] font-medium text-primary transition-colors hover:text-primary-dark"
             >
-              {tab.label}
-              <span className="ml-1 text-[10px] opacity-60">{tab.count}</span>
-            </button>
-          ))}
-        </div>
-      </div>
+              View All
+              <svg
+                className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                aria-hidden="true"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5-5 5M18 12H6" />
+              </svg>
+            </Link>
+          </div>
+
+          {/* Segmented control: the active tab sits on a white pill with a
+              shadow, so selection reads without relying on colour alone. */}
+          <div
+            className="inline-flex items-center gap-0.5 rounded-lg bg-slate-100 p-0.5"
+            role="tablist"
+            aria-label="Filter transactions"
+          >
+            {tabs.map((tab) => (
+              <button
+                key={tab.key}
+                type="button"
+                role="tab"
+                aria-selected={view === tab.key}
+                onClick={() => setView(tab.key)}
+                className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all duration-150 ${
+                  view === tab.key
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                {tab.label}
+                <span className={`ml-1.5 text-[10px] ${view === tab.key ? 'text-neutral-light' : 'text-slate-400'}`}>
+                  {tab.count}
+                </span>
+              </button>
+            ))}
+          </div>
+        </header>
+
       {displaySales.length > 0 ? (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-xs text-neutral-light uppercase tracking-wider">
-                <th className="text-left px-5 py-3 font-medium">Product</th>
-                <th className="text-center px-4 py-3 font-medium">Qty</th>
-                <th className="text-right px-5 py-3 font-medium">Amount</th>
-                <th className="text-center px-4 py-3 font-medium">Status</th>
-                <th className="text-right px-5 py-3 font-medium">Time</th>
-              </tr>
-            </thead>
-            <tbody>
+          <Table>
+            <TableHead>
+              <TableHeaderCell>Product</TableHeaderCell>
+              <TableHeaderCell align="center">Qty</TableHeaderCell>
+              <TableHeaderCell align="right">Amount</TableHeaderCell>
+              <TableHeaderCell align="center">Status</TableHeaderCell>
+              <TableHeaderCell align="right">Time</TableHeaderCell>
+            </TableHead>
+            <TableBody>
               {displaySales.map((sale) => {
                 const borrow = isBorrow(sale)
-                const balance = sale.amount - (sale.amount_paid ?? sale.amount)
                 return (
-                  <tr key={sale.id} onClick={() => setDetailSale(sale)} className="border-t border-slate-50 table-row-hover cursor-pointer">
-                    <td className="px-5 py-3 text-slate-900 font-medium">
+                  <TableRow key={sale.id} onClick={() => setDetailSale(sale)}>
+                    <TableCell>
                       <div className="flex items-center gap-2">
-                        {borrow && (
-                          <span className="w-1.5 h-1.5 rounded-full bg-warning shrink-0" />
-                        )}
-                        <span className="truncate">{sale.product}</span>
+                        {borrow && <span className="status-dot bg-warning" aria-label="On credit" />}
+                        <span className="truncate font-medium text-slate-900">{sale.product}</span>
                       </div>
-                    </td>
-                    <td className="px-4 py-3 text-center text-neutral-light">{sale.qty}</td>
-                    <td className="px-5 py-3 text-right font-semibold text-slate-900">
+                    </TableCell>
+                    <TableCell align="center" className="text-neutral-light">
+                      {sale.qty}
+                    </TableCell>
+                    <TableCell align="right" className="font-semibold text-slate-900">
                       {sale.amount > 0 ? (
                         `GH₵${sale.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
                       ) : (
-                        <span className="text-neutral-light text-xs">No charge</span>
+                        <span className="text-xs font-normal text-neutral-light">No charge</span>
                       )}
-                    </td>
-                    <td className="px-4 py-3 text-center">
+                    </TableCell>
+                    <TableCell align="center">
                       <div className="flex items-center justify-center gap-1.5">
-                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
-                          paymentColors[sale.payment] || 'bg-slate-100 text-slate-600'
-                        }`}>
+                        <Badge color={paymentBadgeColor[sale.payment] ?? 'slate'}>
                           {formatPayment(sale.payment)}
-                        </span>
-                        {borrow && (
-                          <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-warning-light text-warning">
-                            Borrow
-                          </span>
-                        )}
+                        </Badge>
+                        {borrow && <Badge color="amber">Borrow</Badge>}
                       </div>
-                    </td>
-                    <td className="px-5 py-3 text-right text-neutral-light text-xs">{sale.time}</td>
-                  </tr>
+                    </TableCell>
+                    <TableCell align="right" className="whitespace-nowrap text-xs text-neutral-light">
+                      {sale.time}
+                    </TableCell>
+                  </TableRow>
                 )
               })}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <div className="px-5 py-10 text-center">
-          <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-3">
-            <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
-          </div>
-          <p className="text-sm font-medium text-slate-900 mb-1">No {view === 'borrows' ? 'borrows' : view === 'sales' ? 'sales' : 'activity'} yet</p>
-          <p className="text-xs text-neutral-light mb-3">
-            {view === 'borrows'
-              ? 'No borrowed items recorded yet'
-              : view === 'sales'
-              ? 'Record your first sale to see it here'
-              : 'Record a sale to get started'}
-          </p>
-          <Link
-            href={salesLink}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-white rounded-xl text-xs font-medium hover:bg-primary-dark transition-colors"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            </TableBody>
+          </Table>
+        ) : (
+          <EmptyState
+            compact
+            title={`No ${view === 'borrows' ? 'borrows' : view === 'sales' ? 'sales' : 'activity'} yet`}
+            description={
+              view === 'borrows'
+                ? 'Items sold on credit will appear here once recorded.'
+                : view === 'sales'
+                  ? 'Record your first sale to see it here.'
+                  : 'Record a sale to get started.'
+            }
+            action={
+              <Link
+                href={salesLink}
+                className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-white shadow-sm shadow-primary/25 transition-all duration-150 hover:bg-primary-dark"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            Add Sale
-          </Link>
-        </div>
-      )}
-    </div>
+                </svg>
+                Add Sale
+              </Link>
+            }
+          />
+        )}
+      </section>
     {detailSale && <SaleDetailModal sale={detailSale} onClose={() => setDetailSale(null)} />}
     </>
   )

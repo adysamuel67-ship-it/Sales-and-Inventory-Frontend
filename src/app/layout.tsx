@@ -1,14 +1,32 @@
 import type { Metadata, Viewport } from 'next'
+import { Inter, Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
 import { AuthProvider } from '@/lib/auth'
 import { COMPANY_NAME, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '@/lib/site'
+
+// Self-hosted at build time by next/font: no render-blocking request to a
+// third-party CDN, no FOUT, and no silent fallback to the OS system stack.
+const sans = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-sans',
+})
+
+// Distinct display face for page titles / section headers so hierarchy reads
+// as deliberate typography rather than bold-and-bigger.
+const display = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  display: 'swap',
+  weight: ['600', '700', '800'],
+  variable: '--font-display',
+})
 
 export const dynamic = 'force-dynamic'
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  themeColor: '#14213D',
+  themeColor: '#0F172A',
 }
 
 export const metadata: Metadata = {
@@ -68,7 +86,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${sans.variable} ${display.variable}`}>
       <body className="antialiased">
         <AuthProvider>
           {children}

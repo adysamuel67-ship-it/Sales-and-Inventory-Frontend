@@ -9,37 +9,112 @@ interface KpiCardProps {
   icon: React.ReactNode
   color: 'primary' | 'success' | 'warning' | 'danger'
   trend?: { value: string; positive: boolean }
+  /** Renders a shimmering placeholder instead of a value while data loads. */
+  loading?: boolean
+  /** Compact variant used inside dense panels and narrow columns. */
+  dense?: boolean
 }
 
+// Tinted plate + matching icon. Desaturated on purpose: a KPI row is four
+// colours at once, so they must stay quieter than a CTA.
 const colorMap = {
-  primary: { iconBg: 'bg-blue-50', iconText: 'text-blue-600' },
-  success: { iconBg: 'bg-emerald-50', iconText: 'text-emerald-600' },
-  warning: { iconBg: 'bg-amber-50', iconText: 'text-amber-600' },
-  danger: { iconBg: 'bg-rose-50', iconText: 'text-rose-600' },
+  primary: { plate: 'bg-blue-50 text-blue-600', bar: 'bg-primary' },
+  success: { plate: 'bg-emerald-50 text-emerald-600', bar: 'bg-success' },
+  warning: { plate: 'bg-amber-50 text-amber-600', bar: 'bg-warning' },
+  danger: { plate: 'bg-rose-50 text-rose-600', bar: 'bg-danger' },
 }
 
-export default memo(function KpiCard({ title, value, subtitle, icon, color, trend }: KpiCardProps) {
+function TrendChip({ value, positive }: { value: string; positive: boolean }) {
+  return (
+    <span
+      className={`inline-flex shrink-0 items-center gap-1 rounded-full px-1.5 py-0.5 text-[11px] font-semibold ring-1 ring-inset ${
+        positive
+          ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20'
+          : 'bg-rose-50 text-rose-700 ring-rose-600/20'
+      }`}
+    >
+      <svg
+        className={`h-3 w-3 ${positive ? 'rotate-0' : 'rotate-180'}`}
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        strokeWidth={2.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M12 19V5M5 12l7-7 7 7" />
+      </svg>
+      {value}
+    </span>
+  )
+}
+
+export default memo(function KpiCard({
+  title,
+  value,
+  subtitle,
+  icon,
+  color,
+  trend,
+  loading = false,
+  dense = false,
+}: KpiCardProps) {
   const styles = colorMap[color]
 
   return (
-    <div className="kpi-card bg-surface rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-sm hover:shadow-md transition-shadow">
-      <div className="flex items-start justify-between gap-2 sm:gap-3">
+    <div
+      className={`kpi-card group relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card ${
+        dense ? 'p-4' : 'p-5'
+      }`}
+    >
+      {/* Hairline accent bar ties the card to its metric colour without adding
+          another filled shape competing with the number. */}
+      <span
+        className={`absolute inset-x-0 top-0 h-[3px] opacity-0 transition-opacity duration-200 group-hover:opacity-100 ${styles.bar}`}
+        aria-hidden="true"
+      />
+
+      <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <p className="text-[11px] sm:text-xs font-medium text-neutral-light truncate">{title}</p>
-          <p className="text-base sm:text-xl lg:text-2xl font-bold text-slate-900 mt-1 break-words leading-tight">{value}</p>
+          {/* Uppercase micro-label: reads as a category, not as content. */}
+          <p className="truncate text-micro uppercase tracking-[0.06em] text-neutral-light">{title}</p>
+
+          {loading ? (
+            <div className="mt-2.5 space-y-2">
+              <div className="skeleton h-8 w-24" />
+            </div>
+          ) : (
+            <p
+              className={`mt-1.5 font-display font-bold leading-none tracking-tight text-slate-900 ${
+                dense ? 'text-xl' : 'text-kpi'
+              }`}
+            >
+              {value}
+            </p>
+          )}
         </div>
-        <div className={`w-9 h-9 sm:w-11 sm:h-11 rounded-xl ${styles.iconBg} ${styles.iconText} flex items-center justify-center shrink-0`}>
+
+        <div
+          className={`flex shrink-0 items-center justify-center rounded-xl ${styles.plate} ${
+            dense ? 'h-9 w-9' : 'h-10 w-10'
+          }`}
+        >
           {icon}
         </div>
       </div>
-      <div className="flex items-center gap-2 mt-2">
-        {subtitle && !trend && <p className="text-xs text-neutral-light">{subtitle}</p>}
-        {trend && (
-          <span className={`inline-flex items-center gap-1 text-xs font-medium px-1.5 py-0.5 rounded-md shrink-0 ${trend.positive ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
-            {trend.positive ? '↑' : '↓'} {trend.value}
-          </span>
-        )}
-      </div>
+
+      {(subtitle || trend) && (
+        <div className="mt-3 flex items-center gap-2">
+          {trend && !loading && <TrendChip value={trend.value} positive={trend.positive} />}
+          {subtitle &&
+            (loading ? (
+              <div className="skeleton h-3 w-24" />
+            ) : (
+              <p className="truncate text-xs text-neutral-light">{subtitle}</p>
+            ))}
+        </div>
+      )}
     </div>
   )
 })

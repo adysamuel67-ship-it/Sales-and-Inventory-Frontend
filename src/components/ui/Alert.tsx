@@ -1,10 +1,12 @@
 type AlertKind = 'error' | 'success' | 'warning' | 'info'
 
-const styles: Record<AlertKind, { container: string; icon: string }> = {
-  error: { container: 'bg-danger-light border-red-100 text-danger', icon: 'text-danger' },
-  success: { container: 'bg-success-light border-green-100 text-success', icon: 'text-success' },
-  warning: { container: 'bg-warning-light border-amber-100 text-warning', icon: 'text-warning' },
-  info: { container: 'bg-blue-50 border-blue-100 text-blue-700', icon: 'text-blue-600' },
+// Tinted surface + hairline ring in the matching hue, with a coloured icon and
+// deep matching text. Reads as designed feedback rather than a browser default.
+const styles: Record<AlertKind, { container: string; icon: string; role: string }> = {
+  error: { container: 'bg-rose-50/70 border-rose-200 text-rose-800', icon: 'text-danger', role: 'alert' },
+  success: { container: 'bg-emerald-50/70 border-emerald-200 text-emerald-800', icon: 'text-success', role: 'status' },
+  warning: { container: 'bg-amber-50/70 border-amber-200 text-amber-900', icon: 'text-warning', role: 'alert' },
+  info: { container: 'bg-primary-light/60 border-primary/20 text-indigo-900', icon: 'text-primary', role: 'status' },
 }
 
 function AlertIcon({ kind }: { kind: AlertKind }) {
@@ -41,17 +43,41 @@ export default function Alert({
   children,
   className = '',
   icon,
+  title,
+  onDismiss,
 }: {
   kind?: AlertKind
   children: React.ReactNode
   className?: string
   icon?: React.ReactNode
+  title?: string
+  onDismiss?: () => void
 }) {
   const style = styles[kind]
   return (
-    <div className={`px-4 py-3 rounded-xl border flex items-center gap-2.5 text-sm ${style.container} ${className}`}>
-      {icon || <AlertIcon kind={kind} />}
-      <div className="min-w-0 flex-1">{children}</div>
+    <div
+      role={style.role}
+      className={`flex animate-fade-up items-start gap-3 rounded-xl border px-4 py-3 text-sm ${style.container} ${className}`}
+    >
+      <span className={`mt-0.5 shrink-0 ${style.icon}`}>
+        {icon || <AlertIcon kind={kind} />}
+      </span>
+      <div className="min-w-0 flex-1">
+        {title && <p className="font-semibold">{title}</p>}
+        <div className={title ? 'mt-0.5 leading-relaxed' : 'leading-relaxed'}>{children}</div>
+      </div>
+      {onDismiss && (
+        <button
+          type="button"
+          onClick={onDismiss}
+          aria-label="Dismiss notification"
+          className="-mr-1 -mt-0.5 shrink-0 rounded-lg p-1 opacity-60 transition-opacity hover:opacity-100"
+        >
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      )}
     </div>
   )
 }

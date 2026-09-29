@@ -3,9 +3,24 @@
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
+import PageHeader from '@/components/ui/PageHeader'
+import Alert from '@/components/ui/Alert'
+import Badge from '@/components/ui/Badge'
+import EmptyState from '@/components/ui/EmptyState'
+import Pagination from '@/components/ui/Pagination'
+import {
+  Table,
+  TableHead,
+  TableHeaderCell,
+  TableBody,
+  TableRow,
+  TableCell,
+} from '@/components/ui/Table'
 import { useAuth } from '@/lib/auth'
 import { businessAPI, adminAPI, productAPI, saleAPI, debtAPI } from '@/lib/api'
 import { extractArray, isSuperAdminUser } from '@/lib/utils'
+
+const PAGE_SIZE = 10
 
 interface BusinessRecord {
   business_id: number
@@ -160,113 +175,128 @@ export default function AdminBusinessesPage() {
     [businesses, search]
   )
 
+  // Reset to the first page whenever the result set changes, so a filter that
+  // shrinks the list can never strand the user on an empty page.
+  const [page, setPage] = useState(1)
+  useEffect(() => { setPage(1) }, [search, businesses.length])
+
+  const pageCount = Math.max(1, Math.ceil(filteredBusinesses.length / PAGE_SIZE))
+  const pagedBusinesses = filteredBusinesses.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+
   if (isLoading || !isAuthenticated || !profileLoaded || !isSuperAdminUser(user)) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
     )
   }
 
   return (
     <DashboardLayout>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Business Management</h1>
-          <p className="text-sm text-neutral-light mt-1">All businesses on the platform</p>
-        </div>
-      </div>
-
-      {error && (
-        <div className="mb-4 bg-danger-light text-danger text-sm p-3 rounded-xl flex items-center gap-2">
-          <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-          </svg>
-          {error}
-        </div>
-      )}
-      {success && (
-        <div className="mb-4 bg-success-light text-success text-sm p-3 rounded-xl flex items-center gap-2">
-          <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-          </svg>
-          {success}
-        </div>
-      )}
-
-      <div className="mb-4">
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search businesses..."
-          className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+      <div className="mx-auto max-w-7xl space-y-6">
+        <PageHeader
+          eyebrow="Platform"
+          title="Business Management"
+          subtitle="All businesses on the platform"
         />
-      </div>
 
-      <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm">
-        {loading ? (
-          <div className="px-5 py-12 text-center">
-            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-          </div>
-        ) : filteredBusinesses.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-slate-200">
-                  <th className="text-left px-5 py-3 font-medium">Name</th>
-                  <th className="text-left px-5 py-3 font-medium">ID</th>
-                  <th className="text-center px-5 py-3 font-medium">Members</th>
-                  <th className="text-center px-5 py-3 font-medium">Status</th>
-                  <th className="text-right px-5 py-3 font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredBusinesses.map((biz) => {
-                  const isActive = biz.is_active !== false
-                  return (
-                    <tr
-                      key={biz.business_id}
-                      onClick={() => openProfile(biz)}
-                      className="border-t border-slate-50 table-row-hover cursor-pointer hover:bg-primary/5 transition-colors"
-                    >
-                      <td className="px-5 py-3.5">
-                        <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center text-sm font-bold shrink-0">
-                            {biz.name?.charAt(0)?.toUpperCase() || '?'}
+        {error && <Alert kind="error" onDismiss={() => setError('')}>{error}</Alert>}
+        {success && <Alert kind="success" onDismiss={() => setSuccess('')}>{success}</Alert>}
+
+        <div className="relative">
+          <svg
+            className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-light"
+            fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} aria-hidden="true"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" />
+          </svg>
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search businesses..."
+            aria-label="Search businesses"
+            className="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-900 shadow-xs transition-all duration-150 placeholder:text-slate-400 hover:border-slate-400 focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/10"
+          />
+        </div>
+
+        <div className="surface-card overflow-hidden">
+          {loading ? (
+            <div className="space-y-3 p-5" aria-busy="true">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-4">
+                  <div className="skeleton h-9 w-9 shrink-0 rounded-lg" />
+                  <div className="skeleton h-3.5 flex-1" />
+                  <div className="skeleton h-6 w-16 shrink-0 rounded-full" />
+                </div>
+              ))}
+            </div>
+          ) : filteredBusinesses.length > 0 ? (
+            <>
+              <Table>
+                <TableHead>
+                  <TableHeaderCell>Name</TableHeaderCell>
+                  <TableHeaderCell>ID</TableHeaderCell>
+                  <TableHeaderCell align="center">Members</TableHeaderCell>
+                  <TableHeaderCell align="center">Status</TableHeaderCell>
+                  <TableHeaderCell align="right">Actions</TableHeaderCell>
+                </TableHead>
+                <TableBody>
+                  {pagedBusinesses.map((biz) => {
+                    const isActive = biz.is_active !== false
+                    return (
+                      <TableRow key={biz.business_id} onClick={() => openProfile(biz)}>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-light text-[13px] font-bold text-primary">
+                              {biz.name?.charAt(0)?.toUpperCase() || '?'}
+                            </span>
+                            <span className="font-medium text-slate-900">{biz.name}</span>
                           </div>
-                          <span className="font-medium text-slate-900">{biz.name}</span>
-                        </div>
-                      </td>
-                      <td className="px-5 py-3.5 text-neutral-light">#{biz.business_id}</td>
-                      <td className="px-5 py-3.5 text-center text-neutral-light">{biz.members}</td>
-                      <td className="px-5 py-3.5 text-center">
-                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
-                          isActive ? 'bg-success-light text-success' : 'bg-slate-100 text-slate-600'
-                        }`}>
-                          {isActive ? 'Active' : 'Inactive'}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3.5 text-right">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleDelete(biz.business_id) }}
-                          className="text-xs text-danger hover:underline font-medium"
-                        >
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="px-5 py-12 text-center text-neutral-light text-sm">
-            {search ? 'No businesses match your search' : 'No businesses found'}
-          </div>
-        )}
-      </div>
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap text-neutral-light">
+                          #{biz.business_id}
+                        </TableCell>
+                        <TableCell align="center" className="text-neutral-light">
+                          {biz.members}
+                        </TableCell>
+                        <TableCell align="center">
+                          <Badge color={isActive ? 'emerald' : 'slate'} dot>
+                            {isActive ? 'Active' : 'Inactive'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell align="right">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleDelete(biz.business_id) }}
+                            className="rounded-lg px-2 py-1 text-xs font-medium text-danger transition-colors hover:bg-rose-50"
+                          >
+                            Delete
+                          </button>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })}
+                </TableBody>
+              </Table>
+              <Pagination
+                page={page}
+                pageCount={pageCount}
+                onPageChange={setPage}
+                totalItems={filteredBusinesses.length}
+                pageSize={PAGE_SIZE}
+              />
+            </>
+          ) : (
+            <EmptyState
+              title={search ? 'No matching businesses' : 'No businesses found'}
+              description={
+                search
+                  ? 'Try a different search term.'
+                  : 'Businesses created on the platform will appear here.'
+              }
+            />
+          )}
+        </div>
 
       {showProfile && profileBiz && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowProfile(false)}>
@@ -425,6 +455,7 @@ export default function AdminBusinessesPage() {
           </div>
         </div>
       )}
+      </div>
     </DashboardLayout>
   )
 }

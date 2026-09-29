@@ -1,5 +1,4 @@
-const base =
-  'rounded-2xl border border-slate-200 bg-white'
+const base = 'rounded-2xl border border-slate-200 bg-white shadow-card'
 
 export function Card({
   children,
@@ -32,13 +31,13 @@ export function CardHeader({
     <div className={`flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between ${className}`}>
       <div className="flex min-w-0 items-center gap-3">
         {icon && (
-          <div className="flex w-10 h-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-light text-primary">
             {icon}
           </div>
         )}
         <div className="min-w-0">
-          <h3 className="text-sm font-semibold tracking-tight text-slate-900">{title}</h3>
-          {subtitle && <p className="mt-0.5 text-xs text-slate-500">{subtitle}</p>}
+          <h3 className="text-section-title text-slate-900">{title}</h3>
+          {subtitle && <p className="mt-0.5 text-xs leading-relaxed text-neutral-light">{subtitle}</p>}
         </div>
       </div>
       {action && <div className="flex shrink-0 items-center gap-2">{action}</div>}

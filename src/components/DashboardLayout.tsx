@@ -389,30 +389,30 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
+    <div className="min-h-screen bg-background">
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-20 lg:hidden transition-opacity"
+          className="fixed inset-0 z-20 bg-slate-900/50 backdrop-blur-sm transition-opacity lg:hidden"
           onClick={() => setSidebarOpen(false)}
+          aria-hidden="true"
         />
       )}
 
       <aside
-        className={`fixed top-0 left-0 z-30 h-full w-[260px] dashboard-sidebar transform transition-transform duration-300 ease-in-out ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } lg:translate-x-0`}
+        className={`dashboard-sidebar fixed left-0 top-0 z-30 h-full w-[264px] transform transition-transform duration-300 ease-smooth lg:translate-x-0 ${
+          sidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
+        }`}
+        aria-label="Main navigation"
       >
-        <div className="flex flex-col h-full">
+        <div className="flex h-full flex-col">
           {/* Logo */}
-          <div className="px-5 py-5 border-b border-white/[0.06]">
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <BusinessBotLogo size={36} />
-              </div>
-              <div className="min-w-0">
-                <p className="text-white font-semibold text-[13px] tracking-tight">Business Bot</p>
-                <p className="text-white/35 text-[11px]">Sales &amp; Inventory</p>
-              </div>
+          <div className="flex items-center gap-3 border-b border-white/[0.07] px-5 py-5">
+            <div className="relative shrink-0">
+              <BusinessBotLogo size={36} />
+            </div>
+            <div className="min-w-0">
+              <p className="truncate font-display text-[13px] font-bold tracking-tight text-white">Business Bot</p>
+              <p className="text-[11px] text-white/40">Sales &amp; Inventory</p>
             </div>
           </div>
 
@@ -670,29 +670,33 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
                         if (disabled) e.preventDefault()
                         setSidebarOpen(false)
                       }}
-                      className={`relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] transition-all duration-200 min-h-[40px] group ${
+                      className={`group relative flex min-h-[40px] items-center gap-3 rounded-lg px-3 py-2 text-[13px] transition-all duration-150 ease-smooth ${
                         disabled
-                          ? 'opacity-30 pointer-events-none'
+                          ? 'pointer-events-none opacity-30'
                           : isActive
-                            ? 'bg-white/[0.13] text-white font-medium shadow-sm shadow-black/10'
-                            : 'text-white/50 hover:bg-white/[0.06] hover:text-white/80'
+                            ? 'bg-white/[0.13] font-medium text-white shadow-sm shadow-black/20'
+                            : 'text-white/50 hover:bg-white/[0.05] hover:text-white/85'
                       }`}
                     >
                       {isActive && (
-                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-white rounded-r-full shadow-sm shadow-white/30" />
+                        <span
+                          className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-white shadow-sm shadow-white/40"
+                          aria-hidden="true"
+                        />
                       )}
-                      <span className={`transition-colors duration-200 ${isActive ? 'text-white' : 'text-white/35 group-hover:text-white/55'}`}>
+                      <span
+                        className={`transition-colors duration-150 ${
+                          isActive ? 'text-white' : 'text-white/35 group-hover:text-white/60'
+                        }`}
+                      >
                         <NavIcon name={item.icon} />
                       </span>
-                      <span className="flex-1">{item.label}</span>
+                      <span className="flex-1 truncate">{item.label}</span>
                       {!disabled && item.badge ? (
-                        <span className="min-w-[20px] h-5 px-1.5 inline-flex items-center justify-center rounded-full bg-primary text-white text-[10px] font-bold leading-none shadow-sm">
+                        <span className="inline-flex h-5 min-w-[20px] shrink-0 items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-bold leading-none text-white shadow-sm">
                           {item.badge > 99 ? '99+' : item.badge}
                         </span>
                       ) : null}
-                      {isActive && (
-                        <div className="w-1.5 h-1.5 rounded-full bg-white/60" />
-                      )}
                     </Link>
                   )
                 })}
@@ -820,27 +824,32 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
         </div>
       </aside>
 
-      <div className="lg:pl-[260px]">
-        <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-xl border-b border-slate-200/60">
-          <div className="flex items-center justify-between px-4 sm:px-6 h-[60px]">
-            <div className="flex items-center gap-3">
+      <div className="lg:pl-[264px]">
+        {/* Sticky top bar: translucent with a backdrop blur so content scrolling
+            underneath stays legible but never competes with the chrome. */}
+        <header className="sticky top-0 z-10 border-b border-slate-200/80 bg-white/80 backdrop-blur-xl">
+          <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
+            <div className="flex min-w-0 items-center gap-3">
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="lg:hidden p-2 -ml-2 rounded-lg hover:bg-slate-100 min-h-[40px] min-w-[40px] flex items-center justify-center"
+                className="-ml-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 lg:hidden"
+                aria-label="Open navigation menu"
               >
-                <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               </button>
-              <h1 className="text-[17px] font-bold text-slate-900 lg:hidden">
+              <h1 className="truncate font-display text-[15px] font-bold text-slate-900 lg:hidden">
                 {visibleNavItems.find((item) => isNavItemActive(item.href))?.label || 'Dashboard'}
               </h1>
             </div>
           </div>
         </header>
 
-        <main className="p-4 sm:p-6 lg:p-8">
-          {children}
+        {/* Consistent 8px-grid page canvas: 16px gutters on mobile out to 32px
+            on large screens, with a capped measure for line-length comfort. */}
+        <main className="px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+          <div className="mx-auto max-w-7xl">{children}</div>
         </main>
       </div>
 

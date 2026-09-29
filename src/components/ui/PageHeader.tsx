@@ -1,6 +1,13 @@
 import Link from 'next/link'
 import { ChevronLeftIcon } from './Icons'
 
+/**
+ * Page title block.
+ *
+ * Enforces the hierarchy for every screen: a small uppercase eyebrow, a
+ * display-face title, a muted supporting line, then actions aligned to the
+ * baseline on desktop and stacked on mobile.
+ */
 export default function PageHeader({
   eyebrow,
   title,
@@ -17,24 +24,26 @@ export default function PageHeader({
   actions?: React.ReactNode
 }) {
   return (
-    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6">
+    <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
       <div className="min-w-0">
         {backLink && (
           <Link
             href={backLink}
-            className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-slate-900 transition-colors mb-1.5"
+            className="group mb-2 inline-flex items-center gap-1 text-xs font-medium text-neutral-light transition-colors hover:text-slate-900"
           >
-            <ChevronLeftIcon className="w-3.5 h-3.5" />
+            <ChevronLeftIcon className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5" />
             {backLabel || 'Back'}
           </Link>
         )}
         {eyebrow && (
-          <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-1.5">{eyebrow}</p>
+          <p className="mb-1.5 text-micro uppercase tracking-[0.08em] text-primary">{eyebrow}</p>
         )}
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-[-0.02em] text-slate-900">{title}</h1>
-        {subtitle && <p className="text-sm text-slate-500 mt-1.5">{subtitle}</p>}
+        <h1 className="text-page-title text-slate-900">{title}</h1>
+        {subtitle && <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-neutral-light">{subtitle}</p>}
       </div>
-      {actions && <div className="flex items-center gap-2 shrink-0 flex-wrap">{actions}</div>}
+      {actions && (
+        <div className="flex shrink-0 flex-wrap items-center gap-2 md:pt-6">{actions}</div>
+      )}
     </div>
   )
 }

@@ -16,10 +16,11 @@ interface Props {
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white p-3 rounded-xl shadow-lg border border-slate-200 text-sm">
-        <p className="font-bold text-slate-900 mb-1">{label}</p>
+      <div className="rounded-xl border border-slate-200 bg-white/95 p-3 text-sm shadow-lg backdrop-blur">
+        <p className="mb-1.5 font-semibold text-slate-900">{label}</p>
         {payload.map((entry: any, i: number) => (
-          <p key={i} style={{ color: entry.color }} className="font-medium">
+          <p key={i} style={{ color: entry.color }} className="flex items-center gap-1.5 font-medium">
+            <span className="h-2 w-2 rounded-sm" style={{ backgroundColor: entry.color }} />
             {entry.name}: GH₵{(entry.value ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
           </p>
         ))}
@@ -31,28 +32,28 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 export default memo(function RevenueChart({ data }: Props) {
   return (
-    <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-5">
-      <div className="flex items-center justify-between mb-5">
+    <section className="surface-card h-full p-5">
+      <header className="mb-5 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h3 className="font-semibold text-slate-900">Revenue Overview</h3>
-          <p className="text-xs text-neutral-light mt-0.5">Revenue by day</p>
+          <h2 className="text-section-title text-slate-900">Revenue Overview</h2>
+          <p className="mt-0.5 text-xs text-neutral-light">Revenue by day</p>
         </div>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-1.5 text-xs text-neutral-light">
-            <span className="w-3 h-3 rounded-sm bg-primary" />
+            <span className="h-2.5 w-2.5 rounded-sm bg-primary" />
             Revenue
           </div>
           <div className="flex items-center gap-1.5 text-xs text-neutral-light">
-            <span className="w-3 h-3 rounded-sm bg-success" />
+            <span className="h-2.5 w-2.5 rounded-sm bg-success" />
             Profit
           </div>
         </div>
-      </div>
+      </header>
       <div className="h-64">
         {data.length > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data} barGap={4} barCategoryGap="20%">
-              <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
               <XAxis
                 dataKey="day"
                 axisLine={false}
@@ -68,22 +69,24 @@ export default memo(function RevenueChart({ data }: Props) {
               />
               <Tooltip
                 content={<CustomTooltip />}
-                cursor={{ fill: 'rgba(37, 99, 235, 0.05)' }}
+                cursor={{ fill: 'rgba(79, 70, 229, 0.05)' }}
                 wrapperStyle={{ outline: 'none' }}
               />
-              <Bar dataKey="revenue" fill="#2563EB" radius={[6, 6, 0, 0]} />
-              <Bar dataKey="profit" fill="#16A34A" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="revenue" fill="#4F46E5" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="profit" fill="#059669" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         ) : (
-          <div className="flex flex-col items-center justify-center h-full text-neutral-light">
-            <svg className="w-10 h-10 mb-2 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-            <p className="text-sm">No revenue data for this period</p>
+          <div className="flex h-full flex-col items-center justify-center text-center">
+            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white">
+              <svg className="h-5 w-5 text-neutral-light" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5} aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </div>
+            <p className="text-sm text-neutral-light">No revenue data for this period</p>
           </div>
         )}
       </div>
-    </div>
+    </section>
   )
 })
