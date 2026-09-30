@@ -152,7 +152,7 @@ function formatNotifTime(iso?: string): string {
 }
 
 export default function DashboardLayout({ children, businessId: propBusinessId }: DashboardLayoutProps) {
-  const { user, logout, businesses, currentBusiness, switchBusiness, profileLoaded } = useAuth()
+  const { user, businesses, currentBusiness, switchBusiness, profileLoaded } = useAuth()
   const pathname = usePathname()
   const router = useRouter()
   const params = useParams()
@@ -505,23 +505,39 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
             </div>
           )}
 
-          {/* Notification Bell */}
+          {/* Notification Bell
+              Sits directly below the business switcher as a compact control
+              rather than as a full-width nav row that read like another
+              section of the sidebar. The panel only exists while open. */}
           {isManager && (
-            <div className="px-3 pb-2">
+            <div className="px-3 pt-2 pb-1">
               <div ref={notificationsRef} className="relative">
                 <button
+                  type="button"
                   onClick={() => { setNotificationsOpen(!notificationsOpen); if (!notificationsOpen) setActiveTab('all') }}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] transition-all duration-200 min-h-[40px] group text-white/50 hover:bg-white/[0.06] hover:text-white/80"
+                  className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[13px] text-white/50 transition-colors duration-150 hover:bg-white/[0.06] hover:text-white/85"
+                  aria-expanded={notificationsOpen}
+                  aria-label={
+                    unreadCount + pendingApprovals.length > 0
+                      ? `Notifications, ${unreadCount + pendingApprovals.length} new`
+                      : 'Notifications'
+                  }
                 >
-                  <span className="text-white/35 group-hover:text-white/55">
-                    <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                  <span className="relative shrink-0 text-white/35">
+                    <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                       <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                     </svg>
+                    {/* Count badge - the only persistent indicator, so the
+                        control is quiet until there is something new. */}
+                    {unreadCount + pendingApprovals.length > 0 && (
+                      <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold leading-none text-white ring-2 ring-navy">
+                        {unreadCount + pendingApprovals.length > 9
+                          ? '9+'
+                          : unreadCount + pendingApprovals.length}
+                      </span>
+                    )}
                   </span>
                   <span className="flex-1 text-left">Notifications</span>
-                  {(unreadCount + pendingApprovals.length) > 0 && notificationsOpen && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-                  )}
                 </button>
 
                 {notificationsOpen && (
@@ -855,15 +871,20 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
                     </svg>
                     My Profile
                   </Link>
-                  <button
-                    onClick={() => { setSidebarProfileOpen(false); logout() }}
-                    className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-[13px] text-red-600 hover:bg-red-50 transition-colors min-h-[40px]"
+                  {/* Signing out moved to Settings, behind a confirmation. One
+                      tap in a menu at the bottom of the sidebar is too easy to
+                      hit by accident on a phone. */}
+                  <Link
+                    href="/settings"
+                    onClick={() => setSidebarProfileOpen(false)}
+                    className="flex items-center gap-2.5 px-3.5 py-2.5 text-[13px] text-slate-700 hover:bg-slate-50 transition-colors min-h-[40px]"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8} aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.28z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
-                    Sign Out
-                  </button>
+                    Settings
+                  </Link>
                 </div>
               )}
             </div>

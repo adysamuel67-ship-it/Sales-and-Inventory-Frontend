@@ -71,13 +71,31 @@ function extractAccessToken(data: any): string | null {
   return data.access_token || data.token || null
 }
 
-async function performTokenRefresh(): Promise<string> {
-  const refreshToken = localStorage.getItem('refresh_token')
-  const accessToken = localStorage.getItem('token')
-  if (!refreshToken) throw new Error('No refresh token')
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
+/**
+ * Refreshes the access token, tolerating the refresh-token rotation race.
+ *
+ * The backend rotates the refresh token on every refresh, invalidating the
+ * previous one immediately. With more than one tab open - and the app
+ * proactively refreshing on a timer in each tab - tab A can rotate the token
+ * between tab B reading it and posting it. Tab B then gets a 401 on an
+ * otherwise perfectly valid session and gets logged out.
+ *
+ * So: re-read the stored token before every attempt, and if a 401 comes back
+ * while localStorage now holds a *different* token, retry with that instead of
+ * treating the session as dead. A definitive 401/403 only ends the session
+ * after the retries are exhausted. Network failures never log the user out -
+ * a trader on a patchy connection must not lose their session for it.
+ */
+async function performTokenRefresh(): Promise<string> {
   let lastError: any = null
-  for (let attempt = 0; attempt < 2; attempt++) {
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const refreshToken = localStorage.getItem('refresh_token')
+    const accessToken = localStorage.getItem('token')
+    if (!refreshToken) throw new Error('No refresh token')
+
     try {
       const { data } = await axios.post(`${API_BASE_URL}/auth/refresh`, {
         access_token: accessToken,
@@ -98,11 +116,24 @@ async function performTokenRefresh(): Promise<string> {
       return newToken
     } catch (err: any) {
       lastError = err
-      if (err.response?.status === 401 || err.response?.status === 403) {
+      const status = err?.response?.status
+
+      if (status === 401 || status === 403) {
+        // Did another tab rotate the token while this request was in flight?
+        const current = localStorage.getItem('refresh_token')
+        if (current && current !== refreshToken) {
+          continue
+        }
+        if (attempt < 2) {
+          await sleep(750)
+          continue
+        }
         doLogout()
         throw err
       }
-      if (attempt === 0) await new Promise((r) => setTimeout(r, 2000))
+
+      // Offline, DNS failure, 5xx: retry, but never end the session.
+      if (attempt < 2) await sleep(2000)
     }
   }
   throw lastError
@@ -183,9 +214,11 @@ function handle401Interceptor(instance: any) {
           }).then((token) => {
             originalRequest.headers.Authorization = `Bearer ${token}`
             return instance(originalRequest)
-          }).catch(() => {
-            doLogout()
-            return Promise.reject(error)
+          }).catch((refreshError) => {
+            // performTokenRefresh decides when a session is genuinely dead and
+            // calls doLogout() itself. A failure here is usually a dropped
+            // connection, which must not sign the user out.
+            return Promise.reject(refreshError || error)
           })
         }
 
@@ -195,12 +228,13 @@ function handle401Interceptor(instance: any) {
           const newToken = await startRefresh()
           originalRequest.headers.Authorization = `Bearer ${newToken}`
           return instance(originalRequest)
-        } catch {
-          doLogout()
-          return Promise.reject(error)
+        } catch (refreshError) {
+          // Same reasoning as above: do not end the session on a network error.
+          return Promise.reject(refreshError || error)
         }
       }
 
+      // No refresh token at all - the session really is gone.
       doLogout()
     }
     return Promise.reject(error)
