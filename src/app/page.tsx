@@ -5,6 +5,10 @@ import LandingAuthActions from '@/components/LandingAuthActions'
 import DashboardPreview from '@/components/landing/DashboardPreview'
 import MobileCtaBar from '@/components/landing/MobileCtaBar'
 import PhonePreview from '@/components/landing/PhonePreview'
+import FeatureGrid from '@/components/landing/FeatureGrid'
+import FactCards from '@/components/landing/FactCards'
+import DebtLedgerPreview from '@/components/landing/DebtLedgerPreview'
+import ProfitChart from '@/components/landing/ProfitChart'
 import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, COMPANY_NAME, SUPPORT_PHONE_DISPLAY, SUPPORT_PHONE_TEL, absoluteUrl } from '@/lib/site'
 
 export const metadata: Metadata = {
@@ -20,42 +24,51 @@ export const metadata: Metadata = {
 }
 
 const facts = [
-  { value: 'GH₵', label: 'Prices and totals in cedis' },
-  { value: 'MoMo', label: 'Mobile money payments recognised' },
-  { value: 'Any phone', label: 'Works on a basic Android handset' },
-  { value: 'Free', label: 'No card, no setup fee, no trial clock' },
+  { value: 'GH₵', label: 'Prices and totals in cedis', icon: 'cedi' as const },
+  { value: 'MoMo', label: 'Mobile money payments recognised', icon: 'momo' as const },
+  { value: 'Any phone', label: 'Works on a basic Android handset', icon: 'phone' as const },
+  { value: 'Free', label: 'No card, no setup fee, no trial clock', icon: 'free' as const },
 ]
 
+// Ordered by what actually closes the sale for this audience: the money owed
+// comes first because it is the most painful part of running a shop on credit,
+// then the daily mechanics, then reporting and scale.
 const features = [
   {
     n: '01',
-    title: 'Record a sale while the customer waits',
-    body: 'Pick the product, set the quantity, choose cash or mobile money, and it is done. Stock comes down and revenue goes up in the same tap, so nothing depends on you remembering it later.',
+    icon: 'ledger' as const,
+    title: 'Know exactly who owes you what',
+    body: 'When a customer pays partly, the balance is attached to their name. You see who owes, how long it has been outstanding, and every payment they have made — without a notebook, and without asking twice.',
   },
   {
     n: '02',
+    icon: 'sale' as const,
+    title: 'Record a sale while the customer waits',
+    body: 'Search for the product, set the quantity, choose cash or mobile money, and it is done. Stock comes down and revenue goes up in the same tap, so nothing depends on you remembering it later.',
+  },
+  {
+    n: '03',
+    icon: 'box' as const,
     title: 'Know what is running out before it runs out',
     body: 'Every sale reduces your inventory automatically. When an item crosses your threshold it surfaces on the dashboard, so you reorder while you still have sales to make — not after.',
   },
   {
-    n: '03',
-    title: 'Track credit without keeping a notebook',
-    body: 'When a customer pays partly, the balance is attached to their name. You see who owes what, when they last paid, and you can send a reminder from the same screen.',
+    n: '04',
+    icon: 'bell' as const,
+    title: 'Follow up on debts without the awkwardness',
+    body: 'Schedule a reminder against a balance and the message is drafted with the amount and the due date already filled in. You stay on top of what you are owed without turning into a creditor you dread being.',
   },
   {
-    n: '04',
+    n: '05',
+    icon: 'chart' as const,
     title: 'See profit, not just turnover',
     body: 'Money in the till is not the same as money in your pocket. Business Bot GH tracks what you sold against what it cost you, so the reports show what you actually made.',
   },
   {
-    n: '05',
+    n: '06',
+    icon: 'team' as const,
     title: 'Put your staff on the system',
     body: 'Add the people who sell for you and give each one a role. They record sales from their own phone, and you keep an eye on the day’s numbers from wherever you are.',
-  },
-  {
-    n: '06',
-    title: 'More than one shop or branch',
-    body: 'One account holds every business you run, each with its own products, staff and numbers. Switch between them without juggling separate logins.',
   },
 ]
 
@@ -190,6 +203,25 @@ export default function Home() {
             <p className="mt-5 text-[13px] text-slate-500 sm:text-sm">
               No credit card needed · Set up in two minutes
             </p>
+
+            {/* Compact proof row, so the claim below the fold is already
+                anchored before the reader reaches the facts section. */}
+            <dl className="mx-auto mt-10 grid max-w-2xl grid-cols-3 gap-4 border-t border-slate-200 pt-8 sm:gap-8">
+              {[
+                { k: 'Cedis & MoMo', v: 'Native payment formats' },
+                { k: 'Any phone', v: 'No laptop needed' },
+                { k: 'GH₵ 0', v: 'Cost, forever' },
+              ].map((s) => (
+                <div key={s.k}>
+                  <dt className="font-display text-lg font-bold tracking-tight text-slate-900 sm:text-xl">
+                    {s.k}
+                  </dt>
+                  <dd className="mt-1 text-[12px] leading-snug text-slate-500 sm:text-[13px]">
+                    {s.v}
+                  </dd>
+                </div>
+              ))}
+            </dl>
           </div>
 
           {/* Product */}
@@ -201,17 +233,10 @@ export default function Home() {
         </section>
 
         {/* ---------- Facts ---------- */}
-        <section className="mt-12 border-y border-slate-200 bg-slate-50 sm:mt-0">
-          <dl className="mx-auto grid max-w-6xl grid-cols-2 gap-x-6 gap-y-8 px-4 py-10 sm:px-6 lg:grid-cols-4 lg:py-12">
-            {facts.map((f) => (
-              <div key={f.label} className="border-t border-slate-200 pt-4">
-                <dt className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
-                  {f.value}
-                </dt>
-                <dd className="mt-1.5 text-[13px] leading-snug text-slate-500">{f.label}</dd>
-              </div>
-            ))}
-          </dl>
+        <section className="border-y border-slate-200 bg-surfaceAlt">
+          <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
+            <FactCards facts={facts} />
+          </div>
         </section>
 
         {/* ---------- Mobile ---------- */}
@@ -240,8 +265,48 @@ export default function Home() {
           </div>
         </section>
 
+        {/* ---------- Debt ledger (the hook) ----------
+            Sits directly after the product screenshot and before the feature
+            list, because "who owes me money" is the problem that makes a trader
+            look for a solution in the first place. */}
+        <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
+          <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-20">
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-widest text-primary">
+                Credit sales, handled
+              </p>
+              <h2 className="mt-3 text-[1.75rem] font-bold leading-tight tracking-[-0.02em] text-slate-900 sm:text-4xl">
+                The money you are owed, in one place
+              </h2>
+              <p className="mt-5 text-[15px] leading-relaxed text-pretty text-slate-600 sm:text-base">
+                Most shops in Ghana sell on credit, and most lose track of it. Every part
+                payment you take is attached to the customer&rsquo;s name, so the balance
+                follows them. You can see who has gone quiet, how long they have been
+                holding your money, and what they paid last.
+              </p>
+              <ul className="mt-6 space-y-3">
+                {[
+                  'Balances attached to the customer, not a scribbled note',
+                  'Sorted by how long each debt has been outstanding',
+                  'Every payment recorded against the right person',
+                ].map((line) => (
+                  <li key={line} className="flex items-start gap-2.5">
+                    <svg className="mt-0.5 h-5 w-5 shrink-0 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span className="text-[15px] leading-relaxed text-slate-600">{line}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="flex w-full justify-center lg:w-auto lg:shrink-0">
+              <DebtLedgerPreview />
+            </div>
+          </div>
+        </section>
+
         {/* ---------- Features ---------- */}
-        <section className="border-y border-slate-200 bg-slate-50">
+        <section className="border-y border-slate-200 bg-surfaceAlt">
           <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
             <div className="max-w-2xl">
               <p className="text-xs font-semibold uppercase tracking-widest text-primary">What it does</p>
@@ -250,21 +315,30 @@ export default function Home() {
               </h2>
             </div>
 
-            <div className="mt-10 border-t border-slate-200 sm:mt-12">
-              {features.map((f) => (
-                <div
-                  key={f.n}
-                  className="grid grid-cols-1 gap-x-6 gap-y-2 border-b border-slate-200 py-7 sm:grid-cols-[3rem_1fr] sm:py-8 lg:grid-cols-[4rem_16rem_1fr]"
-                >
-                  <span className="text-sm font-semibold tabular-nums text-slate-400">{f.n}</span>
-                  <h3 className="text-[17px] font-semibold leading-snug tracking-tight text-slate-900 sm:text-lg">
-                    {f.title}
-                  </h3>
-                  <p className="text-[15px] leading-relaxed text-pretty text-slate-600 sm:col-start-2 lg:col-start-3">
-                    {f.body}
-                  </p>
-                </div>
-              ))}
+            <FeatureGrid features={features} />
+          </div>
+        </section>
+
+        {/* ---------- Profit visualisation ----------
+            "See profit, not just turnover" is a claim; this makes it visible. */}
+        <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
+          <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-20">
+            <div className="order-2 flex w-full justify-center lg:order-1">
+              <ProfitChart />
+            </div>
+            <div className="order-1 min-w-0 lg:order-2">
+              <p className="text-xs font-semibold uppercase tracking-widest text-primary">
+                Real profit
+              </p>
+              <h2 className="mt-3 text-[1.75rem] font-bold leading-tight tracking-[-0.02em] text-slate-900 sm:text-4xl">
+                Turnover is not what you keep
+              </h2>
+              <p className="mt-5 text-[15px] leading-relaxed text-pretty text-slate-600 sm:text-base">
+                A day can look busy and still leave you behind once you subtract what
+                the stock cost you. Business Bot GH keeps the cost price against every
+                product, so the report shows the difference between what came in and
+                what stayed with you.
+              </p>
             </div>
           </div>
         </section>
@@ -278,36 +352,51 @@ export default function Home() {
             </h2>
           </div>
 
-          <ol className="mt-10 grid grid-cols-1 gap-8 sm:mt-12 md:grid-cols-3 md:gap-10">
+          <ol className="mt-10 grid grid-cols-1 gap-5 sm:mt-12 md:grid-cols-3 md:gap-6">
             {steps.map((s) => (
-              <li key={s.n} className="border-t-2 border-slate-900 pt-5">
-                <span className="text-sm font-bold tabular-nums text-primary">0{s.n}</span>
-                <h3 className="mt-2 text-lg font-semibold tracking-tight text-slate-900">{s.title}</h3>
-                <p className="mt-2 text-[15px] leading-relaxed text-pretty text-slate-600">{s.body}</p>
+              <li
+                key={s.n}
+                className="group relative rounded-2xl border border-slate-200 bg-white p-6 shadow-card transition-all duration-200 ease-smooth hover:-translate-y-0.5 hover:shadow-card-hover"
+              >
+                <span
+                  className="absolute inset-x-0 top-0 h-[3px] scale-x-0 rounded-t-2xl bg-primary transition-transform duration-200 group-hover:scale-x-100"
+                  aria-hidden="true"
+                />
+                {/* Number in a plate, so the sequence reads as 1-2-3 rather than
+                    as three unranked cards. */}
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-light font-display text-sm font-bold text-primary">
+                  {s.n}
+                </div>
+                <h3 className="mt-4 text-lg font-semibold tracking-tight text-slate-900">
+                  {s.title}
+                </h3>
+                <p className="mt-2 text-[15px] leading-relaxed text-pretty text-slate-600">
+                  {s.body}
+                </p>
               </li>
             ))}
           </ol>
         </section>
 
         {/* ---------- FAQ ---------- */}
-        <section className="border-y border-slate-200 bg-slate-50">
+        <section className="border-y border-slate-200 bg-surfaceAlt">
           <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 sm:py-24">
             <p className="text-xs font-semibold uppercase tracking-widest text-primary">Questions</p>
             <h2 className="mt-3 text-[1.75rem] font-bold leading-tight tracking-[-0.02em] text-slate-900 sm:text-4xl">
               Before you sign up
             </h2>
 
-            <div className="mt-10 border-t border-slate-200">
+            <div className="mt-10 space-y-3 sm:mt-12">
               {faqs.map((f) => (
-                <details key={f.q} className="group border-b border-slate-200 py-1">
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-5 text-[15px] font-semibold text-slate-900">
+                <details key={f.q} className="group rounded-xl border border-slate-200 bg-white px-5 transition-all duration-200 hover:border-slate-300">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-4 text-[15px] font-semibold text-slate-900">
                     {f.q}
                     <span className="relative h-3.5 w-3.5 shrink-0" aria-hidden>
                       <span className="absolute top-1/2 left-0 h-px w-full -translate-y-1/2 bg-slate-400" />
                       <span className="absolute top-0 left-1/2 h-full w-px -translate-x-1/2 bg-slate-400 transition-transform group-open:scale-y-0" />
                     </span>
                   </summary>
-                  <p className="pb-5 pr-8 text-[15px] leading-relaxed text-pretty text-slate-600">
+                  <p className="pb-4 pr-8 text-[15px] leading-relaxed text-pretty text-slate-600">
                     {f.a}
                   </p>
                 </details>
