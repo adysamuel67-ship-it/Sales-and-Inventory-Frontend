@@ -589,8 +589,17 @@ export function setNotificationsCache(cache: NotificationsCache) {
 
 export const notificationAPI = {
   // GET /notifications/get_notifications/{business_id}
-  // Returns ALL notifications for the business (backend does not filter per-user).
-  list: (businessId: number) => api.get(`/notifications/get_notifications/${businessId}`),
+  // Scoped server-side to the requesting user and ordered newest-first.
+  list: (businessId: number, unreadOnly = false) =>
+    api.get(`/notifications/get_notifications/${businessId}`, { params: { unread_only: unreadOnly } }),
+  // PATCH /notifications/{notification_id}/read
+  markRead: (notificationId: number) => api.patch(`/notifications/${notificationId}/read`),
+  // POST /notifications/read-all/{business_id}
+  markAllRead: (businessId: number) => api.post(`/notifications/read-all/${businessId}`),
+  // DELETE /notifications/{notification_id}
+  remove: (notificationId: number) => api.delete(`/notifications/${notificationId}`),
+  // DELETE /notifications/read/{business_id} - clears read ones, keeps unread.
+  clearRead: (businessId: number) => api.delete(`/notifications/read/${businessId}`),
   // POST /notifications/send (used by business/system flows; kept for completeness)
   send: (businessId: number, data: { title: string; message: string; user_id: number; business_id: number }) =>
     api.post(`/notifications/send`, { ...data, business_id: businessId }, { params: { business_id: businessId } }),
