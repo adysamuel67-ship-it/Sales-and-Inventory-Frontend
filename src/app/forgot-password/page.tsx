@@ -6,11 +6,13 @@ import Link from 'next/link'
 import AuthLayout from '@/components/AuthLayout'
 import { authAPI } from '@/lib/api'
 
+const OTP_LENGTH = 6
+
 export default function ForgotPasswordPage() {
   const router = useRouter()
   const [step, setStep] = useState<'email' | 'otp' | 'success'>('email')
   const [email, setEmail] = useState('')
-  const [code, setCode] = useState(['', '', '', '', '', '', ''])
+  const [code, setCode] = useState<string[]>(new Array(OTP_LENGTH).fill(''))
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [sending, setSending] = useState(false)
@@ -55,7 +57,7 @@ export default function ForgotPasswordPage() {
     const newCode = [...code]
     newCode[index] = value
     setCode(newCode)
-    if (value && index < 6) {
+    if (value && index < OTP_LENGTH - 1) {
       inputRefs.current[index + 1]?.focus()
     }
   }
@@ -68,20 +70,20 @@ export default function ForgotPasswordPage() {
 
   const handlePaste = (e: React.ClipboardEvent) => {
     e.preventDefault()
-    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 7)
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, OTP_LENGTH)
     if (pasted) {
-      const newCode = pasted.split('').concat(Array(7).fill('')).slice(0, 7)
+      const newCode = pasted.split('').concat(new Array(OTP_LENGTH).fill('')).slice(0, OTP_LENGTH)
       setCode(newCode)
       const nextEmpty = newCode.findIndex((c) => !c)
-      inputRefs.current[nextEmpty === -1 ? 6 : nextEmpty]?.focus()
+      inputRefs.current[nextEmpty === -1 ? OTP_LENGTH - 1 : nextEmpty]?.focus()
     }
   }
 
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault()
     const fullCode = code.join('')
-    if (fullCode.length !== 7) {
-      setError('Please enter the full 7-digit code.')
+    if (fullCode.length !== OTP_LENGTH) {
+      setError('Please enter the full 6-digit code.')
       return
     }
     if (password.length < 8) {
@@ -206,7 +208,7 @@ export default function ForgotPasswordPage() {
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1.5">Verification Code</label>
             <div className="flex justify-center gap-2 sm:gap-3" onPaste={handlePaste}>
-              {[0,1,2,3,4,5,6].map((i) => (
+              {Array.from({ length: OTP_LENGTH }, (_, i) => i).map((i) => (
                 <input
                   key={i}
                   ref={(el) => { inputRefs.current[i] = el }}
@@ -276,7 +278,7 @@ export default function ForgotPasswordPage() {
 
           <button
             type="submit"
-            disabled={loading || code.join('').length !== 7 || !password}
+            disabled={loading || code.join('').length !== OTP_LENGTH || !password}
             className="w-full py-3.5 bg-primary text-white rounded-xl font-semibold text-sm hover:bg-primary-dark transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 active:scale-[0.98]"
           >
             {loading ? (

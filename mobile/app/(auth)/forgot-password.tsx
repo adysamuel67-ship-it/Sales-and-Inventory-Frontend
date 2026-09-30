@@ -11,7 +11,7 @@ import { Colors, BORDER_RADIUS, SHADOW, FONTS } from '@/lib/constants'
 import Button from '@/components/ui/Button'
 import AlertBadge from '@/components/ui/AlertBadge'
 
-const OTP_LENGTH = 7
+const OTP_LENGTH = 6
 
 export default function ForgotPasswordScreen() {
   const router = useRouter()
