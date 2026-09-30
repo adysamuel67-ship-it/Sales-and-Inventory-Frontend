@@ -30,52 +30,87 @@ const facts = [
   { value: 'Free', label: 'No card, no setup fee, no trial clock', icon: 'free' as const },
 ]
 
-// Ordered by what actually closes the sale for this audience: the money owed
-// comes first because it is the most painful part of running a shop on credit,
-// then the daily mechanics, then reporting and scale.
+// Every user-facing capability the app actually has, taken from the in-app
+// navigation: Dashboard, Chat, Sales, Products, Customers, Debts, Reports,
+// Notifications, multi-business, plus reminders. Ordered by what closes the
+// sale for this audience - the money owed leads, because that is the most
+// painful part of running a shop on credit.
 const features = [
   {
     n: '01',
     icon: 'ledger' as const,
     title: 'Know exactly who owes you what',
-    body: 'When a customer pays partly, the balance is attached to their name. You see who owes, how long it has been outstanding, and every payment they have made — without a notebook, and without asking twice.',
+    body: 'Every part payment is attached to the customer, so the balance follows them. See who has gone quiet, how long they have been holding your money, and what they paid last.',
   },
   {
     n: '02',
     icon: 'sale' as const,
     title: 'Record a sale while the customer waits',
-    body: 'Search for the product, set the quantity, choose cash or mobile money, and it is done. Stock comes down and revenue goes up in the same tap, so nothing depends on you remembering it later.',
+    body: 'Search the product, set the quantity, choose cash or mobile money. Stock comes down and revenue goes up in the same tap, so nothing depends on your memory.',
   },
   {
     n: '03',
     icon: 'box' as const,
     title: 'Know what is running out before it runs out',
-    body: 'Every sale reduces your inventory automatically. When an item crosses your threshold it surfaces on the dashboard, so you reorder while you still have sales to make — not after.',
+    body: 'Each sale reduces your inventory automatically. When an item crosses your threshold it surfaces on the dashboard, so you reorder while you still have sales to make.',
   },
   {
     n: '04',
-    icon: 'bell' as const,
-    title: 'Follow up on debts without the awkwardness',
-    body: 'Schedule a reminder against a balance and the message is drafted with the amount and the due date already filled in. You stay on top of what you are owed without turning into a creditor you dread being.',
+    icon: 'customers' as const,
+    title: 'Every customer in one place',
+    body: 'Name, phone and full history for everyone who buys from you, with their balance attached. No more digging through a notebook to check who is who.',
   },
   {
     n: '05',
-    icon: 'chart' as const,
-    title: 'See profit, not just turnover',
-    body: 'Money in the till is not the same as money in your pocket. Business Bot GH tracks what you sold against what it cost you, so the reports show what you actually made.',
+    icon: 'bell' as const,
+    title: 'Follow up on debts without the awkwardness',
+    body: 'Schedule a reminder against a balance and the message is drafted with the amount and the due date already filled in. Stay on top of what you are owed.',
   },
   {
     n: '06',
+    icon: 'chart' as const,
+    title: 'See profit, not just turnover',
+    body: 'Money in the till is not the same as money in your pocket. Cost prices are tracked against every product, so reports show what you actually made.',
+  },
+  {
+    n: '07',
+    icon: 'chat' as const,
+    title: 'Talk to your staff where they already are',
+    body: 'Built-in chat means a question about a sale gets answered in minutes, on the same phone they just used to ring it up.',
+  },
+  {
+    n: '08',
     icon: 'team' as const,
     title: 'Put your staff on the system',
-    body: 'Add the people who sell for you and give each one a role. They record sales from their own phone, and you keep an eye on the day’s numbers from wherever you are.',
+    body: 'Give each person a role. They record sales from their own phone, and you keep an eye on the day’s numbers from wherever you happen to be.',
+  },
+  {
+    n: '09',
+    icon: 'branch' as const,
+    title: 'More than one shop or branch',
+    body: 'One account holds every business you run, each with its own products, staff and numbers. Switch between them without juggling separate logins.',
   },
 ]
 
+// Mirrors the real onboarding order: an account, then a business to hang the
+// data off, then products. Skipping the business step used to imply you could
+// go straight from signing up to adding stock.
 const steps = [
-  { n: '1', title: 'Create your account', body: 'Your name, email and phone number. No card, no sales call, no setup fee.' },
-  { n: '2', title: 'Add what you sell', body: 'Products, prices, and how many of each you have in stock right now.' },
-  { n: '3', title: 'Start recording', body: 'Log sales as they happen and watch stock, revenue and debts update live.' },
+  {
+    n: '1',
+    title: 'Create your account',
+    body: 'Your name, email and phone number. No card, no sales call, no setup fee.',
+  },
+  {
+    n: '2',
+    title: 'Create your business',
+    body: 'Name the shop you run. Products, staff, sales and debts all live inside it, so adding a second branch later does not mean starting over.',
+  },
+  {
+    n: '3',
+    title: 'Add products and start recording',
+    body: 'Add what you sell with prices and stock. Then record each sale as it happens and watch stock, revenue and debts update live.',
+  },
 ]
 
 const faqs = [
@@ -167,22 +202,30 @@ export default function Home() {
           />
 
           <div className="relative mx-auto max-w-6xl px-4 pb-12 pt-12 text-center sm:px-6 sm:pb-16 sm:pt-20">
+            {/* Positioning only. The price used to be stated here as well as in the
+                subhead, the button, the line below it and the proof row -
+                five times in one hero. It now appears once, at the CTA. */}
             <p className="mb-5 inline-flex max-w-full items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-medium text-slate-600 sm:text-xs">
               <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-success" />
-              <span className="truncate">Free to use</span>
-              <span className="hidden h-1 w-1 shrink-0 rounded-full bg-slate-300 sm:block" />
-              <span className="hidden truncate sm:inline">Built for Ghanaian traders</span>
+              <span className="truncate">Built for Ghanaian traders and market shops</span>
             </p>
 
-            <h1 className="mx-auto max-w-3xl text-[1.95rem] font-bold leading-[1.08] tracking-[-0.03em] text-slate-900 sm:text-5xl lg:text-6xl lg:leading-[1.05]">
-              Business Bot GH: Sales &amp; Inventory Tracking for Ghanaian Businesses
+            {/* The headline states the outcome, not the product label - the brand
+                name is already in the header logo directly above, and repeating
+                it here (and again below) was what made the block feel heavy.
+                One phrase carries the accent so the line has a focal point
+                instead of reading as a flat slab of grey-blue. */}
+            <h1 className="mx-auto max-w-3xl text-balance text-[1.95rem] font-bold leading-[1.1] tracking-[-0.03em] text-slate-900 sm:text-5xl lg:text-6xl lg:leading-[1.05]">
+              Know your sales, your stock, and{' '}
+              <span className="text-primary">exactly who owes you</span>
             </h1>
 
-            <p className="mx-auto mt-5 max-w-2xl text-[15px] leading-relaxed text-pretty text-slate-600 sm:mt-6 sm:text-lg">
-              Business Bot GH is a free sales and inventory tracking platform built for Ghanaian
-              traders, market shops and small businesses. Record sales as they happen, see what is
-              left in your stock, follow up on the money you are owed, and know your real profit —
-              from the phone already in your pocket.
+            {/* Narrower measure than the headline: the classic type hierarchy
+                where the headline sets the width and the body copy sits inside
+                it. One sentence, brand named once. */}
+            <p className="mx-auto mt-5 max-w-xl text-pretty text-[15px] leading-relaxed text-slate-600 sm:mt-6 sm:text-lg">
+              Business Bot GH turns every sale, every restock and every part payment into one
+              clear number, on the phone you already own.
             </p>
 
             <div className="mx-auto mt-8 flex max-w-sm flex-col items-stretch gap-3 sm:max-w-none sm:flex-row sm:items-center sm:justify-center">
@@ -210,7 +253,7 @@ export default function Home() {
               {[
                 { k: 'Cedis & MoMo', v: 'Native payment formats' },
                 { k: 'Any phone', v: 'No laptop needed' },
-                { k: 'GH₵ 0', v: 'Cost, forever' },
+                { k: 'Live', v: 'Stock updates as you sell' },
               ].map((s) => (
                 <div key={s.k}>
                   <dt className="font-display text-lg font-bold tracking-tight text-slate-900 sm:text-xl">
@@ -229,6 +272,30 @@ export default function Home() {
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-1.5 sm:p-4">
               <DashboardPreview />
             </div>
+          </div>
+        </section>
+
+        {/* ---------- Everything it does ----------
+            Placed directly under the hero, before the product screenshot, so a
+            visitor who does not scroll past the fold still sees the full
+            capability list in cards. The later, repeated version of this
+            section was removed to avoid saying the same thing twice. */}
+        <section className="border-y border-slate-200 bg-surfaceAlt">
+          <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
+            <div className="mx-auto max-w-2xl text-center">
+              <p className="text-xs font-semibold uppercase tracking-widest text-primary">
+                Everything it does
+              </p>
+              <h2 className="mt-3 text-[1.75rem] font-bold leading-tight tracking-[-0.02em] text-slate-900 sm:text-4xl">
+                Nine things that used to eat your afternoon
+              </h2>
+              <p className="mt-4 text-[15px] leading-relaxed text-pretty text-slate-600 sm:text-base">
+                Sales, stock, customers, credit and your staff — all in one place,
+                on the phone you already own.
+              </p>
+            </div>
+
+            <FeatureGrid features={features} />
           </div>
         </section>
 
@@ -302,20 +369,6 @@ export default function Home() {
             <div className="flex w-full justify-center lg:w-auto lg:shrink-0">
               <DebtLedgerPreview />
             </div>
-          </div>
-        </section>
-
-        {/* ---------- Features ---------- */}
-        <section className="border-y border-slate-200 bg-surfaceAlt">
-          <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
-            <div className="max-w-2xl">
-              <p className="text-xs font-semibold uppercase tracking-widest text-primary">What it does</p>
-              <h2 className="mt-3 text-[1.75rem] font-bold leading-tight tracking-[-0.02em] text-slate-900 sm:text-4xl">
-                Six things that used to eat your afternoon
-              </h2>
-            </div>
-
-            <FeatureGrid features={features} />
           </div>
         </section>
 
