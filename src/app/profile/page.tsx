@@ -13,7 +13,7 @@ import { PageSpinner } from '@/components/ui/Spinner'
 import { useAuth } from '@/lib/auth'
 import { profileAPI, adminAPI } from '@/lib/api'
 import { parseApiError } from '@/lib/utils'
-import { COMPANY_NAME, SUPPORT_PHONE_DISPLAY, SUPPORT_PHONE_TEL } from '@/lib/site'
+import { COMPANY_NAME, SUPPORT_EMAIL, SUPPORT_EMAIL_SUBJECT, SUPPORT_PHONE_DISPLAY, SUPPORT_PHONE_TEL } from '@/lib/site'
 
 const roleColorMap: Record<string, 'purple' | 'blue' | 'emerald' | 'amber' | 'slate'> = {
   super_admin: 'purple',
@@ -483,7 +483,29 @@ export default function ProfilePage() {
           />
           <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-[15px] leading-relaxed text-slate-600">
-              Something not working, or a question about your account? Call us and a person picks up.
+              Something not working, or a question about your account? Send us an email and a person picks up.
+            </p>
+            <a
+              href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(
+                SUPPORT_EMAIL_SUBJECT
+              )}&body=${encodeURIComponent(
+                `From: ${user?.name || 'A Business Bot user'}${user?.email ? ` <${user.email}>` : ''}\n\nWhat is not working, or what do you need help with?\n\n`
+              )}`}
+              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 transition-colors hover:border-primary/40 hover:bg-slate-50"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5" aria-hidden="true">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"
+                />
+              </svg>
+              {SUPPORT_EMAIL}
+            </a>
+          </div>
+          <div className="mt-3 flex flex-col gap-3 border-t border-slate-100 pt-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-slate-500">
+              Prefer to talk? Call us and we will pick up.
             </p>
             <a
               href={`tel:${SUPPORT_PHONE_TEL}`}
