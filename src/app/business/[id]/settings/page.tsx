@@ -4,12 +4,11 @@ import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/lib/auth'
-import { businessAPI, adminAPI } from '@/lib/api'
-import { isAdminRole, isSuperAdminUser, parseApiError, extractArray } from '@/lib/utils'
+import { businessAPI } from '@/lib/api'
+import { isAdminRole, isSuperAdminUser, parseApiError } from '@/lib/utils'
 import PageHeader from '@/components/ui/PageHeader'
 import Alert from '@/components/ui/Alert'
-import EmptyState from '@/components/ui/EmptyState'
-import { UsersIcon, LockIcon, ChevronRightIcon } from '@/components/ui/Icons'
+import { LockIcon, ChevronRightIcon } from '@/components/ui/Icons'
 
 export default function SettingsPage() {
   const params = useParams()
@@ -29,16 +28,6 @@ export default function SettingsPage() {
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
   const [leaving, setLeaving] = useState(false)
 
-  const [members, setMembers] = useState<any[]>([])
-  const [membersLoading, setMembersLoading] = useState(false)
-  const [editingMember, setEditingMember] = useState<number | null>(null)
-  const [editRole, setEditRole] = useState('')
-  const [editActive, setEditActive] = useState(true)
-  const [memberSaving, setMemberSaving] = useState(false)
-  const [removingMemberId, setRemovingMemberId] = useState<number | null>(null)
-  const [confirmRemoveId, setConfirmRemoveId] = useState<number | null>(null)
-  const [togglingActiveId, setTogglingActiveId] = useState<number | null>(null)
-  const [confirmToggleId, setConfirmToggleId] = useState<number | null>(null)
 
   const isOwner = isSuperAdminUser(user) || isAdminRole(user?.business_role || user?.role)
 
@@ -74,114 +63,6 @@ export default function SettingsPage() {
     if (businessId) loadSettings()
   }, [businessId, loadSettings])
 
-  const loadMembers = useCallback(async () => {
-    if (!businessId) return
-    setMembersLoading(true)
-    try {
-      let memberList: any[] = []
-
-      try {
-        const bizRes = await businessAPI.get(businessId)
-        const bizData = bizRes.data?.data || bizRes.data
-        const bizObj = bizData?.data || bizData
-        if (Array.isArray(bizObj?.members)) {
-          memberList = bizObj.members
-        } else if (Array.isArray(bizObj?.users)) {
-          memberList = bizObj.users
-        } else if (Array.isArray(bizData?.members)) {
-          memberList = bizData.members
-        }
-      } catch {}
-
-      if (memberList.length === 0) {
-        try {
-          const allUsersRes = await adminAPI.listAllUsers()
-          const allUsers = extractArray(allUsersRes.data)
-          memberList = allUsers.filter((u: any) => {
-            const ubizId = u.business_id ?? u.business?.business_id
-            return ubizId != null && Number(ubizId) === businessId
-          })
-        } catch {
-          try {
-            const memberRes = await adminAPI.listMembers()
-            const allMembers = extractArray(memberRes.data)
-            memberList = allMembers.filter((m: any) => {
-              return m.business_id != null && Number(m.business_id) === businessId
-            })
-          } catch {
-            memberList = []
-          }
-        }
-      }
-
-      setMembers(memberList.map((m: any) => ({
-        member_id: m.member_id ?? m.user_id ?? m.id,
-        user_id: m.user_id ?? m.id,
-        name: m.name || m.user?.name || '',
-        email: m.email || m.user?.email || '',
-        role: m.role || m.business_role || 'user',
-        is_verified: m.is_verified ?? m.user?.is_verified ?? false,
-        is_active: m.is_active ?? true,
-        business_id: m.business_id ?? businessId,
-      })))
-    } catch (err: any) {
-      setError(parseApiError(err))
-    } finally {
-      setMembersLoading(false)
-    }
-  }, [businessId])
-
-  useEffect(() => {
-    if (businessId && isOwner) loadMembers()
-  }, [businessId, isOwner, loadMembers])
-
-  const handleUpdateMember = async (memberId: number) => {
-    setMemberSaving(true)
-    setError('')
-    setSuccess('')
-    try {
-      await businessAPI.updateMember(businessId, memberId, { role: editRole, is_active: editActive })
-      setSuccess('Member updated!')
-      setEditingMember(null)
-      loadMembers()
-    } catch (err: any) {
-      setError(parseApiError(err))
-    } finally {
-      setMemberSaving(false)
-    }
-  }
-
-  const handleRemoveMember = async (memberId: number) => {
-    setRemovingMemberId(memberId)
-    setError('')
-    setSuccess('')
-    try {
-      await businessAPI.removeMember(businessId, memberId)
-      setSuccess('Member removed from business')
-      setConfirmRemoveId(null)
-      loadMembers()
-    } catch (err: any) {
-      setError(parseApiError(err))
-    } finally {
-      setRemovingMemberId(null)
-    }
-  }
-
-  const handleToggleMemberActive = async (memberId: number, isActive: boolean) => {
-    setTogglingActiveId(memberId)
-    setError('')
-    setSuccess('')
-    try {
-      await businessAPI.updateMember(businessId, memberId, { is_active: !isActive })
-      setSuccess(!isActive ? 'Member deactivated' : 'Member activated')
-      setConfirmToggleId(null)
-      loadMembers()
-    } catch (err: any) {
-      setError(parseApiError(err))
-    } finally {
-      setTogglingActiveId(null)
-    }
-  }
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -351,177 +232,6 @@ export default function SettingsPage() {
                   </button>
                 )}
               </div>
-            </div>
-          )}
-
-          {isOwner && (
-            <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6 mb-4">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="font-semibold text-slate-900">Team Members</h3>
-                  <p className="text-xs text-neutral-light mt-0.5">Manage roles and access for team members</p>
-                </div>
-              </div>
-              {membersLoading ? (
-                <div className="space-y-3">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="skeleton h-16 rounded-xl" />
-                  ))}
-                </div>
-              ) : members.length > 0 ? (
-                <div className="space-y-2">
-                  {members.map((m: any) => (
-                    <div key={m.member_id} className="flex items-center justify-between py-3 px-4 bg-surfaceAlt rounded-xl">
-                      {editingMember === m.member_id ? (
-                        <div className="flex-1 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-slate-900">{m.name}</p>
-                            <p className="text-xs text-neutral-light">{m.email}</p>
-                          </div>
-                          <select
-                            value={editRole}
-                            onChange={(e) => setEditRole(e.target.value)}
-                            className="px-3 py-2 rounded-lg border border-slate-300 text-sm min-h-[40px]"
-                          >
-                            <option value="admin">Admin</option>
-                            <option value="manager">Manager</option>
-                            <option value="cashier">Cashier</option>
-                            <option value="viewer">Viewer</option>
-                          </select>
-                          <label className="flex items-center gap-2 text-sm text-slate-700">
-                            <input
-                              type="checkbox"
-                              checked={editActive}
-                              onChange={(e) => setEditActive(e.target.checked)}
-                              className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary"
-                            />
-                            Active
-                          </label>
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => handleUpdateMember(m.member_id)}
-                              disabled={memberSaving}
-                              className="px-3 py-2 bg-primary text-white rounded-lg text-xs font-medium hover:bg-primary-dark transition-colors disabled:opacity-60 min-h-[40px]"
-                            >
-                              {memberSaving ? '...' : 'Save'}
-                            </button>
-                            <button
-                              onClick={() => setEditingMember(null)}
-                              className="px-3 py-2 bg-slate-100 text-slate-600 rounded-lg text-xs font-medium hover:bg-slate-200 transition-colors min-h-[40px]"
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <>
-                          <div className="flex items-center gap-3 min-w-0 flex-1">
-                            <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold shrink-0 ${m.role === 'admin' ? 'bg-purple-100 text-purple-700' : m.role === 'manager' ? 'bg-primary/10 text-primary' : 'bg-slate-100 text-slate-600'}`}>
-                              {m.name?.charAt(0)?.toUpperCase() || '?'}
-                            </div>
-                            <div className="min-w-0">
-                              <p className="text-sm font-medium text-slate-900 truncate">{m.name}</p>
-                              <p className="text-xs text-neutral-light truncate">{m.email}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-3 shrink-0">
-                            <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
-                              m.role === 'admin' ? 'bg-purple-100 text-purple-700' :
-                              m.role === 'manager' ? 'bg-primary/10 text-primary' :
-                              m.role === 'cashier' ? 'bg-emerald-100 text-emerald-700' :
-                              'bg-slate-100 text-slate-600'
-                            }`}>
-                              {m.role}
-                            </span>
-                            {m.is_active === false && (
-                              <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-200 text-slate-600">
-                                Inactive
-                              </span>
-                            )}
-                            {m.user_id !== user?.id && (
-                              <>
-                                {confirmRemoveId === m.user_id ? (
-                                  <div className="flex items-center gap-1.5">
-                                    <button
-                                      onClick={() => handleRemoveMember(m.user_id)}
-                                      disabled={removingMemberId === m.user_id}
-                                      className="px-2.5 py-1.5 bg-red-600 text-white rounded-lg text-xs font-medium hover:bg-red-700 transition-colors disabled:opacity-60 min-h-[32px]"
-                                    >
-                                      {removingMemberId === m.user_id ? '...' : 'Confirm'}
-                                    </button>
-                                    <button
-                                      onClick={() => setConfirmRemoveId(null)}
-                                      disabled={removingMemberId === m.user_id}
-                                      className="px-2.5 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-xs font-medium hover:bg-slate-200 transition-colors min-h-[32px]"
-                                    >
-                                      No
-                                    </button>
-                                  </div>
-                                ) : confirmToggleId === m.member_id ? (
-                                  <div className="flex items-center gap-1.5">
-                                    <button
-                                      onClick={() => handleToggleMemberActive(m.member_id, m.is_active !== false)}
-                                      disabled={togglingActiveId === m.member_id}
-                                      className={`px-2.5 py-1.5 text-white rounded-lg text-xs font-medium transition-colors disabled:opacity-60 min-h-[32px] ${
-                                        m.is_active === false ? 'bg-success hover:bg-green-700' : 'bg-warning hover:bg-amber-700'
-                                      }`}
-                                    >
-                                      {togglingActiveId === m.member_id ? '...' : m.is_active === false ? 'Yes, Activate' : 'Yes, Deactivate'}
-                                    </button>
-                                    <button
-                                      onClick={() => setConfirmToggleId(null)}
-                                      disabled={togglingActiveId === m.member_id}
-                                      className="px-2.5 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-xs font-medium hover:bg-slate-200 transition-colors min-h-[32px]"
-                                    >
-                                      No
-                                    </button>
-                                  </div>
-                                ) : (
-                                  <>
-                                    <button
-                                      onClick={() => {
-                                        setEditingMember(m.member_id)
-                                        setEditRole(m.role || 'viewer')
-                                        setEditActive(m.is_active !== false)
-                                      }}
-                                      className="px-3 py-1.5 text-xs font-medium text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors"
-                                    >
-                                      Edit
-                                    </button>
-                                    <button
-                                      onClick={() => setConfirmToggleId(m.member_id)}
-                                      title={m.is_active === false ? 'Activate this member' : 'Deactivate this member'}
-                                      className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-                                        m.is_active === false
-                                          ? 'text-success bg-success-light hover:bg-success/10'
-                                          : 'text-warning bg-warning-light hover:bg-warning/10'
-                                      }`}
-                                    >
-                                      {m.is_active === false ? 'Activate' : 'Deactivate'}
-                                    </button>
-                                    <button
-                                      onClick={() => setConfirmRemoveId(m.user_id)}
-                                      className="px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
-                                    >
-                                      Remove
-                                    </button>
-                                  </>
-                                )}
-                              </>
-                            )}
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <EmptyState
-                  icon={<UsersIcon className="w-6 h-6 text-primary" />}
-                  title="No members found"
-                  description="Invite team members using your business key"
-                />
-              )}
             </div>
           )}
 

@@ -49,6 +49,10 @@ export default function BusinessesPage() {
   const [membersByBiz, setMembersByBiz] = useState<Record<number, Member[]>>({})
   const [membersLoadingBiz, setMembersLoadingBiz] = useState<Record<number, boolean>>({})
   const [membersLoaded, setMembersLoaded] = useState<Set<number>>(new Set())
+  // Which businesses have their member list open. Members are fetched on
+  // demand rather than for every business on mount - most visits never open
+  // them, and the list dominated the card it sat in.
+  const [showMembersBiz, setShowMembersBiz] = useState<Set<number>>(new Set())
   const [expandedMember, setExpandedMember] = useState<string | null>(null)
   const [editingMember, setEditingMember] = useState<string | null>(null)
   const [editRole, setEditRole] = useState('')
@@ -133,11 +137,19 @@ export default function BusinessesPage() {
     }
   }, [membersLoaded])
 
-  useEffect(() => {
-    if (businesses.length > 0) {
-      businesses.forEach((b) => loadMembers(b.business_id))
-    }
-  }, [businesses, loadMembers])
+  const toggleMembers = (bizId: number) => {
+    setShowMembersBiz((prev) => {
+      const next = new Set(prev)
+      if (next.has(bizId)) {
+        next.delete(bizId)
+      } else {
+        next.add(bizId)
+        // Fetch the first time it is opened; cached afterwards by loadMembers.
+        loadMembers(bizId)
+      }
+      return next
+    })
+  }
 
   const canManageBiz = (biz: Business) =>
     isAdminRole(biz.role) || isAdminRole(user?.business_role) || isAdminRole(user?.role)
@@ -564,23 +576,42 @@ export default function BusinessesPage() {
                     </div>
                   )}
 
-                  {/* Members */}
-                  <div className="mt-4 pt-4 border-t border-slate-100">
-                    <div className="flex items-center gap-2 mb-2">
-                      <svg className="w-4 h-4 text-neutral-light" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
+                  {/* Members - collapsed until the user opens it. */}
+                  <div className="mt-4 border-t border-slate-100 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => toggleMembers(biz.business_id)}
+                      aria-expanded={showMembersBiz.has(biz.business_id)}
+                      className="flex w-full items-center gap-2 rounded-lg px-1 py-2.5 text-left transition-colors hover:bg-surfaceAlt"
+                    >
+                      <svg className="w-4 h-4 text-neutral-light" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8" aria-hidden="true">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
                         <circle cx="9" cy="7" r="4" />
                         <path d="M23 21v-2a4 4 0 00-3-3.87" />
                         <path d="M16 3.13a4 4 0 010 7.75" />
                       </svg>
-                      <h4 className="text-sm font-semibold text-slate-900">Members</h4>
+                      <h4 className="flex-1 text-sm font-semibold text-slate-900">Members</h4>
                       {bizMembers.length > 0 && (
                         <span className="text-[10px] font-medium uppercase tracking-wider bg-primary/10 text-primary px-2 py-0.5 rounded-full">
                           {bizMembers.length}
                         </span>
                       )}
-                    </div>
+                      <svg
+                        className={`h-4 w-4 shrink-0 text-neutral-light transition-transform duration-200 ${
+                          showMembersBiz.has(biz.business_id) ? 'rotate-180' : ''
+                        }`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        strokeWidth={2}
+                        aria-hidden="true"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
 
+                    {showMembersBiz.has(biz.business_id) && (
+                      <>
                     {membersLoading ? (
                       <div className="space-y-2">
                         {[1, 2].map((i) => (
@@ -755,6 +786,8 @@ export default function BusinessesPage() {
                       <p className="text-xs text-neutral-light bg-surfaceAlt rounded-xl p-3">
                         Members could not be loaded for this business.
                       </p>
+                    )}
+                      </>
                     )}
                   </div>
                 </div>
