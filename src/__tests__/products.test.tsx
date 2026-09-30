@@ -10,7 +10,11 @@
  * 6. Product table renders with data
  * 7. Empty state renders correctly
  * 8. Add product form toggle
+ * 9. Deferred row actions stay reachable for mouse, keyboard and touch
  */
+
+import { readFileSync } from 'fs'
+import { join } from 'path'
 
 function extractArray(data: any): any[] {
   if (Array.isArray(data)) return data
@@ -354,4 +358,70 @@ describe('Product restock logic', () => {
     const qty = parseInt(restockQty[1] || '0')
     expect(qty).toBe(0)
   })
+
+describe('Product row actions', () => {
+  // The list must stay a list. Edit/restock/activate/delete all live in the
+  // detail modal that opens on click, so no destructive control is ever
+  // rendered inline next to the data.
+  const page = readFileSync(
+    join(process.cwd(), 'src/app/business/[id]/products/page.tsx'),
+    'utf8'
+  )
+  const modal = readFileSync(
+    join(process.cwd(), 'src/components/ProductDetailModal.tsx'),
+    'utf8'
+  )
+
+  // Strip the modal wiring block out of the page before inspecting the table.
+  const listMarkup = page.split('<ProductDetailModal')[0]
+
+  it('renders no inline action buttons in the desktop table', () => {
+    expect(listMarkup).not.toMatch(/aria-label={`Delete /)
+    expect(listMarkup).not.toMatch(/aria-label={`Edit /)
+    expect(listMarkup).not.toMatch(/aria-label={`Restock /)
+  })
+
+  it('renders no inline action buttons in the mobile cards', () => {
+    expect(listMarkup).not.toMatch(/>Delete</)
+    expect(listMarkup).not.toMatch(/>Restock</)
+    expect(listMarkup).not.toMatch(/>Deactivate</)
+    expect(listMarkup).not.toMatch(/>Activate</)
+  })
+
+  it('no longer emits an Actions column header', () => {
+    expect(page).not.toContain('<th className="px-4 py-3 text-right">Actions</th>')
+  })
+
+  it('no longer uses the removed row-actions reveal pattern', () => {
+    expect(page).not.toContain('row-actions')
+    expect(page).not.toContain('data-row-active')
+  })
+
+  it('clicking a row opens the detail modal, which carries every action', () => {
+    expect(page).toContain('onClick={() => setDetailProduct(p)}')
+    expect(modal).toContain('onEdit?.(product)')
+    expect(modal).toContain('onRestock?.(product)')
+    expect(modal).toContain('onToggleActive?.(product)')
+    expect(modal).toContain('onDelete?.(product)')
+  })
+})
+
+describe('Dashboard mobile layout', () => {
+  const page = readFileSync(join(process.cwd(), 'src/app/dashboard/page.tsx'), 'utf8')
+
+  it('stacks KPI cards in one column on phones', () => {
+    // Two currency columns in a phone-width cell is what overflowed.
+    expect(page).toContain('grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4')
+  })
+
+  it('caps the date popover to the viewport and left-anchors it on phones', () => {
+    expect(page).toContain('w-[min(20rem,calc(100vw-2rem))]')
+    expect(page).toContain('sm:left-auto sm:right-0')
+  })
+
+  it('stacks the custom date range fields on phones', () => {
+    expect(page).toContain('grid grid-cols-1 gap-2 sm:grid-cols-2')
+  })
+})
+
 })

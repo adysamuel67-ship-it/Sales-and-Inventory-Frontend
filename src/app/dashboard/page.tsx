@@ -276,21 +276,24 @@ export default function DashboardPage() {
         <div className="relative">
           <button
             onClick={() => showDatePicker ? setShowDatePicker(false) : handleOpenDatePicker()}
-            className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 shadow-xs transition-all duration-150 hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900"
+            className="inline-flex h-10 max-w-full items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 shadow-xs transition-all duration-150 hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900"
             aria-expanded={showDatePicker}
             aria-haspopup="dialog"
           >
-            <svg className="h-4 w-4 text-neutral-light" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <svg className="h-4 w-4 shrink-0 text-neutral-light" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            {dateSubtitle}
-            <svg className={`h-4 w-4 text-neutral-light transition-transform duration-200 ${showDatePicker ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <span className="truncate">{dateSubtitle}</span>
+            <svg className={`h-4 w-4 shrink-0 text-neutral-light transition-transform duration-200 ${showDatePicker ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
           </button>
 
+          {/* Width is capped to the viewport and left-anchored below `sm`. A fixed w-72
+              anchored right overflows off the left edge of a phone, which is
+              what caused the date fields to be clipped. */}
           {showDatePicker && (
-            <div className="absolute right-0 top-full z-50 mt-2 w-72 animate-scale-in rounded-xl border border-slate-200 bg-white p-4 shadow-popover">
+            <div className="absolute left-0 top-full z-50 mt-2 w-[min(20rem,calc(100vw-2rem))] animate-scale-in rounded-xl border border-slate-200 bg-white p-4 shadow-popover sm:left-auto sm:right-0 sm:w-72">
               <p className="mb-3 text-micro uppercase tracking-[0.08em] text-neutral-light">Quick Select</p>
               <div className="mb-4 flex flex-wrap gap-2">
                 {datePresets.map((preset) => (
@@ -309,7 +312,9 @@ export default function DashboardPage() {
                 ))}
               </div>
               <p className="mb-2 text-micro uppercase tracking-[0.08em] text-neutral-light">Custom Range</p>
-              <div className="grid grid-cols-2 gap-2">
+              {/* Date inputs are wide by nature, so they stack rather than
+                  squeeze into two columns on a phone. */}
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 <div>
                   <label htmlFor="dash-date-from" className="mb-1 block text-[11px] font-medium text-slate-600">From</label>
                   <input
@@ -343,7 +348,9 @@ export default function DashboardPage() {
         }
       />
 
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      {/* One column on phones: two columns of a currency value in a phone-width
+          grid cell is what pushed the figures out of the viewport. */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           title="Revenue"
           value={summary?.total_revenue != null ? `GH₵${summary.total_revenue.toLocaleString()}` : '---'}

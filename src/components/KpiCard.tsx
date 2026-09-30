@@ -65,7 +65,7 @@ export default memo(function KpiCard({
   return (
     <div
       className={`kpi-card group relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card ${
-        dense ? 'p-4' : 'p-5'
+        dense ? 'p-4' : 'p-4 sm:p-5'
       }`}
     >
       {/* Hairline accent bar ties the card to its metric colour without adding
@@ -75,19 +75,24 @@ export default memo(function KpiCard({
         aria-hidden="true"
       />
 
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-start justify-between gap-2 sm:gap-3">
         <div className="min-w-0 flex-1">
           {/* Uppercase micro-label: reads as a category, not as content. */}
           <p className="truncate text-micro uppercase tracking-[0.06em] text-neutral-light">{title}</p>
 
           {loading ? (
             <div className="mt-2.5 space-y-2">
-              <div className="skeleton h-8 w-24" />
+              <div className="skeleton h-7 w-24 sm:h-8" />
             </div>
           ) : (
+            /* Currency values like "GH₵24,580" are far wider than a phone-width
+               grid cell, so the type scales down below `sm` and is allowed to
+               wrap. `tabular-nums` keeps the columns aligned when it does. */
             <p
-              className={`mt-1.5 font-display font-bold leading-none tracking-tight text-slate-900 ${
-                dense ? 'text-xl' : 'text-kpi'
+              className={`mt-1.5 break-words font-display font-bold leading-tight tracking-tight text-slate-900 tabular-nums ${
+                dense
+                  ? 'text-lg sm:text-xl'
+                  : 'text-xl sm:text-2xl lg:text-kpi'
               }`}
             >
               {value}
@@ -97,7 +102,7 @@ export default memo(function KpiCard({
 
         <div
           className={`flex shrink-0 items-center justify-center rounded-xl ${styles.plate} ${
-            dense ? 'h-9 w-9' : 'h-10 w-10'
+            dense ? 'h-8 w-8 sm:h-9 sm:w-9' : 'h-9 w-9 sm:h-10 sm:w-10'
           }`}
         >
           {icon}
@@ -105,7 +110,7 @@ export default memo(function KpiCard({
       </div>
 
       {(subtitle || trend) && (
-        <div className="mt-3 flex items-center gap-2">
+        <div className="mt-2.5 flex flex-wrap items-center gap-2 sm:mt-3">
           {trend && !loading && <TrendChip value={trend.value} positive={trend.positive} />}
           {subtitle &&
             (loading ? (
