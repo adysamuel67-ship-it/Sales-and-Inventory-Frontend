@@ -1,6 +1,7 @@
 'use client'
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { profileAPI, businessAPI, authAPI, setTokenRefreshCallback, setAuthLogoutCallback, getUserIdFromToken, tryProactiveRefresh, startAutoRefresh, stopAutoRefresh, isTokenExpired, decodeJwt, resetLogoutGuard } from '@/lib/api'
 import { SUPER_ADMIN_EMAIL } from '@/lib/utils'
 
@@ -68,6 +69,7 @@ const AuthContext = createContext<AuthContextType>({
 })
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const router = useRouter()
   const [user, setUser] = useState<User | null>(null)
   const [token, setToken] = useState<string | null>(null)
   const [refreshTokenValue, setRefreshTokenValue] = useState<string | null>(null)
@@ -189,7 +191,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setBusinesses([])
     setCurrentBusiness(null)
     setProfileLoaded(false)
-  }, [])
+    // Clearing state is not the same as signing out. The button lives on
+    // /settings, which has no auth guard of its own, so without this the user
+    // was left sitting on a signed-out page while the dialog promised they had
+    // been returned to sign-in. Forced sign-outs (a dead refresh token) come
+    // through here too, via the api.ts callback, so this is the one place that
+    // can return the user to the sign-in page for every path.
+    router.replace('/login')
+  }, [router])
 
   useEffect(() => {
     setTokenRefreshCallback((newToken: string) => {

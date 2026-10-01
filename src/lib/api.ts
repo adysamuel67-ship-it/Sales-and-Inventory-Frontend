@@ -199,7 +199,15 @@ function handle401Interceptor(instance: any) {
       url.includes('/auth/otp/verification') || url.includes('/auth/verify_user') ||
       url.includes('/auth/forgot_password') || url.includes('/auth/verify/forgot_password')
 
-    if (error.response?.status === 401 && typeof window !== 'undefined' && !isAuthEndpoint) {
+    // /auth/logout is deliberately absent from the list above so the request
+    // interceptor still attaches the access token, but a 401 from it here must
+    // not re-enter doLogout(): the session is already being torn down, so it
+    // would fire a second logout request while the first is still settling.
+    // The mobile api client excludes it from both interceptors for the same
+    // reason.
+    const isLogoutEndpoint = url.includes('/auth/logout')
+
+    if (error.response?.status === 401 && typeof window !== 'undefined' && !isAuthEndpoint && !isLogoutEndpoint) {
       if (originalRequest._retry === 'done') {
         doLogout()
         return Promise.reject(error)
@@ -288,8 +296,14 @@ export const authAPI = {
       new URLSearchParams({ username: data.email, password: data.password }),
       { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
     ),
-  logout: () =>
-    api.post('/auth/logout').catch(() => {}),
+  logout: () => {
+    // logout() clears localStorage synchronously, before this request's
+    // interceptor gets a chance to read the token, so the credential has to be
+    // snapshotted here. Otherwise the sign-out call goes out unauthenticated and
+    // the server never records the revocation. The request body is left alone.
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+    return api.post('/auth/logout', undefined, token ? { headers: { Authorization: `Bearer ${token}` } } : undefined).catch(() => {})
+  },
   sendVerification: (email: string) =>
     api.post('/auth/otp/get_code', { email }),
   verifyEmail: (data: { email: string; code: string }) =>
