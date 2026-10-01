@@ -198,6 +198,26 @@ export function isPlatformAdmin(user?: { role?: string; email?: string } | null)
   return user.role === 'admin' || user.role === 'ADMIN'
 }
 
+// A trader who is "just trying it" does not need the full menu. Eight items on
+// day one reads as a tool they have to learn rather than one they can use, and
+// every unfamiliar entry is another reason to close the tab. Chat and Reports
+// are the two that reward a shop with real data, so they stay hidden until the
+// account has had time to settle.
+export const NEW_ACCOUNT_WINDOW_DAYS = 14
+
+export function isNewAccount(
+  user?: { created_at?: string; email?: string; role?: string } | null,
+  now: number = Date.now()
+): boolean {
+  // Fails open. An account with no usable join date keeps the full menu, so a
+  // missing field can never quietly hide features from an established shop.
+  if (!user?.created_at) return false
+  if (isSuperAdminUser(user)) return false
+  const joined = new Date(user.created_at).getTime()
+  if (isNaN(joined)) return false
+  return now - joined <= NEW_ACCOUNT_WINDOW_DAYS * 24 * 60 * 60 * 1000
+}
+
 export function formatCurrency(amount: number): string {
   return `GH₵ ${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }

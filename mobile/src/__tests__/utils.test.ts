@@ -14,7 +14,38 @@ import {
   isManagerRole,
   isStaffRole,
   isPlatformAdmin,
+  isNewAccount,
+  NEW_ACCOUNT_WINDOW_DAYS,
 } from '../lib/utils'
+
+describe('isNewAccount', () => {
+  const NOW = new Date('2026-01-15T12:00:00.000Z').getTime()
+  const daysAgo = (n: number) => new Date(NOW - n * 24 * 60 * 60 * 1000).toISOString()
+
+  it('treats an account joined today as new', () =>
+    expect(isNewAccount({ created_at: daysAgo(0) }, NOW)).toBe(true))
+
+  it('treats an account inside the window as new', () =>
+    expect(isNewAccount({ created_at: daysAgo(3) }, NOW)).toBe(true))
+
+  it('treats an account past the window as established', () =>
+    expect(isNewAccount({ created_at: daysAgo(NEW_ACCOUNT_WINDOW_DAYS + 1) }, NOW)).toBe(false))
+
+  it('treats a long-standing account as established', () =>
+    expect(isNewAccount({ created_at: daysAgo(400) }, NOW)).toBe(false))
+
+  it('keeps the full menu when there is no join date', () => {
+    expect(isNewAccount(null, NOW)).toBe(false)
+    expect(isNewAccount(undefined, NOW)).toBe(false)
+    expect(isNewAccount({}, NOW)).toBe(false)
+  })
+
+  it('keeps the full menu when the join date is unparseable', () =>
+    expect(isNewAccount({ created_at: 'not-a-date' }, NOW)).toBe(false))
+
+  it('never trims a super admin', () =>
+    expect(isNewAccount({ role: 'super_admin', created_at: daysAgo(1) }, NOW)).toBe(false))
+})
 
 describe('formatPayment', () => {
   it('formats cash', () => expect(formatPayment('cash')).toBe('Cash'))

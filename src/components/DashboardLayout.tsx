@@ -4,7 +4,7 @@ import { useAuth } from '@/lib/auth'
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { usePathname, useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { isManagerRole, isPlatformAdmin, isSuperAdminUser } from '@/lib/utils'
+import { isManagerRole, isPlatformAdmin, isSuperAdminUser, isNewAccount } from '@/lib/utils'
 import {
   businessAPI,
   notificationAPI,
@@ -188,6 +188,7 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
   const isPlatformAdminUser = isPlatformAdmin(user)
   const effectiveRole = user?.business_role || user?.role
   const isManager = isManagerRole(effectiveRole)
+  const isNew = isNewAccount(user)
   const bizBase = businessId ? `/business/${businessId}` : ''
 
   interface NavItem {
@@ -197,17 +198,18 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
     id: string
     group: string
     ownerOnly?: boolean
+    hidesForNewAccounts?: boolean
     badge?: number
   }
 
   const normalNavItems = useMemo<NavItem[]>(() => [
     { label: 'Dashboard', icon: 'dashboard', href: `${bizBase}/dashboard`, id: 'dashboard', group: 'main' },
-    { label: 'Chat', icon: 'chat', href: `${bizBase}/chat`, id: 'chat', group: 'main', badge: chatUnread },
+    { label: 'Chat', icon: 'chat', href: `${bizBase}/chat`, id: 'chat', group: 'main', badge: chatUnread, hidesForNewAccounts: true },
     { label: 'Sales', icon: 'sales', href: `${bizBase}/sales`, id: 'sales', group: 'main' },
     { label: 'Products', icon: 'products', href: `${bizBase}/products`, id: 'products', group: 'main' },
     { label: 'Customers', icon: 'customers', href: `${bizBase}/customers`, id: 'customers', group: 'management' },
     { label: 'Debts', icon: 'debts', href: `${bizBase}/debts`, id: 'debts', group: 'management' },
-    { label: 'Reports', icon: 'reports', href: `${bizBase}/reports`, id: 'reports', group: 'admin', ownerOnly: true },
+    { label: 'Reports', icon: 'reports', href: `${bizBase}/reports`, id: 'reports', group: 'admin', ownerOnly: true, hidesForNewAccounts: true },
     { label: 'Notifications', icon: 'notifications', href: '/notifications', id: 'notifications-nav', group: 'admin', ownerOnly: true },
     { label: 'Businesses', icon: 'admin-businesses', href: '/businesses', id: 'businesses-nav', group: 'account' },
     { label: 'Settings', icon: 'settings', href: `${bizBase}/settings`, id: 'settings', group: 'account' },
@@ -215,11 +217,12 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
 
   const visibleNavItems = useMemo(
     () => normalNavItems.filter((item) => {
+      if (item.hidesForNewAccounts && isNew) return false
       if (item.ownerOnly && isManager) return true
       if (item.ownerOnly && !isManager) return false
       return true
     }),
-    [normalNavItems, isManager]
+    [normalNavItems, isManager, isNew]
   )
 
   const navGroups = useMemo(() => {
@@ -343,8 +346,14 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
   }, [notificationsOpen, fetchNotifications])
 
   // Unread chat badge — refresh periodically and whenever the route changes.
+  // Skipped entirely for new accounts, which cannot see the Chat link anyway,
+  // so the 20s poll is not wasted on them.
   useEffect(() => {
     if (!businessId) {
+      setChatUnread(0)
+      return
+    }
+    if (isNew) {
       setChatUnread(0)
       return
     }
@@ -366,7 +375,7 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
     loadUnread()
     const interval = setInterval(loadUnread, 20000)
     return () => { cancelled = true; clearInterval(interval) }
-  }, [businessId, pathname])
+  }, [businessId, pathname, isNew])
 
   const visibleNotifications = useMemo(
     () => notifications.filter((n) => !dismissedIds.has(n.notification_id)),

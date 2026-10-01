@@ -53,6 +53,7 @@ jest.mock('@/lib/auth', () => ({
 
 import DashboardLayout from '@/components/DashboardLayout'
 import { render, screen } from '@testing-library/react'
+import { useAuth } from '@/lib/auth'
 
 describe('DashboardLayout', () => {
   it('renders navigation links as Link components', () => {
@@ -235,5 +236,131 @@ describe('DashboardLayout', () => {
     const links = screen.getAllByTestId('next-link')
     const hrefs = links.map(l => l.getAttribute('href'))
     expect(hrefs).toContain('/business/1/customers')
+  })
+})
+
+// A trader who is "just trying it" should not open the app to eight menu
+// items. Chat and Reports stay hidden until the account has settled, so the
+// first session is only the things a new shop actually does.
+describe('DashboardLayout - trimmed menu for new accounts', () => {
+  const useAuthMock = useAuth as jest.Mock
+  const originalImpl = useAuthMock.getMockImplementation()
+
+  const daysAgo = (n: number) => new Date(Date.now() - n * 24 * 60 * 60 * 1000).toISOString()
+
+  const owner = (overrides: Record<string, any> = {}) => ({
+    id: 1,
+    name: 'Kwame Mensah',
+    email: 'kwame@test.com',
+    phone: '0241234567',
+    role: 'OWNER',
+    is_verified: true,
+    ...overrides,
+  })
+
+  const mockUser = (user: Record<string, any>) => {
+    useAuthMock.mockReturnValue({
+      user,
+      logout: jest.fn(),
+      businesses: [{ business_id: 1, name: 'Kwame Shop' }],
+      currentBusiness: { business_id: 1, name: 'Kwame Shop' },
+      switchBusiness: jest.fn(),
+      profileLoaded: true,
+    })
+  }
+
+  const navHrefs = () =>
+    screen.getAllByTestId('next-link').map(l => l.getAttribute('href'))
+
+  afterEach(() => {
+    useAuthMock.mockImplementation(originalImpl!)
+  })
+
+  it('hides Chat and Reports from a new account', () => {
+    mockUser(owner({ created_at: daysAgo(2) }))
+
+    render(
+      <DashboardLayout>
+        <div>Content</div>
+      </DashboardLayout>
+    )
+
+    const hrefs = navHrefs()
+    expect(hrefs).not.toContain('/business/1/chat')
+    expect(hrefs).not.toContain('/business/1/reports')
+  })
+
+  it('keeps the core trading nav for a new account', () => {
+    mockUser(owner({ created_at: daysAgo(2) }))
+
+    render(
+      <DashboardLayout>
+        <div>Content</div>
+      </DashboardLayout>
+    )
+
+    const hrefs = navHrefs()
+    expect(hrefs).toContain('/business/1/dashboard')
+    expect(hrefs).toContain('/business/1/sales')
+    expect(hrefs).toContain('/business/1/products')
+    expect(hrefs).toContain('/business/1/customers')
+    expect(hrefs).toContain('/business/1/debts')
+    expect(hrefs).toContain('/business/1/settings')
+  })
+
+  it('shows Chat and Reports once the account is established', () => {
+    mockUser(owner({ created_at: daysAgo(60) }))
+
+    render(
+      <DashboardLayout>
+        <div>Content</div>
+      </DashboardLayout>
+    )
+
+    const hrefs = navHrefs()
+    expect(hrefs).toContain('/business/1/chat')
+    expect(hrefs).toContain('/business/1/reports')
+  })
+
+  it('keeps the full menu when the account has no join date', () => {
+    mockUser(owner({ created_at: undefined }))
+
+    render(
+      <DashboardLayout>
+        <div>Content</div>
+      </DashboardLayout>
+    )
+
+    const hrefs = navHrefs()
+    expect(hrefs).toContain('/business/1/chat')
+    expect(hrefs).toContain('/business/1/reports')
+  })
+
+  it('keeps the full menu when the join date is unparseable', () => {
+    mockUser(owner({ created_at: 'not-a-date' }))
+
+    render(
+      <DashboardLayout>
+        <div>Content</div>
+      </DashboardLayout>
+    )
+
+    const hrefs = navHrefs()
+    expect(hrefs).toContain('/business/1/chat')
+    expect(hrefs).toContain('/business/1/reports')
+  })
+
+  it('does not trim the menu for a platform super admin on a new account', () => {
+    mockUser(owner({ role: 'super_admin', created_at: daysAgo(1) }))
+
+    render(
+      <DashboardLayout>
+        <div>Content</div>
+      </DashboardLayout>
+    )
+
+    const hrefs = navHrefs()
+    expect(hrefs).toContain('/business/1/chat')
+    expect(hrefs).toContain('/business/1/reports')
   })
 })

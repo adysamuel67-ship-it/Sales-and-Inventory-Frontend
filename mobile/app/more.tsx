@@ -6,7 +6,7 @@ import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '@/lib/auth'
 import { businessAPI } from '@/lib/api'
-import { isAdminRole } from '@/lib/utils'
+import { isAdminRole, isNewAccount } from '@/lib/utils'
 import { Colors, BORDER_RADIUS, SHADOW, FONTS } from '@/lib/constants'
 import Button from '@/components/ui/Button'
 import GradientHero from '@/components/ui/GradientHero'
@@ -19,6 +19,9 @@ export default function MoreScreen() {
   const [showBizSelector, setShowBizSelector] = useState(false)
   const [loadingLeave, setLoadingLeave] = useState(false)
   const isAdmin = isAdminRole(user?.business_role) || isAdminRole(user?.role)
+  // New accounts get the trimmed menu, same as the web sidebar. Reports earns
+  // its place once the shop has records to actually report on.
+  const isNew = isNewAccount(user)
 
   const [confirmType, setConfirmType] = useState<'signout' | 'leave' | null>(null)
   const [confirmLoading, setConfirmLoading] = useState(false)
@@ -137,13 +140,15 @@ export default function MoreScreen() {
             <Ionicons name="chevron-forward" size={18} color={Colors.textLight} />
           </TouchableOpacity>
         )}
-        <TouchableOpacity style={styles.menuRow} onPress={() => { if (currentBusiness) router.push(`/business/${currentBusiness.business_id}/reports`) }}>
-          <View style={[styles.menuIcon, { backgroundColor: '#EFF4FF' }]}>
-            <Ionicons name="bar-chart" size={20} color={Colors.primary} />
-          </View>
-          <Text style={styles.menuLabel}>Reports</Text>
-          <Ionicons name="chevron-forward" size={18} color={Colors.textLight} />
-        </TouchableOpacity>
+        {!isNew && (
+          <TouchableOpacity style={styles.menuRow} onPress={() => { if (currentBusiness) router.push(`/business/${currentBusiness.business_id}/reports`) }}>
+            <View style={[styles.menuIcon, { backgroundColor: '#EFF4FF' }]}>
+              <Ionicons name="bar-chart" size={20} color={Colors.primary} />
+            </View>
+            <Text style={styles.menuLabel}>Reports</Text>
+            <Ionicons name="chevron-forward" size={18} color={Colors.textLight} />
+          </TouchableOpacity>
+        )}
         <TouchableOpacity style={styles.menuRow} onPress={() => { if (currentBusiness) router.push(`/business/${currentBusiness.business_id}/settings`) }}>
           <View style={[styles.menuIcon, { backgroundColor: '#F1F5F9' }]}>
             <Ionicons name="settings" size={20} color={Colors.neutral} />
