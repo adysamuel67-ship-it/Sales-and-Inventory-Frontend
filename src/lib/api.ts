@@ -461,8 +461,9 @@ export const debtAPI = {
 export interface ReminderPayload {
   debt_id: number
   customer_id: number
-  start_date?: string
-  end_date?: string
+  // A reminder fires on ONE day. The backend used to take a start/end window
+  // but that is gone - it stores a single `date` and rejects a past one.
+  date: string
   time_of_day?: string
   note?: string
 }
@@ -470,21 +471,13 @@ export interface ReminderPayload {
 export const reminderAPI = {
   create: (businessId: number, data: ReminderPayload) =>
     api.post(`/debts/reminders/${businessId}`, data),
-  // The backend GET route reads its filters from the request body (GetReminders schema),
-  // so filters are sent as JSON data alongside the GET request. A body is REQUIRED,
-  // otherwise FastAPI returns 422 — so always send a window (start/end) with the request.
-  list: (businessId: number, params?: any) => {
-    const end = new Date()
-    end.setFullYear(end.getFullYear() + 10)
-    const endDate = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, '0')}-${String(end.getDate()).padStart(2, '0')}`
-    return api.get(`/debts/reminders/${businessId}`, {
-      data: {
-        start_date: '2000-01-01',
-        end_date: endDate,
-        ...params,
-      },
-    })
-  },
+  // The backend GET route reads its filters from the request body (GetReminders
+  // schema), so filters are sent as JSON data alongside the GET request. A body
+  // is REQUIRED, otherwise FastAPI returns 422. The old start/end window is gone
+  // from the schema and was only ever a way to ask for "everything" - an empty
+  // object already means "no filter".
+  list: (businessId: number, params?: Record<string, any>) =>
+    api.get(`/debts/reminders/${businessId}`, { data: params ?? {} }),
   update: (businessId: number, reminderId: number, data: any) =>
     api.put(`/debts/reminders/${businessId}/${reminderId}`, data),
   delete: (businessId: number, reminderId: number) =>

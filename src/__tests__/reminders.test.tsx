@@ -1,11 +1,15 @@
 /**
  * Reminder Scheduler Tests
  *
+ * A reminder fires on ONE day. The backend used to take a start/end window,
+ * but the Reminders model now stores a single `date` and rejects a past one,
+ * so these tests follow the single-date contract.
+ *
  * Verifies:
  * 1. buildSmsPreview — SMS message format per contract
  * 2. smsPartsCount — 1 SMS / 2 SMS parts hint
- * 3. defaultReminderWindow — start = due date − 3 days, end = due date
- * 4. validateReminderWindow — end ≥ start, >30-day warn, >90-day block, past window
+ * 3. defaultReminderDate — the debt's due date
+ * 4. validateReminderDate — required, and not in the past
  * 5. Note length limit (≤150 chars)
  * 6. No-phone warning edge state
  * 7. Debt-settled edge state
@@ -16,8 +20,8 @@
 import {
   buildSmsPreview,
   smsPartsCount,
-  defaultReminderWindow,
-  validateReminderWindow,
+  defaultReminderDate,
+  validateReminderDate,
   todayDateString,
   compareDates,
 } from '@/components/ScheduleReminderModal'
@@ -39,30 +43,39 @@ describe('buildSmsPreview', () => {
     const preview = buildSmsPreview({
       customerName: 'Addy Mensah',
       amount: 800,
-      endDate: '2026-07-31',
+      dueDate: '2026-07-31',
       note: 'Friendly follow-up on your balance',
     })
     expect(preview).toBe(
-      'Hello Addy, this is a friendly reminder about your outstanding balance of GHS 800.00 due on 2026-07-31. Friendly follow-up on your balance'
+      'Hello Addy Mensah, this is a friendly reminder about your outstanding balance of GHS 800.00, due on 2026-07-31. Friendly follow-up on your balance'
     )
   })
 
-  it('uses the first name only', () => {
+  it('uses the full customer name, matching build_message() on the backend', () => {
     const preview = buildSmsPreview({
       customerName: 'Kofi Asante',
       amount: 100,
-      endDate: '2026-08-01',
+      dueDate: '2026-08-01',
       note: '',
     })
-    expect(preview).toContain('Hello Kofi,')
-    expect(preview).not.toContain('Kofi Asante')
+    expect(preview).toContain('Hello Kofi Asante,')
+  })
+
+  it('shows the debt due date, not the reminder date', () => {
+    const preview = buildSmsPreview({
+      customerName: 'Addy',
+      amount: 800,
+      dueDate: '2026-09-15',
+      note: '',
+    })
+    expect(preview).toContain('due on 2026-09-15')
   })
 
   it('omits note when empty', () => {
     const preview = buildSmsPreview({
       customerName: 'Addy',
       amount: 800,
-      endDate: '2026-07-31',
+      dueDate: '2026-07-31',
       note: '',
     })
     expect(preview.endsWith('due on 2026-07-31.')).toBe(true)
@@ -72,7 +85,7 @@ describe('buildSmsPreview', () => {
     const preview = buildSmsPreview({
       customerName: 'Addy',
       amount: 800,
-      endDate: '2026-07-31',
+      dueDate: '2026-07-31',
       note: 'Please settle soon',
     })
     expect(preview.endsWith('. Please settle soon')).toBe(true)
@@ -82,7 +95,7 @@ describe('buildSmsPreview', () => {
     const preview = buildSmsPreview({
       customerName: 'Addy',
       amount: 150.5,
-      endDate: '2026-07-31',
+      dueDate: '2026-07-31',
       note: '',
     })
     expect(preview).toContain('GHS 150.50')
@@ -92,7 +105,7 @@ describe('buildSmsPreview', () => {
     const preview = buildSmsPreview({
       customerName: '',
       amount: 100,
-      endDate: '2026-07-31',
+      dueDate: '2026-07-31',
       note: '',
     })
     expect(preview).toContain('Hello there,')
@@ -130,85 +143,73 @@ describe('smsPartsCount', () => {
 })
 
 // ──────────────────────────────────────────────────
-// defaultReminderWindow
+// defaultReminderDate
 // ──────────────────────────────────────────────────
 
-describe('defaultReminderWindow', () => {
-  it('defaults start to due date minus 3 days and end to due date', () => {
-    const { start, end } = defaultReminderWindow('2026-07-31')
-    expect(end).toBe('2026-07-31')
-    expect(start).toBe('2026-07-28')
+describe('defaultReminderDate', () => {
+  it('defaults to the due date', () => {
+    expect(defaultReminderDate('2026-07-31')).toBe('2026-07-31')
   })
 
-  it('handles month boundaries', () => {
-    const { start } = defaultReminderWindow('2026-08-02')
-    expect(start).toBe('2026-07-30')
+  it('keeps a due date that falls on a month boundary', () => {
+    expect(defaultReminderDate('2026-08-02')).toBe('2026-08-02')
   })
 
-  it('handles year boundaries', () => {
-    const { start } = defaultReminderWindow('2027-01-02')
-    expect(start).toBe('2026-12-30')
+  it('keeps a due date that falls on a year boundary', () => {
+    expect(defaultReminderDate('2027-01-02')).toBe('2027-01-02')
   })
 
-  it('falls back to today for missing due date', () => {
-    const { start, end } = defaultReminderWindow('')
-    expect(end).toBe(todayDateString())
-    expect(start).toBe(todayDateString())
+  it('strips the time portion off a datetime due date', () => {
+    expect(defaultReminderDate('2026-07-31T10:30:00Z')).toBe('2026-07-31')
+  })
+
+  it('falls back to today for a missing due date', () => {
+    expect(defaultReminderDate('')).toBe(todayDateString())
+  })
+
+  it('falls back to today for an unparseable due date', () => {
+    expect(defaultReminderDate('not-a-date')).toBe(todayDateString())
   })
 })
 
 // ──────────────────────────────────────────────────
-// validateReminderWindow
+// validateReminderDate
 // ──────────────────────────────────────────────────
 
-describe('validateReminderWindow', () => {
+describe('validateReminderDate', () => {
   const today = todayDateString()
 
-  it('blocks submit when end date is before start date', () => {
-    const v = validateReminderWindow('2026-08-05', '2026-08-01', today)
-    expect(v.error).toContain('End date must be on or after')
+  function offset(days: number): string {
+    const d = new Date()
+    d.setDate(d.getDate() + days)
+    return toDateStr(d)
+  }
+
+  it('requires a date', () => {
+    const v = validateReminderDate('', today)
+    expect(v.error).toContain('Pick the day')
   })
 
-  it('allows end date equal to start date', () => {
-    const v = validateReminderWindow('2026-08-05', '2026-08-05', today)
-    expect(v.error).toBeUndefined()
+  it('accepts today', () => {
+    expect(validateReminderDate(today, today).error).toBeUndefined()
   })
 
-  it('blocks windows over 90 days', () => {
-    const v = validateReminderWindow('2026-05-01', '2026-08-31', today)
-    expect(v.error).toContain('90 days')
+  it('accepts a future date', () => {
+    expect(validateReminderDate(offset(5), today).error).toBeUndefined()
   })
 
-  it('warns for windows over 30 days', () => {
-    const v = validateReminderWindow('2026-07-01', '2026-08-10', today)
-    expect(v.warning).toContain('longer than the recommended 30')
+  it('accepts a far-future date — there is no window length cap any more', () => {
+    expect(validateReminderDate(offset(400), today).error).toBeUndefined()
   })
 
-  it('no warning or error for a sane 5-day window', () => {
-    const start = new Date()
-    const end = new Date()
-    start.setDate(start.getDate() - 2)
-    end.setDate(end.getDate() + 3)
-    const v = validateReminderWindow(toDateStr(start), toDateStr(end), today)
-    expect(v.error).toBeUndefined()
-    expect(v.warning).toBeUndefined()
-    expect(v.ended).toBe(false)
+  it('rejects yesterday', () => {
+    const v = validateReminderDate(offset(-1), today)
+    expect(v.error).toContain('cannot be in the past')
   })
 
-  it('flags windows that already ended', () => {
-    const v = validateReminderWindow('2020-01-01', '2020-01-03', today)
-    expect(v.ended).toBe(true)
-  })
-
-  it('does not flag windows ending today', () => {
-    const v = validateReminderWindow(today, today, today)
-    expect(v.ended).toBe(false)
-  })
-
-  it('returns no error for empty dates', () => {
-    const v = validateReminderWindow('', '', today)
-    expect(v.error).toBeUndefined()
-    expect(v.ended).toBe(false)
+  it('rejects a date well in the past', () => {
+    const v = validateReminderDate('2020-01-01', today)
+    expect(v.error).toContain('cannot be in the past')
   })
 })
 
@@ -249,7 +250,7 @@ describe('Note length limit', () => {
     const preview = buildSmsPreview({
       customerName: 'Addy',
       amount: 800,
-      endDate: '2026-07-31',
+      dueDate: '2026-07-31',
       note: 'y'.repeat(150),
     })
     expect(smsPartsCount(preview)).toBe(2)
@@ -328,16 +329,26 @@ describe('Reminder API routes', () => {
     const payload = {
       debt_id: 12,
       customer_id: 7,
-      start_date: '2026-07-28',
-      end_date: '2026-07-31',
+      date: '2026-07-31',
       time_of_day: '09:00',
       note: 'Friendly follow-up on your balance',
     }
     expect(payload).toHaveProperty('debt_id', 12)
     expect(payload).toHaveProperty('customer_id', 7)
-    expect(payload).toHaveProperty('start_date')
-    expect(payload).toHaveProperty('end_date')
+    expect(payload).toHaveProperty('date', '2026-07-31')
     expect(payload).toHaveProperty('time_of_day')
     expect(payload).toHaveProperty('note')
+  })
+
+  it('does not send the removed start/end window', () => {
+    const payload = {
+      debt_id: 12,
+      customer_id: 7,
+      date: '2026-07-31',
+      time_of_day: '09:00',
+      note: 'Friendly follow-up on your balance',
+    }
+    expect(payload).not.toHaveProperty('start_date')
+    expect(payload).not.toHaveProperty('end_date')
   })
 })

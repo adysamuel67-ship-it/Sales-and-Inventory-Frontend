@@ -4,18 +4,21 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '@/lib/auth'
 import { reminderAPI, customerAPI, debtAPI, adminAPI } from '@/lib/api'
 import { extractArray, parseApiError, isAdminRole } from '@/lib/utils'
-import ScheduleReminderModal, { ReminderCustomer, todayDateString, validateReminderWindow } from '@/components/ScheduleReminderModal'
+import ScheduleReminderModal, { ReminderCustomer, todayDateString, validateReminderDate } from '@/components/ScheduleReminderModal'
 
 interface Reminder {
   reminder_id: number
   debt_id: number
   business_id: number
   customer_id: number
-  start_date?: string
-  end_date?: string
+  // One day, not a start/end window - see the Reminders model.
+  date?: string
   time_of_day?: string
   note?: string
   is_active: boolean
+  // Stamped by the Celery dispatcher once the SMS has gone out, so the UI can
+  // show that a reminder has already gone out and will not fire again.
+  sent_at?: string | null
   created_at?: string
   updated_at?: string
 }
@@ -86,8 +89,7 @@ export default function RemindersSection({ businessId }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>('all')
 
   const [editingReminder, setEditingReminder] = useState<Reminder | null>(null)
-  const [editStart, setEditStart] = useState('')
-  const [editEnd, setEditEnd] = useState('')
+  const [editDate, setEditDate] = useState('')
   const [editTime, setEditTime] = useState('09:00')
   const [editNote, setEditNote] = useState('')
   const [editActive, setEditActive] = useState(true)
@@ -139,11 +141,11 @@ export default function RemindersSection({ businessId }: Props) {
           debt_id: r.debt_id,
           business_id: r.business_id,
           customer_id: r.customer_id,
-          start_date: r.start_date,
-          end_date: r.end_date,
+          date: r.date,
           time_of_day: r.time_of_day,
           note: r.note,
           is_active: r.is_active !== false,
+          sent_at: r.sent_at ?? null,
           created_at: r.created_at,
           updated_at: r.updated_at,
         })))
@@ -218,12 +220,12 @@ export default function RemindersSection({ businessId }: Props) {
     const total = reminders.length
     const active = reminders.filter((r) => r.is_active).length
     const paused = reminders.filter((r) => !r.is_active).length
-    const endingSoon = reminders.filter((r) => {
+    const dueSoon = reminders.filter((r) => {
       if (!r.is_active) return false
-      const days = daysUntil(r.end_date)
+      const days = daysUntil(r.date)
       return days != null && days >= 0 && days <= 7
     }).length
-    return { total, active, paused, endingSoon }
+    return { total, active, paused, dueSoon }
   }, [reminders])
 
   const filtered = useMemo(() => {
@@ -243,8 +245,7 @@ export default function RemindersSection({ businessId }: Props) {
 
   const openEdit = (reminder: Reminder) => {
     setEditingReminder(reminder)
-    setEditStart(dateOnly(reminder.start_date) || todayDateString())
-    setEditEnd(dateOnly(reminder.end_date) || todayDateString())
+    setEditDate(dateOnly(reminder.date) || todayDateString())
     setEditTime(formatTime(reminder.time_of_day))
     setEditNote(reminder.note || '')
     setEditActive(reminder.is_active)
@@ -253,7 +254,7 @@ export default function RemindersSection({ businessId }: Props) {
   const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!editingReminder) return
-    const validation = validateReminderWindow(editStart, editEnd, todayDateString())
+    const validation = validateReminderDate(editDate, todayDateString())
     if (validation.error) {
       setError(validation.error)
       return
@@ -262,8 +263,7 @@ export default function RemindersSection({ businessId }: Props) {
     setError('')
     try {
       await reminderAPI.update(businessId, editingReminder.reminder_id, {
-        start_date: editStart,
-        end_date: editEnd,
+        date: editDate,
         time_of_day: editTime,
         note: editNote.trim(),
         is_active: editActive,
@@ -378,8 +378,8 @@ export default function RemindersSection({ businessId }: Props) {
   })()
 
   const editValidation = useMemo(
-    () => validateReminderWindow(editStart, editEnd, todayDateString()),
-    [editStart, editEnd]
+    () => validateReminderDate(editDate, todayDateString()),
+    [editDate]
   )
 
   return (
@@ -473,7 +473,7 @@ export default function RemindersSection({ businessId }: Props) {
                   </svg>
                 </div>
               </div>
-              <p className="text-2xl font-bold text-warning">{stats.endingSoon}</p>
+              <p className="text-2xl font-bold text-warning">{stats.dueSoon}</p>
             </div>
           </div>
 
@@ -529,7 +529,7 @@ export default function RemindersSection({ businessId }: Props) {
                     {filtered.map((reminder) => {
                       const cust = getCustomer(reminder)
                       const debt = debtMap.get(reminder.debt_id)
-                      const endDays = daysUntil(reminder.end_date)
+                      const dueDays = daysUntil(reminder.date)
                       return (
                         <tr
                           key={reminder.reminder_id}
@@ -558,13 +558,18 @@ export default function RemindersSection({ businessId }: Props) {
                           </td>
                           <td className="px-5 py-3.5">
                             <div className="text-slate-700">
-                              {dateOnly(reminder.start_date) || '—'} <span className="text-neutral-light">→</span> {dateOnly(reminder.end_date) || '—'}
+                              {dateOnly(reminder.date) || '—'}
                             </div>
                             <div className="flex items-center gap-2 mt-0.5">
-                              <span className="text-xs text-neutral-light">Daily {formatTime(reminder.time_of_day)}</span>
-                              {reminder.is_active && endDays != null && endDays >= 0 && endDays <= 7 && (
+                              <span className="text-xs text-neutral-light">at {formatTime(reminder.time_of_day)}</span>
+                              {reminder.sent_at && (
+                                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-success-light text-success">
+                                  Sent
+                                </span>
+                              )}
+                              {reminder.is_active && !reminder.sent_at && dueDays != null && dueDays >= 0 && dueDays <= 7 && (
                                 <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-warning-light text-warning">
-                                  {endDays === 0 ? 'Ends today' : `${endDays}d left`}
+                                  {dueDays === 0 ? 'Today' : `in ${dueDays}d`}
                                 </span>
                               )}
                             </div>
@@ -740,27 +745,16 @@ export default function RemindersSection({ businessId }: Props) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Start Date *</label>
-                  <input
-                    type="date"
-                    value={editStart}
-                    onChange={(e) => setEditStart(e.target.value)}
-                    required
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">End Date *</label>
-                  <input
-                    type="date"
-                    value={editEnd}
-                    onChange={(e) => setEditEnd(e.target.value)}
-                    required
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Reminder Date *</label>
+                <input
+                  type="date"
+                  value={editDate}
+                  min={todayDateString()}
+                  onChange={(e) => setEditDate(e.target.value)}
+                  required
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                />
               </div>
 
               <div>
@@ -814,15 +808,6 @@ export default function RemindersSection({ businessId }: Props) {
                     <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                   </svg>
                   {error || editValidation.error}
-                </div>
-              )}
-
-              {!error && !editValidation.error && editValidation.warning && (
-                <div className="bg-warning-light text-warning text-sm p-3 rounded-xl flex items-center gap-2">
-                  <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                  </svg>
-                  {editValidation.warning}
                 </div>
               )}
 
@@ -927,12 +912,12 @@ export default function RemindersSection({ businessId }: Props) {
                 <h4 className="text-xs font-semibold text-neutral-light uppercase tracking-wider mb-3">Reminder</h4>
                 <div className="bg-surfaceAlt rounded-xl p-4 space-y-2">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-neutral-light">Window</span>
-                    <span className="text-slate-900 font-medium">{dateOnly(detailReminder.start_date) || '—'} → {dateOnly(detailReminder.end_date) || '—'}</span>
+                    <span className="text-neutral-light">Date</span>
+                    <span className="text-slate-900 font-medium">{dateOnly(detailReminder.date) || '—'}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-neutral-light">Time</span>
-                    <span className="text-slate-900 font-medium">Daily {formatTime(detailReminder.time_of_day)}</span>
+                    <span className="text-slate-900 font-medium">at {formatTime(detailReminder.time_of_day)}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-neutral-light">Status</span>
