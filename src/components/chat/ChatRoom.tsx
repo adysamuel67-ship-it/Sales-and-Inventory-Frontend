@@ -214,8 +214,10 @@ export default function ChatRoom({ businessId, businessName, selfUserId, fullScr
 
   return (
     <div className={`flex flex-col bg-surface overflow-hidden ${fullScreen ? 'h-dvh rounded-none border-0' : 'h-[calc(100dvh-7rem)] min-h-[520px] lg:h-[calc(100dvh-8.75rem)] rounded-xl lg:rounded-2xl border border-slate-200 shadow-sm'}`}>
-      {/* Header */}
-      <div className="flex items-center justify-between gap-3 px-3 sm:px-5 py-3 bg-primary text-white">
+      {/* Header. Was a saturated indigo bar, which made the whole screen read as a
+          dashboard widget bolted onto the app. A deep slate header matches the
+          sidebar chrome and lets the message colours do the talking. */}
+      <div className="flex items-center justify-between gap-3 px-3 sm:px-5 py-3 bg-navy text-white border-b border-white/[0.06]">
         <div className="flex items-center gap-3 min-w-0">
           {onBack && (
             <button
@@ -229,7 +231,13 @@ export default function ChatRoom({ businessId, businessName, selfUserId, fullScr
             </button>
           )}
           {businessName ? (
-            <ChatAvatar userId={businessId} name={businessName} size="md" className="ring-2 ring-white/20" />
+            // A team chat is a group, not a person - show a group glyph rather
+            // than a coloured circle derived from the business id.
+            <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center shrink-0 ring-1 ring-white/10">
+              <svg className="w-[18px] h-[18px] text-white/90" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </div>
           ) : (
             <div className="w-9 h-9 rounded-full bg-white/15 flex items-center justify-center">
               <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
@@ -254,7 +262,7 @@ export default function ChatRoom({ businessId, businessName, selfUserId, fullScr
 
         <div className="hidden md:flex items-center gap-0.5">
           {presencePreview.map((u: ChatPresenceUser) => (
-            <ChatAvatar key={u.user_id} userId={u.user_id} name={u.name} size="sm" online className="-mr-2 last:mr-0 ring-2 ring-primary" />
+            <ChatAvatar key={u.user_id} userId={u.user_id} name={u.name} size="sm" online className="-mr-2 last:mr-0 ring-2 ring-navy" />
           ))}
           {onlineCount > 5 && (
             <span className="w-7 h-7 rounded-full bg-white/15 flex items-center justify-center text-[10px] font-semibold text-white">

@@ -211,32 +211,25 @@ export default function ChatInput({
             />
           </div>
 
-          {canSend ? (
-            <button
-              type="button"
-              onClick={handleSend}
-              className="shrink-0 w-11 h-11 rounded-full bg-primary text-white hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm flex items-center justify-center"
-              aria-label="Send message"
-            >
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M1.101 21.757L23.8 12.028 1.101 2.3l-.011 7.912 13.623 2.157-13.623 2.161z" />
-              </svg>
-            </button>
-          ) : (
-            <button
-              type="button"
-              disabled={!connected || uploading}
-              className="shrink-0 w-11 h-11 rounded-full text-[#54656F] bg-[#F0F2F5] hover:bg-[#E4E8EB] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-              title="Audio messages are not supported yet"
-              aria-label="Microphone"
-              aria-hidden={!!uploading}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
-                <rect x="9" y="2" width="6" height="12" rx="3" />
-                <path d="M5 10v1a7 7 0 0014 0v-1M12 18v4m-4 0h8" />
-              </svg>
-            </button>
-          )}
+          {/* One send control that dims when there is nothing to send. The old
+              layout swapped in a microphone that was permanently disabled and
+              carried an "audio not supported yet" tooltip - a dead button is the
+              fastest way to make an app look unfinished. */}
+          <button
+            type="button"
+            onClick={handleSend}
+            disabled={!canSend}
+            className={`shrink-0 w-11 h-11 rounded-full flex items-center justify-center transition-all ${
+              canSend
+                ? 'bg-primary text-white hover:bg-primary-dark shadow-md shadow-primary/25 active:scale-95'
+                : 'bg-[#E7EAEE] text-[#B4BDC5] cursor-not-allowed'
+            }`}
+            aria-label="Send message"
+          >
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M1.101 21.757L23.8 12.028 1.101 2.3l-.011 7.912 13.623 2.157-13.623 2.161z" />
+            </svg>
+          </button>
         </div>
 
         {!connected && (

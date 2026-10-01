@@ -225,6 +225,17 @@
   50% { opacity: 1; }
 }
 
+/* Typing indicator: each dot lifts and fades in sequence, the way a live
+   "someone is typing" bubble should move. Staggered per-dot by animation-delay. */
+@keyframes chatTyping {
+  0%, 60%, 100% { opacity: 0.35; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-3px); }
+}
+
+.animate-typing {
+  animation: chatTyping 1.2s ease-in-out infinite;
+}
+
 .auth-animate-fade-up {
   animation: authFadeUp 0.6s ease-out both;
 }

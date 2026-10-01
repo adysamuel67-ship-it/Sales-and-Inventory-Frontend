@@ -17,13 +17,21 @@ export function formatShortTime(iso?: string | null): string {
   return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
 }
 
-// Chat wallpaper: light cool grey-blue canvas with a faint dotted texture,
-// aligned with the app's primary (blue) colour system.
+// Chat wallpaper: a soft neutral canvas with a barely-there paper texture. The
+// old blue-tinted dotted grid read as graph paper; at this contrast it just
+// gives the bubbles somewhere to sit.
 export const chatWallpaper = {
-  backgroundColor: '#EEF3FC',
-  backgroundImage: 'radial-gradient(circle at 0.5px 0.5px, rgba(37, 99, 235, 0.07) 1px, transparent 0)',
-  backgroundSize: '18px 18px',
+  backgroundColor: '#F0F2F5',
+  backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(15, 23, 42, 0.04) 1px, transparent 0)',
+  backgroundSize: '22px 22px',
 }
+
+// Bubble fills. The tail is drawn as a CSS triangle in a sibling element, so
+// it cannot inherit the colour from the bubble the way it would if it were a
+// child. These mirror the Tailwind tokens on the bubble itself (primary.DEFAULT
+// and white) so the two cannot drift apart.
+export const BUBBLE_SELF_BG = '#4F46E5'
+export const BUBBLE_OTHER_BG = '#FFFFFF'
 
 export function dayLabel(iso?: string | null): string | null {
   if (!iso) return null

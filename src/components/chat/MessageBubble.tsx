@@ -3,13 +3,15 @@
 import React from 'react'
 import type { ChatMessageData } from '@/lib/api'
 import ChatAvatar, { memberColor } from './ChatAvatar'
-import { formatFileSize } from './chatUtils'
+import { formatFileSize, BUBBLE_SELF_BG, BUBBLE_OTHER_BG } from './chatUtils'
 
 interface MessageBubbleProps {
   message: ChatMessageData
   self: boolean
   showSender: boolean
   showAvatar?: boolean
+  /** Last bubble in a run from the same author - this one carries the tail. */
+  isLastOfGroup?: boolean
   onEdit?: (msg: ChatMessageData) => void
   onDelete?: (msg: ChatMessageData) => void
   onOpenImage?: (msg: ChatMessageData) => void
@@ -27,15 +29,15 @@ export function formatBytes(bytes?: number | null): string {
   return formatFileSize(bytes ?? 0)
 }
 
-function SingleTick() {
+function SingleTick({ className = '' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 16 11" className="w-3.5 h-2.5 text-[#8696A0]" fill="none">
+    <svg viewBox="0 0 16 11" className={`w-3.5 h-2.5 ${className}`} fill="none">
       <path d="M1.2 5.6l3.6 3.4 8.8-8" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }
 
-export default function MessageBubble({ message, self, showSender, showAvatar = true, onEdit, onDelete, onOpenImage, onOpenMenu }: MessageBubbleProps) {
+export default function MessageBubble({ message, self, showSender, showAvatar = true, isLastOfGroup = false, onEdit, onDelete, onOpenImage, onOpenMenu }: MessageBubbleProps) {
   const isImage = !!message.attachment_url &&
     (message.attachment_type?.startsWith('image/') || /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(message.attachment_name || ''))
 
@@ -67,7 +69,9 @@ export default function MessageBubble({ message, self, showSender, showAvatar = 
         href={message.attachment_url}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex items-center gap-3 p-2.5 rounded-lg bg-black/[0.06] hover:bg-black/[0.1] transition-colors group"
+        className={`flex items-center gap-3 p-2.5 rounded-lg transition-colors ${
+          self ? 'bg-white/15 hover:bg-white/25' : 'bg-black/[0.06] hover:bg-black/[0.1]'
+        }`}
       >
         <div className="w-9 h-9 rounded-lg bg-white/90 flex items-center justify-center shrink-0 shadow-sm">
           <svg className="w-5 h-5 text-neutral" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
@@ -132,11 +136,27 @@ export default function MessageBubble({ message, self, showSender, showAvatar = 
             </div>
           )}
 
-          <div className={`relative rounded-xl px-3 py-2 text-[13.8px] leading-[1.38] break-words shadow-[0_1px_1px_rgba(0,0,0,0.08)] ${
-            self
-              ? 'bg-primary-light text-[#111B21] rounded-tr-[3px]'
-              : 'bg-white text-[#111B21] rounded-tl-[3px]'
-          }`}>
+          <div
+            className={`relative rounded-2xl px-3 py-2 text-[13.8px] leading-[1.38] break-words shadow-sm ${
+              self
+                ? 'bg-primary text-white rounded-br-md'
+                : 'bg-white text-[#111B21] rounded-bl-md border border-black/[0.04]'
+            }`}
+          >
+            {/* Tail, drawn as a CSS triangle in the bubble's own colour so it
+                reads as one shape rather than a bubble with a sticker on it. */}
+            {isLastOfGroup && !message.is_deleted && (
+              <span
+                aria-hidden
+                className="absolute bottom-0 w-0 h-0"
+                style={
+                  self
+                    ? { right: '-7px', borderWidth: '0 0 8px 8px', borderColor: `transparent transparent transparent ${BUBBLE_SELF_BG}` }
+                    : { left: '-7px', borderWidth: '8px 8px 0 0', borderColor: `${BUBBLE_OTHER_BG} transparent transparent transparent` }
+                }
+              />
+            )}
+
             {message.is_deleted ? (
               <p className="italic opacity-60 text-[13px]">This message was deleted</p>
             ) : (
@@ -147,11 +167,13 @@ export default function MessageBubble({ message, self, showSender, showAvatar = 
             )}
 
             <div className={`flex items-center justify-end gap-1 mt-1 text-[10.5px] select-none ${
-              self ? 'text-[#667781]' : 'text-[#8696A0]'
+              self ? 'text-white/70' : 'text-[#8696A0]'
             }`}>
               <span>{formatTime(message.sent_at ?? message.created_at)}</span>
               {message.is_edited && !message.is_deleted && <span>· Edited</span>}
-              {self && message.sent_at && !message.is_deleted && <SingleTick />}
+              {self && message.sent_at && !message.is_deleted && (
+                <SingleTick className={self ? 'text-white/80' : 'text-[#8696A0]'} />
+              )}
             </div>
           </div>
         </div>

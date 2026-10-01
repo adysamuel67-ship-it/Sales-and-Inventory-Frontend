@@ -168,6 +168,7 @@ export default function MessageList({
                   self={self}
                   showSender={isFirstOfGroup}
                   showAvatar={self ? isLastOfGroup : isFirstOfGroup}
+                  isLastOfGroup={isLastOfGroup}
                   onEdit={onEdit}
                   onDelete={onDelete}
                   onOpenImage={onOpenImage}
@@ -179,7 +180,11 @@ export default function MessageList({
 
         {typingUsers.length > 0 && (
           <div className="mt-3 flex items-end gap-1.5">
-            <TypingIndicator name={typingUsers[0].name} userId={typingUsers[0].user_id} />
+            <TypingIndicator
+              name={typingUsers[0].name}
+              userId={typingUsers[0].user_id}
+              others={typingUsers.slice(1)}
+            />
           </div>
         )}
 
