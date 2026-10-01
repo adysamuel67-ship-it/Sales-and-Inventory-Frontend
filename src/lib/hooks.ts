@@ -27,5 +27,16 @@ export function useDebouncedCallback<T extends (...args: any[]) => any>(
   }
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  return useCallback(debouncedFn as T, [delay])
+  const stable = useCallback(debouncedFn as T, [delay])
+
+  // Clear any pending invocation on unmount so it cannot fire against a
+  // torn-down component, and reset when the delay changes.
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
+      timeoutRef.current = null
+    }
+  }, [delay])
+
+  return stable
 }

@@ -124,6 +124,10 @@ export function useChatSocket(businessId: number, selfUserId: number | null, opt
     setError(null)
     try {
       const { data } = await chatAPI.wsTicket(businessRef.current)
+      // The component may unmount while the ticket request is in flight. The
+      // cleanup effect would have seen wsRef as null, so opening a socket here
+      // would leak it (and setState on an unmounted component) forever.
+      if (closedRef.current) return
       const ticket = data?.ticket
       if (!ticket) throw new Error('No ticket returned')
       const bizId = businessRef.current
