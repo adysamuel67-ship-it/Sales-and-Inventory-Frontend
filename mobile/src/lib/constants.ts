@@ -47,7 +47,7 @@ export const CHIP_COLORS: Record<string, { bg: string; text: string }> = {
   gray: { bg: '#F9FAFB', text: '#6B7280' },
 }
 
-export const API_BASE_URL = 'https://smart-sales-inventory.onrender.com'
+export const API_BASE_URL = 'https://smart-sales-and-inventory-ai-tracking.onrender.com'
 
 export const SPACING = {
   xs: 4,
