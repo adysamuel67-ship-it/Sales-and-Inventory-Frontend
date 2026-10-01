@@ -12,6 +12,8 @@ import { authAPI } from '@/lib/api'
 const inputCls =
   'w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]'
 
+const OTP_LENGTH = 6
+
 function PasswordCheck({ met, label }: { met: boolean; label: string }) {
   return (
     <li className={`flex items-center gap-1.5 text-xs font-medium ${met ? 'text-success' : 'text-slate-400'}`}>
@@ -35,7 +37,7 @@ export default function ChangePasswordPage() {
   const [completed, setCompleted] = useState(false)
 
   const [oldPassword, setOldPassword] = useState('')
-  const [otp, setOtp] = useState(['', '', '', '', '', '', ''])
+  const [otp, setOtp] = useState<string[]>(new Array(OTP_LENGTH).fill(''))
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
 
@@ -90,7 +92,7 @@ export default function ChangePasswordPage() {
       await authAPI.sendChangePasswordCode(user.email)
       setCodeSent(true)
       setStep(2)
-      setSuccess(`Your password is confirmed. A 7-digit verification code has been sent to ${user.email}`)
+      setSuccess(`Your password is confirmed. A ${OTP_LENGTH}-digit verification code has been sent to ${user.email}`)
       setResendTimer(120)
     } catch (err: any) {
       const detail = err.response?.data?.detail
@@ -106,7 +108,7 @@ export default function ChangePasswordPage() {
     const next = [...otp]
     next[index] = value
     setOtp(next)
-    if (value && index < 6) inputRefs.current[index + 1]?.focus()
+    if (value && index < OTP_LENGTH - 1) inputRefs.current[index + 1]?.focus()
   }
 
   const handleOtpKeyDown = (index: number, e: React.KeyboardEvent) => {
@@ -115,12 +117,12 @@ export default function ChangePasswordPage() {
 
   const handleOtpPaste = (e: React.ClipboardEvent) => {
     e.preventDefault()
-    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 7)
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, OTP_LENGTH)
     if (pasted) {
-      const next = pasted.split('').concat(Array(7).fill('')).slice(0, 7)
+      const next = pasted.split('').concat(new Array(OTP_LENGTH).fill('')).slice(0, OTP_LENGTH)
       setOtp(next)
       const nextEmpty = next.findIndex((c) => !c)
-      inputRefs.current[nextEmpty === -1 ? 6 : nextEmpty]?.focus()
+      inputRefs.current[nextEmpty === -1 ? OTP_LENGTH - 1 : nextEmpty]?.focus()
     }
   }
 
@@ -128,8 +130,8 @@ export default function ChangePasswordPage() {
     setError('')
     setSuccess('')
     const fullCode = otp.join('')
-    if (fullCode.length !== 7) {
-      setError('Please enter the full 7-digit code')
+    if (fullCode.length !== OTP_LENGTH) {
+      setError('Please enter the full 6-digit code')
       return
     }
     setVerifying(true)
@@ -328,7 +330,7 @@ export default function ChangePasswordPage() {
                 <div>
                   <p className="text-sm font-medium text-slate-900 mb-1.5">Enter Verification Code</p>
                   <p className="text-xs text-neutral-light mb-3">
-                    Enter the 7-digit code sent to {email}
+                    Enter the {OTP_LENGTH}-digit code sent to {email}
                     {resendTimer > 0 && (
                       <>
                         {' '}· Resend in{' '}
@@ -361,7 +363,7 @@ export default function ChangePasswordPage() {
                 <button
                   type="button"
                   onClick={handleVerifyOtp}
-                  disabled={verifying || otp.join('').length !== 7}
+                  disabled={verifying || otp.join('').length !== OTP_LENGTH}
                   className="w-full py-3 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-60 flex items-center justify-center gap-2 min-h-[48px]"
                 >
                   {verifying ? (

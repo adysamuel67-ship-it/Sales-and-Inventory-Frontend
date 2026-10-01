@@ -12,7 +12,7 @@ import { useAuth } from '@/lib/auth'
 import Button from '@/components/ui/Button'
 import AlertBadge from '@/components/ui/AlertBadge'
 
-const OTP_LENGTH = 7
+const OTP_LENGTH = 6
 
 export default function VerifyScreen() {
   const router = useRouter()
@@ -54,7 +54,7 @@ export default function VerifyScreen() {
   const handleVerify = async () => {
     const code = otp.join('')
     if (code.length !== OTP_LENGTH) {
-      setError('Please enter the complete 7-digit code')
+      setError('Please enter the complete 6-digit code')
       return
     }
     if (!email) {

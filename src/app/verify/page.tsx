@@ -7,10 +7,12 @@ import AuthLayout from '@/components/AuthLayout'
 import { authAPI } from '@/lib/api'
 import { useAuth } from '@/lib/auth'
 
+const OTP_LENGTH = 6
+
 export default function VerifyPage() {
   const router = useRouter()
   const { user, login, fetchProfile, fetchBusinesses, logout } = useAuth()
-  const [code, setCode] = useState(['', '', '', '', '', '', ''])
+  const [code, setCode] = useState<string[]>(new Array(OTP_LENGTH).fill(''))
   const [loading, setLoading] = useState(false)
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
@@ -71,7 +73,7 @@ export default function VerifyPage() {
     const newCode = [...code]
     newCode[index] = value
     setCode(newCode)
-    if (value && index < 6) {
+    if (value && index < OTP_LENGTH - 1) {
       inputRefs.current[index + 1]?.focus()
     }
   }
@@ -84,20 +86,20 @@ export default function VerifyPage() {
 
   const handlePaste = (e: React.ClipboardEvent) => {
     e.preventDefault()
-    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 7)
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, OTP_LENGTH)
     if (pasted) {
-      const newCode = pasted.split('').concat(Array(7).fill('')).slice(0, 7)
+      const newCode = pasted.split('').concat(new Array(OTP_LENGTH).fill('')).slice(0, OTP_LENGTH)
       setCode(newCode)
       const nextEmpty = newCode.findIndex((c) => !c)
-      inputRefs.current[nextEmpty === -1 ? 6 : nextEmpty]?.focus()
+      inputRefs.current[nextEmpty === -1 ? OTP_LENGTH - 1 : nextEmpty]?.focus()
     }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const fullCode = code.join('')
-    if (fullCode.length !== 7) {
-      setError('Please enter the full 7-digit code.')
+    if (fullCode.length !== OTP_LENGTH) {
+      setError('Please enter the full 6-digit code.')
       return
     }
     if (!userEmail) {
@@ -155,7 +157,7 @@ export default function VerifyPage() {
   return (
     <AuthLayout
       title="Verify Your Email"
-      subtitle="Enter the 7-digit code sent to your email"
+      subtitle={`Enter the ${OTP_LENGTH}-digit code sent to your email`}
       mode="verify"
     >
       <div className="mb-5 p-3.5 bg-primary-light rounded-xl border border-primary/10 auth-animate-fade-up">
@@ -186,7 +188,7 @@ export default function VerifyPage() {
         )}
 
         <div className="flex justify-center gap-2 sm:gap-3 auth-animate-fade-up auth-delay-1" onPaste={handlePaste}>
-          {[0,1,2,3,4,5,6].map((i) => (
+          {Array.from({ length: OTP_LENGTH }, (_, i) => i).map((i) => (
             <input
               key={i}
               ref={(el) => { inputRefs.current[i] = el }}
@@ -207,7 +209,7 @@ export default function VerifyPage() {
 
         <button
           type="submit"
-          disabled={loading || code.join('').length !== 7}
+          disabled={loading || code.join('').length !== OTP_LENGTH}
           className="w-full py-3.5 bg-primary text-white rounded-xl font-semibold text-sm hover:bg-primary-dark transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 active:scale-[0.98] auth-animate-fade-up auth-delay-2"
         >
           {loading ? (
