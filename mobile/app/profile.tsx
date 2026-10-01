@@ -665,7 +665,7 @@ const styles = StyleSheet.create({
   deleteBtnText: { fontSize: 13, fontWeight: '600', color: Colors.danger },
 
   modalOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center', alignItems: 'center', padding: 24, zIndex: 100,
   },

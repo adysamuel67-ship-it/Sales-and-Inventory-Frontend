@@ -21,7 +21,12 @@
     "resolveJsonModule": true,
     "noEmit": true,
     "isolatedModules": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "types": [
+      "jest",
+      "node",
+      "react"
+    ]
   },
   "include": [
     "**/*.ts",

@@ -7,11 +7,6 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "scheme": "businessbot",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#2563EB"
-    },
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -51,7 +46,17 @@
           "photosPermission": "Business Bot needs access to your photos to upload product images",
           "cameraPermission": "Business Bot needs camera access to take product photos"
         }
-      ]
+      ],
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#2563EB"
+        }
+      ],
+      "expo-status-bar"
     ],
     "experiments": {
       "typedRoutes": true

@@ -35,7 +35,7 @@ export default function GradientHero({
       }}
     >
       {W > 0 && H > 0 && (
-        <Svg width={W} height={H} style={StyleSheet.absoluteFillObject}>
+        <Svg width={W} height={H} style={StyleSheet.absoluteFill}>
           <Defs>
             <LinearGradient id="heroGrad" x1="0" y1="0" x2="1" y2="1">
               <Stop offset="0%" stopColor={gradient[0]} />
