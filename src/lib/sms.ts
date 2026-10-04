@@ -290,6 +290,34 @@ export const REMINDER_DELIVERY_META: Record<ReminderDeliveryState, DeliveryMeta>
 export function reminderDeliveryMeta(state: ReminderDeliveryState): DeliveryMeta {
   return REMINDER_DELIVERY_META[state]
 }
+
+// ── Sale edit debt terms ────────────────────────────────────────────────────
+
+/**
+ * Default due date for a debt raised while editing a sale.
+ *
+ * Mirrors the backend: `update_sale()` creates the Debt row itself with
+ * `datetime.now(UTC) + timedelta(days=30)` when the saved amount_paid is below
+ * the sale total. The UI shows the same window so the form matches what the
+ * server will actually store.
+ */
+export function defaultDebtDueDate(from: Date = new Date()): string {
+  const d = new Date(from)
+  d.setDate(d.getDate() + 30)
+  return d.toISOString().slice(0, 10)
+}
+
+/**
+ * How much of a sale is left unpaid.
+ *
+ * The backend computes `debt = total_amount - amount_paid`, so anything above
+ * zero becomes a Debt row. Rounded to 2dp first so binary floating point dust
+ * (100 - 99.99999999999999) is not mistaken for a real shortfall.
+ */
+export function outstandingBalance(totalAmount: number, amountPaid: number): number {
+  const balance = Number((Number(totalAmount) - Number(amountPaid)).toFixed(2))
+  return balance > 0 ? balance : 0
+}
 export function formatSmsAmount(value: number | null | undefined): string {
   const n = Number(value)
   const safe = Number.isFinite(n) ? n : 0

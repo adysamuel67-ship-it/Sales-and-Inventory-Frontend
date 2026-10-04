@@ -19,6 +19,8 @@ import {
   deriveReminderDelivery,
   reminderDeliveryMeta,
   REPORT_SCHEDULES,
+  defaultDebtDueDate,
+  outstandingBalance,
 } from '@/lib/sms'
 
 describe('smsSegments', () => {
@@ -271,6 +273,46 @@ describe('reminderDeliveryMeta', () => {
       expect(meta.label).toBeTruthy()
       expect(meta.description).toBeTruthy()
       expect(meta.tone).toBeTruthy()
+    })
+  })
+})
+
+describe('SaleEditModal debt terms', () => {
+  describe('defaultDebtDueDate', () => {
+    it('defaults to 30 days out, matching update_sale()', () => {
+      expect(defaultDebtDueDate(new Date('2026-10-03T12:00:00Z'))).toBe('2026-11-02')
+    })
+
+    it('crosses a month boundary correctly', () => {
+      expect(defaultDebtDueDate(new Date('2026-10-20T12:00:00Z'))).toBe('2026-11-19')
+    })
+
+    it('crosses a year boundary correctly', () => {
+      expect(defaultDebtDueDate(new Date('2026-12-20T12:00:00Z'))).toBe('2027-01-19')
+    })
+
+    it('handles a leap day', () => {
+      expect(defaultDebtDueDate(new Date('2028-02-01T12:00:00Z'))).toBe('2028-03-02')
+    })
+  })
+
+  describe('outstandingBalance', () => {
+    it('returns the shortfall when the amount paid is short', () => {
+      expect(outstandingBalance(100, 40)).toBe(60)
+    })
+
+    it('returns zero when the sale is fully paid', () => {
+      expect(outstandingBalance(100, 100)).toBe(0)
+    })
+
+    it('never returns a negative balance on an overpayment', () => {
+      expect(outstandingBalance(100, 150)).toBe(0)
+    })
+
+    it('ignores floating point dust from currency maths', () => {
+      // 0.1 + 0.2 style drift would otherwise look like a real shortfall
+      expect(outstandingBalance(100, 99.99999999999999)).toBe(0)
+      expect(outstandingBalance(0.3, 0)).toBe(0.3)
     })
   })
 })

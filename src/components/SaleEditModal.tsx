@@ -1,9 +1,10 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { saleAPI, productAPI, customerAPI } from '@/lib/api'
+import { saleAPI, productAPI, customerAPI, debtAPI } from '@/lib/api'
 import { extractArray, normalizeProduct, MappedSale, formatCedi } from '@/lib/utils'
 import ProductCombobox from '@/components/ui/ProductCombobox'
+import { defaultDebtDueDate, outstandingBalance } from '@/lib/sms'
 
 interface Props {
   sale: MappedSale
@@ -35,6 +36,14 @@ export default function SaleEditModal({ sale, businessId, onClose, onSaved }: Pr
     (sale.amount_paid ?? 0) < sale.amount && sale.amount > 0 ? 'partial' : 'fully_paid'
   )
   const [amountPaid, setAmountPaid] = useState(String(sale.amount_paid ?? ''))
+  /**
+   * Debt details. The backend's update_sale() already creates the Debt row
+   * automatically whenever amount_paid < total_amount, linked by sale_id, so
+   * these fields do not create a second debt - they record what the user
+   * intends and are sent through as the debt terms.
+   */
+  const [debtDueDate, setDebtDueDate] = useState(() => defaultDebtDueDate())
+  const [debtNote, setDebtNote] = useState('')
   const [customerName, setCustomerName] = useState(sale.customer_name || '')
   const [customerPhone, setCustomerPhone] = useState(sale.customer_phone || '')
   const [customerEmail, setCustomerEmail] = useState(sale.customer_email || '')
@@ -114,6 +123,12 @@ export default function SaleEditModal({ sale, businessId, onClose, onSaved }: Pr
 
   const effectiveAmountPaid = paymentStatus === 'fully_paid' ? totalAmount : (parseFloat(amountPaid) || 0)
   const isPartialPayment = paymentStatus === 'partial' && effectiveAmountPaid < totalAmount && totalAmount > 0
+  /**
+   * True whenever the saved sale will leave a balance. Covers the implicit
+   * case where paymentStatus is still "fully_paid" but a stale amountPaid is
+   * lower than the recalculated total, and drives the debt fields.
+   */
+  const hasOutstandingBalance = outstandingBalance(totalAmount, effectiveAmountPaid) > 0
 
   const stockExceeded = validLineItems.some((item) => {
     const pid = parseInt(item.product_id)
@@ -150,6 +165,7 @@ export default function SaleEditModal({ sale, businessId, onClose, onSaved }: Pr
     setError('')
     setSaving(true)
     try {
+      const balance = outstandingBalance(totalAmount, effectiveAmountPaid)
       const payload: any = {
         list_items: validLineItems.map((item) => ({
           product_id: parseInt(item.product_id),
@@ -157,6 +173,15 @@ export default function SaleEditModal({ sale, businessId, onClose, onSaved }: Pr
         })),
         amount_paid: effectiveAmountPaid,
         payment_method: paymentMethod,
+      }
+
+      /**
+       * Debt terms. update_sale() derives the balance itself, so these only
+       * carry the user's intent - the due date the backend will ignore if the
+       * sale ends up fully paid.
+       */
+      if (balance > 0) {
+        if (debtDueDate) payload.due_date = `${debtDueDate}T23:59:59Z`
       }
 
       if (paymentStatus === 'partial' && isPartialPayment && customerPhone.trim()) {
@@ -198,7 +223,70 @@ export default function SaleEditModal({ sale, businessId, onClose, onSaved }: Pr
         payload.customer_id = sale.customer_id
       }
 
+      /**
+       * A balance always needs a customer: update_sale() rejects the whole
+       * edit with 400 when a debt is left outstanding and no customer is set.
+       * This runs even when no phone number was typed, because the debt case
+       * does not actually require one.
+       */
+      let customerIdForDebt: number | null = payload.customer_id ?? null
+      if (balance > 0 && customerIdForDebt == null) {
+        try {
+          const customersRes = await customerAPI.list(businessId)
+          const customers = extractArray(customersRes.data)
+          const phone = customerPhone.trim()
+          const matched = phone
+            ? customers.find((c: any) => (c.phone || c.phone_number || c.mobile || '') === phone)
+            : null
+          customerIdForDebt = matched ? matched.customer_id ?? matched.id : null
+        } catch {
+          customerIdForDebt = null
+        }
+        if (customerIdForDebt == null && customerName.trim()) {
+          try {
+            const existing = existingCustomers.find(
+              (c: any) => (c.name || '').toLowerCase() === customerName.trim().toLowerCase()
+            )
+            customerIdForDebt = existing ? existing.customer_id ?? existing.id : null
+          } catch {
+            customerIdForDebt = null
+          }
+        }
+        if (customerIdForDebt != null) {
+          payload.customer_id = customerIdForDebt
+        } else {
+          setError(
+            'This sale leaves a balance, so a customer is required. Pick an existing customer or enter their details.'
+          )
+          setSaving(false)
+          return
+        }
+      }
+
       await saleAPI.update(businessId, sale.id, payload)
+
+      /**
+       * update_sale() creates the Debt row itself, linked by sale_id, with a
+       * 30-day default due date. It ignores the `due_date` we sent, so the
+       * user's chosen date is applied here via the debt endpoint. This is
+       * best-effort: a failure here must not fail an otherwise-successful
+       * sale edit, so it is reported as a warning rather than an error.
+       */
+      if (balance > 0 && customerIdForDebt != null && debtDueDate) {
+        try {
+          await debtAPI.updateDebt(businessId, customerIdForDebt, {
+            due_date: `${debtDueDate}T23:59:59Z`,
+            note: debtNote.trim() || undefined,
+          })
+        } catch (debtErr: any) {
+          const detail = debtErr?.response?.data?.detail
+          setError(
+            typeof detail === 'string'
+              ? `Sale updated, but the debt due date could not be saved: ${detail}`
+              : 'Sale updated, but the debt due date could not be saved.'
+          )
+        }
+      }
       onSaved?.()
     } catch (err: any) {
       const detail = err.response?.data?.detail
@@ -441,6 +529,59 @@ export default function SaleEditModal({ sale, businessId, onClose, onSaved }: Pr
                   </div>
                 )}
               </>
+            )}
+
+            {/* ── Debt details ──────────────────────────────────────────
+                The backend creates the Debt row itself whenever the saved
+                amount_paid is below the total, so these fields describe the
+                balance the shopkeeper is taking on rather than creating a
+                second one. */}
+            {hasOutstandingBalance && (
+              <div className="rounded-xl border border-warning/30 bg-warning-light/40 p-4 space-y-3">
+                <div className="flex items-start gap-2.5">
+                  <svg className="w-4 h-4 shrink-0 text-warning mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 9v2m0 4h.01M5.07 19h13.86a2 2 0 001.74-3L13.74 4a2 2 0 00-3.48 0l-7 12a2 2 0 001.74 3z" />
+                  </svg>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-slate-900">
+                      Record the remaining {formatCedi(outstandingBalance(totalAmount, effectiveAmountPaid))} as debt
+                    </p>
+                    <p className="mt-0.5 text-xs text-slate-600">
+                      This amount is short of the {formatCedi(totalAmount)} total, so it is tracked as a debt
+                      against {customerName.trim() || 'this customer'}.
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="debt-due-date" className="block text-xs font-medium text-slate-700 mb-1.5">
+                    Payment due by
+                  </label>
+                  <input
+                    id="debt-due-date"
+                    type="date"
+                    value={debtDueDate}
+                    min={new Date().toISOString().slice(0, 10)}
+                    onChange={(e) => setDebtDueDate(e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-white min-h-[44px]"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="debt-note" className="block text-xs font-medium text-slate-700 mb-1.5">
+                    Note (optional)
+                  </label>
+                  <input
+                    id="debt-note"
+                    type="text"
+                    value={debtNote}
+                    onChange={(e) => setDebtNote(e.target.value)}
+                    placeholder="e.g. Part payment, rest due at market close"
+                    maxLength={150}
+                    className="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                  />
+                </div>
+              </div>
             )}
 
             <div className="px-4 py-4 rounded-xl bg-surfaceAlt border border-border">
