@@ -164,6 +164,88 @@ export function generateDateLabels(startDate: string, endDate: string): string[]
   return labels
 }
 
+export interface ProductPerformance {
+  product_id: number
+  name: string
+  quantity: number
+  revenue: number
+  profit: number
+  /** Share of total units sold across the whole period, 0-100. */
+  share: number
+}
+
+/**
+ * Rolls sale line items up into a per-product performance table.
+ *
+ * The analytics endpoints only expose a single `best_selling_product` *name*
+ * (analytics/service.py groups by product and takes the top row), so a ranked
+ * list has to be built from the sale line items the sales endpoint already
+ * returns. `SaleResponse.sales_items` carries product_id, quantity,
+ * unit_price, subtotal and profit - everything needed here.
+ *
+ * `productMap` supplies names when the line item omits one, which happens for
+ * older rows.
+ *
+ * Ranked by quantity, which is how a shopkeeper reads "best selling".
+ */
+export function aggregateProductPerformance(
+  sales: any[],
+  productMap?: Map<number, string>
+): ProductPerformance[] {
+  const rows = new Map<number, ProductPerformance>()
+
+  for (const sale of sales || []) {
+    const items = sale?.sales_items || sale?.raw?.sales_items || []
+    if (!Array.isArray(items) || items.length === 0) continue
+
+    for (const item of items) {
+      const pid = Number(item.product_id ?? item.productId)
+      if (!pid || Number.isNaN(pid)) continue
+
+      const quantity = Number(item.quantity ?? 0)
+      // SaleItemResponse always sends subtotal, but older or partially populated
+      // rows only carry unit_price, so derive the line value when needed.
+      const revenue = item.subtotal != null
+        ? Number(item.subtotal)
+        : Number(item.unit_price ?? 0) * quantity
+      const profit = Number(item.profit ?? 0)
+
+      const name =
+        item.product_name ||
+        item.name ||
+        productMap?.get(pid) ||
+        `Product #${pid}`
+
+      const existing = rows.get(pid)
+      if (existing) {
+        existing.quantity += quantity
+        existing.revenue += revenue
+        existing.profit += profit
+        // Prefer a real name over the placeholder if a later row has one.
+        if (existing.name.startsWith('Product #') && !name.startsWith('Product #')) {
+          existing.name = name
+        }
+      } else {
+        rows.set(pid, { product_id: pid, name, quantity, revenue, profit, share: 0 })
+      }
+    }
+  }
+
+  const ranked = [...rows.values()].sort((a, b) => {
+    if (b.quantity !== a.quantity) return b.quantity - a.quantity
+    return b.revenue - a.revenue
+  })
+
+  const totalUnits = ranked.reduce((sum, r) => sum + r.quantity, 0)
+  return ranked.map((r) => ({
+    ...r,
+    quantity: Number(r.quantity.toFixed(2)),
+    revenue: Number(r.revenue.toFixed(2)),
+    profit: Number(r.profit.toFixed(2)),
+    share: totalUnits > 0 ? Number(((r.quantity / totalUnits) * 100).toFixed(1)) : 0,
+  }))
+}
+
 export function parseApiError(err: any): string {
   const detail = err?.response?.data?.detail
   if (Array.isArray(detail)) {

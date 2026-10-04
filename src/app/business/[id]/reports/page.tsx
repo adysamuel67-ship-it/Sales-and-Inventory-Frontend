@@ -2,15 +2,15 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useParams } from 'next/navigation'
-import Link from 'next/link'
 import { reportAPI, saleAPI, productAPI, customerAPI } from '@/lib/api'
 import dynamic from 'next/dynamic'
 const RevenueChart = dynamic(() => import('@/components/RevenueChart'), { ssr: false })
-import { extractArray, extractProfit, extractSummary, getDateRange, parseApiError, formatCedi } from '@/lib/utils'
+import { extractArray, extractProfit, extractSummary, getDateRange, parseApiError, formatCedi, aggregateProductPerformance, type ProductPerformance } from '@/lib/utils'
 import PageHeader from '@/components/ui/PageHeader'
 import Alert from '@/components/ui/Alert'
 import EmptyState from '@/components/ui/EmptyState'
 import { ChartIcon } from '@/components/ui/Icons'
+import SmsReportPanel from '@/components/SmsReportPanel'
 
 interface ProfitData {
   total_revenue: number
@@ -74,6 +74,7 @@ export default function ReportsPage() {
   const [debtsLoading, setDebtsLoading] = useState(false)
   const [customersById, setCustomersById] = useState<Record<number, { name?: string | null }>>({})
   const [chartData, setChartData] = useState<ChartDataPoint[]>([])
+  const [topProducts, setTopProducts] = useState<ProductPerformance[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [dateRange, setDateRange] = useState(() => getDateRange(30))
@@ -89,6 +90,7 @@ export default function ReportsPage() {
     setSummary(null)
     setSaleSummary(null)
     setChartData([])
+    setTopProducts([])
 
     try {
       const [profitRes, summaryRes, salesRes, saleSummaryRes] = await Promise.allSettled([
@@ -167,6 +169,29 @@ export default function ReportsPage() {
           }))
 
         setChartData(chartPoints)
+
+        /**
+         * Ranked best sellers. The analytics endpoints only return a single
+         * best_selling_product name, so the table is rolled up from the sale
+         * line items already fetched above. Product names are resolved from the
+         * catalogue because older line items do not carry one.
+         */
+        const ranked = aggregateProductPerformance(filtered)
+        if (ranked.some((r) => r.name.startsWith('Product #'))) {
+          try {
+            const productsRes = await productAPI.list(businessId)
+            const nameMap = new Map<number, string>()
+            for (const p of extractArray(productsRes.data)) {
+              const pid = Number(p.product_id ?? p.id)
+              if (pid && p.name) nameMap.set(pid, p.name)
+            }
+            setTopProducts(aggregateProductPerformance(filtered, nameMap))
+          } catch {
+            setTopProducts(ranked)
+          }
+        } else {
+          setTopProducts(ranked)
+        }
       }
 
       const hasData =
@@ -250,19 +275,6 @@ export default function ReportsPage() {
         title="Reports"
         subtitle="Profit & analytics overview"
         actions={
-          <div className="flex items-center gap-2">
-            <Link
-              href={`/business/${businessId}/sms-reports`}
-              className="flex items-center gap-2 px-4 py-2.5 bg-surface border border-slate-200 rounded-xl text-sm font-medium text-slate-700 hover:bg-surfaceAlt transition-colors min-h-[44px]"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20 4H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2z" />
-                <line x1="22" y1="6" x2="12" y2="13" />
-                <line x1="12" y1="13" x2="12" y2="19" />
-                <line x1="12" y1="13" x2="2" y2="6" />
-              </svg>
-              SMS Reports
-            </Link>
           <div className="relative">
             <button
               onClick={() => showDatePicker ? setShowDatePicker(false) : handleOpenDatePicker()}
@@ -324,7 +336,6 @@ export default function ReportsPage() {
                 </button>
               </div>
             )}
-          </div>
           </div>
         }
       />
@@ -434,6 +445,106 @@ export default function ReportsPage() {
               )}
             </div>
           )}
+
+          {/* ── Best selling products ───────────────────────────────────
+              The backend summary only names a single top product, so this
+              ranked table is rolled up from the sale line items already
+              loaded above. */}
+          {topProducts.length > 0 && (
+            <section className="mb-6 bg-surface rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+              <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <h2 className="font-semibold text-slate-900">Best Selling Products</h2>
+                  <p className="text-xs text-neutral-light mt-0.5">
+                    Ranked by units sold{dateSubtitle ? ` · ${dateSubtitle.toLowerCase()}` : ''}
+                  </p>
+                </div>
+                <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
+                  {topProducts.length} product{topProducts.length === 1 ? '' : 's'}
+                </span>
+              </div>
+
+              <div className="hidden sm:block overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-slate-200">
+                      <th className="text-left px-5 py-3 font-medium w-10">#</th>
+                      <th className="text-left px-5 py-3 font-medium">Product</th>
+                      <th className="text-right px-5 py-3 font-medium">Units</th>
+                      <th className="text-right px-5 py-3 font-medium">Revenue</th>
+                      <th className="text-right px-5 py-3 font-medium">Profit</th>
+                      <th className="text-left px-5 py-3 font-medium w-40">Share</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {topProducts.map((row, idx) => (
+                      <tr key={row.product_id} className="border-t border-slate-50 table-row-hover">
+                        <td className="px-5 py-3">
+                          {idx === 0 ? (
+                            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-white">
+                              1
+                            </span>
+                          ) : (
+                            <span className="pl-1 text-xs text-neutral-light tabular-nums">{idx + 1}</span>
+                          )}
+                        </td>
+                        <td className="px-5 py-3 font-medium text-slate-900">{row.name}</td>
+                        <td className="px-5 py-3 text-right tabular-nums text-slate-700">
+                          {row.quantity.toLocaleString()}
+                        </td>
+                        <td className="px-5 py-3 text-right tabular-nums font-medium text-slate-900">
+                          {formatCedi(row.revenue)}
+                        </td>
+                        <td className="px-5 py-3 text-right tabular-nums font-medium text-success">
+                          {formatCedi(row.profit)}
+                        </td>
+                        <td className="px-5 py-3">
+                          <div className="flex items-center gap-2">
+                            <div className="h-1.5 flex-1 rounded-full bg-slate-100 overflow-hidden">
+                              <div
+                                className="h-full rounded-full bg-primary"
+                                style={{ width: `${Math.min(row.share, 100)}%` }}
+                              />
+                            </div>
+                            <span className="w-10 text-right text-xs tabular-nums text-neutral-light">
+                              {row.share}%
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="sm:hidden divide-y divide-slate-100">
+                {topProducts.map((row, idx) => (
+                  <div key={row.product_id} className="px-4 py-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="min-w-0 truncate font-medium text-slate-900">
+                        {idx + 1}. {row.name}
+                      </span>
+                      <span className="shrink-0 text-sm tabular-nums text-slate-700">
+                        {row.quantity.toLocaleString()} units
+                      </span>
+                    </div>
+                    <div className="mt-1 flex items-center justify-between gap-3">
+                      <span className="text-xs text-neutral-light">{formatCedi(row.revenue)}</span>
+                      <span className="text-xs font-medium text-success">{formatCedi(row.profit)}</span>
+                    </div>
+                    <div className="mt-2 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-primary"
+                        style={{ width: `${Math.min(row.share, 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          <SmsReportPanel businessId={businessId} summary={saleSummary} />
 
           <div className="mb-6">
             <RevenueChart data={chartData} />

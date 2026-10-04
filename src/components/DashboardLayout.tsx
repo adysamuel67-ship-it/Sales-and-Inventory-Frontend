@@ -75,14 +75,6 @@ function NavIcon({ name }: { name: string }) {
         <line x1="6" y1="20" x2="6" y2="14" />
       </svg>
     ),
-    smsReports: (
-      <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-        <path d="M20 4H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2z" />
-        <line x1="22" y1="6" x2="12" y2="13" />
-        <line x1="12" y1="13" x2="12" y2="19" />
-        <line x1="12" y1="13" x2="2" y2="6" />
-      </svg>
-    ),
     notifications: (
       <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
         <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -218,7 +210,6 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
     { label: 'Customers', icon: 'customers', href: `${bizBase}/customers`, id: 'customers', group: 'management' },
     { label: 'Debts', icon: 'debts', href: `${bizBase}/debts`, id: 'debts', group: 'management' },
     { label: 'Reports', icon: 'reports', href: `${bizBase}/reports`, id: 'reports', group: 'admin', ownerOnly: true, hidesForNewAccounts: true },
-    { label: 'SMS Reports', icon: 'smsReports', href: `${bizBase}/sms-reports`, id: 'sms-reports', group: 'admin', ownerOnly: true, hidesForNewAccounts: true },
     { label: 'Notifications', icon: 'notifications', href: '/notifications', id: 'notifications-nav', group: 'admin', ownerOnly: true },
     { label: 'Businesses', icon: 'admin-businesses', href: '/businesses', id: 'businesses-nav', group: 'account' },
     { label: 'Settings', icon: 'settings', href: `${bizBase}/settings`, id: 'settings', group: 'account' },

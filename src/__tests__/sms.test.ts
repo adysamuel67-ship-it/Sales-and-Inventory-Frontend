@@ -22,6 +22,7 @@ import {
   defaultDebtDueDate,
   outstandingBalance,
 } from '@/lib/sms'
+import { aggregateProductPerformance } from '@/lib/utils'
 
 describe('smsSegments', () => {
   it('counts a short message as one part', () => {
@@ -274,6 +275,93 @@ describe('reminderDeliveryMeta', () => {
       expect(meta.description).toBeTruthy()
       expect(meta.tone).toBeTruthy()
     })
+  })
+})
+
+describe('aggregateProductPerformance', () => {
+  const sale = (items: any[]) => ({ sale_id: 1, sales_items: items })
+
+  it('ranks products by units sold, highest first', () => {
+    const rows = aggregateProductPerformance([
+      sale([
+        { product_id: 1, product_name: 'Rice', quantity: 3, subtotal: 30, profit: 6 },
+        { product_id: 2, product_name: 'Beans', quantity: 10, subtotal: 100, profit: 20 },
+      ]),
+    ])
+    expect(rows[0].name).toBe('Beans')
+    expect(rows[0].quantity).toBe(10)
+    expect(rows[1].name).toBe('Rice')
+  })
+
+  it('sums the same product across separate sales', () => {
+    const rows = aggregateProductPerformance([
+      sale([{ product_id: 1, product_name: 'Rice', quantity: 2, subtotal: 20, profit: 4 }]),
+      sale([{ product_id: 1, product_name: 'Rice', quantity: 5, subtotal: 50, profit: 10 }]),
+    ])
+    expect(rows).toHaveLength(1)
+    expect(rows[0].quantity).toBe(7)
+    expect(rows[0].revenue).toBe(70)
+    expect(rows[0].profit).toBe(14)
+  })
+
+  it('derives revenue from unit_price when subtotal is absent', () => {
+    const rows = aggregateProductPerformance([
+      sale([{ product_id: 1, product_name: 'Rice', quantity: 4, unit_price: 12.5 }]),
+    ])
+    expect(rows[0].revenue).toBe(50)
+  })
+
+  it('computes each product share of total units', () => {
+    const rows = aggregateProductPerformance([
+      sale([
+        { product_id: 1, product_name: 'Rice', quantity: 3, subtotal: 30 },
+        { product_id: 2, product_name: 'Beans', quantity: 1, subtotal: 10 },
+      ]),
+    ])
+    expect(rows[0].share).toBe(75)
+    expect(rows[1].share).toBe(25)
+  })
+
+  it('falls back to the catalogue when a line item has no name', () => {
+    const names = new Map([[7, 'Tomatoes']])
+    const rows = aggregateProductPerformance(
+      [sale([{ product_id: 7, quantity: 2, subtotal: 20 }])],
+      names
+    )
+    expect(rows[0].name).toBe('Tomatoes')
+  })
+
+  it('uses a placeholder when no name is available anywhere', () => {
+    const rows = aggregateProductPerformance([sale([{ product_id: 7, quantity: 2, subtotal: 20 }])])
+    expect(rows[0].name).toBe('Product #7')
+  })
+
+  it('upgrades a placeholder name when a later row carries the real one', () => {
+    const rows = aggregateProductPerformance([
+      sale([{ product_id: 7, quantity: 1, subtotal: 10 }]),
+      sale([{ product_id: 7, quantity: 1, subtotal: 10, product_name: 'Tomatoes' }]),
+    ])
+    expect(rows[0].name).toBe('Tomatoes')
+    expect(rows[0].quantity).toBe(2)
+  })
+
+  it('ignores sales with no line items', () => {
+    expect(aggregateProductPerformance([{ sale_id: 2, sales_items: [] }])).toEqual([])
+    expect(aggregateProductPerformance([{ sale_id: 3 }])).toEqual([])
+  })
+
+  it('breaks a quantity tie on revenue', () => {
+    const rows = aggregateProductPerformance([
+      sale([
+        { product_id: 1, product_name: 'A', quantity: 5, subtotal: 10 },
+        { product_id: 2, product_name: 'B', quantity: 5, subtotal: 90 },
+      ]),
+    ])
+    expect(rows[0].name).toBe('B')
+  })
+
+  it('handles an empty input without throwing', () => {
+    expect(aggregateProductPerformance([])).toEqual([])
   })
 })
 

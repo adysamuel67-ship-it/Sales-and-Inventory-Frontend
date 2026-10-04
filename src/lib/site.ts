@@ -4,13 +4,17 @@ export const SITE_TAGLINE = 'Sales & Inventory Tracking for Ghanaian Businesses'
 
 export const COMPANY_NAME = 'Whisper Systems'
 
-/** Raw digits, as stored. */
-export const SUPPORT_PHONE = '0257524704'
+/**
+ * Raw digits, as stored. Kept in full international form (+233 country code,
+ * trunk 0 dropped) so it can be handed straight to an SMS provider - the
+ * backend's `to_international()` normalises to this same shape before sending.
+ */
+export const SUPPORT_PHONE = '+233257524704'
 
-/** Grouped for reading on screen. */
-export const SUPPORT_PHONE_DISPLAY = '0257 524 704'
+/** Grouped for reading on screen, still international. */
+export const SUPPORT_PHONE_DISPLAY = '+233 25 752 4704'
 
-/** Dialable from outside Ghana (country code 233, trunk 0 dropped). */
+/** Dialable from outside Ghana and inside it alike. */
 export const SUPPORT_PHONE_TEL = '+233257524704'
 
 export const SUPPORT_EMAIL = 'adysamuel68@gmail.com'
