@@ -147,20 +147,17 @@ describe('smsPartsCount', () => {
 // ──────────────────────────────────────────────────
 
 describe('defaultReminderDate', () => {
-  it('defaults to the due date', () => {
-    expect(defaultReminderDate('2026-07-31')).toBe('2026-07-31')
+  // The backend stamps new debts 30 days out, so defaulting the reminder to the
+  // debt's due date silently pushed it a month into the future. The default is
+  // today instead, so the user always picks the day the text goes out.
+  const FAR_FUTURE = '2099-07-31'
+
+  it('defaults to today, not the debt due date', () => {
+    expect(defaultReminderDate(FAR_FUTURE)).toBe(todayDateString())
   })
 
-  it('keeps a due date that falls on a month boundary', () => {
-    expect(defaultReminderDate('2026-08-02')).toBe('2026-08-02')
-  })
-
-  it('keeps a due date that falls on a year boundary', () => {
-    expect(defaultReminderDate('2027-01-02')).toBe('2027-01-02')
-  })
-
-  it('strips the time portion off a datetime due date', () => {
-    expect(defaultReminderDate('2026-07-31T10:30:00Z')).toBe('2026-07-31')
+  it('returns today when no due date is supplied', () => {
+    expect(defaultReminderDate()).toBe(todayDateString())
   })
 
   it('falls back to today for a missing due date', () => {
@@ -169,6 +166,10 @@ describe('defaultReminderDate', () => {
 
   it('falls back to today for an unparseable due date', () => {
     expect(defaultReminderDate('not-a-date')).toBe(todayDateString())
+  })
+
+  it('ignores a due date that has already passed', () => {
+    expect(defaultReminderDate('2020-01-01')).toBe(todayDateString())
   })
 })
 

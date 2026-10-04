@@ -5,6 +5,16 @@ import { useAuth } from '@/lib/auth'
 import { reminderAPI, customerAPI, debtAPI, adminAPI } from '@/lib/api'
 import { extractArray, parseApiError, isAdminRole } from '@/lib/utils'
 import ScheduleReminderModal, { ReminderCustomer, todayDateString, validateReminderDate } from '@/components/ScheduleReminderModal'
+import { deriveReminderDelivery, reminderDeliveryMeta, type DeliveryMeta } from '@/lib/sms'
+
+/** Badge colours per delivery tone, so every status chip reads consistently. */
+const DELIVERY_TONE_CLASS: Record<DeliveryMeta['tone'], string> = {
+  neutral: 'bg-slate-200 text-slate-600',
+  info: 'bg-primary-light text-primary',
+  success: 'bg-success-light text-success',
+  warning: 'bg-warning-light text-warning',
+  danger: 'bg-danger-light text-danger',
+}
 
 interface Reminder {
   reminder_id: number
@@ -74,6 +84,19 @@ function daysUntil(dateStr?: string): number | null {
 
 function formatCurrency(amount: number) {
   return `GH\u20B5${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+}
+
+/** Delivery status chip; the explanation is available as a tooltip. */
+function DeliveryBadge({ state }: { state: ReturnType<typeof deriveReminderDelivery> }) {
+  const meta = reminderDeliveryMeta(state)
+  return (
+    <span
+      title={meta.description}
+      className={`inline-block cursor-help rounded-full px-2 py-0.5 text-xs font-medium ${DELIVERY_TONE_CLASS[meta.tone]}`}
+    >
+      {meta.label}
+    </span>
+  )
 }
 
 export default function RemindersSection({ businessId }: Props) {
@@ -216,17 +239,37 @@ export default function RemindersSection({ businessId }: Props) {
 
   const getCustomer = (reminder: Reminder) => customerMap.get(reminder.customer_id)
 
+  /**
+   * Delivery state per reminder.
+   *
+   * The Reminders model tracks `status` (pending/sending/sent/failed) and
+   * `attempts`, but ReminderResponse in the backend schema never serialises
+   * either field - so the API cannot report a failed send. State is inferred
+   * from what is exposed (sent_at, date, is_active) plus whether the debt was
+   * settled. Reminders the backend marked failed are still surfaced via
+   * REMINDER_DELIVERY_META once the schema exposes it.
+   */
+  const deliveryState = useCallback(
+    (reminder: Reminder) => {
+      const debt = debtMap.get(reminder.debt_id)
+      return deriveReminderDelivery(reminder, { debtSettled: debt?.is_paid === true })
+    },
+    [debtMap]
+  )
+
   const stats = useMemo(() => {
     const total = reminders.length
     const active = reminders.filter((r) => r.is_active).length
     const paused = reminders.filter((r) => !r.is_active).length
+    const sent = reminders.filter((r) => deliveryState(r) === 'sent').length
+    const overdue = reminders.filter((r) => deliveryState(r) === 'due').length
     const dueSoon = reminders.filter((r) => {
-      if (!r.is_active) return false
+      if (!r.is_active || deliveryState(r) === 'sent') return false
       const days = daysUntil(r.date)
       return days != null && days >= 0 && days <= 7
     }).length
-    return { total, active, paused, dueSoon }
-  }, [reminders])
+    return { total, active, paused, sent, overdue, dueSoon }
+  }, [reminders, deliveryState])
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -422,7 +465,7 @@ export default function RemindersSection({ businessId }: Props) {
       {loading ? (
         <div className="space-y-6">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            {[1, 2, 3, 4].map((i) => (
+            {[1, 2, 3, 4, 5, 6].map((i) => (
               <div key={i} className="skeleton h-24 rounded-2xl" />
             ))}
           </div>
@@ -475,6 +518,28 @@ export default function RemindersSection({ businessId }: Props) {
               </div>
               <p className="text-2xl font-bold text-warning">{stats.dueSoon}</p>
             </div>
+            <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs text-neutral-light uppercase tracking-wider">Sent</p>
+                <div className="w-8 h-8 rounded-xl bg-success-light flex items-center justify-center">
+                  <svg className="w-4 h-4 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              </div>
+              <p className="text-2xl font-bold text-success">{stats.sent}</p>
+            </div>
+            <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs text-neutral-light uppercase tracking-wider">Overdue</p>
+                <div className="w-8 h-8 rounded-xl bg-danger-light flex items-center justify-center">
+                  <svg className="w-4 h-4 text-danger" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M5.07 19h13.86a2 2 0 001.74-3L13.74 4a2 2 0 00-3.48 0l-7 12a2 2 0 001.74 3z" />
+                  </svg>
+                </div>
+              </div>
+              <p className="text-2xl font-bold text-danger">{stats.overdue}</p>
+            </div>
           </div>
 
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-4">
@@ -520,8 +585,9 @@ export default function RemindersSection({ businessId }: Props) {
                       <th className="text-left px-5 py-3 font-medium">Customer</th>
                       <th className="text-left px-5 py-3 font-medium hidden md:table-cell">Amount</th>
                       <th className="text-left px-5 py-3 font-medium">Window</th>
+                      <th className="text-left px-5 py-3 font-medium">Delivery</th>
                       <th className="text-left px-5 py-3 font-medium hidden sm:table-cell">Note</th>
-                      <th className="text-center px-5 py-3 font-medium">Status</th>
+                      <th className="text-center px-5 py-3 font-medium">Reminder</th>
                       <th className="text-right px-5 py-3 font-medium">Actions</th>
                     </tr>
                   </thead>
@@ -562,17 +628,15 @@ export default function RemindersSection({ businessId }: Props) {
                             </div>
                             <div className="flex items-center gap-2 mt-0.5">
                               <span className="text-xs text-neutral-light">at {formatTime(reminder.time_of_day)}</span>
-                              {reminder.sent_at && (
-                                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-success-light text-success">
-                                  Sent
-                                </span>
-                              )}
                               {reminder.is_active && !reminder.sent_at && dueDays != null && dueDays >= 0 && dueDays <= 7 && (
                                 <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-warning-light text-warning">
                                   {dueDays === 0 ? 'Today' : `in ${dueDays}d`}
                                 </span>
                               )}
                             </div>
+                          </td>
+                          <td className="px-5 py-3.5">
+                            <DeliveryBadge state={deliveryState(reminder)} />
                           </td>
                           <td className="px-5 py-3.5 hidden sm:table-cell">
                             <span className="text-slate-600 line-clamp-2 max-w-[220px]">{reminder.note || '—'}</span>

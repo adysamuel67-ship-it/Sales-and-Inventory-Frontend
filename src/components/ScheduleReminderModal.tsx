@@ -37,12 +37,14 @@ export function todayDateString(): string {
   return toDateString(new Date())
 }
 
-// A reminder fires on a single day, so the natural default is the day the debt
-// is due. Falls back to today when there is no usable due date on file.
-export function defaultReminderDate(dueDate: string): string {
-  const datePart = (dueDate || '').slice(0, 10)
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(datePart)) return todayDateString()
-  return datePart
+// A reminder fires on a single day.
+//
+// It defaults to TODAY, never to the debt's due date. The backend stamps new
+// debts 30 days out, so inheriting the due date silently pushed every new
+// reminder a month into the future. The due date still appears in the message
+// body; it just no longer decides when the text goes out.
+export function defaultReminderDate(_dueDate?: string): string {
+  return todayDateString()
 }
 
 export function compareDates(a: string, b: string): number {
@@ -98,9 +100,9 @@ export default function ScheduleReminderModal({ businessId, customer, defaultDeb
   })
 
   const [reminderDate, setReminderDate] = useState<string>(() => {
-    const preferred = outstandingDebts.find((d) => d.debt_id === defaultDebtId)
-    const initial = preferred || outstandingDebts[0]
-    return initial?.due_date ? defaultReminderDate(initial.due_date) : todayDateString()
+    // Starts on today. Changing the debt must not move the date the user already
+    // chose, so this is intentionally not recomputed from the debt below.
+    return todayDateString()
   })
 
   const [timeOfDay, setTimeOfDay] = useState('09:00')
@@ -133,17 +135,14 @@ export default function ScheduleReminderModal({ businessId, customer, defaultDeb
 
   const handleDebtChange = (value: string) => {
     setSelectedDebtId(value)
-    const debt = outstandingDebts.find((d) => String(d.debt_id) === value)
-    if (debt?.due_date) {
-      setReminderDate(defaultReminderDate(debt.due_date))
-    }
+    // The reminder date is left alone: switching debts must not silently move a
+    // date the user has already picked. The due date still shows in the preview.
   }
 
   const resetForm = () => {
     setNote('')
     setTimeOfDay('09:00')
-    const debt = outstandingDebts.find((d) => String(d.debt_id) === selectedDebtId) || outstandingDebts[0]
-    setReminderDate(debt?.due_date ? defaultReminderDate(debt.due_date) : todayDateString())
+    setReminderDate(todayDateString())
   }
 
   const doSchedule = async () => {

@@ -179,10 +179,44 @@ export default function BusinessesPage() {
     setError('')
     setSuccess('')
     try {
-      await businessAPI.updateMember(bizId, memberId, { role: editRole, is_active: editActive })
-      setSuccess('Member updated!')
+      const res = await businessAPI.updateMember(bizId, memberId, { role: editRole, is_active: editActive })
+      /**
+       * The PUT returns the authoritative member row (member_id, role,
+       * is_active, name, email), so apply it straight to local state.
+       *
+       * A refetch cannot be relied on here: businessAPI.get() answers with
+       * BusinessWithMemberCount, where `members` is an integer count rather
+       * than a list, and the fallback /users/members endpoint returns
+       * UsersOutUsers - a schema that has no `is_active` field at all. So the
+       * active/inactive state can never survive a refetch, and the row appears
+       * to revert. Merging the response keeps the UI honest instead.
+       */
+      const updated = res?.data
+      if (updated && updated.member_id != null) {
+        setMembersByBiz(prev => {
+          const list = prev[bizId] || []
+          return {
+            ...prev,
+            [bizId]: list.map((m) =>
+              m.user_id === userId || m.member_id === memberId
+                ? {
+                    ...m,
+                    member_id: updated.member_id ?? m.member_id,
+                    role: updated.role ?? m.role,
+                    is_active: updated.is_active ?? m.is_active,
+                    name: updated.name || m.name,
+                    email: updated.email || m.email,
+                  }
+                : m
+            ),
+          }
+        })
+      }
+      setSuccess(`${editRole === 'manager' ? 'Manager' : editRole === 'admin' ? 'Admin' : 'Staff'} access saved`)
       setEditingMember(null)
-      await loadMembersForce(bizId)
+      // Refresh in the background, but the local merge above is what the user
+      // sees immediately.
+      loadMembersForce(bizId).catch(() => {})
     } catch (err: any) {
       const detail = err.response?.data?.detail
       setError(typeof detail === 'string' ? detail : 'Failed to update member')
@@ -219,10 +253,22 @@ export default function BusinessesPage() {
     setSuccess('')
     try {
       const nextActive = member.is_active === false
-      await businessAPI.updateMember(bizId, member.member_id, { is_active: nextActive })
+      const res = await businessAPI.updateMember(bizId, member.member_id, { is_active: nextActive })
+      // Merge the response for the same reason as handleUpdateMember: the
+      // members listing does not carry is_active, so a refetch would silently
+      // flip the row back.
+      const updated = res?.data
+      setMembersByBiz(prev => ({
+        ...prev,
+        [bizId]: (prev[bizId] || []).map((m) =>
+          m.user_id === member.user_id
+            ? { ...m, is_active: updated?.is_active ?? nextActive, role: updated?.role ?? m.role }
+            : m
+        ),
+      }))
       setSuccess(nextActive ? `${member.name} activated` : `${member.name} deactivated`)
       setConfirmToggleId(null)
-      await loadMembersForce(bizId)
+      loadMembersForce(bizId).catch(() => {})
     } catch (err: any) {
       const detail = err.response?.data?.detail
       setError(typeof detail === 'string' ? detail : 'Failed to update member')
