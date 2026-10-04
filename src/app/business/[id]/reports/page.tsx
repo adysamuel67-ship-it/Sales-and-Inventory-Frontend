@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useParams } from 'next/navigation'
+import Link from 'next/link'
 import { reportAPI, saleAPI, productAPI, customerAPI } from '@/lib/api'
 import dynamic from 'next/dynamic'
 const RevenueChart = dynamic(() => import('@/components/RevenueChart'), { ssr: false })
@@ -249,6 +250,19 @@ export default function ReportsPage() {
         title="Reports"
         subtitle="Profit & analytics overview"
         actions={
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/business/${businessId}/sms-reports`}
+              className="flex items-center gap-2 px-4 py-2.5 bg-surface border border-slate-200 rounded-xl text-sm font-medium text-slate-700 hover:bg-surfaceAlt transition-colors min-h-[44px]"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 4H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2z" />
+                <line x1="22" y1="6" x2="12" y2="13" />
+                <line x1="12" y1="13" x2="12" y2="19" />
+                <line x1="12" y1="13" x2="2" y2="6" />
+              </svg>
+              SMS Reports
+            </Link>
           <div className="relative">
             <button
               onClick={() => showDatePicker ? setShowDatePicker(false) : handleOpenDatePicker()}
@@ -310,6 +324,7 @@ export default function ReportsPage() {
                 </button>
               </div>
             )}
+          </div>
           </div>
         }
       />
