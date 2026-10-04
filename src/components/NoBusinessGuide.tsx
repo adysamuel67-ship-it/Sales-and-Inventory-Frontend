@@ -1,6 +1,8 @@
 'use client'
 
 import Link from 'next/link'
+import GuideDownloadButton from '@/components/GuideDownloadButton'
+import { GUIDE_HIGHLIGHTS } from '@/lib/guideContent'
 
 export default function NoBusinessGuide({ pageName }: { pageName: string }) {
   return (
@@ -38,6 +40,37 @@ export default function NoBusinessGuide({ pageName }: { pageName: string }) {
               <p className="text-sm font-medium text-slate-900">Start selling</p>
               <p className="text-xs text-slate-500">Record sales, track customers, and manage debts</p>
             </div>
+          </div>
+        </div>
+
+        <div className="mt-4 border-t border-primary/10 pt-4">
+          <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-3">
+            How the system behaves
+          </p>
+          <ul className="space-y-2.5">
+            {GUIDE_HIGHLIGHTS.map((item) => (
+              <li key={item.title} className="flex items-start gap-2.5">
+                <svg
+                  className="mt-0.5 h-4 w-4 shrink-0 text-primary"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M5 13l4 4L19 7" />
+                </svg>
+                <span className="min-w-0">
+                  <span className="block text-sm font-medium text-slate-900">{item.title}</span>
+                  <span className="block text-xs text-neutral-light">{item.body}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-4">
+            <GuideDownloadButton />
           </div>
         </div>
       </div>
