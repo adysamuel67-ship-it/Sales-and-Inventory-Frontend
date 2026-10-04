@@ -19,6 +19,7 @@ import {
 import type { NotificationItem } from '@/lib/api'
 import BusinessBotLogo from './BusinessBotLogo'
 import AppLoadingSplash from './AppLoadingSplash'
+import GuideDownloadButton from './GuideDownloadButton'
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -854,6 +855,8 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
 
               {sidebarProfileOpen && (
                 <div className="absolute bottom-full left-0 right-0 mb-2 mx-1 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 z-50">
+                  {/* The menu flips above the trigger in the sidebar, so the
+                      guide download sits at the bottom of the list. */}
                   <div className="px-3.5 py-2.5 border-b border-slate-200">
                     <p className="text-[13px] font-semibold text-slate-900 truncate">{user?.name || 'User'}</p>
                     <div className="flex items-center gap-1.5 mt-1.5">
@@ -880,6 +883,11 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
                     </svg>
                     My Profile
                   </Link>
+                  <GuideDownloadButton
+                    compact
+                    label="How it works (PDF)"
+                    className="px-1 py-1"
+                  />
                   {/* Signing out moved to Settings, behind a confirmation. One
                       tap in a menu at the bottom of the sidebar is too easy to
                       hit by accident on a phone. */}

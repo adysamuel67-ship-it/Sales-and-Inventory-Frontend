@@ -6,6 +6,8 @@ import DashboardLayout from '@/components/DashboardLayout'
 import { useAuth } from '@/lib/auth'
 import { businessAPI, adminAPI } from '@/lib/api'
 import { isAdminRole, extractArray } from '@/lib/utils'
+import GuideDownloadButton from '@/components/GuideDownloadButton'
+import { GUIDE_HIGHLIGHTS } from '@/lib/guideContent'
 
 interface Business {
   business_id: number
@@ -827,6 +829,40 @@ export default function BusinessesPage() {
                     <p className="text-sm font-medium text-slate-900">Record sales</p>
                     <p className="text-xs text-neutral-light">Track every transaction and payment</p>
                   </div>
+                </div>
+              </div>
+
+              {/* What the system actually does, since the rules that surprise
+                  people - stock returning when a sale is deleted - are not
+                  obvious from the menu. */}
+              <div className="mt-4 border-t border-primary/10 pt-4">
+                <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-3">
+                  How the system behaves
+                </p>
+                <ul className="space-y-2">
+                  {GUIDE_HIGHLIGHTS.map((item) => (
+                    <li key={item.title} className="flex items-start gap-2.5">
+                      <svg
+                        className="mt-0.5 h-4 w-4 shrink-0 text-primary"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        strokeWidth={2}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span className="min-w-0">
+                        <span className="block text-sm font-medium text-slate-900">{item.title}</span>
+                        <span className="block text-xs text-neutral-light">{item.body}</span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-4">
+                  <GuideDownloadButton />
                 </div>
               </div>
             </div>
