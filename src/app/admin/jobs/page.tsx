@@ -22,11 +22,37 @@ function normalize(raw: any): CronJob {
   }
 }
 
-function formatWhen(iso?: string | null): string {
+function formatWhen(iso: string | null | undefined, timeZone?: string): string {
   if (!iso) return 'Not scheduled'
   const parsed = new Date(iso)
   if (Number.isNaN(parsed.getTime())) return 'Not scheduled'
+  const opts: Intl.DateTimeFormatOptions = { dateStyle: 'medium', timeStyle: 'short' }
+  if (timeZone) {
+    try {
+      return new Intl.DateTimeFormat(undefined, { ...opts, timeZone }).format(parsed)
+    } catch {
+    }
+  }
+  return parsed.toLocaleString(undefined, opts)
+}
+
+function formatWhenLocal(iso?: string | null): string {
+  if (!iso) return ''
+  const parsed = new Date(iso)
+  if (Number.isNaN(parsed.getTime())) return ''
   return parsed.toLocaleString()
+}
+
+function relativeFromNow(iso: string | null | undefined, now: number): string {
+  if (!iso) return ''
+  const target = new Date(iso).getTime()
+  if (Number.isNaN(target)) return ''
+  const minutes = Math.round((target - now) / 60000)
+  if (minutes <= 0) return 'due now'
+  if (minutes < 60) return `in ${minutes} min`
+  const hours = Math.round(minutes / 60)
+  if (hours < 24) return `in ${hours} hr`
+  return `in ${Math.round(hours / 24)} day${Math.round(hours / 24) === 1 ? '' : 's'}`
 }
 
 export default function AdminJobsPage() {
@@ -38,6 +64,7 @@ export default function AdminJobsPage() {
   const [triggering, setTriggering] = useState<string | null>(null)
   const [confirmTrigger, setConfirmTrigger] = useState<string | null>(null)
   const [notice, setNotice] = useState('')
+  const [now, setNow] = useState(() => Date.now())
 
   const isSuperAdmin = isSuperAdminUser(user)
 
@@ -68,6 +95,19 @@ export default function AdminJobsPage() {
   useEffect(() => {
     if (isAuthenticated && isSuperAdmin) loadJobs()
   }, [isAuthenticated, isSuperAdmin, loadJobs])
+
+  useEffect(() => {
+    if (!isAuthenticated || !isSuperAdmin) return
+    const id = setInterval(loadJobs, 30000)
+    return () => clearInterval(id)
+  }, [isAuthenticated, isSuperAdmin, loadJobs])
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 30000)
+    return () => clearInterval(id)
+  }, [])
+
+  const schedulerOffline = !loading && jobs.length > 0 && jobs.every((j) => !j.next_run)
 
   const handleTrigger = async (jobId: string) => {
     setTriggering(jobId)
@@ -110,6 +150,15 @@ export default function AdminJobsPage() {
           {error}
         </div>
       )}
+      {schedulerOffline && (
+        <div className="mb-4 bg-danger-light text-danger text-sm p-3 rounded-xl">
+          <p className="font-semibold">The scheduler is not running.</p>
+          <p className="mt-1">
+            These jobs are registered but nothing is queued, so none of them will fire. Restart the
+            API process to bring the scheduler back up.
+          </p>
+        </div>
+      )}
       {notice && (
         <div className="mb-4 bg-success-light text-success text-sm p-3 rounded-xl flex items-center gap-2">
           <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -149,7 +198,17 @@ export default function AdminJobsPage() {
                   </div>
                   <div className="flex justify-between gap-3">
                     <dt className="text-neutral-light">Next run</dt>
-                    <dd className="text-slate-700 font-medium text-right">{formatWhen(job.next_run)}</dd>
+                    <dd className="text-slate-700 font-medium text-right">
+                      <div>{formatWhen(job.next_run, job.timezone)}</div>
+                      {job.next_run && (
+                        <div className="text-[11px] text-neutral-light font-normal">
+                          {relativeFromNow(job.next_run, now)}
+                          {formatWhenLocal(job.next_run) !== formatWhen(job.next_run, job.timezone) && (
+                            <> · you see {formatWhenLocal(job.next_run)}</>
+                          )}
+                        </div>
+                      )}
+                    </dd>
                   </div>
                   <div className="flex justify-between gap-3">
                     <dt className="text-neutral-light">Timezone</dt>
@@ -230,7 +289,8 @@ export default function AdminJobsPage() {
                       </span>
                     </td>
                     <td className="px-5 py-3.5 text-right text-neutral-light text-xs">
-                      {formatWhen(job.next_run)}
+                      <div className="text-slate-700 font-medium">{formatWhen(job.next_run, job.timezone)}</div>
+                      {job.next_run && <div>{relativeFromNow(job.next_run, now)}</div>}
                     </td>
                   </tr>
                 ))}

@@ -281,7 +281,9 @@ export default function ScheduleReminderModal({ businessId, customer, defaultDeb
                 onChange={(e) => setTimeOfDay(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
               />
-              <p className="text-[11px] text-neutral-light mt-1">Used when the reminder fires (defaults 09:00).</p>
+              <p className="text-[11px] text-neutral-light mt-1">
+                Reminders go out on the hourly check, so this is the earliest time it texts.
+              </p>
             </div>
 
             <div>
