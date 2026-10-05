@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { reminderAPI } from '@/lib/api'
 import { parseApiError } from '@/lib/utils'
+import { compareDateKeys, formatDateLabel, todayDateKey } from '@/lib/dates'
 
 export interface ReminderDebt {
   debt_id: number
@@ -27,14 +28,11 @@ interface Props {
 }
 
 export function toDateString(d: Date): string {
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
+  return todayDateKey(d)
 }
 
 export function todayDateString(): string {
-  return toDateString(new Date())
+  return todayDateKey()
 }
 
 // A reminder fires on a single day.
@@ -48,7 +46,7 @@ export function defaultReminderDate(_dueDate?: string): string {
 }
 
 export function compareDates(a: string, b: string): number {
-  return new Date(a.slice(0, 10) + 'T00:00:00').getTime() - new Date(b.slice(0, 10) + 'T00:00:00').getTime()
+  return compareDateKeys(a, b)
 }
 
 export interface DateValidation {
@@ -69,8 +67,15 @@ export function validateReminderDate(date: string, today: string): DateValidatio
   return result
 }
 
-// Mirrors build_message() in src/celery_tasks/debt_reminders.py: the text names
-// the DEBT's due date and the customer's full name, not the reminder date.
+export function validateReminderDateEdit(
+  originalDate: string,
+  nextDate: string,
+  today: string
+): DateValidation {
+  if (originalDate && originalDate === nextDate) return {}
+  return validateReminderDate(nextDate, today)
+}
+
 export function buildSmsPreview(opts: { customerName: string; amount: number; dueDate: string; note: string }): string {
   const name = (opts.customerName || '').trim() || 'there'
   const amount = Number(opts.amount || 0).toFixed(2)
@@ -247,7 +252,7 @@ export default function ScheduleReminderModal({ businessId, customer, defaultDeb
                 {outstandingDebts.map((debt) => (
                   <option key={debt.debt_id} value={debt.debt_id}>
                     {formatAmount(debt.amount)}
-                    {debt.due_date ? ` · Due ${new Date(debt.due_date.slice(0, 10) + 'T00:00:00').toLocaleDateString()}` : ''}
+                    {debt.due_date ? ` · Due ${formatDateLabel(debt.due_date)}` : ''}
                   </option>
                 ))}
               </select>

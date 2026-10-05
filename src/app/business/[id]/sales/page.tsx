@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useMemo, useCallback } from 'react'
+import { useEffect, useRef, useState, useMemo, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
 import { saleAPI, productAPI, customerAPI, adminAPI } from '@/lib/api'
@@ -47,7 +47,6 @@ export default function SalesPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [showForm, setShowForm] = useState(false)
-  const [creating, setCreating] = useState(false)
   const [lineItems, setLineItems] = useState<{ product_id: string; quantity: string }[]>([
     { product_id: '', quantity: '' },
   ])
@@ -72,6 +71,9 @@ export default function SalesPage() {
   const [selectedSales, setSelectedSales] = useState<Set<number>>(new Set())
   const [selectMode, setSelectMode] = useState(false)
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false)
+  const [syncFailures, setSyncFailures] = useState<Record<number, string>>({})
+  const tempIdRef = useRef(0)
+  const retryRef = useRef<Map<number, any>>(new Map())
 
   const isStaff = isStaffRole(user?.business_role || user?.role)
   const canEditSale = isAdminRole(user?.business_role || user?.role) || user?.business_role === 'cashier' || user?.role === 'cashier'
@@ -215,81 +217,190 @@ export default function SalesPage() {
 
   const validLineItems = lineItems.filter((item) => item.product_id && item.quantity)
 
+  const syncFailureCount = Object.keys(syncFailures).length
+
+  const isBlankSaleField = (value?: string) =>
+    value === undefined || value === null || value === '' || value === 'Unknown' || /^Product #\d+$/.test(value)
+
+  const mergeConfirmedSale = (optimistic: MappedSale, saved: MappedSale): MappedSale => {
+    const merged: MappedSale = { ...optimistic, ...saved, id: saved.id, pending: false }
+    for (const field of ['product', 'customer_name', 'customer_phone', 'sold_by_name'] as const) {
+      if (isBlankSaleField(saved[field]) && !isBlankSaleField(optimistic[field])) {
+        ;(merged as unknown as Record<string, unknown>)[field] = optimistic[field]
+      }
+    }
+    if (!merged.sales_items?.length && optimistic.sales_items?.length) {
+      merged.sales_items = optimistic.sales_items
+    }
+    return merged
+  }
+
+  const sendSale = async (tempId: number, payload: any) => {
+    try {
+      const res = await saleAPI.record(businessId, payload)
+      const raw = res.data?.data ?? res.data
+      const saved = mapSale(raw)
+      setAllSales((prev) => prev.map((s) => (s.id === tempId ? mergeConfirmedSale(s, saved) : s)))
+      retryRef.current.delete(tempId)
+      setSyncFailures((prev) => {
+        if (!(tempId in prev)) return prev
+        const next = { ...prev }
+        delete next[tempId]
+        return next
+      })
+    } catch (err: any) {
+      const detail = err.response?.data?.detail
+      const message = Array.isArray(detail)
+        ? detail.map((d: any) => d.msg || d.message || d.detail || String(d)).join(', ')
+        : typeof detail === 'string'
+          ? detail
+          : 'Failed to record sale'
+      setSyncFailures((prev) => ({ ...prev, [tempId]: message }))
+      setSuccess('')
+      setError(`Sale not saved: ${message}`)
+    }
+  }
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!businessId || validLineItems.length === 0) return
-    setCreating(true)
     setError('')
     setSuccess('')
-    try {
-      const salePayload: any = {
-        list_items: validLineItems.map((item) => ({
-          product_id: parseInt(item.product_id),
-          quantity: parseInt(item.quantity),
-        })),
-        amount_paid: effectiveAmountPaid,
-        payment_method: paymentMethod,
-      }
 
-      if (paymentStatus === 'partial' && customerName.trim() && customerPhone.trim()) {
-        let customerId: number | null = null
-        try {
-          const customersRes = await customerAPI.list(businessId)
-          const customers = extractArray(customersRes.data)
-          const existing = customers.find((c: any) => {
-            const phone = c.phone || c.phone_number || c.mobile || ''
-            return phone === customerPhone.trim()
-          })
-          if (existing) {
-            customerId = existing.customer_id ?? existing.id
-          }
-        } catch {
-        }
+    const items = validLineItems.map((item) => ({
+      product_id: parseInt(item.product_id),
+      quantity: parseInt(item.quantity),
+    }))
+    const paid = effectiveAmountPaid
+    const name = customerName.trim()
+    const phone = customerPhone.trim()
+    const email = customerEmail.trim()
+    const method = paymentMethod
+    const status = paymentStatus
+    const total = formTotal
 
-        if (!customerId) {
-          try {
-            const customerPayload: any = {
-              name: customerName.trim(),
-              phone: customerPhone.trim(),
-            }
-            if (customerEmail.trim()) {
-              customerPayload.email = customerEmail.trim()
-            }
-            const newCustomerRes = await customerAPI.create(businessId, customerPayload)
-            customerId = newCustomerRes.data?.customer_id ?? newCustomerRes.data?.id
-          } catch {
-            setError('Failed to create customer. Please check the details and try again.')
-            setCreating(false)
-            return
-          }
-        }
+    tempIdRef.current -= 1
+    const tempId = tempIdRef.current
 
-        salePayload.customer_id = customerId
-      }
-
-      await saleAPI.record(businessId, salePayload)
-      setLineItems([{ product_id: '', quantity: '' }])
-      setPaymentMethod('cash')
-      setPaymentStatus('fully_paid')
-      setAmountPaid('')
-      setCustomerName('')
-      setCustomerPhone('')
-      setCustomerEmail('')
-      setShowForm(false)
-      setSuccess('Sale recorded successfully!')
-      loadData()
-    } catch (err: any) {
-      const detail = err.response?.data?.detail
-      if (Array.isArray(detail)) {
-        setError(detail.map((e: any) => e.msg || e.message || e.detail || String(e)).join(', '))
-      } else if (typeof detail === 'string') {
-        setError(detail)
-      } else {
-        setError('Failed to record sale')
-      }
-    } finally {
-      setCreating(false)
+    const optimistic: MappedSale = {
+      id: tempId,
+      product:
+        items
+          .map((i) => products.find((p) => p.product_id === i.product_id)?.name || `Product #${i.product_id}`)
+          .join(', ') || 'Unknown',
+      qty: items.reduce((s, i) => s + i.quantity, 0),
+      amount: total,
+      payment: method.toLowerCase(),
+      time: new Date().toLocaleString(),
+      created_at: new Date().toISOString(),
+      amount_paid: paid,
+      payment_status: status,
+      customer_name: name || undefined,
+      customer_phone: phone || undefined,
+      pending: true,
     }
+
+    setAllSales((prev) => [optimistic, ...prev])
+    setProducts((prev) =>
+      prev.map((p) => {
+        const sold = items.find((i) => i.product_id === p.product_id)
+        return sold ? { ...p, quantity: p.quantity - sold.quantity } : p
+      })
+    )
+
+    setLineItems([{ product_id: '', quantity: '' }])
+    setPaymentMethod('cash')
+    setPaymentStatus('fully_paid')
+    setAmountPaid('')
+    setCustomerName('')
+    setCustomerPhone('')
+    setCustomerEmail('')
+    setShowForm(false)
+    setSuccess('Sale saved')
+
+    const payload: any = { list_items: items, amount_paid: paid, payment_method: method }
+
+    const resolveCustomer = async (): Promise<number | null> => {
+      if (status !== 'partial' || !name || !phone) return null
+      try {
+        const customersRes = await customerAPI.list(businessId)
+        const existing = extractArray(customersRes.data).find(
+          (c: any) => (c.phone || c.phone_number || c.mobile || '') === phone
+        )
+        if (existing) return existing.customer_id ?? existing.id
+      } catch {
+      }
+      const customerPayload: any = { name, phone }
+      if (email) customerPayload.email = email
+      const created = await customerAPI.create(businessId, customerPayload)
+      return created.data?.customer_id ?? created.data?.id
+    }
+
+    retryRef.current.set(tempId, { items, paid, method, name, phone, email, status })
+    void (async () => {
+      let customerId: number | null = null
+      try {
+        customerId = await resolveCustomer()
+      } catch {
+        setSyncFailures((prev) => ({ ...prev, [tempId]: 'Failed to save customer' }))
+        setSuccess('')
+        setError('Sale not saved: could not save the customer. Retry from the failed sale.')
+        return
+      }
+      const finalPayload = { ...payload, ...(customerId != null ? { customer_id: customerId } : {}) }
+      await sendSale(tempId, finalPayload)
+    })()
+  }
+
+  const retrySale = async (tempId: number) => {
+    const saved = retryRef.current.get(tempId)
+    if (!saved || !businessId) return
+    setSyncFailures((prev) => {
+      const next = { ...prev }
+      delete next[tempId]
+      return next
+    })
+    const payload: any = {
+      list_items: saved.items,
+      amount_paid: saved.paid,
+      payment_method: saved.method,
+    }
+    if (saved.status === 'partial' && saved.name && saved.phone) {
+      try {
+        const customersRes = await customerAPI.list(businessId)
+        const existing = extractArray(customersRes.data).find(
+          (c: any) => (c.phone || c.phone_number || c.mobile || '') === saved.phone
+        )
+        const customerId =
+          existing?.customer_id ??
+          existing?.id ??
+          (await customerAPI.create(businessId, { name: saved.name, phone: saved.phone })).data?.customer_id
+        if (customerId != null) payload.customer_id = customerId
+      } catch {
+        setSyncFailures((prev) => ({ ...prev, [tempId]: 'Failed to save customer' }))
+        return
+      }
+    }
+    await sendSale(tempId, payload)
+  }
+
+  const discardSale = (tempId: number) => {
+    const saved = retryRef.current.get(tempId)
+    retryRef.current.delete(tempId)
+    if (saved?.items) {
+      setProducts((prev) =>
+        prev.map((p) => {
+          const sold = saved.items.find((i: any) => i.product_id === p.product_id)
+          return sold ? { ...p, quantity: p.quantity + sold.quantity } : p
+        })
+      )
+    }
+    setAllSales((prev) => prev.filter((s) => s.id !== tempId))
+    setSyncFailures((prev) => {
+      const next = { ...prev }
+      delete next[tempId]
+      return next
+    })
   }
 
   const handleDetail = async (sale: SaleRecord) => {
@@ -383,6 +494,34 @@ export default function SalesPage() {
       )}
       {success && (
         <Alert kind="success">{success}</Alert>
+      )}
+      {syncFailureCount > 0 && (
+        <Alert kind="error">
+          <div className="space-y-2">
+            <p className="font-semibold">
+              {syncFailureCount} sale{syncFailureCount > 1 ? 's' : ''} did not save
+            </p>
+            {Object.entries(syncFailures).map(([tempId, message]) => (
+              <div key={tempId} className="flex flex-wrap items-center gap-2 text-sm">
+                <span>{message}</span>
+                <button
+                  type="button"
+                  onClick={() => retrySale(Number(tempId))}
+                  className="rounded-lg bg-white px-2 py-1 font-medium"
+                >
+                  Retry
+                </button>
+                <button
+                  type="button"
+                  onClick={() => discardSale(Number(tempId))}
+                  className="rounded-lg bg-white px-2 py-1 font-medium"
+                >
+                  Discard
+                </button>
+              </div>
+            ))}
+          </div>
+        </Alert>
       )}
 
       {/* Record Sale Form */}
@@ -640,13 +779,13 @@ export default function SalesPage() {
             <div className="flex items-center gap-3">
               <button
                 type="submit"
-                disabled={creating || validLineItems.length === 0 || lineItems.some((item) => {
+                disabled={validLineItems.length === 0 || lineItems.some((item) => {
                   const product = products.find((p) => p.product_id === parseInt(item.product_id))
                   return product && parseInt(item.quantity) > (product.quantity ?? 0)
                 })}
                 className="flex-1 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed min-h-[44px]"
               >
-                {creating ? 'Recording...' : paymentStatus === 'partial' ? 'Record Partial Sale' : 'Confirm Sale'}
+                {paymentStatus === 'partial' ? 'Record Partial Sale' : 'Confirm Sale'}
               </button>
               <button
                 type="button"
@@ -960,6 +1099,12 @@ export default function SalesPage() {
                           <p className="font-medium text-slate-900 truncate text-sm">{sale.product}</p>
                         </div>
                         <p className="text-xs text-neutral-light mt-0.5">{sale.time}</p>
+                        {sale.pending && (
+                          <span className="inline-flex items-center gap-1 text-[10px] text-neutral-light mt-0.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-warning animate-pulse" />
+                            Saving…
+                          </span>
+                        )}
                         {(sale.customer_name || sale.customer_phone) && (
                           <div className="flex items-center gap-1.5 mt-0.5">
                             {sale.customer_name && (

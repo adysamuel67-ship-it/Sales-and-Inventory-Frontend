@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
 import { debtAPI, customerAPI, saleAPI } from '@/lib/api'
 import { extractArray, parseApiError, isAdminRole, MappedSale, formatCedi } from '@/lib/utils'
+import { compareDateKeys, daysUntilDateKey, formatDateLabel } from '@/lib/dates'
 import SaleDetailModal from '@/components/SaleDetailModal'
 import ScheduleReminderModal from '@/components/ScheduleReminderModal'
 import RemindersSection from '@/components/RemindersSection'
@@ -56,20 +57,13 @@ interface CustomerTransaction {
 type Tab = 'all' | 'overdue' | 'paid' | 'reminders'
 
 function isOverdue(dueDate: string): boolean {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const due = new Date(dueDate)
-  due.setHours(0, 0, 0, 0)
-  return due < today
+  const days = daysUntilDateKey(dueDate)
+  return days != null && days < 0
 }
 
 function daysUntilDue(dueDate: string): number {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const due = new Date(dueDate)
-  due.setHours(0, 0, 0, 0)
-  const diff = due.getTime() - today.getTime()
-  return Math.round(diff / (1000 * 60 * 60 * 24))
+  const days = daysUntilDateKey(dueDate)
+  return days ?? 0
 }
 
 export default function DebtsPage() {
@@ -971,7 +965,7 @@ export default function DebtsPage() {
                             </div>
                             {debt.due_date && (
                               <p className="text-xs text-neutral-light mt-1">
-                                Due: {new Date(debt.due_date).toLocaleDateString()}
+                                Due: {formatDateLabel(debt.due_date)}
                                 {overdue && <span className="text-danger ml-1">(overdue)</span>}
                                 {!overdue && !debt.is_paid && daysLeft != null && (
                                   <span className="ml-1">({daysLeft} day{daysLeft !== 1 ? 's' : ''} left)</span>
@@ -1080,7 +1074,7 @@ export default function DebtsPage() {
                   .sort((a, b) => {
                     if (!a.due_date) return 1
                     if (!b.due_date) return -1
-                    return new Date(a.due_date).getTime() - new Date(b.due_date).getTime()
+                    return compareDateKeys(a.due_date, b.due_date)
                   })
                 return unpaidDebts.length > 0 ? (
                   <div className="mb-6">
@@ -1098,7 +1092,7 @@ export default function DebtsPage() {
                               <span className="font-medium text-slate-900">{formatCurrency(debt.amount)}</span>
                               {debt.due_date && (
                                 <span className="text-xs text-neutral-light ml-2">
-                                  Due {new Date(debt.due_date).toLocaleDateString()}
+                                  Due {formatDateLabel(debt.due_date)}
                                 </span>
                               )}
                             </div>
@@ -1274,7 +1268,7 @@ export default function DebtsPage() {
                 {debtDetailData.debt.due_date && (
                   <div className="flex items-center gap-2 text-sm">
                     <svg className="w-4 h-4 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    <span className="text-slate-700">Due: {new Date(debtDetailData.debt.due_date).toLocaleDateString()}</span>
+                    <span className="text-slate-700">Due: {formatDateLabel(debtDetailData.debt.due_date)}</span>
                     {!debtDetailData.debt.is_paid && isOverdue(debtDetailData.debt.due_date) && (
                       <span className="text-xs text-danger font-medium ml-1">(overdue)</span>
                     )}

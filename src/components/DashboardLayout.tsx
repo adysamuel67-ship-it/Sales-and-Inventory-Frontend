@@ -200,7 +200,7 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
 
   const normalNavItems = useMemo<NavItem[]>(() => [
     { label: 'Dashboard', icon: 'dashboard', href: `${bizBase}/dashboard`, id: 'dashboard', group: 'main' },
-    { label: 'Chat', icon: 'chat', href: `${bizBase}/chat`, id: 'chat', group: 'main', badge: chatUnread, hidesForNewAccounts: true },
+    { label: 'Chat', icon: 'chat', href: `${bizBase}/chat`, id: 'chat', group: 'main', badge: chatUnread },
     { label: 'Sales', icon: 'sales', href: `${bizBase}/sales`, id: 'sales', group: 'main' },
     { label: 'Products', icon: 'products', href: `${bizBase}/products`, id: 'products', group: 'main' },
     { label: 'Customers', icon: 'customers', href: `${bizBase}/customers`, id: 'customers', group: 'management' },
@@ -341,14 +341,8 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
   }, [notificationsOpen, fetchNotifications])
 
   // Unread chat badge — refresh periodically and whenever the route changes.
-  // Skipped entirely for new accounts, which cannot see the Chat link anyway,
-  // so the 20s poll is not wasted on them.
   useEffect(() => {
     if (!businessId) {
-      setChatUnread(0)
-      return
-    }
-    if (isNew) {
       setChatUnread(0)
       return
     }
@@ -370,7 +364,7 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
     loadUnread()
     const interval = setInterval(loadUnread, 20000)
     return () => { cancelled = true; clearInterval(interval) }
-  }, [businessId, pathname, isNew])
+  }, [businessId, pathname])
 
   const visibleNotifications = useMemo(
     () => notifications.filter((n) => !dismissedIds.has(n.notification_id)),

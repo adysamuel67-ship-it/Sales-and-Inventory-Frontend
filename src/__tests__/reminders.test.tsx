@@ -22,16 +22,15 @@ import {
   smsPartsCount,
   defaultReminderDate,
   validateReminderDate,
+  validateReminderDateEdit,
   todayDateString,
   compareDates,
 } from '@/components/ScheduleReminderModal'
 import { isAdminRole } from '@/lib/utils'
+import { deriveReminderDelivery } from '@/lib/sms'
 
 function toDateStr(d: Date): string {
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
+  return d.toISOString().slice(0, 10)
 }
 
 // ──────────────────────────────────────────────────
@@ -182,7 +181,7 @@ describe('validateReminderDate', () => {
 
   function offset(days: number): string {
     const d = new Date()
-    d.setDate(d.getDate() + days)
+    d.setUTCDate(d.getUTCDate() + days)
     return toDateStr(d)
   }
 
@@ -316,40 +315,110 @@ describe('Reminder role-based access', () => {
 // ──────────────────────────────────────────────────
 
 describe('Reminder API routes', () => {
-  it('create uses POST /debts/reminders/{business_id}', () => {
-    const route = '/debts/reminders/{business_id}'
-    expect(route.startsWith('/debts/reminders/')).toBe(true)
-  })
-
-  it('list uses GET /debts/reminders/{business_id}', () => {
-    const route = '/debts/reminders/{business_id}'
-    expect(route.startsWith('/debts/reminders/')).toBe(true)
-  })
-
-  it('builds the create payload with expected fields', () => {
-    const payload = {
+  it('create posts to /debts/reminders/{business_id}', async () => {
+    const { reminderAPI } = await import('@/lib/api')
+    const spy = jest.spyOn(require('@/lib/api').default, 'post').mockResolvedValue({ data: {} })
+    await reminderAPI.create(3, {
       debt_id: 12,
       customer_id: 7,
       date: '2026-07-31',
       time_of_day: '09:00',
-      note: 'Friendly follow-up on your balance',
-    }
-    expect(payload).toHaveProperty('debt_id', 12)
-    expect(payload).toHaveProperty('customer_id', 7)
-    expect(payload).toHaveProperty('date', '2026-07-31')
-    expect(payload).toHaveProperty('time_of_day')
-    expect(payload).toHaveProperty('note')
+      note: 'pay up',
+    })
+    expect(spy).toHaveBeenCalledWith('/debts/reminders/3', expect.objectContaining({ debt_id: 12 }))
   })
 
-  it('does not send the removed start/end window', () => {
-    const payload = {
-      debt_id: 12,
-      customer_id: 7,
-      date: '2026-07-31',
-      time_of_day: '09:00',
-      note: 'Friendly follow-up on your balance',
-    }
-    expect(payload).not.toHaveProperty('start_date')
-    expect(payload).not.toHaveProperty('end_date')
+  it('list gets /debts/reminders/{business_id} with filters in the body', async () => {
+    const { reminderAPI } = await import('@/lib/api')
+    const spy = jest.spyOn(require('@/lib/api').default, 'get').mockResolvedValue({ data: [] })
+    await reminderAPI.list(3)
+    expect(spy).toHaveBeenCalledWith('/debts/reminders/3', { data: {} })
+    await reminderAPI.list(3, { status: 'failed' })
+    expect(spy).toHaveBeenLastCalledWith('/debts/reminders/3', { data: { status: 'failed' } })
+  })
+
+  it('update puts to the reminder id', async () => {
+    const { reminderAPI } = await import('@/lib/api')
+    const spy = jest.spyOn(require('@/lib/api').default, 'put').mockResolvedValue({ data: {} })
+    await reminderAPI.update(3, 9, { note: 'hi' })
+    expect(spy).toHaveBeenCalledWith('/debts/reminders/3/9', { note: 'hi' })
+  })
+
+  it('toggleActive only sends is_active', async () => {
+    const { reminderAPI } = await import('@/lib/api')
+    const spy = jest.spyOn(require('@/lib/api').default, 'put').mockResolvedValue({ data: {} })
+    await reminderAPI.toggleActive(3, 9, false)
+    expect(spy).toHaveBeenCalledWith('/debts/reminders/3/9', { is_active: false })
+  })
+
+  it('delete targets the reminder id', async () => {
+    const { reminderAPI } = await import('@/lib/api')
+    const spy = jest.spyOn(require('@/lib/api').default, 'delete').mockResolvedValue({ data: {} })
+    await reminderAPI.delete(3, 9)
+    expect(spy).toHaveBeenCalledWith('/debts/reminders/3/9')
+  })
+})
+
+describe('cronAPI', () => {
+  it('lists /admin/crons/jobs', async () => {
+    const { cronAPI } = await import('@/lib/api')
+    const spy = jest.spyOn(require('@/lib/api').default, 'get').mockResolvedValue({ data: [] })
+    await cronAPI.list()
+    expect(spy).toHaveBeenCalledWith('/admin/crons/jobs')
+  })
+
+  it('triggers by scheduler job id, not the friendly name', async () => {
+    const { cronAPI } = await import('@/lib/api')
+    const spy = jest.spyOn(require('@/lib/api').default, 'post').mockResolvedValue({ data: {} })
+    await cronAPI.trigger('hourly-debt-reminder-job')
+    expect(spy).toHaveBeenCalledWith('/admin/crons/hourly-debt-reminder-job')
+  })
+})
+
+describe('Editing an overdue reminder', () => {
+  const today = todayDateString()
+
+  function offset(days: number): string {
+    const d = new Date()
+    d.setUTCDate(d.getUTCDate() + days)
+    return d.toISOString().slice(0, 10)
+  }
+
+  it('still reports no error when the past date is left untouched', () => {
+    const storedDate = offset(-4)
+    expect(storedDate < today).toBe(true)
+    expect(validateReminderDateEdit(storedDate, storedDate, today).error).toBeUndefined()
+  })
+
+  it('still rejects moving the date into the past', () => {
+    const storedDate = offset(-4)
+    const moved = offset(-2)
+    expect(validateReminderDateEdit(storedDate, moved, today).error).toContain('cannot be in the past')
+  })
+
+  it('accepts moving an overdue reminder forward to today', () => {
+    expect(validateReminderDateEdit(offset(-4), today, today).error).toBeUndefined()
+  })
+
+  it('still requires a date when one is newly chosen and blank', () => {
+    expect(validateReminderDateEdit(offset(-4), '', today).error).toContain('Pick the day')
+  })
+
+  it('guards a brand new date when there is no original', () => {
+    expect(validateReminderDateEdit('', offset(-1), today).error).toContain('cannot be in the past')
+  })
+
+  it('accepts moving the date to today', () => {
+    expect(validateReminderDate(today, today).error).toBeUndefined()
+  })
+})
+
+describe('Reminder status from the API', () => {
+  it('maps a failed send to the failed state', () => {
+    expect(deriveReminderDelivery({ date: '2026-10-01', status: 'failed' })).toBe('failed')
+  })
+
+  it('maps a queued send to the sending state', () => {
+    expect(deriveReminderDelivery({ date: '2026-10-01', status: 'sending' })).toBe('sending')
   })
 })

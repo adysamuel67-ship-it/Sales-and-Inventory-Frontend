@@ -468,22 +468,42 @@ export interface ReminderPayload {
   note?: string
 }
 
+export interface ReminderUpdatePayload {
+  date?: string
+  time_of_day?: string
+  note?: string
+  is_active?: boolean
+}
+
 export const reminderAPI = {
   create: (businessId: number, data: ReminderPayload) =>
     api.post(`/debts/reminders/${businessId}`, data),
-  // The backend GET route reads its filters from the request body (GetReminders
-  // schema), so filters are sent as JSON data alongside the GET request. A body
-  // is REQUIRED, otherwise FastAPI returns 422. The old start/end window is gone
-  // from the schema and was only ever a way to ask for "everything" - an empty
-  // object already means "no filter".
   list: (businessId: number, params?: Record<string, any>) =>
     api.get(`/debts/reminders/${businessId}`, { data: params ?? {} }),
-  update: (businessId: number, reminderId: number, data: any) =>
+  update: (businessId: number, reminderId: number, data: ReminderUpdatePayload) =>
     api.put(`/debts/reminders/${businessId}/${reminderId}`, data),
   delete: (businessId: number, reminderId: number) =>
     api.delete(`/debts/reminders/${businessId}/${reminderId}`),
   toggleActive: (businessId: number, reminderId: number, isActive: boolean) =>
     api.put(`/debts/reminders/${businessId}/${reminderId}`, { is_active: isActive }),
+}
+
+export interface CronJob {
+  id: string
+  name: string
+  label: string
+  description: string
+  schedule: string
+  trigger: 'cron' | 'interval' | string
+  timezone: string
+  running: boolean
+  pending: boolean
+  next_run?: string | null
+}
+
+export const cronAPI = {
+  list: () => api.get('/admin/crons/jobs'),
+  trigger: (jobId: string) => api.post(`/admin/crons/${jobId}`),
 }
 
 export const reportAPI = {

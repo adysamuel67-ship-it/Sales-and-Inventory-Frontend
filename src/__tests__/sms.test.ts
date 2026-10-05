@@ -261,6 +261,45 @@ describe('deriveReminderDelivery', () => {
     expect(deriveReminderDelivery({ date: '2026-10-10' }, { status: 'sent' }, now)).toBe('sent')
   })
 
+  it('reads status off the reminder without an override', () => {
+    expect(deriveReminderDelivery({ date: '2026-10-10', status: 'failed' }, {}, now)).toBe('failed')
+    expect(deriveReminderDelivery({ date: '2026-10-10', status: 'sending' }, {}, now)).toBe('sending')
+    expect(deriveReminderDelivery({ date: '2026-10-10', status: 'sent' }, {}, now)).toBe('sent')
+  })
+
+  it('still shows a failed reminder as failed after its date passes', () => {
+    expect(deriveReminderDelivery({ date: '2026-09-01', status: 'failed' }, {}, now)).toBe('failed')
+  })
+
+  it('does not let a failed send hide a settled debt', () => {
+    expect(
+      deriveReminderDelivery({ date: '2026-10-10', status: 'failed' }, { debtSettled: true }, now)
+    ).toBe('settled')
+  })
+
+  it('treats a pending status with a passed date as due', () => {
+    expect(deriveReminderDelivery({ date: '2026-10-01', status: 'pending' }, {}, now)).toBe('due')
+  })
+
+  it('ignores an unrecognised status rather than trusting it', () => {
+    expect(deriveReminderDelivery({ date: '2026-10-10', status: 'queued' }, {}, now)).toBe('scheduled')
+  })
+
+  it('does not let a later pause mask a terminal status', () => {
+    expect(
+      deriveReminderDelivery({ date: '2026-10-01', status: 'sent', is_active: false }, {}, now)
+    ).toBe('sent')
+    expect(
+      deriveReminderDelivery({ date: '2026-10-01', status: 'failed', is_active: false }, {}, now)
+    ).toBe('failed')
+  })
+
+  it('shows a paused reminder as paused once nothing has been attempted', () => {
+    expect(
+      deriveReminderDelivery({ date: '2026-10-01', status: 'pending', is_active: false }, {}, now)
+    ).toBe('paused')
+  })
+
   it('falls back to scheduled for an unparseable date', () => {
     expect(deriveReminderDelivery({ date: '' }, {}, now)).toBe('scheduled')
   })

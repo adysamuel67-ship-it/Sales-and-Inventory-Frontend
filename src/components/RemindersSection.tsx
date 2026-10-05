@@ -2,10 +2,16 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '@/lib/auth'
-import { reminderAPI, customerAPI, debtAPI, adminAPI } from '@/lib/api'
+import { reminderAPI, customerAPI, debtAPI, adminAPI, type ReminderUpdatePayload } from '@/lib/api'
 import { extractArray, parseApiError, isAdminRole } from '@/lib/utils'
-import ScheduleReminderModal, { ReminderCustomer, todayDateString, validateReminderDate } from '@/components/ScheduleReminderModal'
+import ScheduleReminderModal, {
+  ReminderCustomer,
+  todayDateString,
+  validateReminderDate,
+  validateReminderDateEdit,
+} from '@/components/ScheduleReminderModal'
 import { deriveReminderDelivery, reminderDeliveryMeta, type DeliveryMeta } from '@/lib/sms'
+import { compareDateKeys, dateKey, daysUntilDateKey, formatDateLabel, timeLabel } from '@/lib/dates'
 
 /** Badge colours per delivery tone, so every status chip reads consistently. */
 const DELIVERY_TONE_CLASS: Record<DeliveryMeta['tone'], string> = {
@@ -26,9 +32,9 @@ interface Reminder {
   time_of_day?: string
   note?: string
   is_active: boolean
-  // Stamped by the Celery dispatcher once the SMS has gone out, so the UI can
-  // show that a reminder has already gone out and will not fire again.
   sent_at?: string | null
+  status?: string
+  attempts?: number
   created_at?: string
   updated_at?: string
 }
@@ -62,24 +68,8 @@ interface Props {
   businessId: number
 }
 
-function dateOnly(value?: string): string {
-  const part = (value || '').slice(0, 10)
-  return /^\d{4}-\d{2}-\d{2}$/.test(part) ? part : ''
-}
-
-function formatTime(value?: string): string {
-  const v = (value || '').trim()
-  if (!v) return '09:00'
-  return v.slice(0, 5)
-}
-
 function daysUntil(dateStr?: string): number | null {
-  const part = dateOnly(dateStr)
-  if (!part) return null
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const target = new Date(part + 'T00:00:00')
-  return Math.round((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+  return daysUntilDateKey(dateStr)
 }
 
 function formatCurrency(amount: number) {
@@ -169,6 +159,8 @@ export default function RemindersSection({ businessId }: Props) {
           note: r.note,
           is_active: r.is_active !== false,
           sent_at: r.sent_at ?? null,
+          status: typeof r.status === 'string' ? r.status.toLowerCase() : undefined,
+          attempts: Number.isFinite(Number(r.attempts)) ? Number(r.attempts) : undefined,
           created_at: r.created_at,
           updated_at: r.updated_at,
         })))
@@ -240,14 +232,9 @@ export default function RemindersSection({ businessId }: Props) {
   const getCustomer = (reminder: Reminder) => customerMap.get(reminder.customer_id)
 
   /**
-   * Delivery state per reminder.
-   *
-   * The Reminders model tracks `status` (pending/sending/sent/failed) and
-   * `attempts`, but ReminderResponse in the backend schema never serialises
-   * either field - so the API cannot report a failed send. State is inferred
-   * from what is exposed (sent_at, date, is_active) plus whether the debt was
-   * settled. Reminders the backend marked failed are still surfaced via
-   * REMINDER_DELIVERY_META once the schema exposes it.
+   * Delivery state per reminder. `status`/`attempts` come from the API, so a
+   * failed send reads as failed; the date and is_active fallback covers reminders
+   * whose status is still pending, plus whether the debt was settled.
    */
   const deliveryState = useCallback(
     (reminder: Reminder) => {
@@ -264,7 +251,9 @@ export default function RemindersSection({ businessId }: Props) {
     const sent = reminders.filter((r) => deliveryState(r) === 'sent').length
     const overdue = reminders.filter((r) => deliveryState(r) === 'due').length
     const dueSoon = reminders.filter((r) => {
-      if (!r.is_active || deliveryState(r) === 'sent') return false
+      if (!r.is_active) return false
+      const state = deliveryState(r)
+      if (state !== 'scheduled') return false
       const days = daysUntil(r.date)
       return days != null && days >= 0 && days <= 7
     }).length
@@ -288,29 +277,35 @@ export default function RemindersSection({ businessId }: Props) {
 
   const openEdit = (reminder: Reminder) => {
     setEditingReminder(reminder)
-    setEditDate(dateOnly(reminder.date) || todayDateString())
-    setEditTime(formatTime(reminder.time_of_day))
+    setEditDate(dateKey(reminder.date) || todayDateString())
+    setEditTime(timeLabel(reminder.time_of_day))
     setEditNote(reminder.note || '')
     setEditActive(reminder.is_active)
   }
 
+  const originalEditDate = editingReminder ? dateKey(editingReminder.date) : ''
+  const editDateChanged = editDate !== originalEditDate
+
   const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!editingReminder) return
-    const validation = validateReminderDate(editDate, todayDateString())
-    if (validation.error) {
-      setError(validation.error)
-      return
+    if (editDateChanged) {
+      const validation = validateReminderDateEdit(originalEditDate, editDate, todayDateString())
+      if (validation.error) {
+        setError(validation.error)
+        return
+      }
     }
     setSavingEdit(true)
     setError('')
     try {
-      await reminderAPI.update(businessId, editingReminder.reminder_id, {
-        date: editDate,
+      const payload: ReminderUpdatePayload = {
         time_of_day: editTime,
         note: editNote.trim(),
         is_active: editActive,
-      })
+      }
+      if (editDateChanged) payload.date = editDate
+      await reminderAPI.update(businessId, editingReminder.reminder_id, payload)
       setEditingReminder(null)
       showSuccess('Reminder updated!')
       loadAll()
@@ -421,8 +416,8 @@ export default function RemindersSection({ businessId }: Props) {
   })()
 
   const editValidation = useMemo(
-    () => validateReminderDate(editDate, todayDateString()),
-    [editDate]
+    () => validateReminderDateEdit(originalEditDate, editDate, todayDateString()),
+    [editDate, originalEditDate]
   )
 
   return (
@@ -596,6 +591,7 @@ export default function RemindersSection({ businessId }: Props) {
                       const cust = getCustomer(reminder)
                       const debt = debtMap.get(reminder.debt_id)
                       const dueDays = daysUntil(reminder.date)
+                      const state = deliveryState(reminder)
                       return (
                         <tr
                           key={reminder.reminder_id}
@@ -624,11 +620,11 @@ export default function RemindersSection({ businessId }: Props) {
                           </td>
                           <td className="px-5 py-3.5">
                             <div className="text-slate-700">
-                              {dateOnly(reminder.date) || '—'}
+                              {formatDateLabel(reminder.date) || '—'}
                             </div>
                             <div className="flex items-center gap-2 mt-0.5">
-                              <span className="text-xs text-neutral-light">at {formatTime(reminder.time_of_day)}</span>
-                              {reminder.is_active && !reminder.sent_at && dueDays != null && dueDays >= 0 && dueDays <= 7 && (
+                              <span className="text-xs text-neutral-light">at {timeLabel(reminder.time_of_day)}</span>
+                              {state === 'scheduled' && dueDays != null && dueDays <= 7 && (
                                 <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-warning-light text-warning">
                                   {dueDays === 0 ? 'Today' : `in ${dueDays}d`}
                                 </span>
@@ -636,7 +632,7 @@ export default function RemindersSection({ businessId }: Props) {
                             </div>
                           </td>
                           <td className="px-5 py-3.5">
-                            <DeliveryBadge state={deliveryState(reminder)} />
+                            <DeliveryBadge state={state} />
                           </td>
                           <td className="px-5 py-3.5 hidden sm:table-cell">
                             <span className="text-slate-600 line-clamp-2 max-w-[220px]">{reminder.note || '—'}</span>
@@ -814,11 +810,16 @@ export default function RemindersSection({ businessId }: Props) {
                 <input
                   type="date"
                   value={editDate}
-                  min={todayDateString()}
                   onChange={(e) => setEditDate(e.target.value)}
                   required
                   className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                 />
+                {originalEditDate && compareDateKeys(originalEditDate, todayDateString()) < 0 && (
+                  <p className="text-[11px] text-neutral-light mt-1">
+                    Already dated {formatDateLabel(originalEditDate)}. Leave it as-is to edit
+                    other fields, or pick today or later to reschedule.
+                  </p>
+                )}
               </div>
 
               <div>
@@ -939,7 +940,7 @@ export default function RemindersSection({ businessId }: Props) {
                 <div className="grid grid-cols-2 gap-3 mt-3">
                   <div className="bg-surfaceAlt rounded-xl p-4">
                     <p className="text-xs text-neutral-light mb-1">Due Date</p>
-                    <p className="text-sm font-medium text-slate-900">{detailDebt?.due_date ? dateOnly(detailDebt.due_date) : '—'}</p>
+                    <p className="text-sm font-medium text-slate-900">{detailDebt?.due_date ? formatDateLabel(detailDebt.due_date) : '—'}</p>
                   </div>
                   <div className="bg-surfaceAlt rounded-xl p-4">
                     <p className="text-xs text-neutral-light mb-1">Debt ID</p>
@@ -977,11 +978,11 @@ export default function RemindersSection({ businessId }: Props) {
                 <div className="bg-surfaceAlt rounded-xl p-4 space-y-2">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-neutral-light">Date</span>
-                    <span className="text-slate-900 font-medium">{dateOnly(detailReminder.date) || '—'}</span>
+                    <span className="text-slate-900 font-medium">{formatDateLabel(detailReminder.date) || '—'}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-neutral-light">Time</span>
-                    <span className="text-slate-900 font-medium">at {formatTime(detailReminder.time_of_day)}</span>
+                    <span className="text-slate-900 font-medium">at {timeLabel(detailReminder.time_of_day)}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-neutral-light">Status</span>
@@ -989,6 +990,24 @@ export default function RemindersSection({ businessId }: Props) {
                       {detailReminder.is_active ? 'Active' : 'Paused'}
                     </span>
                   </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-neutral-light">Delivery</span>
+                    <DeliveryBadge state={deliveryState(detailReminder)} />
+                  </div>
+                  {detailReminder.sent_at && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-neutral-light">Sent</span>
+                      <span className="text-slate-900 font-medium">
+                        {new Date(detailReminder.sent_at).toLocaleString()}
+                      </span>
+                    </div>
+                  )}
+                  {(detailReminder.attempts ?? 0) > 0 && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-neutral-light">Attempts</span>
+                      <span className="text-slate-900 font-medium">{detailReminder.attempts}</span>
+                    </div>
+                  )}
                   {detailReminder.note && (
                     <div className="text-sm">
                       <span className="text-neutral-light block mb-0.5">Note</span>

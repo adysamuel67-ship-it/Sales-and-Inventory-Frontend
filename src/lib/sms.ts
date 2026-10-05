@@ -9,10 +9,11 @@
  *    Business summaries pushed to every admin/manager's phone on a schedule.
  *    This is what the "SMS Reports" screen shows.
  *
- * Everything here is derived from data the API already returns. No endpoint
- * exposes report-schedule state, so the schedule below is a faithful
- * transcription of the CronTriggers in `start_report_schedulers()`.
+ * The report schedule below is a transcription of the CronTriggers in
+ * `start_report_schedulers()`. Debt-reminder delivery state comes from the API.
  */
+
+import { addDays, compareDateKeys, dateKey, todayDateKey } from '@/lib/dates'
 
 // ── Segment maths ───────────────────────────────────────────────────────────
 // GSM-7 alphabet. A single part carries 160 characters; once the message runs
@@ -205,18 +206,21 @@ export interface ReminderForDelivery {
   time_of_day?: string | null
   is_active?: boolean
   sent_at?: string | null
+  status?: string | null
+  attempts?: number | null
 }
 
 /**
- * The Reminders model carries `status` ('pending' | 'sending' | 'sent' |
- * 'failed') and `attempts`, and the dispatcher writes them — but
- * `ReminderResponse` in `src/debts/schemas.py` never serialises either field,
- * so the API cannot report a failed send.
+ * Delivery state for a reminder.
  *
- * State is therefore inferred from what *is* exposed. A reminder counts as
- * delivered once `sent_at` is set; an active, unsent reminder whose date has
- * passed is surfaced as due so the shopkeeper can chase it manually instead of
- * silently waiting on a send that already failed.
+ * `status` and `attempts` come straight from the `Reminders` row, so a failed
+ * send is reported as failed instead of looking like one that simply has not
+ * fired yet. `sent_at` still wins when it is set, because the backend stamps it
+ * in the same transaction that writes status='sent'.
+ *
+ * Everything else is derived from what the API exposes plus whether the debt was
+ * settled: an active, unsent reminder whose UTC date has arrived reads as due so
+ * a shopkeeper can chase it instead of waiting on a send that already failed.
  */
 export function deriveReminderDelivery(
   reminder: ReminderForDelivery,
@@ -226,21 +230,17 @@ export function deriveReminderDelivery(
   if (reminder.sent_at) return 'sent'
   if (opts.debtSettled) return 'settled'
 
-  const rawStatus = (opts.status || '').toLowerCase()
+  const rawStatus = (opts.status || reminder.status || '').toLowerCase()
   if (rawStatus === 'sent') return 'sent'
   if (rawStatus === 'sending') return 'sending'
   if (rawStatus === 'failed') return 'failed'
 
   if (reminder.is_active === false) return 'paused'
 
-  const datePart = (reminder.date || '').slice(0, 10)
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(datePart)) return 'scheduled'
+  const datePart = dateKey(reminder.date)
+  if (!datePart) return 'scheduled'
 
-  // Compare against the start of today so a reminder set for earlier today
-  // counts as due rather than waiting for midnight UTC.
-  const todayUtc = new Date(now.toISOString().slice(0, 10) + 'T00:00:00Z').getTime()
-  const target = new Date(datePart + 'T00:00:00Z').getTime()
-  return target <= todayUtc ? 'due' : 'scheduled'
+  return compareDateKeys(datePart, todayDateKey(now)) <= 0 ? 'due' : 'scheduled'
 }
 
 export interface DeliveryMeta {
@@ -272,7 +272,7 @@ export const REMINDER_DELIVERY_META: Record<ReminderDeliveryState, DeliveryMeta>
   },
   failed: {
     label: 'Failed',
-    description: 'The provider rejected the send. Reschedule or send it manually.',
+    description: 'The provider rejected the send. It retries on the next hourly run until it succeeds 3 times.',
     tone: 'danger',
   },
   paused: {
@@ -302,9 +302,7 @@ export function reminderDeliveryMeta(state: ReminderDeliveryState): DeliveryMeta
  * server will actually store.
  */
 export function defaultDebtDueDate(from: Date = new Date()): string {
-  const d = new Date(from)
-  d.setDate(d.getDate() + 30)
-  return d.toISOString().slice(0, 10)
+  return addDays(todayDateKey(from), 30)
 }
 
 /**

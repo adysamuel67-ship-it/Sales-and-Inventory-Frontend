@@ -45,6 +45,7 @@ export interface MappedSale {
   note?: string
   sales_items?: any[]
   raw?: any
+  pending?: boolean
 }
 
 export function mapSale(raw: any, productMap?: Map<number, string>, userMap?: Map<number, string>): MappedSale {

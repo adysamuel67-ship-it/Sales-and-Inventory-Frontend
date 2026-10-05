@@ -240,8 +240,9 @@ describe('DashboardLayout', () => {
 })
 
 // A trader who is "just trying it" should not open the app to eight menu
-// items. Chat and Reports stay hidden until the account has settled, so the
-// first session is only the things a new shop actually does.
+// items, so Reports stays hidden until the account has settled. Chat does not:
+// the nav window keys off the user's own join date, so a cashier added to an
+// established shop was losing a core working feature for 14 days.
 describe('DashboardLayout - trimmed menu for new accounts', () => {
   const useAuthMock = useAuth as jest.Mock
   const originalImpl = useAuthMock.getMockImplementation()
@@ -276,7 +277,45 @@ describe('DashboardLayout - trimmed menu for new accounts', () => {
     useAuthMock.mockImplementation(originalImpl!)
   })
 
-  it('hides Chat and Reports from a new account', () => {
+  const cashier = (overrides: Record<string, any> = {}) => ({
+    id: 7,
+    name: 'Ama Serwaa',
+    email: 'ama@test.com',
+    phone: '0241234568',
+    role: 'cashier',
+    business_role: 'cashier',
+    is_verified: true,
+    ...overrides,
+  })
+
+  it.each([
+    ['a cashier who just joined', 2],
+    ['a long-standing cashier', 400],
+  ])('shows Chat to %s', (_label, age) => {
+    mockUser(cashier({ created_at: daysAgo(age) }))
+
+    render(
+      <DashboardLayout>
+        <div>Content</div>
+      </DashboardLayout>
+    )
+
+    expect(navHrefs()).toContain('/business/1/chat')
+  })
+
+  it('still hides Reports from a cashier', () => {
+    mockUser(cashier({ created_at: daysAgo(400) }))
+
+    render(
+      <DashboardLayout>
+        <div>Content</div>
+      </DashboardLayout>
+    )
+
+    expect(navHrefs()).not.toContain('/business/1/reports')
+  })
+
+  it('keeps Chat for a new account but hides Reports', () => {
     mockUser(owner({ created_at: daysAgo(2) }))
 
     render(
@@ -286,7 +325,7 @@ describe('DashboardLayout - trimmed menu for new accounts', () => {
     )
 
     const hrefs = navHrefs()
-    expect(hrefs).not.toContain('/business/1/chat')
+    expect(hrefs).toContain('/business/1/chat')
     expect(hrefs).not.toContain('/business/1/reports')
   })
 

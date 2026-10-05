@@ -1,78 +1,89 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
 import { useAuth } from '@/lib/auth'
-import api from '@/lib/api'
-import { extractArray, isSuperAdminUser } from '@/lib/utils'
+import { cronAPI, type CronJob } from '@/lib/api'
+import { extractArray, isSuperAdminUser, parseApiError } from '@/lib/utils'
 
-interface Job {
-  id: string
-  name: string
-  status: string
-  last_run?: string
-  next_run?: string
+function normalize(raw: any): CronJob {
+  return {
+    id: String(raw?.id ?? raw?.name ?? ''),
+    name: String(raw?.name ?? raw?.id ?? ''),
+    label: String(raw?.label ?? raw?.name ?? raw?.id ?? 'Job'),
+    description: String(raw?.description ?? ''),
+    schedule: String(raw?.schedule ?? ''),
+    trigger: String(raw?.trigger ?? 'cron'),
+    timezone: String(raw?.timezone ?? 'UTC'),
+    running: Boolean(raw?.running),
+    pending: Boolean(raw?.pending),
+    next_run: raw?.next_run ?? null,
+  }
+}
+
+function formatWhen(iso?: string | null): string {
+  if (!iso) return 'Not scheduled'
+  const parsed = new Date(iso)
+  if (Number.isNaN(parsed.getTime())) return 'Not scheduled'
+  return parsed.toLocaleString()
 }
 
 export default function AdminJobsPage() {
   const { isAuthenticated, isLoading, profileLoaded, user } = useAuth()
   const router = useRouter()
-  const [jobs, setJobs] = useState<Job[]>([])
+  const [jobs, setJobs] = useState<CronJob[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [triggering, setTriggering] = useState<string | null>(null)
   const [confirmTrigger, setConfirmTrigger] = useState<string | null>(null)
+  const [notice, setNotice] = useState('')
+
+  const isSuperAdmin = isSuperAdminUser(user)
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) router.replace('/login')
   }, [isLoading, isAuthenticated, router])
 
-  const isNotSuperAdmin = user && !isSuperAdminUser(user)
+  const notSuperAdmin = !!user && !isSuperAdmin
   useEffect(() => {
-    if (profileLoaded && isAuthenticated && isNotSuperAdmin) {
+    if (profileLoaded && isAuthenticated && notSuperAdmin) {
       router.replace('/dashboard')
     }
-  }, [profileLoaded, isAuthenticated, isNotSuperAdmin, router])
+  }, [profileLoaded, isAuthenticated, notSuperAdmin, router])
 
-  const loadJobs = async () => {
+  const loadJobs = useCallback(async () => {
     setLoading(true)
     setError('')
     try {
-      const res = await api.get('/admin/crons/jobs')
-      setJobs(extractArray(res.data))
+      const res = await cronAPI.list()
+      setJobs(extractArray(res.data).map(normalize))
     } catch (err: any) {
-      const detail = err.response?.data?.detail
-      setError(typeof detail === 'string' ? detail : 'Failed to load jobs')
+      setError(parseApiError(err) || 'Failed to load scheduled jobs')
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  const isSuperAdmin = isSuperAdminUser(user)
   useEffect(() => {
     if (isAuthenticated && isSuperAdmin) loadJobs()
-  }, [isAuthenticated, isSuperAdmin])
+  }, [isAuthenticated, isSuperAdmin, loadJobs])
 
-  const handleTrigger = async (jobName: string) => {
-    setTriggering(jobName)
+  const handleTrigger = async (jobId: string) => {
+    setTriggering(jobId)
     setConfirmTrigger(null)
+    setError('')
+    setNotice('')
     try {
-      await api.post(`/admin/crons/${jobName}`)
+      const res = await cronAPI.trigger(jobId)
+      setNotice(res.data?.detail || 'Job queued.')
       loadJobs()
     } catch (err: any) {
-      const detail = err.response?.data?.detail
-      setError(typeof detail === 'string' ? detail : `Failed to trigger ${jobName}`)
+      setError(parseApiError(err) || `Failed to trigger ${jobId}`)
     } finally {
       setTriggering(null)
     }
   }
-
-  const cronJobs = [
-    { name: 'daily_summary', label: 'Daily Summary', description: 'Generate daily sales and revenue summary' },
-    { name: 'weekly_summary', label: 'Weekly Summary', description: 'Generate weekly analytics report' },
-    { name: 'monthly_summary', label: 'Monthly Summary', description: 'Generate monthly analytics report' },
-  ]
 
   if (isLoading || !isAuthenticated || !profileLoaded || !isSuperAdminUser(user)) {
     return (
@@ -85,8 +96,10 @@ export default function AdminJobsPage() {
   return (
     <DashboardLayout>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900">Cron Jobs</h1>
-        <p className="text-sm text-neutral-light mt-1">Manage and trigger scheduled jobs</p>
+        <h1 className="text-2xl font-bold text-slate-900">Scheduled Jobs</h1>
+        <p className="text-sm text-neutral-light mt-1">
+          Background jobs running on the server, and when each one fires next.
+        </p>
       </div>
 
       {error && (
@@ -97,58 +110,88 @@ export default function AdminJobsPage() {
           {error}
         </div>
       )}
+      {notice && (
+        <div className="mb-4 bg-success-light text-success text-sm p-3 rounded-xl flex items-center gap-2">
+          <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414 1.414L10 10.586l4.707 4.707a1 1 0 001.414-1.414L11.414 10l4.707-4.707a1 1 0 00-1.414-1.414L10 8.586 6.293 4.879a1 1 0 00-1.414 1.414L9.586 10l-4.707 4.707a1 1 0 101.414 1.414L10 11.414l4.707 4.707a1 1 0 001.414-1.414L11.414 10l4.707-4.707z" clipRule="evenodd" />
+          </svg>
+          {notice}
+        </div>
+      )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        {cronJobs.map((job) => {
-          const lastRun = jobs.find((j) => j.name === job.name)
-          return (
-            <div key={job.name} className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-5">
-              <h3 className="font-semibold text-slate-900 text-sm">{job.label}</h3>
-              <p className="text-xs text-neutral-light mt-1">{job.description}</p>
-              {lastRun?.last_run && (
-                <p className="text-[10px] text-neutral-light mt-2">
-                  Last run: {new Date(lastRun.last_run).toLocaleString()}
-                </p>
-              )}
-              <div className="mt-3">
-                {confirmTrigger === job.name ? (
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleTrigger(job.name)}
-                      disabled={triggering === job.name}
-                      className="px-3 py-1.5 text-xs font-medium text-white bg-danger rounded-lg hover:bg-danger/90 transition-colors min-h-[36px]"
-                    >
-                      {triggering === job.name ? 'Running...' : 'Confirm Run'}
-                    </button>
-                    <button
-                      onClick={() => setConfirmTrigger(null)}
-                      className="px-3 py-1.5 text-xs font-medium text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors min-h-[36px]"
-                    >
-                      Cancel
-                    </button>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+        {loading
+          ? [1, 2, 3, 4].map((i) => <div key={i} className="skeleton h-36 rounded-2xl" />)
+          : jobs.map((job) => (
+              <div key={job.id} className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-5">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h3 className="font-semibold text-slate-900 text-sm">{job.label}</h3>
+                    <p className="text-xs text-neutral-light mt-1">{job.description}</p>
                   </div>
-                ) : (
-                  <button
-                    onClick={() => setConfirmTrigger(job.name)}
-                    disabled={triggering !== null}
-                    className="px-3 py-1.5 text-xs font-medium text-primary bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors disabled:opacity-40 min-h-[36px]"
+                  <span
+                    className={`shrink-0 inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
+                      job.running
+                        ? 'bg-success-light text-success'
+                        : job.pending
+                          ? 'bg-warning-light text-warning'
+                          : 'bg-slate-200 text-slate-600'
+                    }`}
                   >
-                    Trigger Now
-                  </button>
-                )}
+                    {job.running ? 'Scheduled' : job.pending ? 'Paused' : 'Stopped'}
+                  </span>
+                </div>
+
+                <dl className="mt-3 space-y-1 text-xs">
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-neutral-light">Cadence</dt>
+                    <dd className="text-slate-700 font-medium text-right">{job.schedule}</dd>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-neutral-light">Next run</dt>
+                    <dd className="text-slate-700 font-medium text-right">{formatWhen(job.next_run)}</dd>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-neutral-light">Timezone</dt>
+                    <dd className="text-slate-700 font-medium text-right">{job.timezone}</dd>
+                  </div>
+                </dl>
+
+                <div className="mt-4">
+                  {confirmTrigger === job.id ? (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleTrigger(job.id)}
+                        disabled={triggering === job.id}
+                        className="px-3 py-1.5 text-xs font-medium text-white bg-danger rounded-lg hover:bg-danger/90 transition-colors min-h-[36px]"
+                      >
+                        {triggering === job.id ? 'Queueing...' : 'Confirm Run'}
+                      </button>
+                      <button
+                        onClick={() => setConfirmTrigger(null)}
+                        className="px-3 py-1.5 text-xs font-medium text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors min-h-[36px]"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmTrigger(job.id)}
+                      disabled={triggering !== null || !job.running}
+                      className="px-3 py-1.5 text-xs font-medium text-primary bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors disabled:opacity-40 min-h-[36px]"
+                    >
+                      Run Now
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
-          )
-        })}
+            ))}
       </div>
 
       <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm">
         <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
-          <h3 className="font-semibold text-slate-900">Job History</h3>
-          <button
-            onClick={loadJobs}
-            className="text-xs text-primary font-medium hover:underline"
-          >
+          <h3 className="font-semibold text-slate-900">Schedules</h3>
+          <button onClick={loadJobs} className="text-xs text-primary font-medium hover:underline">
             Refresh
           </button>
         </div>
@@ -163,24 +206,31 @@ export default function AdminJobsPage() {
                 <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-slate-200">
                   <th className="text-left px-5 py-3 font-medium">Job</th>
                   <th className="text-center px-5 py-3 font-medium">Status</th>
-                  <th className="text-right px-5 py-3 font-medium">Last Run</th>
+                  <th className="text-right px-5 py-3 font-medium">Next Run</th>
                 </tr>
               </thead>
               <tbody>
                 {jobs.map((job) => (
-                  <tr key={job.id || job.name} className="border-t border-slate-50 table-row-hover">
-                    <td className="px-5 py-3.5 font-medium text-slate-900">{job.name}</td>
+                  <tr key={job.id} className="border-t border-slate-50 table-row-hover">
+                    <td className="px-5 py-3.5">
+                      <div className="font-medium text-slate-900">{job.label}</div>
+                      <div className="text-xs text-neutral-light">{job.schedule}</div>
+                    </td>
                     <td className="px-5 py-3.5 text-center">
-                      <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
-                        job.status === 'success' ? 'bg-success-light text-success'
-                          : job.status === 'failed' ? 'bg-danger-light text-danger'
-                          : 'bg-warning-light text-warning'
-                      }`}>
-                        {job.status || 'unknown'}
+                      <span
+                        className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
+                          job.running
+                            ? 'bg-success-light text-success'
+                            : job.pending
+                              ? 'bg-warning-light text-warning'
+                              : 'bg-slate-200 text-slate-600'
+                        }`}
+                      >
+                        {job.running ? 'Scheduled' : job.pending ? 'Paused' : 'Stopped'}
                       </span>
                     </td>
                     <td className="px-5 py-3.5 text-right text-neutral-light text-xs">
-                      {job.last_run ? new Date(job.last_run).toLocaleString() : 'Never'}
+                      {formatWhen(job.next_run)}
                     </td>
                   </tr>
                 ))}
@@ -189,7 +239,7 @@ export default function AdminJobsPage() {
           </div>
         ) : (
           <div className="px-5 py-8 text-center text-neutral-light text-sm">
-            No job history available
+            No scheduled jobs are registered.
           </div>
         )}
       </div>
