@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/Table'
 import { useAuth } from '@/lib/auth'
 import { businessAPI, adminAPI, productAPI, saleAPI, debtAPI } from '@/lib/api'
-import { extractArray, isSuperAdminUser } from '@/lib/utils'
+import { extractArray, isSuperAdminUser, isDeletedProduct } from '@/lib/utils'
 
 const PAGE_SIZE = 10
 
@@ -147,7 +147,7 @@ export default function AdminBusinessesPage() {
       }
 
       if (productsRes.status === 'fulfilled') {
-        setProfileProductCount(extractArray(productsRes.value.data).length)
+        setProfileProductCount(extractArray(productsRes.value.data).filter((p: any) => !isDeletedProduct(p)).length)
       }
 
       if (salesRes.status === 'fulfilled') {

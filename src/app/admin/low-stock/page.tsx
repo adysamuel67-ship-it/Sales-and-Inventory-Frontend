@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
 import { useAuth } from '@/lib/auth'
 import { adminAPI, productAPI } from '@/lib/api'
-import { extractArray, isSuperAdminUser } from '@/lib/utils'
+import { extractArray, isSuperAdminUser, isDeletedProduct } from '@/lib/utils'
 
 interface LowStockItem {
   name: string
@@ -57,6 +57,7 @@ export default function AdminLowStockPage() {
           try {
             const prods = extractArray(result.value.data)
             for (const p of prods) {
+              if (isDeletedProduct(p)) continue
               const qty = p.quantity ?? p.stock ?? 0
               const threshold = p.low_stock_threshold ?? p.threshold ?? p.reorder_level ?? 10
               if (qty <= threshold) {

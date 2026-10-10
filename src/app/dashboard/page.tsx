@@ -14,7 +14,7 @@ import LowStockAlerts from '@/components/LowStockAlerts'
 import { useAuth } from '@/lib/auth'
 import { reportAPI, saleAPI, productAPI } from '@/lib/api'
 import { useBusinessId } from '@/lib/useBusinessId'
-import { extractArray, mapLowStock, getDateRange } from '@/lib/utils'
+import { extractArray, mapLowStock, getDateRange, isDeletedProduct } from '@/lib/utils'
 
 interface DashboardSummary {
   total_revenue: number
@@ -81,12 +81,15 @@ function extractSummary(data: any): DashboardSummary | null {
   }
 }
 
-const datePresets = [
+const datePresets: { label: string; days: number | 'all' }[] = [
+  { label: 'All time', days: 'all' },
   { label: '7 days', days: 7 },
   { label: '30 days', days: 30 },
   { label: '90 days', days: 90 },
   { label: '1 year', days: 365 },
 ]
+
+type DateRange = { start: string; end: string } | null
 
 export default function DashboardPage() {
   const { isAuthenticated, isLoading, isVerified, profileLoaded, currentBusiness, businesses, fetchBusinesses, businessesLoading, user } = useAuth()
@@ -97,8 +100,8 @@ export default function DashboardPage() {
   const [lowStockItems, setLowStockItems] = useState<LowStockItem[]>([])
   const [chartData, setChartData] = useState<ChartDataPoint[]>([])
   const [error, setError] = useState('')
-  const [dateRange, setDateRange] = useState(() => getDateRange(30))
-  const [activePreset, setActivePreset] = useState(30)
+  const [dateRange, setDateRange] = useState<DateRange>(null)
+  const [activePreset, setActivePreset] = useState<number | 'all'>('all')
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [draftDateRange, setDraftDateRange] = useState(() => getDateRange(30))
   const [chartLoading, setChartLoading] = useState(false)
@@ -131,7 +134,7 @@ export default function DashboardPage() {
 
     try {
       const results = await Promise.allSettled([
-        reportAPI.summary(businessId, dateRange.start, dateRange.end),
+        reportAPI.summary(businessId, dateRange?.start, dateRange?.end),
         saleAPI.list(businessId),
         productAPI.list(businessId),
       ])
@@ -164,6 +167,7 @@ export default function DashboardPage() {
         setLowStockItems(
           products
             .filter((p: any) => {
+              if (isDeletedProduct(p)) return false
               const qty = p.quantity ?? 0
               const threshold = p.low_stock_threshold ?? p.threshold ?? p.reorder_level ?? 10
               return qty <= threshold
@@ -177,6 +181,7 @@ export default function DashboardPage() {
 
         const filtered = sales.filter((s: any) => {
           if (!s.created_at) return false
+          if (!dateRange) return true
           const d = new Date(s.created_at)
           const start = new Date(dateRange.start)
           start.setHours(0, 0, 0, 0)
@@ -210,20 +215,20 @@ export default function DashboardPage() {
         setError(err.message || 'Failed to load dashboard')
       }
     }
-  }, [businessId, dateRange.start, dateRange.end])
+  }, [businessId, dateRange])
 
   useEffect(() => {
     loadDashboard()
   }, [loadDashboard])
 
-  const handlePresetChange = (days: number) => {
+  const handlePresetChange = (days: number | 'all') => {
     setActivePreset(days)
-    setDateRange(getDateRange(days))
+    setDateRange(days === 'all' ? null : getDateRange(days))
     setShowDatePicker(false)
   }
 
   const handleOpenDatePicker = () => {
-    setDraftDateRange(dateRange)
+    setDraftDateRange(dateRange ?? getDateRange(30))
     setShowDatePicker(true)
   }
 
@@ -237,7 +242,11 @@ export default function DashboardPage() {
     setShowDatePicker(false)
   }
 
-  const dateSubtitle = activePreset > 0 ? `Last ${activePreset} days` : `${dateRange.start} to ${dateRange.end}`
+  const dateSubtitle = dateRange === null
+    ? 'All time'
+    : activePreset !== 'all' && activePreset > 0
+      ? `Last ${activePreset} days`
+      : `${dateRange.start} to ${dateRange.end}`
 
   if (isLoading || !isAuthenticated || !profileLoaded || bizLoading) {
     return (

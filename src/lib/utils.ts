@@ -108,6 +108,24 @@ export function normalizeProduct(raw: any) {
   }
 }
 
+/**
+ * Products are soft-deleted: the API sets `deleted_at` instead of removing the
+ * row so historical sales keep pointing at a real product. The catalogue must
+ * therefore hide anything with a `deleted_at` timestamp rather than trusting
+ * the list to be pre-filtered.
+ */
+export function isDeletedProduct(product: any): boolean {
+  if (!product || typeof product !== 'object') return false
+  if (product.deleted_at) return true
+  return product.deleted === true
+}
+
+export function formatDeletedAt(value?: string | null): string {
+  if (!value) return ''
+  const d = new Date(value)
+  return isNaN(d.getTime()) ? '' : d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+}
+
 export function extractSummary(data: any): {
   total_revenue: number
   total_profit: number

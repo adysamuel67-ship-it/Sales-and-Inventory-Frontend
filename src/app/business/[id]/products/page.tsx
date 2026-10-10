@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import { productAPI } from '@/lib/api'
-import { normalizeProduct, extractArray, parseApiError, isAdminRole, formatCedi } from '@/lib/utils'
+import { normalizeProduct, extractArray, parseApiError, isAdminRole, formatCedi, isDeletedProduct, formatDeletedAt } from '@/lib/utils'
 import { useAuth } from '@/lib/auth'
 import ProductDetailModal from '@/components/ProductDetailModal'
 import ProductUploadModal from '@/components/ProductUploadModal'
@@ -33,6 +33,7 @@ export default function ProductsPage() {
   const [categories, setCategories] = useState<string[]>([])
   const [selectedCategory, setSelectedCategory] = useState('')
   const [lowStockOnly, setLowStockOnly] = useState(false)
+  const [productView, setProductView] = useState<'active' | 'deleted'>('active')
   const [detailProduct, setDetailProduct] = useState<any>(null)
   const [showExportDropdown, setShowExportDropdown] = useState(false)
   const [exporting, setExporting] = useState(false)
@@ -53,7 +54,7 @@ export default function ProductsPage() {
       const res = await productAPI.list(businessId)
       const items = extractArray(res.data).map(normalizeProduct)
       setAllProducts(items)
-      const cats = [...new Set(items.map((p: any) => p.category).filter(Boolean))] as string[]
+      const cats = [...new Set(items.filter((p: any) => !isDeletedProduct(p)).map((p: any) => p.category).filter(Boolean))] as string[]
       setCategories(cats)
       setError('')
     } catch (err: any) {
@@ -65,8 +66,11 @@ export default function ProductsPage() {
 
   useEffect(() => { if (businessId) load() }, [businessId, load])
 
+  const activeProducts = useMemo(() => allProducts.filter(p => !isDeletedProduct(p)), [allProducts])
+  const deletedProducts = useMemo(() => allProducts.filter(p => isDeletedProduct(p)), [allProducts])
+
   const displayed = useMemo(() => {
-    let items = [...allProducts]
+    let items = [...(productView === 'deleted' ? deletedProducts : activeProducts)]
     if (search) {
       const q = search.toLowerCase()
       items = items.filter(p =>
@@ -75,8 +79,8 @@ export default function ProductsPage() {
         p.sku?.toLowerCase().includes(q)
       )
     }
-    if (selectedCategory) items = items.filter(p => p.category === selectedCategory)
-    if (lowStockOnly) items = items.filter(p => p.quantity <= (p.low_stock_threshold ?? 10))
+    if (productView === 'active' && selectedCategory) items = items.filter(p => p.category === selectedCategory)
+    if (productView === 'active' && lowStockOnly) items = items.filter(p => p.quantity <= (p.low_stock_threshold ?? 10))
     items.sort((a: any, b: any) => {
       let va = a[sortKey], vb = b[sortKey]
       if (typeof va === 'string') va = va.toLowerCase()
@@ -86,14 +90,14 @@ export default function ProductsPage() {
       return sortAsc ? (va > vb ? 1 : -1) : (va < vb ? 1 : -1)
     })
     return items
-  }, [allProducts, search, sortKey, sortAsc, selectedCategory, lowStockOnly])
+  }, [activeProducts, deletedProducts, productView, search, sortKey, sortAsc, selectedCategory, lowStockOnly])
 
   const stats = useMemo(() => ({
-    total: allProducts.length,
-    lowStock: allProducts.filter(p => p.quantity <= (p.low_stock_threshold ?? 10)).length,
-    outOfStock: allProducts.filter(p => p.quantity === 0).length,
-    totalValue: allProducts.reduce((sum, p) => sum + (p.price * p.quantity), 0),
-  }), [allProducts])
+    total: activeProducts.length,
+    lowStock: activeProducts.filter(p => p.quantity <= (p.low_stock_threshold ?? 10)).length,
+    outOfStock: activeProducts.filter(p => p.quantity === 0).length,
+    totalValue: activeProducts.reduce((sum, p) => sum + (p.price * p.quantity), 0),
+  }), [activeProducts])
 
   const handleSort = (key: string) => {
     if (sortKey === key) setSortAsc(!sortAsc)
@@ -368,7 +372,27 @@ export default function ProductsPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl border border-slate-200 p-3 sm:p-4">
+      <div className="bg-white rounded-xl border border-slate-200 p-3 sm:p-4 space-y-3">
+        <div className="flex items-center gap-1 bg-slate-100 rounded-xl p-1 w-full sm:w-fit">
+          <button
+            onClick={() => { setProductView('active'); clearSelection() }}
+            className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all min-h-[40px] ${
+              productView === 'active' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            Products
+            <span className={`px-1.5 py-0.5 rounded-md text-[11px] font-semibold ${productView === 'active' ? 'bg-primary/10 text-primary' : 'bg-slate-200 text-slate-500'}`}>{activeProducts.length}</span>
+          </button>
+          <button
+            onClick={() => { setProductView('deleted'); clearSelection() }}
+            className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all min-h-[40px] ${
+              productView === 'deleted' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            Deleted
+            <span className={`px-1.5 py-0.5 rounded-md text-[11px] font-semibold ${productView === 'deleted' ? 'bg-danger/10 text-danger' : 'bg-slate-200 text-slate-500'}`}>{deletedProducts.length}</span>
+          </button>
+        </div>
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
           <input
             value={search}
@@ -376,25 +400,41 @@ export default function ProductsPage() {
             placeholder="Search products..."
             className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
           />
-          <select
-            value={selectedCategory}
-            onChange={e => setSelectedCategory(e.target.value)}
-            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-          >
-            <option value="">All Categories</option>
-            {categories.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
-          <button
-            onClick={() => setLowStockOnly(!lowStockOnly)}
-            className={`px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${lowStockOnly ? 'bg-warning-light border-warning text-warning' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
-          >
-            Low Stock
-          </button>
+          {productView === 'active' && (
+            <>
+              <select
+                value={selectedCategory}
+                onChange={e => setSelectedCategory(e.target.value)}
+                className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              >
+                <option value="">All Categories</option>
+                {categories.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+              <button
+                onClick={() => setLowStockOnly(!lowStockOnly)}
+                className={`px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${lowStockOnly ? 'bg-warning-light border-warning text-warning' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+              >
+                Low Stock
+              </button>
+            </>
+          )}
         </div>
       </div>
 
+      {productView === 'deleted' && !loading && (
+        <div className="flex items-start gap-3 bg-slate-50 border border-slate-200 rounded-xl p-3 sm:p-4">
+          <svg className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+          </svg>
+          <div>
+            <p className="text-sm font-medium text-slate-900">Deleted products</p>
+            <p className="text-xs text-neutral-light mt-0.5">These products are hidden from your inventory and can no longer be sold. Past sales still reference them.</p>
+          </div>
+        </div>
+      )}
+
       {/* Bulk selection bar */}
-      {canEdit && !loading && displayed.length > 0 && (
+      {canEdit && !loading && productView === 'active' && displayed.length > 0 && (
         <div className={`flex flex-wrap items-center gap-3 bg-white rounded-xl border p-3 transition-colors ${selectMode || selected.size > 0 ? 'border-primary/40 ring-2 ring-primary/10' : 'border-slate-200'}`}>
           <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer select-none">
             <input
@@ -460,9 +500,15 @@ export default function ProductsPage() {
       {!loading && displayed.length === 0 && (
         <EmptyState
           icon={<BoxIcon className="w-6 h-6 text-primary" />}
-          title="No products found"
-          description={allProducts.length === 0 ? 'Add your first product to start selling' : 'Try adjusting your filters'}
-          action={canEdit && allProducts.length === 0 ? (
+          title={productView === 'deleted' ? 'No deleted products' : 'No products found'}
+          description={
+            productView === 'deleted'
+              ? 'Products you delete will appear here.'
+              : activeProducts.length === 0
+                ? 'Add your first product to start selling'
+                : 'Try adjusting your filters'
+          }
+          action={productView === 'active' && canEdit && activeProducts.length === 0 ? (
             <Button size="sm" onClick={openAdd} leftIcon={<PlusIcon className="w-3.5 h-3.5" />}>
               Add Product
             </Button>
@@ -476,7 +522,7 @@ export default function ProductsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-200 text-left text-xs text-neutral-light uppercase tracking-wider">
-                {canEdit && (
+                {canEdit && productView === 'active' && (
                   <th className="px-4 py-3 w-10">
                     <input
                       type="checkbox"
@@ -514,7 +560,7 @@ export default function ProductsPage() {
                     className={`border-b border-slate-50 transition-colors ${selected.has(p.product_id) ? 'bg-primary-light/60' : 'hover:bg-slate-50/50 cursor-pointer'}`}
                     onClick={() => setDetailProduct(p)}
                   >
-                    {canEdit && (
+                    {canEdit && productView === 'active' && (
                       <td className="px-4 py-3 w-10">
                         <input
                           type="checkbox"
@@ -528,8 +574,13 @@ export default function ProductsPage() {
                     <td className="px-4 py-3">
                       <div className="font-medium text-slate-900">{p.name}</div>
                       {p.sku && <div className="text-xs text-neutral-light font-mono mt-0.5">SKU: {p.sku}</div>}
-                      {p.is_active === false && (
+                      {p.is_active === false && !isDeletedProduct(p) && (
                         <span className="inline-block px-1.5 py-0.5 mt-1 text-[10px] font-medium uppercase tracking-wider bg-slate-100 text-slate-500 rounded">Inactive</span>
+                      )}
+                      {isDeletedProduct(p) && (
+                        <span className="inline-block px-1.5 py-0.5 mt-1 text-[10px] font-medium uppercase tracking-wider bg-danger-light text-danger rounded">
+                          Deleted{p.deleted_at ? ` · ${formatDeletedAt(p.deleted_at)}` : ''}
+                        </span>
                       )}
                     </td>
                     <td className="px-4 py-3 font-medium text-slate-900">{formatCedi(p.price)}</td>
@@ -563,7 +614,7 @@ export default function ProductsPage() {
                 onClick={() => setDetailProduct(p)}
               >
                 <div className="flex items-start justify-between gap-2">
-                  {canEdit && (
+                  {canEdit && productView === 'active' && (
                     <input
                       type="checkbox"
                       checked={selected.has(p.product_id)}
@@ -575,8 +626,13 @@ export default function ProductsPage() {
                   <div className="min-w-0 flex-1">
                     <h3 className="font-medium text-slate-900 truncate">{p.name}</h3>
                     {p.sku && <p className="text-xs text-neutral-light font-mono mt-0.5">SKU: {p.sku}</p>}
+                    {isDeletedProduct(p) && p.deleted_at && (
+                      <p className="text-xs text-neutral-light mt-0.5">Deleted {formatDeletedAt(p.deleted_at)}</p>
+                    )}
                   </div>
-                  {isOut ? (
+                  {isDeletedProduct(p) ? (
+                    <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-danger-light text-danger shrink-0">Deleted</span>
+                  ) : isOut ? (
                     <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-danger-light text-danger shrink-0">Out</span>
                   ) : isLow ? (
                     <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-warning-light text-warning shrink-0">Low</span>

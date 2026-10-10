@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useMemo, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
 import { saleAPI, productAPI, customerAPI, adminAPI } from '@/lib/api'
-import { extractArray, normalizeProduct, mapSale, parseApiError, isStaffRole, isAdminRole, MappedSale, formatPayment, formatCedi } from '@/lib/utils'
+import { extractArray, normalizeProduct, mapSale, parseApiError, isStaffRole, isAdminRole, MappedSale, formatPayment, formatCedi, isDeletedProduct } from '@/lib/utils'
 import SaleDetailModal from '@/components/SaleDetailModal'
 import SaleEditModal from '@/components/SaleEditModal'
 import SaleReceiptModal from '@/components/SaleReceiptModal'
@@ -117,7 +117,7 @@ export default function SalesPage() {
         adminAPI.listMembers(),
       ])
       const productsList = productsRes.status === 'fulfilled' ? extractArray(productsRes.value.data).map(normalizeProduct) : []
-      if (productsRes.status === 'fulfilled') setProducts(productsList)
+      if (productsRes.status === 'fulfilled') setProducts(productsList.filter((p: any) => !isDeletedProduct(p)))
       const productMap = new Map<number, string>()
       for (const p of productsList) {
         productMap.set(p.product_id, p.name)

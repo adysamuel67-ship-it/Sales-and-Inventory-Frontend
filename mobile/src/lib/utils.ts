@@ -107,6 +107,18 @@ export function normalizeProduct(raw: any) {
   }
 }
 
+export function isDeletedProduct(product: any): boolean {
+  if (!product || typeof product !== 'object') return false
+  if (product.deleted_at) return true
+  return product.deleted === true
+}
+
+export function formatDeletedAt(value?: string | null): string {
+  if (!value) return ''
+  const d = new Date(value)
+  return isNaN(d.getTime()) ? '' : d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+}
+
 export function extractSummary(data: any): {
   total_revenue: number
   total_profit: number

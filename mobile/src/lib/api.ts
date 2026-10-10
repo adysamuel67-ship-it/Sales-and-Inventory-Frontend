@@ -279,8 +279,10 @@ export const debtAPI = {
 export const reportAPI = {
   profit: (businessId: number, date: string, endDate: string) =>
     api.get(`/reports/profit/${businessId}`, { params: { date, end_date: endDate } }),
-  summary: (businessId: number, date: string, endDate: string) =>
-    api.get(`/reports/analytics/dashboard/${businessId}`, { params: { date, end_date: endDate } }),
+  summary: (businessId: number, date?: string, endDate?: string) =>
+    api.get(`/reports/analytics/dashboard/${businessId}`, {
+      params: date && endDate ? { date, end_date: endDate } : {},
+    }),
   dashboard: (businessId: number) => api.get(`/reports/analytics/dashboard/${businessId}`),
 }
 

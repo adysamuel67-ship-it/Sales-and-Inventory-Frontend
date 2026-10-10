@@ -14,7 +14,7 @@ const RevenueChart = dynamic(() => import('@/components/RevenueChart'), { ssr: f
 const FluctuationChart = dynamic(() => import('@/components/FluctuationChart'), { ssr: false })
 import { useAuth } from '@/lib/auth'
 import { reportAPI, saleAPI, productAPI } from '@/lib/api'
-import { extractArray, extractSummary, mapSale, mapLowStock, generateDateLabels, isStaffRole, parseApiError, getDateRange, formatCedi, formatNumber } from '@/lib/utils'
+import { extractArray, extractSummary, mapSale, mapLowStock, generateDateLabels, isStaffRole, parseApiError, getDateRange, formatCedi, formatNumber, isDeletedProduct } from '@/lib/utils'
 import PageHeader from '@/components/ui/PageHeader'
 import Alert from '@/components/ui/Alert'
 import Skeleton from '@/components/ui/Skeleton'
@@ -58,12 +58,15 @@ function mapSaleLocal(raw: any, productMap?: Map<number, string>): SaleRecord {
   }
 }
 
-const datePresets = [
+const datePresets: { label: string; days: number | 'all' }[] = [
+  { label: 'All time', days: 'all' },
   { label: '7 days', days: 7 },
   { label: '30 days', days: 30 },
   { label: '90 days', days: 90 },
   { label: '1 year', days: 365 },
 ]
+
+type DateRange = { start: string; end: string } | null
 
 export default function BusinessDashboardPage() {
   const params = useParams()
@@ -76,8 +79,8 @@ export default function BusinessDashboardPage() {
   const [chartData, setChartData] = useState<ChartDataPoint[]>([])
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
-  const [dateRange, setDateRange] = useState(() => getDateRange(30))
-  const [activePreset, setActivePreset] = useState(30)
+  const [dateRange, setDateRange] = useState<DateRange>(null)
+  const [activePreset, setActivePreset] = useState<number | 'all'>('all')
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [draftDateRange, setDraftDateRange] = useState(() => getDateRange(30))
   const [staffView, setStaffView] = useState<'today' | 'week'>('today')
@@ -100,7 +103,7 @@ export default function BusinessDashboardPage() {
     try {
       const todayRange = getDateRange(0)
       const results = await Promise.allSettled([
-        reportAPI.summary(businessId, effectiveRange.start, effectiveRange.end),
+        reportAPI.summary(businessId, effectiveRange?.start, effectiveRange?.end),
         saleAPI.list(businessId),
         productAPI.list(businessId),
         isStaff ? reportAPI.summary(businessId, todayRange.start, todayRange.end) : Promise.resolve(null),
@@ -143,6 +146,7 @@ export default function BusinessDashboardPage() {
         setLowStockItems(
           products
             .filter((p: any) => {
+              if (isDeletedProduct(p)) return false
               const qty = p.quantity ?? 0
               const threshold = p.low_stock_threshold ?? p.threshold ?? p.reorder_level ?? 10
               return qty <= threshold
@@ -156,6 +160,7 @@ export default function BusinessDashboardPage() {
 
         const filtered = sales.filter((s: any) => {
           if (!s.created_at) return false
+          if (!effectiveRange) return true
           const d = new Date(s.created_at)
           const start = new Date(effectiveRange.start)
           start.setHours(0, 0, 0, 0)
@@ -167,7 +172,17 @@ export default function BusinessDashboardPage() {
         setRecentSales(filtered.slice(0, 10).map((s: any) => mapSaleLocal(s, productMap)))
 
         const dailyMap: Record<string, { revenue: number; count: number }> = {}
-        const allDateLabels = generateDateLabels(effectiveRange.start, effectiveRange.end)
+        let allDateLabels: string[]
+        if (effectiveRange) {
+          allDateLabels = generateDateLabels(effectiveRange.start, effectiveRange.end)
+        } else if (filtered.length > 0) {
+          const keys = filtered
+            .map((s: any) => new Date(s.created_at).toISOString().split('T')[0])
+            .sort()
+          allDateLabels = generateDateLabels(keys[0], keys[keys.length - 1])
+        } else {
+          allDateLabels = []
+        }
         for (const label of allDateLabels) {
           dailyMap[label] = { revenue: 0, count: 0 }
         }
@@ -236,14 +251,14 @@ export default function BusinessDashboardPage() {
     loadDashboard()
   }, [loadDashboard])
 
-  const handlePresetChange = (days: number) => {
+  const handlePresetChange = (days: number | 'all') => {
     setActivePreset(days)
-    setDateRange(getDateRange(days))
+    setDateRange(days === 'all' ? null : getDateRange(days))
     setShowDatePicker(false)
   }
 
   const handleOpenDatePicker = () => {
-    setDraftDateRange(dateRange)
+    setDraftDateRange(dateRange ?? getDateRange(30))
     setShowDatePicker(true)
   }
 
@@ -257,7 +272,13 @@ export default function BusinessDashboardPage() {
     setShowDatePicker(false)
   }
 
-  const dateSubtitle = isStaff ? (staffView === 'today' ? "Today's data" : 'Last 7 days (weekly)') : activePreset > 0 ? `Last ${activePreset} days` : `${dateRange.start} to ${dateRange.end}`
+  const dateSubtitle = isStaff
+    ? (staffView === 'today' ? "Today's data" : 'Last 7 days (weekly)')
+    : dateRange === null
+      ? 'All time'
+      : activePreset !== 'all' && activePreset > 0
+        ? `Last ${activePreset} days`
+        : `${dateRange.start} to ${dateRange.end}`
 
   if (loading) {
     return (

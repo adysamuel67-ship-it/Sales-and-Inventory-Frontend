@@ -7,7 +7,7 @@ import {
 import { useLocalSearchParams } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { productAPI } from '@/lib/api'
-import { extractArray, normalizeProduct, formatCurrency, parseApiError } from '@/lib/utils'
+import { extractArray, normalizeProduct, formatCurrency, parseApiError, isDeletedProduct, formatDeletedAt } from '@/lib/utils'
 import { Colors, BORDER_RADIUS, FONTS } from '@/lib/constants'
 import { useAuth } from '@/lib/auth'
 import Button from '@/components/ui/Button'
@@ -46,6 +46,7 @@ export default function ProductsScreen() {
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
   const [lowStockOnly, setLowStockOnly] = useState(false)
+  const [productView, setProductView] = useState<'active' | 'deleted'>('active')
 
   const [showFormModal, setShowFormModal] = useState(false)
   const [editingProduct, setEditingProduct] = useState<any>(null)
@@ -74,9 +75,12 @@ export default function ProductsScreen() {
 
   const onRefresh = useCallback(async () => { setRefreshing(true); await fetchProducts(); setRefreshing(false) }, [fetchProducts])
 
-  const categories = [...new Set(products.map((p) => p.category).filter(Boolean))]
+  const activeProducts = products.filter((p) => !isDeletedProduct(p))
+  const deletedProducts = products.filter((p) => isDeletedProduct(p))
 
-  const filtered = products.filter((p) => {
+  const categories = [...new Set(activeProducts.map((p) => p.category).filter(Boolean))]
+
+  const filtered = (productView === 'deleted' ? deletedProducts : activeProducts).filter((p) => {
     const q = search.toLowerCase()
     const nameMatch = (p.name || '').toLowerCase().includes(q) || (p.sku || '').toLowerCase().includes(q)
     const catMatch = !categoryFilter || p.category === categoryFilter
@@ -85,8 +89,8 @@ export default function ProductsScreen() {
   })
 
   const totalValue = filtered.reduce((sum, p) => sum + (p.price || 0) * (p.quantity || 0), 0)
-  const lowStockCount = products.filter((p) => (p.quantity ?? 0) <= (p.low_stock_threshold ?? 10) && (p.quantity ?? 0) > 0).length
-  const outOfStockCount = products.filter((p) => (p.quantity ?? 0) === 0).length
+  const lowStockCount = activeProducts.filter((p) => (p.quantity ?? 0) <= (p.low_stock_threshold ?? 10) && (p.quantity ?? 0) > 0).length
+  const outOfStockCount = activeProducts.filter((p) => (p.quantity ?? 0) === 0).length
 
   const openAddModal = () => { setEditingProduct(null); setForm(emptyForm); setShowFormModal(true); setFormError('') }
   const openEditModal = (p: any) => {
@@ -162,24 +166,38 @@ export default function ProductsScreen() {
               <Text style={s.productName}>{item.name}</Text>
               {item.sku ? <Text style={s.productSku}>SKU: {item.sku}</Text> : null}
             </View>
-            <View style={[s.stockBadge, { backgroundColor: stockColor + '20' }]}>
-              <Text style={[s.stockText, { color: stockColor }]}>{qty} {item.unit || 'units'}</Text>
-            </View>
+            {isDeletedProduct(item) ? (
+              <View style={[s.stockBadge, { backgroundColor: Colors.danger + '20' }]}>
+                <Text style={[s.stockText, { color: Colors.danger }]}>Deleted</Text>
+              </View>
+            ) : (
+              <View style={[s.stockBadge, { backgroundColor: stockColor + '20' }]}>
+                <Text style={[s.stockText, { color: stockColor }]}>{qty} {item.unit || 'units'}</Text>
+              </View>
+            )}
           </View>
           <View style={s.productMeta}>
             <Text style={s.productPrice}>{formatCurrency(item.price || 0)}</Text>
             {item.category && <Text style={s.productCategory}>{item.category}</Text>}
           </View>
-          <View style={s.productActions}>
-            <TouchableOpacity style={s.productActionBtn} onPress={() => openEditModal(item)}>
-              <Ionicons name="pencil" size={14} color={Colors.primary} />
-              <Text style={s.productActionText}>Edit</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={s.productActionBtn} onPress={() => { setDeleteTarget(item); setShowDeleteConfirm(true) }}>
-              <Ionicons name="trash-outline" size={14} color={Colors.danger} />
-              <Text style={[s.productActionText, { color: Colors.danger }]}>Delete</Text>
-            </TouchableOpacity>
-          </View>
+          {isDeletedProduct(item) ? (
+            <View style={s.productActions}>
+              <Text style={s.productDeletedText}>
+                Deleted {formatDeletedAt(item.deleted_at) || 'previously'}
+              </Text>
+            </View>
+          ) : (
+            <View style={s.productActions}>
+              <TouchableOpacity style={s.productActionBtn} onPress={() => openEditModal(item)}>
+                <Ionicons name="pencil" size={14} color={Colors.primary} />
+                <Text style={s.productActionText}>Edit</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={s.productActionBtn} onPress={() => { setDeleteTarget(item); setShowDeleteConfirm(true) }}>
+                <Ionicons name="trash-outline" size={14} color={Colors.danger} />
+                <Text style={[s.productActionText, { color: Colors.danger }]}>Delete</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </Card>
       </TouchableOpacity>
     )
@@ -193,7 +211,7 @@ export default function ProductsScreen() {
         <View style={s.heroTop}>
           <View>
             <Text style={s.heroTitle}>Products</Text>
-            <Text style={s.heroSubtitle}>{products.length} products in inventory</Text>
+            <Text style={s.heroSubtitle}>{activeProducts.length} products in inventory</Text>
           </View>
           <TouchableOpacity style={s.addBtn} onPress={openAddModal}>
             <Ionicons name="add" size={22} color="#FFF" />
@@ -201,7 +219,7 @@ export default function ProductsScreen() {
         </View>
         <View style={s.heroQuickStats}>
           <View style={s.heroStat}>
-            <Text style={s.heroStatValue}>{products.length}</Text>
+            <Text style={s.heroStatValue}>{activeProducts.length}</Text>
             <Text style={s.heroStatLabel}>Total</Text>
           </View>
           <View style={s.heroStatDivider} />
@@ -232,19 +250,40 @@ export default function ProductsScreen() {
           {search ? <TouchableOpacity onPress={() => setSearch('')}><Ionicons name="close-circle" size={18} color={Colors.textLight} /></TouchableOpacity> : null}
         </View>
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.catBar} contentContainerStyle={s.catContent}>
-          <TouchableOpacity style={[s.catBtn, !categoryFilter && s.catActive]} onPress={() => setCategoryFilter('')}>
-            <Text style={[s.catText, !categoryFilter && s.catTextActive]}>All</Text>
+        <View style={s.viewToggle}>
+          <TouchableOpacity
+            style={[s.viewToggleBtn, productView === 'active' && s.viewToggleActive]}
+            onPress={() => setProductView('active')}
+          >
+            <Text style={[s.viewToggleText, productView === 'active' && s.viewToggleTextActive]}>
+              Active ({activeProducts.length})
+            </Text>
           </TouchableOpacity>
-          {categories.map((c) => (
-            <TouchableOpacity key={c} style={[s.catBtn, categoryFilter === c && s.catActive]} onPress={() => setCategoryFilter(c)}>
-              <Text style={[s.catText, categoryFilter === c && s.catTextActive]}>{c}</Text>
+          <TouchableOpacity
+            style={[s.viewToggleBtn, productView === 'deleted' && s.viewToggleActive]}
+            onPress={() => setProductView('deleted')}
+          >
+            <Text style={[s.viewToggleText, productView === 'deleted' && s.viewToggleTextActive]}>
+              Deleted ({deletedProducts.length})
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {productView === 'active' ? (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.catBar} contentContainerStyle={s.catContent}>
+            <TouchableOpacity style={[s.catBtn, !categoryFilter && s.catActive]} onPress={() => setCategoryFilter('')}>
+              <Text style={[s.catText, !categoryFilter && s.catTextActive]}>All</Text>
             </TouchableOpacity>
-          ))}
-          <TouchableOpacity style={[s.catBtn, lowStockOnly && s.catLowActive]} onPress={() => setLowStockOnly(!lowStockOnly)}>
-            <Text style={[s.catText, lowStockOnly && s.catTextActive]}>Low Stock</Text>
-          </TouchableOpacity>
-        </ScrollView>
+            {categories.map((c) => (
+              <TouchableOpacity key={c} style={[s.catBtn, categoryFilter === c && s.catActive]} onPress={() => setCategoryFilter(c)}>
+                <Text style={[s.catText, categoryFilter === c && s.catTextActive]}>{c}</Text>
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity style={[s.catBtn, lowStockOnly && s.catLowActive]} onPress={() => setLowStockOnly(!lowStockOnly)}>
+              <Text style={[s.catText, lowStockOnly && s.catTextActive]}>Low Stock</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        ) : null}
       </View>
 
       <FlatList
@@ -254,7 +293,11 @@ export default function ProductsScreen() {
         style={s.list}
         contentContainerStyle={s.listContent}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[Colors.primary]} />}
-        ListEmptyComponent={<EmptyState icon="cube-outline" title="No products" message="Add your first product to get started" />}
+        ListEmptyComponent={
+          productView === 'deleted'
+            ? <EmptyState icon="trash-outline" title="No deleted products" message="Deleted products will appear here so you can restore or review them" />
+            : <EmptyState icon="cube-outline" title="No products" message="Add your first product to get started" />
+        }
       />
 
       <RNModal visible={showFormModal} animationType="slide" presentationStyle="pageSheet">

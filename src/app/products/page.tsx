@@ -8,7 +8,7 @@ import ProductDetailModal from '@/components/ProductDetailModal'
 import { useAuth } from '@/lib/auth'
 import { productAPI } from '@/lib/api'
 import { useBusinessId } from '@/lib/useBusinessId'
-import { extractArray, normalizeProduct } from '@/lib/utils'
+import { extractArray, normalizeProduct, isDeletedProduct } from '@/lib/utils'
 
 interface Product {
   product_id: number
@@ -35,6 +35,7 @@ export default function ProductsPage() {
   const [search, setSearch] = useState('')
 
   const filteredProducts = products.filter((p) => {
+    if (isDeletedProduct(p)) return false
     if (!search) return true
     const q = search.toLowerCase()
     return (
