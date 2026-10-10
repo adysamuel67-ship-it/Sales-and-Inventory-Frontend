@@ -439,10 +439,17 @@ export default function ProductsScreen() {
               </View>
             </Card>
 
-            <View style={{ flexDirection: 'row', gap: 12, marginTop: 20, marginBottom: 40 }}>
-              <Button title="Edit" onPress={() => { setShowDetailModal(false); openEditModal(selectedProduct) }} style={{ flex: 1 }} />
-              <Button title="Delete" variant="danger" onPress={() => { setShowDetailModal(false); setDeleteTarget(selectedProduct); setShowDeleteConfirm(true) }} style={{ flex: 1 }} />
-            </View>
+            {isDeletedProduct(selectedProduct) ? (
+              <View style={s.deletedNote}>
+                <Ionicons name="information-circle-outline" size={16} color={Colors.textLight} />
+                <Text style={s.deletedNoteText}>This product was deleted{formatDeletedAt(selectedProduct.deleted_at) ? ` on ${formatDeletedAt(selectedProduct.deleted_at)}` : ''} and is kept for record keeping.</Text>
+              </View>
+            ) : (
+              <View style={{ flexDirection: 'row', gap: 12, marginTop: 20, marginBottom: 40 }}>
+                <Button title="Edit" onPress={() => { setShowDetailModal(false); openEditModal(selectedProduct) }} style={{ flex: 1 }} />
+                <Button title="Delete" variant="danger" onPress={() => { setShowDetailModal(false); setDeleteTarget(selectedProduct); setShowDeleteConfirm(true) }} style={{ flex: 1 }} />
+              </View>
+            )}
           </ScrollView>
         )}
       </RNModal>
@@ -491,6 +498,16 @@ const s = StyleSheet.create({
   },
   searchInput: { flex: 1, fontSize: 14, color: Colors.text, paddingVertical: 4 },
 
+  viewToggle: {
+    flexDirection: 'row', marginHorizontal: 16, marginTop: 10,
+    backgroundColor: Colors.surfaceAlt, borderRadius: BORDER_RADIUS.lg,
+    padding: 3, borderWidth: 1, borderColor: Colors.border,
+  },
+  viewToggleBtn: { flex: 1, paddingVertical: 7, borderRadius: BORDER_RADIUS.md, alignItems: 'center' },
+  viewToggleActive: { backgroundColor: Colors.primary },
+  viewToggleText: { fontSize: 13, fontWeight: '600', color: Colors.textLight },
+  viewToggleTextActive: { color: '#FFF' },
+
   catBar: { marginTop: 8 },
   catContent: { paddingHorizontal: 16, gap: 8 },
   catBtn: {
@@ -523,6 +540,13 @@ const s = StyleSheet.create({
   },
   productActionBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   productActionText: { fontSize: 13, fontWeight: '600', color: Colors.primary },
+  productDeletedText: { fontSize: 12, color: Colors.textLight, fontStyle: 'italic' },
+
+  deletedNote: {
+    flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 20, marginBottom: 40,
+    backgroundColor: Colors.surfaceAlt, borderRadius: BORDER_RADIUS.lg, padding: 14,
+  },
+  deletedNoteText: { flex: 1, fontSize: 13, color: Colors.textLight, lineHeight: 18 },
 
   modalNav: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
