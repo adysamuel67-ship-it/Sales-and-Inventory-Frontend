@@ -74,11 +74,6 @@ const COLUMN_REFERENCES: ColumnReference[] = [
 
 const ACCEPTED_EXTENSIONS = ['.csv', '.xls', '.xlsx']
 
-function isValidExt(name: string): boolean {
-  const lower = (name || '').toLowerCase()
-  return ACCEPTED_EXTENSIONS.some((ext) => lower.endsWith(ext))
-}
-
 function fileTypeLabel(name: string): string {
   const lower = (name || '').toLowerCase()
   if (lower.endsWith('.csv')) return 'CSV'
@@ -114,23 +109,6 @@ function download(filename: string, content: string | Blob, mime: string) {
   URL.revokeObjectURL(url)
 }
 
-function isColumnErrorStatus(status: number): boolean {
-  return status === 406 || status === 422 || status === 400
-}
-
-function isColumnErrorMessage(msg: string): boolean {
-  const lower = (msg || '').toLowerCase()
-  return (
-    lower.includes('column') ||
-    lower.includes('required colun') ||
-    lower.includes('name and price') ||
-    lower.includes('could not parse') ||
-    lower.includes('no data rows') ||
-    lower.includes('null') ||
-    lower.includes('header')
-  )
-}
-
 export default function ProductUploadModal({
   businessId,
   onClose,
@@ -153,15 +131,8 @@ export default function ProductUploadModal({
     if (!selected) return
     setError('')
     setSuccess('')
-    if (!isValidExt(selected.name)) {
-      setFile(null)
-      setProgress(0)
-      setError(
-        `"${selected.name}" is not a supported format. Please upload a CSV, XLS, or XLSX file.`
-      )
-      return
-    }
     setFile(selected)
+    setProgress(0)
   }
 
   const handleDrop = (e: React.DragEvent) => {
@@ -198,16 +169,7 @@ export default function ProductUploadModal({
       setProgress(100)
       onUploaded(summary)
     } catch (err: any) {
-      const status = err?.response?.status
-      const msg = parseApiError(err)
-      if (isColumnErrorStatus(status) && isColumnErrorMessage(msg)) {
-        setError(
-          msg ||
-            'We could not read the columns in that file. Check that your headers match the accepted names below.'
-        )
-      } else {
-        setError(msg)
-      }
+      setError(parseApiError(err))
       setProgress(0)
     } finally {
       setUploading(false)

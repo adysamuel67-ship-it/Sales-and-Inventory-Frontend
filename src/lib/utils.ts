@@ -266,11 +266,41 @@ export function aggregateProductPerformance(
 }
 
 export function parseApiError(err: any): string {
-  const detail = err?.response?.data?.detail
+  const data = err?.response?.data
+  const detail = data?.detail ?? data?.message ?? data?.msg ?? data?.error
+
+  if (typeof detail === 'string' && detail.trim()) return detail.trim()
+
   if (Array.isArray(detail)) {
-    return detail.map((e: any) => e.msg).join(', ')
+    const msgs = detail
+      .map((e: any) => (typeof e === 'string' ? e : e?.msg ?? e?.message))
+      .filter((m: any) => typeof m === 'string' && m.trim())
+    if (msgs.length) return msgs.map((m: string) => m.trim()).join(', ')
   }
-  if (typeof detail === 'string') return detail
+
+  if (detail && typeof detail === 'object') return JSON.stringify(detail)
+
+  if (typeof data === 'string' && data.trim()) {
+    const raw = data.trim()
+    if (raw.startsWith('{') || raw.startsWith('[')) {
+      try {
+        const parsed = JSON.parse(raw)
+        const inner = parsed?.detail ?? parsed?.message ?? parsed?.msg ?? parsed?.error
+        if (typeof inner === 'string' && inner.trim()) return inner.trim()
+        if (Array.isArray(inner)) {
+          const msgs = inner
+            .map((e: any) => (typeof e === 'string' ? e : e?.msg ?? e?.message))
+            .filter((m: any) => typeof m === 'string' && m.trim())
+          if (msgs.length) return msgs.map((m: string) => m.trim()).join(', ')
+        }
+      } catch {
+        // not JSON after all, fall through to the raw text
+      }
+    }
+    const text = raw.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+    if (text) return text
+  }
+
   return err?.message || 'An error occurred'
 }
 

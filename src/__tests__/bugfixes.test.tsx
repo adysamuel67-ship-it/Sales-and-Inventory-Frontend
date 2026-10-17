@@ -454,4 +454,24 @@ describe('parseApiError', () => {
   it('handles empty object', () => {
     expect(parseApiError({})).toBe('An error occurred')
   })
+
+  it('handles plain text response bodies', () => {
+    const err = { response: { status: 500, data: 'Internal Server Error' }, message: 'Request failed with status code 500' }
+    expect(parseApiError(err)).toBe('Internal Server Error')
+  })
+
+  it('handles message and msg keys', () => {
+    expect(parseApiError({ response: { data: { message: 'Too many requests' } } })).toBe('Too many requests')
+    expect(parseApiError({ response: { data: { msg: 'Rate limited' } } })).toBe('Rate limited')
+  })
+
+  it('handles arrays of plain strings', () => {
+    const err = { response: { data: { detail: ['First', 'Second'] } } }
+    expect(parseApiError(err)).toBe('First, Second')
+  })
+
+  it('strips html from gateway error pages', () => {
+    const err = { response: { status: 502, data: '<html><body>Bad Gateway</body></html>' } }
+    expect(parseApiError(err)).toBe('Bad Gateway')
+  })
 })
