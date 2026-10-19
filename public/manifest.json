@@ -8,6 +8,20 @@
   "orientation": "portrait",
   "background_color": "#FFFFFF",
   "theme_color": "#14213D",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
   "lang": "en-GH",
   "dir": "ltr",
   "categories": ["business", "productivity", "finance"],
