@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Inter, Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
 import { AuthProvider } from '@/lib/auth'
-import { COMPANY_NAME, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '@/lib/site'
+import { COMPANY_NAME, SITE_DESCRIPTION, SITE_NAME, SITE_URL, SUPPORT_PHONE } from '@/lib/site'
 
 // Self-hosted at build time by next/font: no render-blocking request to a
 // third-party CDN, no FOUT, and no silent fallback to the OS system stack.
@@ -84,10 +84,49 @@ export const metadata: Metadata = {
   },
 }
 
+// Served on every page. The Organization logo is what Google uses for the
+// site logo / knowledge-panel treatment in search results; the favicon only
+// covers the small icon beside the listing.
+const siteJsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Organization',
+      '@id': `${SITE_URL}/#organization`,
+      name: SITE_NAME,
+      url: `${SITE_URL}/`,
+      logo: {
+        '@type': 'ImageObject',
+        url: `${SITE_URL}/icon-512.png`,
+        width: 512,
+        height: 512,
+      },
+      areaServed: 'GH',
+      contactPoint: {
+        '@type': 'ContactPoint',
+        telephone: SUPPORT_PHONE,
+        contactType: 'customer support',
+        areaServed: 'GH',
+      },
+    },
+    {
+      '@type': 'WebSite',
+      '@id': `${SITE_URL}/#website`,
+      name: SITE_NAME,
+      url: `${SITE_URL}/`,
+      publisher: { '@id': `${SITE_URL}/#organization` },
+    },
+  ],
+}
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${sans.variable} ${display.variable}`}>
       <body className="antialiased">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd) }}
+        />
         <AuthProvider>
           {children}
         </AuthProvider>

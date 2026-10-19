@@ -149,6 +149,8 @@ export default function Home() {
     operatingSystem: 'Web, Android, iOS',
     url: absoluteUrl('/'),
     description: SITE_DESCRIPTION,
+    logo: absoluteUrl('/icon-512.png'),
+    image: absoluteUrl('/icon-512.png'),
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'GHS' },
     areaServed: 'GH',
     author: { '@type': 'Organization', name: COMPANY_NAME },
