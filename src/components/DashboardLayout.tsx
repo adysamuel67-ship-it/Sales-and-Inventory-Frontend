@@ -20,6 +20,7 @@ import type { NotificationItem } from '@/lib/api'
 import BusinessBotLogo from './BusinessBotLogo'
 import AppLoadingSplash from './AppLoadingSplash'
 import GuideDownloadButton from './GuideDownloadButton'
+import Modal from '@/components/ui/Modal'
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -936,23 +937,18 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
         const status = a.status || 'pending'
         const createdAt = a.created_at || a.sent_at || ''
         return (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" onClick={() => setSelectedApproval(null)}>
-            <div className="absolute inset-0 bg-black/40" />
-            <div
-              className="relative bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="px-4 sm:px-6 py-4 sm:py-5 bg-gradient-to-br from-primary to-primary-dark">
-                <div className="flex items-center gap-3 sm:gap-4">
-                  <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-white/15 backdrop-blur-sm border-2 border-white/30 flex items-center justify-center text-white text-lg sm:text-xl font-bold shrink-0">
-                    {name.charAt(0).toUpperCase()}
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-white">{name}</h3>
-                    <p className="text-white/70 text-sm">{email}</p>
-                  </div>
+          <Modal onClose={() => setSelectedApproval(null)} panelClassName="w-full max-w-md overflow-hidden p-0">
+            <div className="px-4 sm:px-6 py-4 sm:py-5 bg-gradient-to-br from-primary to-primary-dark">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-white/15 backdrop-blur-sm border-2 border-white/30 flex items-center justify-center text-white text-lg sm:text-xl font-bold shrink-0">
+                  {name.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white">{name}</h3>
+                  <p className="text-white/70 text-sm">{email}</p>
                 </div>
               </div>
+            </div>
 
               <div className="px-4 sm:px-6 py-4 sm:py-5 space-y-3 sm:space-y-4">
                 <div className="grid grid-cols-2 gap-4">
@@ -1011,8 +1007,7 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
                   Close
                 </button>
               </div>
-            </div>
-          </div>
+          </Modal>
         )
       })()}
     </div>

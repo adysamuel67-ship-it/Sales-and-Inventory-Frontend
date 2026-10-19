@@ -9,6 +9,7 @@ import Button from '@/components/ui/Button'
 import Card, { CardHeader } from '@/components/ui/Card'
 import Field, { disposalInputClass, inputClass } from '@/components/ui/Field'
 import PageHeader from '@/components/ui/PageHeader'
+import Modal from '@/components/ui/Modal'
 import { PageSpinner } from '@/components/ui/Spinner'
 import { useAuth } from '@/lib/auth'
 import { profileAPI, adminAPI } from '@/lib/api'
@@ -540,33 +541,32 @@ export default function ProfilePage() {
 
         {/* Delete Confirmation Modal */}
         {showDeleteConfirm && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" onClick={() => !deleting && setShowDeleteConfirm(false)}>
-            <div className="absolute inset-0 bg-slate-900/50" />
-            <div
-              className="relative w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-xl"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="p-6 text-center">
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-50">
-                  <svg className="w-7 h-7 text-danger" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-bold tracking-tight text-slate-900">Delete Account</h3>
-                <p className="mt-2 text-[15px] leading-relaxed text-slate-600">
-                  Are you sure you want to permanently delete your account? This action cannot be undone and all your data will be removed.
-                </p>
+          <Modal
+            onClose={() => {
+              if (!deleting) setShowDeleteConfirm(false)
+            }}
+            panelClassName="w-full max-w-md overflow-hidden"
+          >
+            <div className="p-6 text-center">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-50">
+                <svg className="w-7 h-7 text-danger" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                </svg>
               </div>
-              <div className="flex flex-col items-stretch gap-3 border-t border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:px-6">
-                <Button variant="danger" loading={deleting} onClick={handleDeleteAccount} className="flex-1">
-                  Yes, Delete My Account
-                </Button>
-                <Button variant="ghost" disabled={deleting} onClick={() => setShowDeleteConfirm(false)}>
-                  Cancel
-                </Button>
-              </div>
+              <h3 className="text-lg font-bold tracking-tight text-slate-900">Delete Account</h3>
+              <p className="mt-2 text-[15px] leading-relaxed text-slate-600">
+                Are you sure you want to permanently delete your account? This action cannot be undone and all your data will be removed.
+              </p>
             </div>
-          </div>
+            <div className="flex flex-col items-stretch gap-3 border-t border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:px-6">
+              <Button variant="danger" loading={deleting} onClick={handleDeleteAccount} className="flex-1">
+                Yes, Delete My Account
+              </Button>
+              <Button variant="ghost" disabled={deleting} onClick={() => setShowDeleteConfirm(false)}>
+                Cancel
+              </Button>
+            </div>
+          </Modal>
         )}
 
       </div>

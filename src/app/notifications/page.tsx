@@ -7,6 +7,7 @@ import Alert from '@/components/ui/Alert'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import EmptyState from '@/components/ui/EmptyState'
+import Modal from '@/components/ui/Modal'
 import Skeleton from '@/components/ui/Skeleton'
 import Pagination from '@/components/ui/Pagination'
 import { notificationAPI, normalizeNotifications, NotificationItem } from '@/lib/api'
@@ -288,39 +289,31 @@ export default function NotificationsPage() {
       </div>
 
       {pendingDelete && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          onClick={() => setPendingDelete(null)}
+        <Modal
+          onClose={() => setPendingDelete(null)}
+          panelClassName="w-full max-w-md animate-scale-in border border-slate-200 p-6 shadow-popover"
+          aria-labelledby="del-notif-title"
         >
-          <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" />
-          <div
-            role="alertdialog"
-            aria-modal="true"
-            aria-labelledby="del-notif-title"
-            className="relative w-full max-w-md animate-scale-in rounded-2xl border border-slate-200 bg-white p-6 shadow-popover"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 id="del-notif-title" className="text-section-title text-slate-900">
-              Delete this notification?
-            </h2>
-            <p className="mt-2 text-sm leading-relaxed text-slate-600">
-              &ldquo;{pendingDelete.title || 'This notification'}&rdquo; will be removed
-              permanently. This cannot be undone.
-            </p>
-            <div className="mt-6 flex justify-end gap-2">
-              <Button variant="ghost" onClick={() => setPendingDelete(null)}>
-                Cancel
-              </Button>
-              <Button
-                variant="danger"
-                onClick={confirmDelete}
-                loading={busyId === pendingDelete.notification_id}
-              >
-                Delete
-              </Button>
-            </div>
+          <h2 id="del-notif-title" className="text-section-title text-slate-900">
+            Delete this notification?
+          </h2>
+          <p className="mt-2 text-sm leading-relaxed text-slate-600">
+            &ldquo;{pendingDelete.title || 'This notification'}&rdquo; will be removed
+            permanently. This cannot be undone.
+          </p>
+          <div className="mt-6 flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setPendingDelete(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              onClick={confirmDelete}
+              loading={busyId === pendingDelete.notification_id}
+            >
+              Delete
+            </Button>
           </div>
-        </div>
+        </Modal>
       )}
     </DashboardLayout>
   )

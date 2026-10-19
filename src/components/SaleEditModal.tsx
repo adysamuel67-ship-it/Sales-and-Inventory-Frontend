@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { saleAPI, productAPI, customerAPI, debtAPI } from '@/lib/api'
 import { extractArray, normalizeProduct, MappedSale, formatCedi } from '@/lib/utils'
 import ProductCombobox from '@/components/ui/ProductCombobox'
+import Modal from '@/components/ui/Modal'
 import { defaultDebtDueDate, outstandingBalance } from '@/lib/sms'
 
 interface Props {
@@ -303,12 +304,8 @@ export default function SaleEditModal({ sale, businessId, onClose, onSaved }: Pr
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/40" />
-      <div
-        className="relative bg-white rounded-2xl shadow-xl w-full max-w-xl max-h-[90vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <>
+      <Modal onClose={onClose} panelClassName="w-full max-w-xl max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 bg-white border-b border-slate-200 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
           <div>
             <h3 className="font-semibold text-slate-900">Edit Sale #{sale.id}</h3>
@@ -636,48 +633,45 @@ export default function SaleEditModal({ sale, businessId, onClose, onSaved }: Pr
             </div>
           </form>
         )}
-      </div>
+      </Modal>
 
       {showCustomerPicker && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" onClick={() => setShowCustomerPicker(false)}>
-          <div className="absolute inset-0 bg-black/40" />
-          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-sm max-h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
-            <div className="px-4 py-3 border-b border-slate-200">
-              <p className="font-semibold text-slate-900 text-sm mb-2">Pick a Customer</p>
-              <input
-                type="text"
-                value={customerSearch}
-                onChange={(e) => setCustomerSearch(e.target.value)}
-                placeholder="Search by name or phone..."
-                autoFocus
-                className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-              />
-            </div>
-            <div className="overflow-y-auto max-h-64">
-              {filteredCustomers.length === 0 ? (
-                <div className="px-4 py-6 text-center text-sm text-neutral-light">No customers found</div>
-              ) : (
-                filteredCustomers.map((c: any) => (
-                  <button
-                    key={c.customer_id ?? c.id}
-                    type="button"
-                    onClick={() => selectCustomer(c)}
-                    className="w-full px-4 py-3 flex items-center gap-3 border-b border-slate-50 hover:bg-slate-50 transition-colors text-left"
-                  >
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold shrink-0">
-                      {(c.name || '?').charAt(0).toUpperCase()}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-slate-900 truncate">{c.name || 'Unknown'}</p>
-                      <p className="text-xs text-neutral-light truncate">{c.phone || c.phone_number || c.mobile || c.email || 'No contact'}</p>
-                    </div>
-                  </button>
-                ))
-              )}
-            </div>
+        <Modal onClose={() => setShowCustomerPicker(false)} panelClassName="w-full max-w-sm max-h-[80vh] overflow-hidden">
+          <div className="px-4 py-3 border-b border-slate-200">
+            <p className="font-semibold text-slate-900 text-sm mb-2">Pick a Customer</p>
+            <input
+              type="text"
+              value={customerSearch}
+              onChange={(e) => setCustomerSearch(e.target.value)}
+              placeholder="Search by name or phone..."
+              autoFocus
+              className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+            />
           </div>
-        </div>
+          <div className="overflow-y-auto max-h-64">
+            {filteredCustomers.length === 0 ? (
+              <div className="px-4 py-6 text-center text-sm text-neutral-light">No customers found</div>
+            ) : (
+              filteredCustomers.map((c: any) => (
+                <button
+                  key={c.customer_id ?? c.id}
+                  type="button"
+                  onClick={() => selectCustomer(c)}
+                  className="w-full px-4 py-3 flex items-center gap-3 border-b border-slate-50 hover:bg-slate-50 transition-colors text-left"
+                >
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold shrink-0">
+                    {(c.name || '?').charAt(0).toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-slate-900 truncate">{c.name || 'Unknown'}</p>
+                    <p className="text-xs text-neutral-light truncate">{c.phone || c.phone_number || c.mobile || c.email || 'No contact'}</p>
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
+        </Modal>
       )}
-    </div>
+    </>
   )
 }

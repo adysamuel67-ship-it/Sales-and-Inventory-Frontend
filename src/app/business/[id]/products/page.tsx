@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import { productAPI } from '@/lib/api'
 import { normalizeProduct, extractArray, parseApiError, isAdminRole, formatCedi, isDeletedProduct, formatDeletedAt } from '@/lib/utils'
+import type { Product } from '@/lib/types'
 import { useAuth } from '@/lib/auth'
 import ProductDetailModal from '@/components/ProductDetailModal'
 import ProductUploadModal from '@/components/ProductUploadModal'
@@ -11,12 +12,13 @@ import PageHeader from '@/components/ui/PageHeader'
 import Alert from '@/components/ui/Alert'
 import Button from '@/components/ui/Button'
 import EmptyState from '@/components/ui/EmptyState'
+import Modal from '@/components/ui/Modal'
 import { PlusIcon, BoxIcon } from '@/components/ui/Icons'
 export default function ProductsPage() {
   const params = useParams()
   const businessId = parseInt(params?.id as string)
   const { user } = useAuth()
-  const [allProducts, setAllProducts] = useState<any[]>([])
+  const [allProducts, setAllProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
@@ -28,13 +30,13 @@ export default function ProductsPage() {
   const [selected, setSelected] = useState<Set<number>>(new Set())
   const [selectMode, setSelectMode] = useState(false)
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false)
-  const [editProduct, setEditProduct] = useState<any>(null)
-  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; product: any }>({ open: false, product: null })
+  const [editProduct, setEditProduct] = useState<Product | null>(null)
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; product: Product | null }>({ open: false, product: null })
   const [categories, setCategories] = useState<string[]>([])
   const [selectedCategory, setSelectedCategory] = useState('')
   const [lowStockOnly, setLowStockOnly] = useState(false)
   const [productView, setProductView] = useState<'active' | 'deleted'>('active')
-  const [detailProduct, setDetailProduct] = useState<any>(null)
+  const [detailProduct, setDetailProduct] = useState<Product | null>(null)
   const [showExportDropdown, setShowExportDropdown] = useState(false)
   const [exporting, setExporting] = useState(false)
   const exportRef = useRef<HTMLDivElement>(null)
@@ -43,7 +45,7 @@ export default function ProductsPage() {
   })
   const [saving, setSaving] = useState(false)
   const [showRestockModal, setShowRestockModal] = useState(false)
-  const [restockProduct, setRestockProduct] = useState<any>(null)
+  const [restockProduct, setRestockProduct] = useState<Product | null>(null)
   const [restockQty, setRestockQty] = useState('')
   const [restocking, setRestocking] = useState(false)
 
@@ -54,7 +56,7 @@ export default function ProductsPage() {
       const res = await productAPI.list(businessId)
       const items = extractArray(res.data).map(normalizeProduct)
       setAllProducts(items)
-      const cats = [...new Set(items.filter((p: any) => !isDeletedProduct(p)).map((p: any) => p.category).filter(Boolean))] as string[]
+      const cats = [...new Set(items.filter(p => !isDeletedProduct(p)).map(p => p.category).filter(Boolean))] as string[]
       setCategories(cats)
       setError('')
     } catch (err: any) {
@@ -81,8 +83,8 @@ export default function ProductsPage() {
     }
     if (productView === 'active' && selectedCategory) items = items.filter(p => p.category === selectedCategory)
     if (productView === 'active' && lowStockOnly) items = items.filter(p => p.quantity <= (p.low_stock_threshold ?? 10))
-    items.sort((a: any, b: any) => {
-      let va = a[sortKey], vb = b[sortKey]
+    items.sort((a, b) => {
+      let va = (a as any)[sortKey], vb = (b as any)[sortKey]
       if (typeof va === 'string') va = va.toLowerCase()
       if (typeof vb === 'string') vb = vb.toLowerCase()
       if (va == null) return 1
@@ -110,8 +112,7 @@ export default function ProductsPage() {
     setShowAdd(true)
   }
 
-  const openEdit = (p: any, e: React.MouseEvent) => {
-    e.stopPropagation()
+  const openEdit = (p: Product) => {
     setForm({
       name: p.name || '', price: String(p.price ?? ''), cost_price: String(p.cost_price ?? ''),
       quantity: String(p.quantity ?? ''), unit: p.unit || 'units',
@@ -174,7 +175,7 @@ export default function ProductsPage() {
   }
 
   const toggleSelectAll = () => {
-    const ids = displayed.map((p: any) => p.product_id)
+    const ids = displayed.map(p => p.product_id)
     const allSelected = ids.length > 0 && ids.every((id) => selected.has(id))
     setSelected((prev) => {
       const next = new Set(prev)
@@ -245,8 +246,7 @@ export default function ProductsPage() {
     })
   }
 
-  const openRestock = (p: any, e: React.MouseEvent) => {
-    e.stopPropagation()
+  const openRestock = (p: Product) => {
     setRestockProduct(p)
     setRestockQty('')
     setShowRestockModal(true)
@@ -279,8 +279,7 @@ export default function ProductsPage() {
     }
   }
 
-  const handleToggleActive = async (p: any, e: React.MouseEvent) => {
-    e.stopPropagation()
+  const handleToggleActive = async (p: Product) => {
     const nextActive = !p.is_active
     setAllProducts(prev => prev.map(x => x.product_id === p.product_id ? { ...x, is_active: nextActive } : x))
     try {
@@ -670,15 +669,15 @@ export default function ProductsPage() {
           canManage={canEdit}
           onEdit={(p) => {
             setDetailProduct(null)
-            openEdit(p, new MouseEvent('click') as unknown as React.MouseEvent)
+            openEdit(p)
           }}
           onRestock={(p) => {
             setDetailProduct(null)
-            openRestock(p, new MouseEvent('click') as unknown as React.MouseEvent)
+            openRestock(p)
           }}
           onToggleActive={(p) => {
             setDetailProduct(null)
-            handleToggleActive(p, new MouseEvent('click') as unknown as React.MouseEvent)
+            handleToggleActive(p)
           }}
           onDelete={(p) => {
             setDetailProduct(null)
@@ -702,10 +701,8 @@ export default function ProductsPage() {
 
       {/* Restock Modal */}
       {showRestockModal && restockProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowRestockModal(false)}>
-          <div className="absolute inset-0 bg-black/40" />
-          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4">
-            <div>
+        <Modal onClose={() => setShowRestockModal(false)} panelClassName="w-full max-w-sm p-6 space-y-4">
+          <div>
               <h3 className="font-semibold text-slate-900">Restock Product</h3>
               <p className="text-sm text-neutral-light mt-1">
                 Add stock to <span className="font-medium text-slate-900">{restockProduct.name}</span>.
@@ -745,15 +742,12 @@ export default function ProductsPage() {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {/* Add/Edit Modal */}
       {showAdd && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowAdd(false)}>
-          <div className="absolute inset-0 bg-black/40" />
-          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <Modal onClose={() => setShowAdd(false)} panelClassName="w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
               <h3 className="font-semibold text-slate-900">{editProduct ? 'Edit Product' : 'Add Product'}</h3>
               <button onClick={() => setShowAdd(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors">
@@ -818,15 +812,12 @@ export default function ProductsPage() {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {/* Delete confirm */}
       {deleteConfirm.open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setDeleteConfirm({ open: false, product: null })}>
-          <div className="absolute inset-0 bg-black/40" />
-          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 text-center" onClick={e => e.stopPropagation()}>
+        <Modal onClose={() => setDeleteConfirm({ open: false, product: null })} panelClassName="w-full max-w-sm p-6 text-center">
             <div className="w-12 h-12 mx-auto rounded-full bg-danger-light flex items-center justify-center mb-4">
               <svg className="w-6 h-6 text-danger" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
@@ -838,15 +829,12 @@ export default function ProductsPage() {
               <button onClick={() => setDeleteConfirm({ open: false, product: null })} className="flex-1 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors">Cancel</button>
               <button onClick={handleDelete} className="flex-1 py-2.5 bg-danger text-white rounded-xl text-sm font-medium hover:bg-red-600 transition-colors">Delete</button>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {/* Bulk delete confirm */}
       {bulkDeleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setBulkDeleteConfirm(false)}>
-          <div className="absolute inset-0 bg-black/40" />
-          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 text-center" onClick={e => e.stopPropagation()}>
+        <Modal onClose={() => setBulkDeleteConfirm(false)} panelClassName="w-full max-w-sm p-6 text-center">
             <div className="w-12 h-12 mx-auto rounded-full bg-danger-light flex items-center justify-center mb-4">
               <svg className="w-6 h-6 text-danger" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
@@ -862,8 +850,7 @@ export default function ProductsPage() {
                 Delete {selected.size}
               </button>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   )

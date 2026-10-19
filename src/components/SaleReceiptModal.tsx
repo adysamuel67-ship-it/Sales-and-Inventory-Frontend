@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { saleAPI } from '@/lib/api'
 import { parseApiError, formatPayment } from '@/lib/utils'
 import Alert from '@/components/ui/Alert'
+import Modal from '@/components/ui/Modal'
 
 interface ReceiptItem {
   product_id: number
@@ -40,12 +41,6 @@ export default function SaleReceiptModal({ businessId, saleId, saleLabel, onClos
   const [data, setData] = useState<ReceiptData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-
-  useEffect(() => {
-    const handleEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    window.addEventListener('keydown', handleEsc)
-    return () => window.removeEventListener('keydown', handleEsc)
-  }, [onClose])
 
   useEffect(() => {
     let cancelled = false
@@ -119,117 +114,111 @@ export default function SaleReceiptModal({ businessId, saleId, saleLabel, onClos
   const balance = data ? Math.max(0, Number(data.total) - Number(data.amount_paid ?? 0)) : 0
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/40" />
-      <div
-        className="relative bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="sticky top-0 z-10 bg-white border-b border-slate-200 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between">
-          <h3 className="font-semibold text-slate-900">Sale Receipt</h3>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
-          >
-            <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        <div className="px-4 sm:px-6 py-5">
-          {error && (
-            <div className="mb-4">
-              <Alert kind="error">{error}</Alert>
-            </div>
-          )}
-
-          {loading ? (
-            <div className="flex justify-center py-12">
-              <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
-            </div>
-          ) : data ? (
-            <div className="font-mono text-sm bg-surfaceAlt rounded-xl p-4">
-              <div className="text-center border-b border-dashed border-slate-300 pb-3 mb-3">
-                <p className="text-base font-bold uppercase tracking-wide text-slate-900">
-                  {data.business?.name || 'Business Receipt'}
-                </p>
-                {data.business?.phone && <p className="text-xs text-neutral-light mt-0.5">{data.business.phone}</p>}
-              </div>
-
-              <div className="flex items-center justify-between text-xs text-slate-600 mb-1">
-                <span>{saleLabel}</span>
-                <span>
-                  {data.created_at ? new Date(data.created_at).toLocaleString() : ''}
-                </span>
-              </div>
-              <p className="text-xs text-neutral-light mb-3">
-                Receipt #{data.sale_id} · Customer:{' '}
-                <span className="text-slate-900 font-medium">{data.customer?.name || 'Walk-in Customer'}</span>
-                {data.customer?.phone ? ` · ${data.customer.phone}` : ''}
-              </p>
-
-              <div className="border-t border-dashed border-slate-300 pt-2">
-                <div className="flex items-center justify-between text-xs text-neutral-light uppercase tracking-wider pb-1">
-                  <span className="flex-1">Item</span>
-                  <span className="w-10 text-right">Qty</span>
-                  <span className="w-16 text-right">Unit</span>
-                  <span className="w-20 text-right">Subtotal</span>
-                </div>
-                {(data.items || []).map((item, idx) => (
-                  <div key={idx} className="flex items-center justify-between text-xs py-1">
-                    <span className="flex-1 pr-2 truncate text-slate-900">{item.name || `Product #${item.product_id}`}</span>
-                    <span className="w-10 text-right">{item.quantity}</span>
-                    <span className="w-16 text-right">{money(item.unit_price)}</span>
-                    <span className="w-20 text-right font-medium">{money(item.subtotal)}</span>
-                  </div>
-                ))}
-                <div className="flex items-center justify-between border-t border-dashed border-slate-300 mt-1 pt-2 text-sm font-bold text-slate-900">
-                  <span>TOTAL</span>
-                  <span className="w-20 text-right">GH₵{money(data.total)}</span>
-                </div>
-              </div>
-
-              <div className="border-t border-dashed border-slate-300 mt-3 pt-2 space-y-1 text-xs text-slate-700">
-                <div className="flex items-center justify-between">
-                  <span>Amount paid</span>
-                  <span>GH₵{money(data.amount_paid)}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>Payment method</span>
-                  <span className="font-medium">{formatPayment(data.payment_method)}</span>
-                </div>
-                {balance > 0 && (
-                  <div className="flex items-center justify-between text-danger font-semibold">
-                    <span>Balance</span>
-                    <span>GH₵{money(balance)}</span>
-                  </div>
-                )}
-              </div>
-
-              <p className="text-center text-xs text-neutral-light mt-4">Thank you for your business!</p>
-            </div>
-          ) : (
-            <div className="py-10 text-center text-sm text-neutral-light">No receipt data available</div>
-          )}
-        </div>
-
-        <div className="sticky bottom-0 bg-white border-t border-slate-200 px-4 sm:px-6 py-4 rounded-b-2xl flex items-center gap-3">
-          <button
-            onClick={onClose}
-            className="flex-1 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors min-h-[44px]"
-          >
-            Close
-          </button>
-          <button
-            onClick={handlePrint}
-            disabled={loading || !data || !!error}
-            className="flex-1 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-50 min-h-[44px]"
-          >
-            Print Receipt
-          </button>
-        </div>
+    <Modal onClose={onClose} panelClassName="w-full max-w-md max-h-[90vh] overflow-y-auto">
+      <div className="sticky top-0 z-10 bg-white border-b border-slate-200 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between">
+        <h3 className="font-semibold text-slate-900">Sale Receipt</h3>
+        <button
+          onClick={onClose}
+          className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
+        >
+          <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
       </div>
-    </div>
+
+      <div className="px-4 sm:px-6 py-5">
+        {error && (
+          <div className="mb-4">
+            <Alert kind="error">{error}</Alert>
+          </div>
+        )}
+
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+          </div>
+        ) : data ? (
+          <div className="font-mono text-sm bg-surfaceAlt rounded-xl p-4">
+            <div className="text-center border-b border-dashed border-slate-300 pb-3 mb-3">
+              <p className="text-base font-bold uppercase tracking-wide text-slate-900">
+                {data.business?.name || 'Business Receipt'}
+              </p>
+              {data.business?.phone && <p className="text-xs text-neutral-light mt-0.5">{data.business.phone}</p>}
+            </div>
+
+            <div className="flex items-center justify-between text-xs text-slate-600 mb-1">
+              <span>{saleLabel}</span>
+              <span>
+                {data.created_at ? new Date(data.created_at).toLocaleString() : ''}
+              </span>
+            </div>
+            <p className="text-xs text-neutral-light mb-3">
+              Receipt #{data.sale_id} · Customer:{' '}
+              <span className="text-slate-900 font-medium">{data.customer?.name || 'Walk-in Customer'}</span>
+              {data.customer?.phone ? ` · ${data.customer.phone}` : ''}
+            </p>
+
+            <div className="border-t border-dashed border-slate-300 pt-2">
+              <div className="flex items-center justify-between text-xs text-neutral-light uppercase tracking-wider pb-1">
+                <span className="flex-1">Item</span>
+                <span className="w-10 text-right">Qty</span>
+                <span className="w-16 text-right">Unit</span>
+                <span className="w-20 text-right">Subtotal</span>
+              </div>
+              {(data.items || []).map((item, idx) => (
+                <div key={idx} className="flex items-center justify-between text-xs py-1">
+                  <span className="flex-1 pr-2 truncate text-slate-900">{item.name || `Product #${item.product_id}`}</span>
+                  <span className="w-10 text-right">{item.quantity}</span>
+                  <span className="w-16 text-right">{money(item.unit_price)}</span>
+                  <span className="w-20 text-right font-medium">{money(item.subtotal)}</span>
+                </div>
+              ))}
+              <div className="flex items-center justify-between border-t border-dashed border-slate-300 mt-1 pt-2 text-sm font-bold text-slate-900">
+                <span>TOTAL</span>
+                <span className="w-20 text-right">GH₵{money(data.total)}</span>
+              </div>
+            </div>
+
+            <div className="border-t border-dashed border-slate-300 mt-3 pt-2 space-y-1 text-xs text-slate-700">
+              <div className="flex items-center justify-between">
+                <span>Amount paid</span>
+                <span>GH₵{money(data.amount_paid)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Payment method</span>
+                <span className="font-medium">{formatPayment(data.payment_method)}</span>
+              </div>
+              {balance > 0 && (
+                <div className="flex items-center justify-between text-danger font-semibold">
+                  <span>Balance</span>
+                  <span>GH₵{money(balance)}</span>
+                </div>
+              )}
+            </div>
+
+            <p className="text-center text-xs text-neutral-light mt-4">Thank you for your business!</p>
+          </div>
+        ) : (
+          <div className="py-10 text-center text-sm text-neutral-light">No receipt data available</div>
+        )}
+      </div>
+
+      <div className="sticky bottom-0 bg-white border-t border-slate-200 px-4 sm:px-6 py-4 rounded-b-2xl flex items-center gap-3">
+        <button
+          onClick={onClose}
+          className="flex-1 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors min-h-[44px]"
+        >
+          Close
+        </button>
+        <button
+          onClick={handlePrint}
+          disabled={loading || !data || !!error}
+          className="flex-1 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-50 min-h-[44px]"
+        >
+          Print Receipt
+        </button>
+      </div>
+    </Modal>
   )
 }

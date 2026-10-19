@@ -12,6 +12,7 @@ import EmptyState from '@/components/ui/EmptyState'
 import { PlusIcon, UsersIcon } from '@/components/ui/Icons'
 import SaleDetailModal from '@/components/SaleDetailModal'
 import ScheduleReminderModal, { ReminderCustomer } from '@/components/ScheduleReminderModal'
+import Modal from '@/components/ui/Modal'
 interface Customer {
   customer_id: number
   name: string
@@ -761,285 +762,279 @@ function CustomersContent() {
       </div>
 
       {showProfile && profileCustomer && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowProfile(false)}>
-          <div className="absolute inset-0 bg-black/40" />
-          <div
-            className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="sticky top-0 bg-white border-b border-slate-200 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
-              <h3 className="font-semibold text-slate-900 text-sm sm:text-base">Customer Profile</h3>
-              <button
-                onClick={() => setShowProfile(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
-              >
-                <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+        <Modal onClose={() => setShowProfile(false)} panelClassName="w-full max-w-lg max-h-[90vh] overflow-y-auto">
+          <div className="sticky top-0 bg-white border-b border-slate-200 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
+            <h3 className="font-semibold text-slate-900 text-sm sm:text-base">Customer Profile</h3>
+            <button
+              onClick={() => setShowProfile(false)}
+              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
+            >
+              <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <div className="px-4 sm:px-6 py-4 sm:py-5">
+            <div className="flex items-center gap-3 sm:gap-4 mb-5 sm:mb-6">
+              <div className={`w-11 h-11 sm:w-14 sm:h-14 rounded-full flex items-center justify-center text-base sm:text-lg font-bold shrink-0 ${
+                profileCustomer.is_active === false
+                  ? 'bg-slate-100 text-slate-400'
+                  : 'bg-primary/10 text-primary'
+              }`}>
+                {profileCustomer.name?.charAt(0)?.toUpperCase() || '?'}
+              </div>
+              <div className="min-w-0 flex-1">
+                <h4 className="text-base sm:text-lg font-semibold text-slate-900 truncate">{profileCustomer.name}</h4>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
+                    profileCustomer.is_active === false
+                      ? 'bg-slate-100 text-slate-500'
+                      : 'bg-success-light text-success'
+                  }`}>
+                    {profileCustomer.is_active === false ? 'Inactive' : 'Active'}
+                  </span>
+                  {profileCustomer.created_at && (
+                    <span className="text-xs text-neutral-light">
+                      Since {new Date(profileCustomer.created_at).toLocaleDateString()}
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
 
-            <div className="px-4 sm:px-6 py-4 sm:py-5">
-              <div className="flex items-center gap-3 sm:gap-4 mb-5 sm:mb-6">
-                <div className={`w-11 h-11 sm:w-14 sm:h-14 rounded-full flex items-center justify-center text-base sm:text-lg font-bold shrink-0 ${
-                  profileCustomer.is_active === false
-                    ? 'bg-slate-100 text-slate-400'
-                    : 'bg-primary/10 text-primary'
-                }`}>
-                  {profileCustomer.name?.charAt(0)?.toUpperCase() || '?'}
+            <div className="space-y-3 mb-6">
+              {profileCustomer.phone && (
+                <div className="flex items-center gap-3 text-sm">
+                  <svg className="w-4 h-4 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                  </svg>
+                  <span className="text-slate-600">{profileCustomer.phone}</span>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <h4 className="text-base sm:text-lg font-semibold text-slate-900 truncate">{profileCustomer.name}</h4>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
-                      profileCustomer.is_active === false
-                        ? 'bg-slate-100 text-slate-500'
-                        : 'bg-success-light text-success'
-                    }`}>
-                      {profileCustomer.is_active === false ? 'Inactive' : 'Active'}
-                    </span>
-                    {profileCustomer.created_at && (
-                      <span className="text-xs text-neutral-light">
-                        Since {new Date(profileCustomer.created_at).toLocaleDateString()}
-                      </span>
-                    )}
-                  </div>
+              )}
+              {profileCustomer.email && (
+                <div className="flex items-center gap-3 text-sm">
+                  <svg className="w-4 h-4 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  <span className="text-slate-600">{profileCustomer.email}</span>
                 </div>
+              )}
+              {profileCustomer.address && (
+                <div className="flex items-center gap-3 text-sm">
+                  <svg className="w-4 h-4 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <span className="text-slate-600">{profileCustomer.address}</span>
+                </div>
+              )}
+              {!profileCustomer.phone && !profileCustomer.email && !profileCustomer.address && (
+                <p className="text-sm text-neutral-light">No contact details provided</p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-5 sm:mb-6">
+              <div className="bg-surfaceAlt rounded-xl p-2.5 sm:p-4">
+                <p className="text-[10px] sm:text-xs text-neutral-light mb-0.5 sm:mb-1">Total Spent</p>
+                <p className="text-sm sm:text-lg font-semibold text-slate-900">
+                  {profileLoading ? '...' : formatCedi(profileTotalSpent)}
+                </p>
               </div>
-
-              <div className="space-y-3 mb-6">
-                {profileCustomer.phone && (
-                  <div className="flex items-center gap-3 text-sm">
-                    <svg className="w-4 h-4 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                    </svg>
-                    <span className="text-slate-600">{profileCustomer.phone}</span>
-                  </div>
-                )}
-                {profileCustomer.email && (
-                  <div className="flex items-center gap-3 text-sm">
-                    <svg className="w-4 h-4 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                    <span className="text-slate-600">{profileCustomer.email}</span>
-                  </div>
-                )}
-                {profileCustomer.address && (
-                  <div className="flex items-center gap-3 text-sm">
-                    <svg className="w-4 h-4 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    <span className="text-slate-600">{profileCustomer.address}</span>
-                  </div>
-                )}
-                {!profileCustomer.phone && !profileCustomer.email && !profileCustomer.address && (
-                  <p className="text-sm text-neutral-light">No contact details provided</p>
-                )}
+              <div className="bg-surfaceAlt rounded-xl p-2.5 sm:p-4">
+                <p className="text-[10px] sm:text-xs text-neutral-light mb-0.5 sm:mb-1">Outstanding Debt</p>
+                <p className={`text-sm sm:text-lg font-semibold ${profileTotalDebt > 0 ? 'text-danger' : 'text-success'}`}>
+                  {profileLoading ? '...' : formatCedi(profileTotalDebt)}
+                </p>
               </div>
-
-              <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-5 sm:mb-6">
-                <div className="bg-surfaceAlt rounded-xl p-2.5 sm:p-4">
-                  <p className="text-[10px] sm:text-xs text-neutral-light mb-0.5 sm:mb-1">Total Spent</p>
-                  <p className="text-sm sm:text-lg font-semibold text-slate-900">
-                    {profileLoading ? '...' : formatCedi(profileTotalSpent)}
-                  </p>
-                </div>
-                <div className="bg-surfaceAlt rounded-xl p-2.5 sm:p-4">
-                  <p className="text-[10px] sm:text-xs text-neutral-light mb-0.5 sm:mb-1">Outstanding Debt</p>
-                  <p className={`text-sm sm:text-lg font-semibold ${profileTotalDebt > 0 ? 'text-danger' : 'text-success'}`}>
-                    {profileLoading ? '...' : formatCedi(profileTotalDebt)}
-                  </p>
-                </div>
-                <div className="bg-surfaceAlt rounded-xl p-2.5 sm:p-4">
-                  <p className="text-[10px] sm:text-xs text-neutral-light mb-0.5 sm:mb-1">Transactions</p>
-                  <p className="text-sm sm:text-lg font-semibold text-slate-900">
-                    {profileLoading ? '...' : profileTransactions.length}
-                  </p>
-                </div>
+              <div className="bg-surfaceAlt rounded-xl p-2.5 sm:p-4">
+                <p className="text-[10px] sm:text-xs text-neutral-light mb-0.5 sm:mb-1">Transactions</p>
+                <p className="text-sm sm:text-lg font-semibold text-slate-900">
+                  {profileLoading ? '...' : profileTransactions.length}
+                </p>
               </div>
+            </div>
 
-              {profileLoading ? (
-                <div className="py-6 text-center">
-                  <div className="w-6 h-6 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-                </div>
-              ) : (
-                <>
-                  {(() => {
-                    const saleToMappedSale = (sale: SaleRecord): MappedSale => ({
-                      id: sale.sale_id,
-                      product: `Sale #${sale.sale_id}`,
-                      qty: 0,
-                      amount: sale.total_amount,
-                      payment: sale.payment_method,
-                      time: new Date(sale.created_at).toLocaleString(),
-                      created_at: sale.created_at,
-                      amount_paid: sale.amount_paid,
-                      sales_items: [],
-                    })
+            {profileLoading ? (
+              <div className="py-6 text-center">
+                <div className="w-6 h-6 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+              </div>
+            ) : (
+              <>
+                {(() => {
+                  const saleToMappedSale = (sale: SaleRecord): MappedSale => ({
+                    id: sale.sale_id,
+                    product: `Sale #${sale.sale_id}`,
+                    qty: 0,
+                    amount: sale.total_amount,
+                    payment: sale.payment_method,
+                    time: new Date(sale.created_at).toLocaleString(),
+                    created_at: sale.created_at,
+                    amount_paid: sale.amount_paid,
+                    sales_items: [],
+                  })
 
-                    const borrowedItems = [
-                      ...profileSales
-                        .filter((sale) => sale.amount_paid < sale.total_amount)
-                        .map((sale) => ({
-                          key: `sale-${sale.sale_id}`,
-                          date: new Date(sale.created_at),
-                          amount: sale.total_amount,
-                          paid: sale.amount_paid,
-                          method: sale.payment_method,
-                          dueDate: null as string | null,
-                          source: 'sale' as const,
-                        })),
-                      ...profileDebt
-                        .filter((debt) => !debt.is_paid)
-                        .map((debt) => ({
-                          key: `debt-${debt.debt_id}`,
-                          date: new Date(debt.due_date || debt.created_at || ''),
-                          amount: debt.amount,
-                          paid: 0,
-                          method: '',
-                          dueDate: debt.due_date,
-                          source: 'debt' as const,
-                        })),
-                    ].sort((a, b) => b.date.getTime() - a.date.getTime());
+                  const borrowedItems = [
+                    ...profileSales
+                      .filter((sale) => sale.amount_paid < sale.total_amount)
+                      .map((sale) => ({
+                        key: `sale-${sale.sale_id}`,
+                        date: new Date(sale.created_at),
+                        amount: sale.total_amount,
+                        paid: sale.amount_paid,
+                        method: sale.payment_method,
+                        dueDate: null as string | null,
+                        source: 'sale' as const,
+                      })),
+                    ...profileDebt
+                      .filter((debt) => !debt.is_paid)
+                      .map((debt) => ({
+                        key: `debt-${debt.debt_id}`,
+                        date: new Date(debt.due_date || debt.created_at || ''),
+                        amount: debt.amount,
+                        paid: 0,
+                        method: '',
+                        dueDate: debt.due_date,
+                        source: 'debt' as const,
+                      })),
+                  ].sort((a, b) => b.date.getTime() - a.date.getTime());
 
-                    const hasBorrowed = borrowedItems.length > 0;
-                    const hasPayments = profileTransactions.length > 0;
+                  const hasBorrowed = borrowedItems.length > 0;
+                  const hasPayments = profileTransactions.length > 0;
 
-                    return (
-                      <>
-                        {hasBorrowed && (
-                          <div className="mb-6">
-                            <div className="flex items-center gap-2 mb-3">
-                              <h5 className="text-sm font-semibold text-slate-900">Borrowed</h5>
-                              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-warning text-white text-xs font-bold">
-                                {borrowedItems.length}
-                              </span>
-                            </div>
-                            <div className="space-y-2">
-                              {borrowedItems.map((item) => (
-                                <div
-                                  key={item.key}
-                                  className={`flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 px-3 bg-surfaceAlt rounded-lg text-sm${item.source === 'sale' ? ' cursor-pointer hover:bg-slate-50 transition-colors' : ''}`}
-                                  onClick={item.source === 'sale' ? () => {
-                                    const sale = profileSales.find(s => s.sale_id === Number(item.key.replace('sale-', '')))
-                                    if (sale) setDetailSale(saleToMappedSale(sale))
-                                  } : undefined}
-                                >
-                                  <div>
-                                    <div className="flex items-center gap-2">
-                                        <span className="font-medium text-slate-900">{formatCedi(item.amount)}</span>
-                                        <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-warning-light text-warning">
-                                          Borrowed
-                                        </span>
-                                      </div>
-                                    <p className="text-xs text-neutral-light mt-0.5">
-                                      {item.date.toLocaleDateString()}
-                                      {item.dueDate && ` · Due ${new Date(item.dueDate).toLocaleDateString()}`}
-                                      {item.method && ` · ${item.method}`}
-                                    </p>
-                                    {item.source === 'sale' && (
-                                      <p className="text-xs text-neutral-light mt-0.5">
-                                        Paid {formatCedi(item.paid)} of {formatCedi(item.amount)}
-                                      </p>
-                                    )}
-                                  </div>
-                                  {item.source === 'debt' && (
-                                    <div className="mt-2 sm:mt-0 sm:pl-3 shrink-0">
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation()
-                                          openReminderFromProfile(item.key)
-                                        }}
-                                        className="px-2.5 py-1 text-xs font-medium text-primary bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors"
-                                      >
-                                        Remind
-                                      </button>
-                                    </div>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
+                  return (
+                    <>
+                      {hasBorrowed && (
+                        <div className="mb-6">
+                          <div className="flex items-center gap-2 mb-3">
+                            <h5 className="text-sm font-semibold text-slate-900">Borrowed</h5>
+                            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-warning text-white text-xs font-bold">
+                              {borrowedItems.length}
+                            </span>
                           </div>
-                        )}
-
-                        {hasPayments && (
-                          <div className="mb-6">
-                            <div className="flex items-center gap-2 mb-3">
-                              <h5 className="text-sm font-semibold text-slate-900">Payments</h5>
-                              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-success text-white text-xs font-bold">
-                                {profileTransactions.length}
-                              </span>
-                            </div>
-                            <div className="space-y-2">
-                              {profileTransactions.map((txn) => (
-                                <div key={txn.transaction_id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2.5 px-3 bg-surfaceAlt rounded-lg text-sm cursor-pointer hover:bg-slate-50 transition-colors">
-                                  <div>
-                                    <div className="flex items-center gap-2">
-                                      <span className="font-medium text-success">{formatCedi(txn.amount_paid)}</span>
-                                      <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-success-light text-success">
-                                        Payment
+                          <div className="space-y-2">
+                            {borrowedItems.map((item) => (
+                              <div
+                                key={item.key}
+                                className={`flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 px-3 bg-surfaceAlt rounded-lg text-sm${item.source === 'sale' ? ' cursor-pointer hover:bg-slate-50 transition-colors' : ''}`}
+                                onClick={item.source === 'sale' ? () => {
+                                  const sale = profileSales.find(s => s.sale_id === Number(item.key.replace('sale-', '')))
+                                  if (sale) setDetailSale(saleToMappedSale(sale))
+                                } : undefined}
+                              >
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                      <span className="font-medium text-slate-900">{formatCedi(item.amount)}</span>
+                                      <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-warning-light text-warning">
+                                        Borrowed
                                       </span>
                                     </div>
-                                    {txn.note && (
-                                      <p className="text-xs text-neutral-light mt-0.5">{txn.note}</p>
-                                    )}
+                                  <p className="text-xs text-neutral-light mt-0.5">
+                                    {item.date.toLocaleDateString()}
+                                    {item.dueDate && ` · Due ${new Date(item.dueDate).toLocaleDateString()}`}
+                                    {item.method && ` · ${item.method}`}
+                                  </p>
+                                  {item.source === 'sale' && (
                                     <p className="text-xs text-neutral-light mt-0.5">
-                                      {new Date(txn.created_at).toLocaleDateString()} at {new Date(txn.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                      Paid {formatCedi(item.paid)} of {formatCedi(item.amount)}
                                     </p>
-                                  </div>
+                                  )}
                                 </div>
-                              ))}
-                            </div>
+                                {item.source === 'debt' && (
+                                  <div className="mt-2 sm:mt-0 sm:pl-3 shrink-0">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        openReminderFromProfile(item.key)
+                                      }}
+                                      className="px-2.5 py-1 text-xs font-medium text-primary bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors"
+                                    >
+                                      Remind
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
                           </div>
-                        )}
+                        </div>
+                      )}
 
-                        {!hasBorrowed && !hasPayments && (
-                          <p className="text-sm text-neutral-light text-center py-4">No transaction history</p>
-                        )}
-                      </>
-                    );
-                  })()}
-                </>
-              )}
-            </div>
+                      {hasPayments && (
+                        <div className="mb-6">
+                          <div className="flex items-center gap-2 mb-3">
+                            <h5 className="text-sm font-semibold text-slate-900">Payments</h5>
+                            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-success text-white text-xs font-bold">
+                              {profileTransactions.length}
+                            </span>
+                          </div>
+                          <div className="space-y-2">
+                            {profileTransactions.map((txn) => (
+                              <div key={txn.transaction_id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2.5 px-3 bg-surfaceAlt rounded-lg text-sm cursor-pointer hover:bg-slate-50 transition-colors">
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-medium text-success">{formatCedi(txn.amount_paid)}</span>
+                                    <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-success-light text-success">
+                                      Payment
+                                    </span>
+                                  </div>
+                                  {txn.note && (
+                                    <p className="text-xs text-neutral-light mt-0.5">{txn.note}</p>
+                                  )}
+                                  <p className="text-xs text-neutral-light mt-0.5">
+                                    {new Date(txn.created_at).toLocaleDateString()} at {new Date(txn.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
 
-            <div className="sticky bottom-0 bg-white border-t border-slate-200 px-4 sm:px-6 py-3 sm:py-4 rounded-b-2xl flex flex-wrap items-center gap-2 sm:gap-3">
-              {isAdmin && (
-                <>
-                  <button
-                    onClick={() => {
-                      setShowProfile(false)
-                      openEditForm(profileCustomer)
-                    }}
-                    className="px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors min-h-[44px]"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowProfile(false)
-                      handleDeactivate(profileCustomer)
-                    }}
-                    className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-colors min-h-[44px] ${
-                      profileCustomer.is_active === false
-                        ? 'bg-success-light text-success hover:bg-success/10'
-                        : 'bg-warning-light text-warning hover:bg-warning/10'
-                    }`}
-                  >
-                    {profileCustomer.is_active === false ? 'Activate' : 'Deactivate'}
-                  </button>
-                </>
-              )}
-              <button
-                onClick={() => setShowProfile(false)}
-                className="px-4 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors min-h-[44px]"
-              >
-                Close
-              </button>
-            </div>
+                      {!hasBorrowed && !hasPayments && (
+                        <p className="text-sm text-neutral-light text-center py-4">No transaction history</p>
+                      )}
+                    </>
+                  );
+                })()}
+              </>
+            )}
           </div>
-        </div>
+
+          <div className="sticky bottom-0 bg-white border-t border-slate-200 px-4 sm:px-6 py-3 sm:py-4 rounded-b-2xl flex flex-wrap items-center gap-2 sm:gap-3">
+            {isAdmin && (
+              <>
+                <button
+                  onClick={() => {
+                    setShowProfile(false)
+                    openEditForm(profileCustomer)
+                  }}
+                  className="px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors min-h-[44px]"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => {
+                    setShowProfile(false)
+                    handleDeactivate(profileCustomer)
+                  }}
+                  className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-colors min-h-[44px] ${
+                    profileCustomer.is_active === false
+                      ? 'bg-success-light text-success hover:bg-success/10'
+                      : 'bg-warning-light text-warning hover:bg-warning/10'
+                  }`}
+                >
+                  {profileCustomer.is_active === false ? 'Activate' : 'Deactivate'}
+                </button>
+              </>
+            )}
+            <button
+              onClick={() => setShowProfile(false)}
+              className="px-4 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors min-h-[44px]"
+            >
+              Close
+            </button>
+          </div>
+        </Modal>
       )}
       {detailSale && <SaleDetailModal sale={detailSale} onClose={() => setDetailSale(null)} />}
 
@@ -1055,60 +1050,54 @@ function CustomersContent() {
 
       {/* Delete Customer Confirmation */}
       {deleteConfirm != null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => !deletingCustomer && setDeleteConfirm(null)}>
-          <div className="absolute inset-0 bg-black/50" />
-          <div
-            className="relative bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="p-6">
-              <div className="w-14 h-14 rounded-full bg-danger-light flex items-center justify-center mx-auto mb-4">
-                <svg className="w-7 h-7 text-danger" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-bold text-slate-900 text-center">Delete customer?</h3>
-              <p className="text-sm text-neutral-light mt-2 text-center">
-                You are about to permanently delete{' '}
-                <span className="font-semibold text-slate-900">
-                  {customers.find((c) => c.customer_id === deleteConfirm)?.name || `Customer #${deleteConfirm}`}
-                </span>
-                .
-              </p>
-              <div className="mt-4 bg-danger-light rounded-xl p-4 flex items-start gap-3">
-                <svg className="w-5 h-5 text-danger shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
-                <p className="text-sm text-danger font-medium leading-relaxed">
-                  This will permanently delete this customer together with all their sales, debts, transactions, and activity history. This action cannot be undone.
-                </p>
-              </div>
+        <Modal onClose={() => !deletingCustomer && setDeleteConfirm(null)} panelClassName="w-full max-w-md overflow-hidden">
+          <div className="p-6">
+            <div className="w-14 h-14 rounded-full bg-danger-light flex items-center justify-center mx-auto mb-4">
+              <svg className="w-7 h-7 text-danger" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+              </svg>
             </div>
-            <div className="px-5 sm:px-6 py-4 border-t border-slate-200 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-              <button
-                onClick={() => setDeleteConfirm(null)}
-                disabled={deletingCustomer}
-                className="px-4 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors disabled:opacity-60 min-h-[44px] flex-1"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDelete}
-                disabled={deletingCustomer}
-                className="flex-1 py-2.5 bg-danger text-white rounded-xl text-sm font-medium hover:bg-red-700 transition-colors disabled:opacity-60 flex items-center justify-center gap-2 min-h-[44px]"
-              >
-                {deletingCustomer ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Deleting...
-                  </>
-                ) : (
-                  'Delete Customer'
-                )}
-              </button>
+            <h3 className="text-lg font-bold text-slate-900 text-center">Delete customer?</h3>
+            <p className="text-sm text-neutral-light mt-2 text-center">
+              You are about to permanently delete{' '}
+              <span className="font-semibold text-slate-900">
+                {customers.find((c) => c.customer_id === deleteConfirm)?.name || `Customer #${deleteConfirm}`}
+              </span>
+              .
+            </p>
+            <div className="mt-4 bg-danger-light rounded-xl p-4 flex items-start gap-3">
+              <svg className="w-5 h-5 text-danger shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+              <p className="text-sm text-danger font-medium leading-relaxed">
+                This will permanently delete this customer together with all their sales, debts, transactions, and activity history. This action cannot be undone.
+              </p>
             </div>
           </div>
-        </div>
+          <div className="px-5 sm:px-6 py-4 border-t border-slate-200 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <button
+              onClick={() => setDeleteConfirm(null)}
+              disabled={deletingCustomer}
+              className="px-4 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors disabled:opacity-60 min-h-[44px] flex-1"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleDelete}
+              disabled={deletingCustomer}
+              className="flex-1 py-2.5 bg-danger text-white rounded-xl text-sm font-medium hover:bg-red-700 transition-colors disabled:opacity-60 flex items-center justify-center gap-2 min-h-[44px]"
+            >
+              {deletingCustomer ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                'Delete Customer'
+              )}
+            </button>
+          </div>
+        </Modal>
       )}
     </div>
   )

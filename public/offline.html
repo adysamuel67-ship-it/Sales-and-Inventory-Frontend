@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Offline — Business Bot GH</title>
+  <style>
+    body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #f8fafc; font-family: system-ui, -apple-system, sans-serif; color: #0f172a; }
+    .card { text-align: center; padding: 2rem; max-width: 22rem; }
+    .dot { width: 3rem; height: 3rem; margin: 0 auto 1rem; border-radius: 0.75rem; background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+    h1 { font-size: 1.25rem; margin: 0 0 0.5rem; }
+    p { color: #64748b; font-size: 0.9rem; line-height: 1.5; margin: 0 0 1.25rem; }
+    button { border: 0; border-radius: 0.75rem; background: #3b82f6; color: #fff; font-size: 0.9rem; font-weight: 600; padding: 0.65rem 1.5rem; cursor: pointer; }
+    button:hover { background: #1d4ed8; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="dot"></div>
+    <h1>You are offline</h1>
+    <p>Business Bot GH needs a connection. Anything you already recorded is safe &mdash; reconnect and try again.</p>
+    <button onclick="location.reload()">Try again</button>
+  </div>
+</body>
+</html>

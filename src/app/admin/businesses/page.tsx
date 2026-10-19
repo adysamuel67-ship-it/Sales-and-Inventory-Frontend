@@ -19,6 +19,7 @@ import {
 import { useAuth } from '@/lib/auth'
 import { businessAPI, adminAPI, productAPI, saleAPI, debtAPI } from '@/lib/api'
 import { extractArray, isSuperAdminUser, isDeletedProduct } from '@/lib/utils'
+import Modal from '@/components/ui/Modal'
 
 const PAGE_SIZE = 10
 
@@ -299,161 +300,155 @@ export default function AdminBusinessesPage() {
         </div>
 
       {showProfile && profileBiz && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowProfile(false)}>
-          <div className="absolute inset-0 bg-black/40" />
-          <div
-            className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 rounded-t-2xl flex items-center justify-between">
-              <h3 className="font-semibold text-slate-900">Business Profile</h3>
-              <button
-                onClick={() => setShowProfile(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
-              >
-                <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
+        <Modal onClose={() => setShowProfile(false)} panelClassName="w-full max-w-lg max-h-[90vh] overflow-y-auto">
+          <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 rounded-t-2xl flex items-center justify-between">
+            <h3 className="font-semibold text-slate-900">Business Profile</h3>
+            <button
+              onClick={() => setShowProfile(false)}
+              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
+            >
+              <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
 
-            <div className="px-6 py-5">
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center text-xl font-bold shrink-0">
-                  {profileBiz.name?.charAt(0)?.toUpperCase() || '?'}
-                </div>
-                <div>
-                  <h4 className="text-lg font-semibold text-slate-900">{profileBiz.name}</h4>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
-                      profileBiz.is_active !== false
-                        ? 'bg-success-light text-success'
-                        : 'bg-slate-100 text-slate-500'
-                    }`}>
-                      {profileBiz.is_active !== false ? 'Active' : 'Inactive'}
-                    </span>
-                    <span className="text-xs text-neutral-light">ID: #{profileBiz.business_id}</span>
-                  </div>
+          <div className="px-6 py-5">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center text-xl font-bold shrink-0">
+                {profileBiz.name?.charAt(0)?.toUpperCase() || '?'}
+              </div>
+              <div>
+                <h4 className="text-lg font-semibold text-slate-900">{profileBiz.name}</h4>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
+                    profileBiz.is_active !== false
+                      ? 'bg-success-light text-success'
+                      : 'bg-slate-100 text-slate-500'
+                  }`}>
+                    {profileBiz.is_active !== false ? 'Active' : 'Inactive'}
+                  </span>
+                  <span className="text-xs text-neutral-light">ID: #{profileBiz.business_id}</span>
                 </div>
               </div>
+            </div>
 
-              {profileLoading ? (
-                <div className="py-8 text-center">
-                  <div className="w-6 h-6 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+            {profileLoading ? (
+              <div className="py-8 text-center">
+                <div className="w-6 h-6 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-2 gap-3 mb-6">
+                  <div className="bg-surfaceAlt rounded-xl p-4">
+                    <p className="text-xs text-neutral-light mb-1">Members</p>
+                    <p className="text-lg font-semibold text-slate-900">{profileMembers.length}</p>
+                  </div>
+                  <div className="bg-surfaceAlt rounded-xl p-4">
+                    <p className="text-xs text-neutral-light mb-1">Products</p>
+                    <p className="text-lg font-semibold text-slate-900">{profileProductCount ?? '---'}</p>
+                  </div>
+                  <div className="bg-surfaceAlt rounded-xl p-4">
+                    <p className="text-xs text-neutral-light mb-1">Total Sales</p>
+                    <p className="text-lg font-semibold text-slate-900">
+                      {profileSalesTotal !== null ? `GH₵${profileSalesTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '---'}
+                    </p>
+                  </div>
+                  <div className="bg-surfaceAlt rounded-xl p-4">
+                    <p className="text-xs text-neutral-light mb-1">Outstanding Debt</p>
+                    <p className={`text-lg font-semibold ${(profileDebtTotal ?? 0) > 0 ? 'text-danger' : 'text-success'}`}>
+                      {profileDebtTotal !== null ? `GH₵${profileDebtTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '---'}
+                    </p>
+                  </div>
                 </div>
-              ) : (
-                <>
-                  <div className="grid grid-cols-2 gap-3 mb-6">
-                    <div className="bg-surfaceAlt rounded-xl p-4">
-                      <p className="text-xs text-neutral-light mb-1">Members</p>
-                      <p className="text-lg font-semibold text-slate-900">{profileMembers.length}</p>
-                    </div>
-                    <div className="bg-surfaceAlt rounded-xl p-4">
-                      <p className="text-xs text-neutral-light mb-1">Products</p>
-                      <p className="text-lg font-semibold text-slate-900">{profileProductCount ?? '---'}</p>
-                    </div>
-                    <div className="bg-surfaceAlt rounded-xl p-4">
-                      <p className="text-xs text-neutral-light mb-1">Total Sales</p>
-                      <p className="text-lg font-semibold text-slate-900">
-                        {profileSalesTotal !== null ? `GH₵${profileSalesTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '---'}
-                      </p>
-                    </div>
-                    <div className="bg-surfaceAlt rounded-xl p-4">
-                      <p className="text-xs text-neutral-light mb-1">Outstanding Debt</p>
-                      <p className={`text-lg font-semibold ${(profileDebtTotal ?? 0) > 0 ? 'text-danger' : 'text-success'}`}>
-                        {profileDebtTotal !== null ? `GH₵${profileDebtTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '---'}
-                      </p>
+
+                {profileBusinessKey && (
+                  <div className="mb-6">
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">Business Key</p>
+                    <div className="flex items-center gap-2 p-3 bg-slate-50 rounded-xl">
+                      <code className="flex-1 text-sm text-slate-900 bg-white px-3 py-2 rounded-lg border border-slate-300 truncate">
+                        {profileBusinessKey}
+                      </code>
+                      <button
+                        onClick={async () => {
+                          try {
+                            await navigator.clipboard.writeText(profileBusinessKey)
+                          } catch {
+                            const el = document.createElement('textarea')
+                            el.value = profileBusinessKey
+                            document.body.appendChild(el)
+                            el.select()
+                            document.execCommand('copy')
+                            document.body.removeChild(el)
+                          }
+                          setSuccess('Key copied!')
+                        }}
+                        className="px-3 py-2 text-xs font-medium text-primary bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors shrink-0"
+                      >
+                        Copy
+                      </button>
                     </div>
                   </div>
+                )}
 
-                  {profileBusinessKey && (
-                    <div className="mb-6">
-                      <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">Business Key</p>
-                      <div className="flex items-center gap-2 p-3 bg-slate-50 rounded-xl">
-                        <code className="flex-1 text-sm text-slate-900 bg-white px-3 py-2 rounded-lg border border-slate-300 truncate">
-                          {profileBusinessKey}
-                        </code>
-                        <button
-                          onClick={async () => {
-                            try {
-                              await navigator.clipboard.writeText(profileBusinessKey)
-                            } catch {
-                              const el = document.createElement('textarea')
-                              el.value = profileBusinessKey
-                              document.body.appendChild(el)
-                              el.select()
-                              document.execCommand('copy')
-                              document.body.removeChild(el)
-                            }
-                            setSuccess('Key copied!')
-                          }}
-                          className="px-3 py-2 text-xs font-medium text-primary bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors shrink-0"
-                        >
-                          Copy
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {profileMembers.length > 0 && (
-                    <div>
-                      <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">Members</p>
-                      <div className="space-y-2">
-                        {profileMembers.map((m) => (
-                          <div key={m.user_id} className="flex items-center justify-between py-2.5 px-3 bg-surfaceAlt rounded-lg">
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold shrink-0">
-                                {m.name?.charAt(0)?.toUpperCase() || '?'}
-                              </div>
-                              <div>
-                                <p className="text-sm font-medium text-slate-900">{m.name}</p>
-                                <p className="text-xs text-neutral-light">{m.email}</p>
-                              </div>
+                {profileMembers.length > 0 && (
+                  <div>
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">Members</p>
+                    <div className="space-y-2">
+                      {profileMembers.map((m) => (
+                        <div key={m.user_id} className="flex items-center justify-between py-2.5 px-3 bg-surfaceAlt rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold shrink-0">
+                              {m.name?.charAt(0)?.toUpperCase() || '?'}
                             </div>
-                            <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
-                              m.role === 'admin' ? 'bg-primary/10 text-primary'
-                                : m.role === 'manager' ? 'bg-warning-light text-warning'
-                                : 'bg-slate-100 text-slate-600'
-                            }`}>
-                              {m.role}
-                            </span>
+                            <div>
+                              <p className="text-sm font-medium text-slate-900">{m.name}</p>
+                              <p className="text-xs text-neutral-light">{m.email}</p>
+                            </div>
                           </div>
-                        ))}
-                      </div>
+                          <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
+                            m.role === 'admin' ? 'bg-primary/10 text-primary'
+                              : m.role === 'manager' ? 'bg-warning-light text-warning'
+                              : 'bg-slate-100 text-slate-600'
+                          }`}>
+                            {m.role}
+                          </span>
+                        </div>
+                      ))}
                     </div>
-                  )}
+                  </div>
+                )}
 
-                  {profileMembers.length === 0 && (
-                    <p className="text-sm text-neutral-light text-center py-4">No members found</p>
-                  )}
-                </>
-              )}
-            </div>
-
-            <div className="sticky bottom-0 bg-white border-t border-slate-200 px-6 py-4 rounded-b-2xl flex items-center gap-3">
-              <button
-                onClick={() => {
-                  router.push(`/business/${profileBiz.business_id}/dashboard`)
-                }}
-                className="px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors min-h-[44px]"
-              >
-                Open Business
-              </button>
-              <button
-                onClick={() => handleDelete(profileBiz.business_id)}
-                className="px-4 py-2.5 bg-danger-light text-danger rounded-xl text-sm font-medium hover:bg-danger/10 transition-colors min-h-[44px]"
-              >
-                Delete
-              </button>
-              <button
-                onClick={() => setShowProfile(false)}
-                className="px-4 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors min-h-[44px]"
-              >
-                Close
-              </button>
-            </div>
+                {profileMembers.length === 0 && (
+                  <p className="text-sm text-neutral-light text-center py-4">No members found</p>
+                )}
+              </>
+            )}
           </div>
-        </div>
+
+          <div className="sticky bottom-0 bg-white border-t border-slate-200 px-6 py-4 rounded-b-2xl flex items-center gap-3">
+            <button
+              onClick={() => {
+                router.push(`/business/${profileBiz.business_id}/dashboard`)
+              }}
+              className="px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors min-h-[44px]"
+            >
+              Open Business
+            </button>
+            <button
+              onClick={() => handleDelete(profileBiz.business_id)}
+              className="px-4 py-2.5 bg-danger-light text-danger rounded-xl text-sm font-medium hover:bg-danger/10 transition-colors min-h-[44px]"
+            >
+              Delete
+            </button>
+            <button
+              onClick={() => setShowProfile(false)}
+              className="px-4 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors min-h-[44px]"
+            >
+              Close
+            </button>
+          </div>
+        </Modal>
       )}
       </div>
     </DashboardLayout>

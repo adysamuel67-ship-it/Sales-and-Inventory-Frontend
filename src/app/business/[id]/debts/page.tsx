@@ -14,6 +14,7 @@ import Alert from '@/components/ui/Alert'
 import Button from '@/components/ui/Button'
 import EmptyState from '@/components/ui/EmptyState'
 import { PlusIcon, CashIcon } from '@/components/ui/Icons'
+import Modal from '@/components/ui/Modal'
 interface DebtRecord {
   debt_id: number
   sale_id?: number
@@ -678,374 +679,351 @@ export default function DebtsPage() {
       )}
 
       {showPaymentModal && paymentCustomer && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowPaymentModal(false)}>
-          <div className="absolute inset-0 bg-black/40" />
-          <div
-            className="relative bg-white rounded-2xl shadow-xl w-full max-w-md"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="px-6 py-4 border-b border-slate-200 rounded-t-2xl flex items-center justify-between">
-              <h3 className="font-semibold text-slate-900">Record Payment</h3>
-              <button
-                onClick={() => setShowPaymentModal(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
-              >
-                <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <form onSubmit={handlePayment} className="px-6 py-5 space-y-4">
-              <div className="bg-surfaceAlt rounded-xl p-4">
-                <p className="text-xs text-neutral-light mb-1">Customer</p>
-                <p className="text-sm font-semibold text-slate-900">{paymentCustomer.customer_name}</p>
-                <p className="text-xs text-neutral-light mt-1">
-                  Outstanding: <span className="font-semibold text-danger">{formatCurrency(paymentCustomer.total_debt)}</span>
-                </p>
-              </div>
-
-              <div>
-                <label className="flex items-center gap-2 mb-3">
-                  <input
-                    type="checkbox"
-                    checked={paymentFullyPaid}
-                    onChange={(e) => setPaymentFullyPaid(e.target.checked)}
-                    className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary"
-                  />
-                  <span className="text-sm font-medium text-slate-700">Mark as fully paid</span>
-                </label>
-              </div>
-
-              {!paymentFullyPaid && (
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Payment Amount (GH\u20B5)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0.01"
-                    max={paymentCustomer.total_debt}
-                    value={paymentAmount}
-                    onChange={(e) => setPaymentAmount(e.target.value)}
-                    placeholder="0.00"
-                    required
-                    className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
-                  />
-                </div>
-              )}
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Note (optional)</label>
-                <input
-                  type="text"
-                  value={paymentNote}
-                  onChange={(e) => setPaymentNote(e.target.value)}
-                  placeholder="e.g. Partial payment via MoMo"
-                  className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
-                />
-              </div>
-
-              <div className="flex items-center gap-3 pt-2">
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="flex-1 py-3 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-60 min-h-[44px]"
-                >
-                  {submitting ? 'Recording...' : paymentFullyPaid ? 'Mark as Paid' : 'Record Payment'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowPaymentModal(false)}
-                  className="px-4 py-3 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors min-h-[44px]"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
+        <Modal onClose={() => setShowPaymentModal(false)} panelClassName="w-full max-w-md">
+          <div className="px-6 py-4 border-b border-slate-200 rounded-t-2xl flex items-center justify-between">
+            <h3 className="font-semibold text-slate-900">Record Payment</h3>
+            <button
+              onClick={() => setShowPaymentModal(false)}
+              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
+            >
+              <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
-        </div>
-      )}
-
-      {showAddDebtModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowAddDebtModal(false)}>
-          <div className="absolute inset-0 bg-black/40" />
-          <div
-            className="relative bg-white rounded-2xl shadow-xl w-full max-w-md"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="px-6 py-4 border-b border-slate-200 rounded-t-2xl flex items-center justify-between">
-              <h3 className="font-semibold text-slate-900">Add New Debt</h3>
-              <button
-                onClick={() => setShowAddDebtModal(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
-              >
-                <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+          <form onSubmit={handlePayment} className="px-6 py-5 space-y-4">
+            <div className="bg-surfaceAlt rounded-xl p-4">
+              <p className="text-xs text-neutral-light mb-1">Customer</p>
+              <p className="text-sm font-semibold text-slate-900">{paymentCustomer.customer_name}</p>
+              <p className="text-xs text-neutral-light mt-1">
+                Outstanding: <span className="font-semibold text-danger">{formatCurrency(paymentCustomer.total_debt)}</span>
+              </p>
             </div>
-            <form onSubmit={handleAddDebt} className="px-6 py-5 space-y-4">
-              <div>
-                <label className="flex items-center gap-2 mb-3">
-                  <input
-                    type="checkbox"
-                    checked={addDebtNewCustomer}
-                    onChange={(e) => {
-                      setAddDebtNewCustomer(e.target.checked)
-                      setAddDebtCustomerId('')
-                    }}
-                    className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary"
-                  />
-                  <span className="text-sm font-medium text-slate-700">Create new customer</span>
-                </label>
-              </div>
 
-              {addDebtNewCustomer ? (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Customer Name *</label>
-                    <input
-                      type="text"
-                      value={addDebtNewName}
-                      onChange={(e) => setAddDebtNewName(e.target.value)}
-                      placeholder="Customer's full name"
-                      required
-                      className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Customer Phone *</label>
-                    <input
-                      type="tel"
-                      value={addDebtNewPhone}
-                      onChange={(e) => setAddDebtNewPhone(e.target.value)}
-                      placeholder="024XXXXXXX"
-                      required
-                      className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Customer Email</label>
-                    <input
-                      type="email"
-                      value={addDebtNewEmail}
-                      onChange={(e) => setAddDebtNewEmail(e.target.value)}
-                      placeholder="customer@example.com"
-                      className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
-                    />
-                  </div>
-                </>
-              ) : (
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Customer *</label>
-                  <select
-                    value={addDebtCustomerId}
-                    onChange={(e) => setAddDebtCustomerId(e.target.value)}
-                    required
-                    className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-white min-h-[44px]"
-                  >
-                    <option value="">Select a customer</option>
-                    {allCustomers.map((c: any) => (
-                      <option key={c.customer_id ?? c.id} value={c.customer_id ?? c.id}>
-                        {c.name} {c.phone ? `(${c.phone})` : ''}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
+            <div>
+              <label className="flex items-center gap-2 mb-3">
+                <input
+                  type="checkbox"
+                  checked={paymentFullyPaid}
+                  onChange={(e) => setPaymentFullyPaid(e.target.checked)}
+                  className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary"
+                />
+                <span className="text-sm font-medium text-slate-700">Mark as fully paid</span>
+              </label>
+            </div>
 
+            {!paymentFullyPaid && (
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Amount (GH\u20B5) *</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Payment Amount (GH\u20B5)</label>
                 <input
                   type="number"
                   step="0.01"
                   min="0.01"
-                  value={addDebtAmount}
-                  onChange={(e) => setAddDebtAmount(e.target.value)}
+                  max={paymentCustomer.total_debt}
+                  value={paymentAmount}
+                  onChange={(e) => setPaymentAmount(e.target.value)}
                   placeholder="0.00"
                   required
                   className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
                 />
               </div>
+            )}
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Due Date</label>
-                <input
-                  type="date"
-                  value={addDebtDueDate}
-                  onChange={(e) => setAddDebtDueDate(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
-                />
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Note (optional)</label>
+              <input
+                type="text"
+                value={paymentNote}
+                onChange={(e) => setPaymentNote(e.target.value)}
+                placeholder="e.g. Partial payment via MoMo"
+                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+              />
+            </div>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Note (optional)</label>
-                <input
-                  type="text"
-                  value={addDebtNote}
-                  onChange={(e) => setAddDebtNote(e.target.value)}
-                  placeholder="e.g. Goods delivered on credit"
-                  className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
-                />
-              </div>
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                type="submit"
+                disabled={submitting}
+                className="flex-1 py-3 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-60 min-h-[44px]"
+              >
+                {submitting ? 'Recording...' : paymentFullyPaid ? 'Mark as Paid' : 'Record Payment'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowPaymentModal(false)}
+                className="px-4 py-3 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors min-h-[44px]"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
 
-              <div className="flex items-center gap-3 pt-2">
-                <button
-                  type="submit"
-                  disabled={addingDebt}
-                  className="flex-1 py-3 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-60 min-h-[44px]"
-                >
-                  {addingDebt ? 'Adding...' : 'Add Debt'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowAddDebtModal(false)}
-                  className="px-4 py-3 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors min-h-[44px]"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
+      {showAddDebtModal && (
+        <Modal onClose={() => setShowAddDebtModal(false)} panelClassName="w-full max-w-md">
+          <div className="px-6 py-4 border-b border-slate-200 rounded-t-2xl flex items-center justify-between">
+            <h3 className="font-semibold text-slate-900">Add New Debt</h3>
+            <button
+              onClick={() => setShowAddDebtModal(false)}
+              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
+            >
+              <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
-        </div>
+          <form onSubmit={handleAddDebt} className="px-6 py-5 space-y-4">
+            <div>
+              <label className="flex items-center gap-2 mb-3">
+                <input
+                  type="checkbox"
+                  checked={addDebtNewCustomer}
+                  onChange={(e) => {
+                    setAddDebtNewCustomer(e.target.checked)
+                    setAddDebtCustomerId('')
+                  }}
+                  className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary"
+                />
+                <span className="text-sm font-medium text-slate-700">Create new customer</span>
+              </label>
+            </div>
+
+            {addDebtNewCustomer ? (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Customer Name *</label>
+                  <input
+                    type="text"
+                    value={addDebtNewName}
+                    onChange={(e) => setAddDebtNewName(e.target.value)}
+                    placeholder="Customer's full name"
+                    required
+                    className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Customer Phone *</label>
+                  <input
+                    type="tel"
+                    value={addDebtNewPhone}
+                    onChange={(e) => setAddDebtNewPhone(e.target.value)}
+                    placeholder="024XXXXXXX"
+                    required
+                    className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Customer Email</label>
+                  <input
+                    type="email"
+                    value={addDebtNewEmail}
+                    onChange={(e) => setAddDebtNewEmail(e.target.value)}
+                    placeholder="customer@example.com"
+                    className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+                  />
+                </div>
+              </>
+            ) : (
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Customer *</label>
+                <select
+                  value={addDebtCustomerId}
+                  onChange={(e) => setAddDebtCustomerId(e.target.value)}
+                  required
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-white min-h-[44px]"
+                >
+                  <option value="">Select a customer</option>
+                  {allCustomers.map((c: any) => (
+                    <option key={c.customer_id ?? c.id} value={c.customer_id ?? c.id}>
+                      {c.name} {c.phone ? `(${c.phone})` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Amount (GH\u20B5) *</label>
+              <input
+                type="number"
+                step="0.01"
+                min="0.01"
+                value={addDebtAmount}
+                onChange={(e) => setAddDebtAmount(e.target.value)}
+                placeholder="0.00"
+                required
+                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Due Date</label>
+              <input
+                type="date"
+                value={addDebtDueDate}
+                onChange={(e) => setAddDebtDueDate(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Note (optional)</label>
+              <input
+                type="text"
+                value={addDebtNote}
+                onChange={(e) => setAddDebtNote(e.target.value)}
+                placeholder="e.g. Goods delivered on credit"
+                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+              />
+            </div>
+
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                type="submit"
+                disabled={addingDebt}
+                className="flex-1 py-3 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-60 min-h-[44px]"
+              >
+                {addingDebt ? 'Adding...' : 'Add Debt'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowAddDebtModal(false)}
+                className="px-4 py-3 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors min-h-[44px]"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </Modal>
       )}
 
       {showDetailModal && detailCustomer && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowDetailModal(false)}>
-          <div className="absolute inset-0 bg-black/40" />
-          <div
-            className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="sticky top-0 bg-white border-b border-slate-200 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between">
-              <h3 className="font-semibold text-slate-900">Debt Details</h3>
-              <button
-                onClick={() => setShowDetailModal(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
-              >
-                <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <div className="px-4 sm:px-6 py-5">
-              <div className="flex items-center gap-3 sm:gap-4 mb-5 sm:mb-6">
-                <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-danger-light flex items-center justify-center text-base sm:text-lg font-bold text-danger shrink-0">
-                  {detailCustomer.customer_name?.charAt(0)?.toUpperCase() || '?'}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h4 className="text-base sm:text-lg font-semibold text-slate-900 truncate">{detailCustomer.customer_name}</h4>
-                  {detailCustomer.customer_phone && (
-                    <p className="text-sm text-neutral-light">{detailCustomer.customer_phone}</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="bg-danger-light rounded-xl p-4 mb-6">
-                <p className="text-xs text-neutral-light mb-1">Total Outstanding</p>
-                <p className="text-2xl font-bold text-danger">{formatCurrency(detailCustomer.total_debt)}</p>
-              </div>
-
-              {detailCustomer.debts.length > 0 ? (
-                <div>
-                  <h5 className="text-sm font-semibold text-slate-900 mb-3">Debt Records</h5>
-                  <div className="space-y-2">
-                    {detailCustomer.debts.map((debt) => {
-                      const overdue = !debt.is_paid && debt.due_date && isOverdue(debt.due_date)
-                      const daysLeft = debt.due_date ? daysUntilDue(debt.due_date) : null
-                      return (
-                        <div key={debt.debt_id} className="flex items-center justify-between py-3 px-4 bg-surfaceAlt rounded-xl text-sm">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium text-slate-900">{formatCurrency(debt.amount)}</span>
-                              <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
-                                debt.is_paid ? 'bg-success-light text-success' : overdue ? 'bg-danger-light text-danger' : 'bg-warning-light text-warning'
-                              }`}>
-                                {debt.is_paid ? 'Paid' : overdue ? 'Overdue' : 'Pending'}
-                              </span>
-                            </div>
-                            {debt.due_date && (
-                              <p className="text-xs text-neutral-light mt-1">
-                                Due: {formatDateLabel(debt.due_date)}
-                                {overdue && <span className="text-danger ml-1">(overdue)</span>}
-                                {!overdue && !debt.is_paid && daysLeft != null && (
-                                  <span className="ml-1">({daysLeft} day{daysLeft !== 1 ? 's' : ''} left)</span>
-                                )}
-                              </p>
-                            )}
-                            {debt.created_at && (
-                              <p className="text-xs text-neutral-light mt-0.5">
-                                Created: {new Date(debt.created_at).toLocaleDateString()}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              ) : (
-                <p className="text-sm text-neutral-light text-center py-4">No debt records found</p>
-              )}
-            </div>
-            <div className="sticky bottom-0 bg-white border-t border-slate-200 px-4 sm:px-6 py-4 rounded-b-2xl flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-              {detailCustomer.total_debt > 0 && canPayDebt && (
-                <button
-                  onClick={() => {
-                    setShowDetailModal(false)
-                    openPayment(detailCustomer)
-                  }}
-                  className="px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors min-h-[44px]"
-                >
-                  Record Payment
-                </button>
-              )}
-              <button
-                onClick={() => setShowDetailModal(false)}
-                className="px-4 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors min-h-[44px]"
-              >
-                Close
-              </button>
-            </div>
+        <Modal onClose={() => setShowDetailModal(false)} panelClassName="w-full max-w-lg max-h-[90vh] overflow-y-auto">
+          <div className="sticky top-0 bg-white border-b border-slate-200 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between">
+            <h3 className="font-semibold text-slate-900">Debt Details</h3>
+            <button
+              onClick={() => setShowDetailModal(false)}
+              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
+            >
+              <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
-        </div>
+          <div className="px-4 sm:px-6 py-5">
+            <div className="flex items-center gap-3 sm:gap-4 mb-5 sm:mb-6">
+              <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-danger-light flex items-center justify-center text-base sm:text-lg font-bold text-danger shrink-0">
+                {detailCustomer.customer_name?.charAt(0)?.toUpperCase() || '?'}
+              </div>
+              <div className="min-w-0 flex-1">
+                <h4 className="text-base sm:text-lg font-semibold text-slate-900 truncate">{detailCustomer.customer_name}</h4>
+                {detailCustomer.customer_phone && (
+                  <p className="text-sm text-neutral-light">{detailCustomer.customer_phone}</p>
+                )}
+              </div>
+            </div>
+
+            <div className="bg-danger-light rounded-xl p-4 mb-6">
+              <p className="text-xs text-neutral-light mb-1">Total Outstanding</p>
+              <p className="text-2xl font-bold text-danger">{formatCurrency(detailCustomer.total_debt)}</p>
+            </div>
+
+            {detailCustomer.debts.length > 0 ? (
+              <div>
+                <h5 className="text-sm font-semibold text-slate-900 mb-3">Debt Records</h5>
+                <div className="space-y-2">
+                  {detailCustomer.debts.map((debt) => {
+                    const overdue = !debt.is_paid && debt.due_date && isOverdue(debt.due_date)
+                    const daysLeft = debt.due_date ? daysUntilDue(debt.due_date) : null
+                    return (
+                      <div key={debt.debt_id} className="flex items-center justify-between py-3 px-4 bg-surfaceAlt rounded-xl text-sm">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-slate-900">{formatCurrency(debt.amount)}</span>
+                            <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
+                              debt.is_paid ? 'bg-success-light text-success' : overdue ? 'bg-danger-light text-danger' : 'bg-warning-light text-warning'
+                            }`}>
+                              {debt.is_paid ? 'Paid' : overdue ? 'Overdue' : 'Pending'}
+                            </span>
+                          </div>
+                          {debt.due_date && (
+                            <p className="text-xs text-neutral-light mt-1">
+                              Due: {formatDateLabel(debt.due_date)}
+                              {overdue && <span className="text-danger ml-1">(overdue)</span>}
+                              {!overdue && !debt.is_paid && daysLeft != null && (
+                                <span className="ml-1">({daysLeft} day{daysLeft !== 1 ? 's' : ''} left)</span>
+                              )}
+                            </p>
+                          )}
+                          {debt.created_at && (
+                            <p className="text-xs text-neutral-light mt-0.5">
+                              Created: {new Date(debt.created_at).toLocaleDateString()}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-neutral-light text-center py-4">No debt records found</p>
+            )}
+          </div>
+          <div className="sticky bottom-0 bg-white border-t border-slate-200 px-4 sm:px-6 py-4 rounded-b-2xl flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            {detailCustomer.total_debt > 0 && canPayDebt && (
+              <button
+                onClick={() => {
+                  setShowDetailModal(false)
+                  openPayment(detailCustomer)
+                }}
+                className="px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors min-h-[44px]"
+              >
+                Record Payment
+              </button>
+            )}
+            <button
+              onClick={() => setShowDetailModal(false)}
+              className="px-4 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors min-h-[44px]"
+            >
+              Close
+            </button>
+          </div>
+        </Modal>
       )}
 
       {showProfileModal && profileCustomer && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowProfileModal(false)}>
-          <div className="absolute inset-0 bg-black/40" />
-          <div
-            className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="sticky top-0 bg-white border-b border-slate-200 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
-              <h3 className="font-semibold text-slate-900">Customer Profile</h3>
-              <button
-                onClick={() => setShowProfileModal(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
-              >
-                <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
+        <Modal onClose={() => setShowProfileModal(false)} panelClassName="w-full max-w-lg max-h-[90vh] overflow-y-auto">
+          <div className="sticky top-0 bg-white border-b border-slate-200 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
+            <h3 className="font-semibold text-slate-900">Customer Profile</h3>
+            <button
+              onClick={() => setShowProfileModal(false)}
+              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
+            >
+              <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
 
-            <div className="px-4 sm:px-6 py-5">
-              <div className="flex items-center gap-3 sm:gap-4 mb-5 sm:mb-6">
-                <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-primary/10 flex items-center justify-center text-base sm:text-lg font-bold text-primary shrink-0">
-                  {profileCustomer.customer_name?.charAt(0)?.toUpperCase() || '?'}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h4 className="text-base sm:text-lg font-semibold text-slate-900 truncate">{profileCustomer.customer_name}</h4>
-                  <div className="flex items-center gap-1 sm:gap-2 mt-0.5 text-xs sm:text-sm flex-wrap">
-                    {profileCustomer.customer_phone && (
-                      <span className="text-neutral-light truncate">{profileCustomer.customer_phone}</span>
-                    )}
-                    {profileCustomer.customer_email && (
-                      <span className="text-neutral-light truncate hidden sm:inline">| {profileCustomer.customer_email}</span>
-                    )}
-                  </div>
+          <div className="px-4 sm:px-6 py-5">
+            <div className="flex items-center gap-3 sm:gap-4 mb-5 sm:mb-6">
+              <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-primary/10 flex items-center justify-center text-base sm:text-lg font-bold text-primary shrink-0">
+                {profileCustomer.customer_name?.charAt(0)?.toUpperCase() || '?'}
+              </div>
+              <div className="min-w-0 flex-1">
+                <h4 className="text-base sm:text-lg font-semibold text-slate-900 truncate">{profileCustomer.customer_name}</h4>
+                <div className="flex items-center gap-1 sm:gap-2 mt-0.5 text-xs sm:text-sm flex-wrap">
+                  {profileCustomer.customer_phone && (
+                    <span className="text-neutral-light truncate">{profileCustomer.customer_phone}</span>
+                  )}
+                  {profileCustomer.customer_email && (
+                    <span className="text-neutral-light truncate hidden sm:inline">| {profileCustomer.customer_email}</span>
+                  )}
                 </div>
               </div>
+            </div>
 
               <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-5 sm:mb-6">
                 <div className="bg-warning-light rounded-xl p-2.5 sm:p-4">
@@ -1207,8 +1185,7 @@ export default function DebtsPage() {
                 Close
               </button>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
       {detailSale && <SaleDetailModal sale={detailSale} onClose={() => setDetailSale(null)} />}
 
@@ -1223,137 +1200,131 @@ export default function DebtsPage() {
       )}
 
       {showDebtDetailModal && debtDetailData && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowDebtDetailModal(false)}>
-          <div className="absolute inset-0 bg-black/40" />
-          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="sticky top-0 bg-white border-b border-slate-200 px-5 py-4 rounded-t-2xl flex items-center justify-between z-10">
-              <h3 className="font-semibold text-slate-900">Borrow Details</h3>
-              <button onClick={() => setShowDebtDetailModal(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors">
-                <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
+        <Modal onClose={() => setShowDebtDetailModal(false)} panelClassName="w-full max-w-md max-h-[90vh] overflow-y-auto">
+          <div className="sticky top-0 bg-white border-b border-slate-200 px-5 py-4 rounded-t-2xl flex items-center justify-between z-10">
+            <h3 className="font-semibold text-slate-900">Borrow Details</h3>
+            <button onClick={() => setShowDebtDetailModal(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors">
+              <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          </div>
+          <div className="px-5 py-5 space-y-5">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-warning-light flex items-center justify-center shrink-0">
+                <svg className="w-6 h-6 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-xs text-neutral-light">Amount Borrowed</p>
+                <p className="text-xl font-bold text-warning">{formatCurrency(debtDetailData.debt.amount)}</p>
+              </div>
             </div>
-            <div className="px-5 py-5 space-y-5">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-warning-light flex items-center justify-center shrink-0">
-                  <svg className="w-6 h-6 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-xs text-neutral-light">Amount Borrowed</p>
-                  <p className="text-xl font-bold text-warning">{formatCurrency(debtDetailData.debt.amount)}</p>
-                </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-surfaceAlt rounded-xl p-4">
-                  <p className="text-xs text-neutral-light mb-1">Status</p>
-                  <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${
-                    debtDetailData.debt.is_paid ? 'bg-success-light text-success' : isOverdue(debtDetailData.debt.due_date) ? 'bg-danger-light text-danger' : 'bg-warning-light text-warning'
-                  }`}>
-                    {debtDetailData.debt.is_paid ? 'Paid' : isOverdue(debtDetailData.debt.due_date) ? 'Overdue' : 'Pending'}
-                  </span>
-                </div>
-                <div className="bg-surfaceAlt rounded-xl p-4">
-                  <p className="text-xs text-neutral-light mb-1">Customer</p>
-                  <p className="text-sm font-medium text-slate-900">{debtDetailData.customer.customer_name}</p>
-                </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-surfaceAlt rounded-xl p-4">
+                <p className="text-xs text-neutral-light mb-1">Status</p>
+                <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${
+                  debtDetailData.debt.is_paid ? 'bg-success-light text-success' : isOverdue(debtDetailData.debt.due_date) ? 'bg-danger-light text-danger' : 'bg-warning-light text-warning'
+                }`}>
+                  {debtDetailData.debt.is_paid ? 'Paid' : isOverdue(debtDetailData.debt.due_date) ? 'Overdue' : 'Pending'}
+                </span>
               </div>
+              <div className="bg-surfaceAlt rounded-xl p-4">
+                <p className="text-xs text-neutral-light mb-1">Customer</p>
+                <p className="text-sm font-medium text-slate-900">{debtDetailData.customer.customer_name}</p>
+              </div>
+            </div>
 
-              <div className="bg-surfaceAlt rounded-xl p-4 space-y-2">
+            <div className="bg-surfaceAlt rounded-xl p-4 space-y-2">
+              <div className="flex items-center gap-2 text-sm">
+                <svg className="w-4 h-4 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>
+                <span className="text-slate-700">Created: {debtDetailData.debt.created_at ? new Date(debtDetailData.debt.created_at).toLocaleDateString() : 'N/A'}</span>
+              </div>
+              {debtDetailData.debt.due_date && (
                 <div className="flex items-center gap-2 text-sm">
-                  <svg className="w-4 h-4 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>
-                  <span className="text-slate-700">Created: {debtDetailData.debt.created_at ? new Date(debtDetailData.debt.created_at).toLocaleDateString() : 'N/A'}</span>
-                </div>
-                {debtDetailData.debt.due_date && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <svg className="w-4 h-4 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    <span className="text-slate-700">Due: {formatDateLabel(debtDetailData.debt.due_date)}</span>
-                    {!debtDetailData.debt.is_paid && isOverdue(debtDetailData.debt.due_date) && (
-                      <span className="text-xs text-danger font-medium ml-1">(overdue)</span>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {debtDetailData.customer.customer_phone && (
-                <div className="bg-surfaceAlt rounded-xl p-4">
-                  <p className="text-xs text-neutral-light mb-1">Customer Phone</p>
-                  <p className="text-sm font-medium text-slate-900">{debtDetailData.customer.customer_phone}</p>
+                  <svg className="w-4 h-4 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  <span className="text-slate-700">Due: {formatDateLabel(debtDetailData.debt.due_date)}</span>
+                  {!debtDetailData.debt.is_paid && isOverdue(debtDetailData.debt.due_date) && (
+                    <span className="text-xs text-danger font-medium ml-1">(overdue)</span>
+                  )}
                 </div>
               )}
             </div>
-            <div className="sticky bottom-0 bg-white border-t border-slate-200 px-5 py-4 rounded-b-2xl">
-              <button onClick={() => setShowDebtDetailModal(false)} className="w-full py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors">
-                Close
-              </button>
-            </div>
+
+            {debtDetailData.customer.customer_phone && (
+              <div className="bg-surfaceAlt rounded-xl p-4">
+                <p className="text-xs text-neutral-light mb-1">Customer Phone</p>
+                <p className="text-sm font-medium text-slate-900">{debtDetailData.customer.customer_phone}</p>
+              </div>
+            )}
           </div>
-        </div>
+          <div className="sticky bottom-0 bg-white border-t border-slate-200 px-5 py-4 rounded-b-2xl">
+            <button onClick={() => setShowDebtDetailModal(false)} className="w-full py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors">
+              Close
+            </button>
+          </div>
+        </Modal>
       )}
 
       {showTxnDetailModal && txnDetailData && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowTxnDetailModal(false)}>
-          <div className="absolute inset-0 bg-black/40" />
-          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="sticky top-0 bg-white border-b border-slate-200 px-5 py-4 rounded-t-2xl flex items-center justify-between z-10">
-              <h3 className="font-semibold text-slate-900">{txnDetailData.amount_paid === 0 ? 'Borrow Details' : 'Payment Details'}</h3>
-              <button onClick={() => setShowTxnDetailModal(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors">
-                <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
-            </div>
-            <div className="px-5 py-5 space-y-5">
-              <div className="flex items-center gap-3">
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${txnDetailData.amount_paid === 0 ? 'bg-warning-light' : 'bg-success-light'}`}>
-                  {txnDetailData.amount_paid === 0 ? (
-                    <svg className="w-6 h-6 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  ) : (
-                    <svg className="w-6 h-6 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  )}
-                </div>
-                <div>
-                  <p className="text-xs text-neutral-light">{txnDetailData.amount_paid === 0 ? 'Item Borrowed' : 'Amount Paid'}</p>
-                  <p className={`text-xl font-bold ${txnDetailData.amount_paid === 0 ? 'text-warning' : 'text-success'}`}>
-                    {txnDetailData.amount_paid === 0 ? (txnDetailData.note || 'Borrowed') : formatCurrency(txnDetailData.amount_paid)}
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-surfaceAlt rounded-xl p-4">
-                  <p className="text-xs text-neutral-light mb-1">Transaction ID</p>
-                  <p className="text-sm font-medium text-slate-900">#{txnDetailData.transaction_id}</p>
-                </div>
-                <div className="bg-surfaceAlt rounded-xl p-4">
-                  <p className="text-xs text-neutral-light mb-1">Customer</p>
-                  <p className="text-sm font-medium text-slate-900">{txnDetailData.customer_name || profileCustomer?.customer_name || 'N/A'}</p>
-                </div>
-              </div>
-
-              <div className="bg-surfaceAlt rounded-xl p-4 space-y-2">
-                <div className="flex items-center gap-2 text-sm">
-                  <svg className="w-4 h-4 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>
-                  <span className="text-slate-700">Date: {txnDetailData.created_at ? new Date(txnDetailData.created_at).toLocaleDateString() : 'N/A'}</span>
-                </div>
-                {txnDetailData.note && (
-                  <div className="flex items-start gap-2 text-sm">
-                    <svg className="w-4 h-4 text-neutral-light shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" /></svg>
-                    <span className="text-slate-700">{txnDetailData.note}</span>
-                  </div>
+        <Modal onClose={() => setShowTxnDetailModal(false)} panelClassName="w-full max-w-md max-h-[90vh] overflow-y-auto">
+          <div className="sticky top-0 bg-white border-b border-slate-200 px-5 py-4 rounded-t-2xl flex items-center justify-between z-10">
+            <h3 className="font-semibold text-slate-900">{txnDetailData.amount_paid === 0 ? 'Borrow Details' : 'Payment Details'}</h3>
+            <button onClick={() => setShowTxnDetailModal(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors">
+              <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          </div>
+          <div className="px-5 py-5 space-y-5">
+            <div className="flex items-center gap-3">
+              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${txnDetailData.amount_paid === 0 ? 'bg-warning-light' : 'bg-success-light'}`}>
+                {txnDetailData.amount_paid === 0 ? (
+                  <svg className="w-6 h-6 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                ) : (
+                  <svg className="w-6 h-6 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
                 )}
               </div>
+              <div>
+                <p className="text-xs text-neutral-light">{txnDetailData.amount_paid === 0 ? 'Item Borrowed' : 'Amount Paid'}</p>
+                <p className={`text-xl font-bold ${txnDetailData.amount_paid === 0 ? 'text-warning' : 'text-success'}`}>
+                  {txnDetailData.amount_paid === 0 ? (txnDetailData.note || 'Borrowed') : formatCurrency(txnDetailData.amount_paid)}
+                </p>
+              </div>
             </div>
-            <div className="sticky bottom-0 bg-white border-t border-slate-200 px-5 py-4 rounded-b-2xl">
-              <button onClick={() => setShowTxnDetailModal(false)} className="w-full py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors">
-                Close
-              </button>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-surfaceAlt rounded-xl p-4">
+                <p className="text-xs text-neutral-light mb-1">Transaction ID</p>
+                <p className="text-sm font-medium text-slate-900">#{txnDetailData.transaction_id}</p>
+              </div>
+              <div className="bg-surfaceAlt rounded-xl p-4">
+                <p className="text-xs text-neutral-light mb-1">Customer</p>
+                <p className="text-sm font-medium text-slate-900">{txnDetailData.customer_name || profileCustomer?.customer_name || 'N/A'}</p>
+              </div>
+            </div>
+
+            <div className="bg-surfaceAlt rounded-xl p-4 space-y-2">
+              <div className="flex items-center gap-2 text-sm">
+                <svg className="w-4 h-4 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>
+                <span className="text-slate-700">Date: {txnDetailData.created_at ? new Date(txnDetailData.created_at).toLocaleDateString() : 'N/A'}</span>
+              </div>
+              {txnDetailData.note && (
+                <div className="flex items-start gap-2 text-sm">
+                  <svg className="w-4 h-4 text-neutral-light shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" /></svg>
+                  <span className="text-slate-700">{txnDetailData.note}</span>
+                </div>
+              )}
             </div>
           </div>
-        </div>
+          <div className="sticky bottom-0 bg-white border-t border-slate-200 px-5 py-4 rounded-b-2xl">
+            <button onClick={() => setShowTxnDetailModal(false)} className="w-full py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors">
+              Close
+            </button>
+          </div>
+        </Modal>
       )}
     </div>
   )

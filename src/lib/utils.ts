@@ -1,3 +1,5 @@
+import type { Product } from '@/lib/types'
+
 export const paymentLabel: Record<string, string> = {
   cash: 'Cash',
   mobile_money: 'MoMo',
@@ -97,7 +99,7 @@ export function mapLowStock(raw: any) {
   }
 }
 
-export function normalizeProduct(raw: any) {
+export function normalizeProduct(raw: any): Product {
   return {
     ...raw,
     product_id: raw.product_id ?? raw.id,
@@ -114,7 +116,7 @@ export function normalizeProduct(raw: any) {
  * therefore hide anything with a `deleted_at` timestamp rather than trusting
  * the list to be pre-filtered.
  */
-export function isDeletedProduct(product: any): boolean {
+export function isDeletedProduct(product: Product | null | undefined): boolean {
   if (!product || typeof product !== 'object') return false
   if (product.deleted_at) return true
   return product.deleted === true

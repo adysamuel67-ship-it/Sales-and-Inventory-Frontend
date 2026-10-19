@@ -5,6 +5,7 @@ import Link from 'next/link'
 import DashboardLayout from '@/components/DashboardLayout'
 import PageHeader from '@/components/ui/PageHeader'
 import Button from '@/components/ui/Button'
+import Modal from '@/components/ui/Modal'
 import { useAuth } from '@/lib/auth'
 
 const Row = ({
@@ -120,36 +121,28 @@ export default function AccountSettingsPage() {
       </div>
 
       {confirming && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          onClick={() => setConfirming(false)}
+        <Modal
+          onClose={() => setConfirming(false)}
+          panelClassName="w-full max-w-md animate-scale-in border border-slate-200 p-6 shadow-popover"
+          role="alertdialog"
+          aria-labelledby="signout-title"
         >
-          <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" />
-          <div
-            role="alertdialog"
-            aria-modal="true"
-            aria-labelledby="signout-title"
-            aria-describedby="signout-body"
-            className="relative w-full max-w-md animate-scale-in rounded-2xl border border-slate-200 bg-white p-6 shadow-popover"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 id="signout-title" className="text-section-title text-slate-900">
-              Sign out of Business Bot GH?
-            </h2>
-            <p id="signout-body" className="mt-2 text-sm leading-relaxed text-slate-600">
-              You will be returned to the sign-in page. Nothing in your account is
-              deleted, and you can sign straight back in.
-            </p>
-            <div className="mt-6 flex justify-end gap-2">
-              <Button variant="ghost" onClick={() => setConfirming(false)}>
-                Stay signed in
-              </Button>
-              <Button variant="danger" leftIcon={SignOutIcon} onClick={logout}>
-                Sign out
-              </Button>
-            </div>
+          <h2 id="signout-title" className="text-section-title text-slate-900">
+            Sign out of Business Bot GH?
+          </h2>
+          <p id="signout-body" className="mt-2 text-sm leading-relaxed text-slate-600">
+            You will be returned to the sign-in page. Nothing in your account is
+            deleted, and you can sign straight back in.
+          </p>
+          <div className="mt-6 flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setConfirming(false)}>
+              Stay signed in
+            </Button>
+            <Button variant="danger" leftIcon={SignOutIcon} onClick={logout}>
+              Sign out
+            </Button>
           </div>
-        </div>
+        </Modal>
       )}
     </DashboardLayout>
   )

@@ -14,6 +14,7 @@ import MessageList from './MessageList'
 import ChatInput, { type AttachmentPayload } from './ChatInput'
 import ChatAvatar from './ChatAvatar'
 import type { TypingUser } from './types'
+import Modal from '@/components/ui/Modal'
 
 interface ChatRoomProps {
   businessId: number
@@ -311,28 +312,28 @@ export default function ChatRoom({ businessId, businessName, selfUserId, fullScr
       />
 
       {lightbox && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4" onClick={() => setLightbox(null)}>
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-          <div className="relative max-w-3xl w-full" onClick={(e) => e.stopPropagation()}>
-            <img
-              src={lightbox.attachment_url || ''}
-              alt={lightbox.attachment_name || 'image'}
-              className="w-full max-h-[85dvh] object-contain rounded-2xl shadow-2xl"
-            />
-            <div className="mt-3 flex items-center justify-between">
-              <p className="text-sm text-white/80 truncate px-1">
-                {lightbox.attachment_name || 'Image'} · {lightbox.name || ''}
-              </p>
-              <button
-                type="button"
-                onClick={() => setLightbox(null)}
-                className="shrink-0 px-3 py-2 rounded-xl bg-white/10 text-white hover:bg-white/20 transition-colors text-sm font-medium"
-              >
-                Close
-              </button>
-            </div>
+        <Modal
+          onClose={() => setLightbox(null)}
+          panelClassName="max-w-3xl w-full bg-transparent shadow-none rounded-none p-0"
+        >
+          <img
+            src={lightbox.attachment_url || ''}
+            alt={lightbox.attachment_name || 'image'}
+            className="w-full max-h-[85dvh] object-contain rounded-2xl shadow-2xl"
+          />
+          <div className="mt-3 flex items-center justify-between">
+            <p className="text-sm text-white/80 truncate px-1">
+              {lightbox.attachment_name || 'Image'} · {lightbox.name || ''}
+            </p>
+            <button
+              type="button"
+              onClick={() => setLightbox(null)}
+              className="shrink-0 px-3 py-2 rounded-xl bg-white/10 text-white hover:bg-white/20 transition-colors text-sm font-medium"
+            >
+              Close
+            </button>
           </div>
-        </div>
+        </Modal>
       )}
     </div>
   )

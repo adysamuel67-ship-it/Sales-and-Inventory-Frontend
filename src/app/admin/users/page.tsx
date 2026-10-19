@@ -6,6 +6,7 @@ import DashboardLayout from '@/components/DashboardLayout'
 import { useAuth } from '@/lib/auth'
 import { adminAPI } from '@/lib/api'
 import { extractArray, isSuperAdminUser } from '@/lib/utils'
+import Modal from '@/components/ui/Modal'
 
 interface UserRecord {
   user_id: number
@@ -274,154 +275,148 @@ export default function AdminUsersPage() {
       </div>
 
       {selectedUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setSelectedUser(null)}>
-          <div className="absolute inset-0 bg-black/40" />
-          <div
-            className="relative bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="px-6 py-5 bg-gradient-to-br from-primary to-primary-dark rounded-t-2xl">
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-full bg-white/15 backdrop-blur-sm border-2 border-white/30 flex items-center justify-center text-white text-xl font-bold shrink-0">
-                  {selectedUser.name?.charAt(0)?.toUpperCase() || '?'}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h3 className="text-lg font-bold text-white truncate">{selectedUser.name}</h3>
-                  <p className="text-white/70 text-sm truncate">{selectedUser.email}</p>
-                </div>
-                <button
-                  onClick={() => setSelectedUser(null)}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 transition-colors shrink-0"
-                >
-                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+        <Modal onClose={() => setSelectedUser(null)} panelClassName="w-full max-w-md max-h-[90vh] overflow-y-auto">
+          <div className="px-6 py-5 bg-gradient-to-br from-primary to-primary-dark rounded-t-2xl">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-full bg-white/15 backdrop-blur-sm border-2 border-white/30 flex items-center justify-center text-white text-xl font-bold shrink-0">
+                {selectedUser.name?.charAt(0)?.toUpperCase() || '?'}
               </div>
-            </div>
-
-            <div className="px-6 py-5 space-y-4">
-              {detailLoading ? (
-                <div className="py-6 text-center">
-                  <div className="w-6 h-6 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-                </div>
-              ) : (
-                <>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-surfaceAlt rounded-xl p-3">
-                      <p className="text-[10px] text-neutral-light uppercase tracking-wider mb-1">Role</p>
-                      <span className="inline-block px-2.5 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary capitalize">
-                        {(selectedUser.role || 'user').replace('_', ' ')}
-                      </span>
-                    </div>
-                    <div className="bg-surfaceAlt rounded-xl p-3">
-                      <p className="text-[10px] text-neutral-light uppercase tracking-wider mb-1">Status</p>
-                      <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold capitalize ${
-                        selectedUser.is_verified ? 'bg-success-light text-success' : 'bg-warning-light text-warning'
-                      }`}>
-                        {selectedUser.is_verified ? 'Verified' : 'Unverified'}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-3 text-sm bg-surfaceAlt rounded-xl p-3">
-                      <svg className="w-4 h-4 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
-                      </svg>
-                      <div>
-                        <p className="text-[10px] text-neutral-light">Phone</p>
-                        <span className="text-slate-700 font-medium">{selectedUser.phone || '—'}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-3 text-sm bg-surfaceAlt rounded-xl p-3">
-                      <svg className="w-4 h-4 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-                      </svg>
-                      <div>
-                        <p className="text-[10px] text-neutral-light">User ID</p>
-                        <span className="text-slate-700 font-medium">#{selectedUser.user_id}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-3 text-sm bg-surfaceAlt rounded-xl p-3">
-                      <svg className="w-4 h-4 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
-                      </svg>
-                      <div>
-                        <p className="text-[10px] text-neutral-light">Joined</p>
-                        <span className="text-slate-700 font-medium">
-                          {selectedUser.date_joined || selectedUser.created_at
-                            ? new Date(selectedUser.date_joined || selectedUser.created_at!).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
-                            : '—'}
-                        </span>
-                      </div>
-                    </div>
-
-                    {selectedUser.last_login && (
-                      <div className="flex items-center gap-3 text-sm bg-surfaceAlt rounded-xl p-3">
-                        <svg className="w-4 h-4 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <div>
-                          <p className="text-[10px] text-neutral-light">Last Login</p>
-                          <span className="text-slate-700 font-medium">
-                            {new Date(selectedUser.last_login).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-
-                    {Array.isArray(selectedUser.businesses) && selectedUser.businesses.length > 0 && (
-                      <div className="bg-surfaceAlt rounded-xl p-3">
-                        <p className="text-[10px] text-neutral-light uppercase tracking-wider mb-2">Businesses</p>
-                        <div className="space-y-1.5">
-                          {selectedUser.businesses.map((biz: any, idx: number) => (
-                            <div key={idx} className="flex items-center gap-2 text-sm">
-                              <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center text-primary text-[10px] font-bold shrink-0">
-                                {(biz.name || biz.business_name || '?').charAt(0).toUpperCase()}
-                              </div>
-                              <span className="text-slate-700 font-medium truncate">{biz.name || biz.business_name || `Business #${biz.business_id || idx}`}</span>
-                              {biz.role && (
-                                <span className="text-[10px] text-neutral-light capitalize ml-auto shrink-0">{biz.role}</span>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </>
-              )}
-            </div>
-
-            <div className="px-6 py-4 border-t border-slate-200 flex items-center gap-3 rounded-b-2xl">
-              {!selectedUser.is_verified && (
-                <button
-                  onClick={() => { handleVerifyUser(selectedUser.email); setSelectedUser(null) }}
-                  disabled={selectedUser.user_id === user?.id}
-                  className="px-4 py-2.5 bg-warning text-white rounded-xl text-sm font-medium hover:bg-warning-dark transition-colors disabled:opacity-50"
-                >
-                  Verify User
-                </button>
-              )}
-              <button
-                onClick={() => { handleToggleActive(selectedUser.user_id); setSelectedUser(null) }}
-                disabled={selectedUser.user_id === user?.id}
-                className="px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-50"
-              >
-                Toggle Active
-              </button>
+              <div className="min-w-0 flex-1">
+                <h3 className="text-lg font-bold text-white truncate">{selectedUser.name}</h3>
+                <p className="text-white/70 text-sm truncate">{selectedUser.email}</p>
+              </div>
               <button
                 onClick={() => setSelectedUser(null)}
-                className="px-4 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors ml-auto"
+                className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 transition-colors shrink-0"
               >
-                Close
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
             </div>
           </div>
-        </div>
+
+          <div className="px-6 py-5 space-y-4">
+            {detailLoading ? (
+              <div className="py-6 text-center">
+                <div className="w-6 h-6 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-surfaceAlt rounded-xl p-3">
+                    <p className="text-[10px] text-neutral-light uppercase tracking-wider mb-1">Role</p>
+                    <span className="inline-block px-2.5 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary capitalize">
+                      {(selectedUser.role || 'user').replace('_', ' ')}
+                    </span>
+                  </div>
+                  <div className="bg-surfaceAlt rounded-xl p-3">
+                    <p className="text-[10px] text-neutral-light uppercase tracking-wider mb-1">Status</p>
+                    <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold capitalize ${
+                      selectedUser.is_verified ? 'bg-success-light text-success' : 'bg-warning-light text-warning'
+                    }`}>
+                      {selectedUser.is_verified ? 'Verified' : 'Unverified'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 text-sm bg-surfaceAlt rounded-xl p-3">
+                    <svg className="w-4 h-4 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
+                    </svg>
+                    <div>
+                      <p className="text-[10px] text-neutral-light">Phone</p>
+                      <span className="text-slate-700 font-medium">{selectedUser.phone || '—'}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 text-sm bg-surfaceAlt rounded-xl p-3">
+                    <svg className="w-4 h-4 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                    </svg>
+                    <div>
+                      <p className="text-[10px] text-neutral-light">User ID</p>
+                      <span className="text-slate-700 font-medium">#{selectedUser.user_id}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 text-sm bg-surfaceAlt rounded-xl p-3">
+                    <svg className="w-4 h-4 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                    </svg>
+                    <div>
+                      <p className="text-[10px] text-neutral-light">Joined</p>
+                      <span className="text-slate-700 font-medium">
+                        {selectedUser.date_joined || selectedUser.created_at
+                          ? new Date(selectedUser.date_joined || selectedUser.created_at!).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+                          : '—'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {selectedUser.last_login && (
+                    <div className="flex items-center gap-3 text-sm bg-surfaceAlt rounded-xl p-3">
+                      <svg className="w-4 h-4 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <div>
+                        <p className="text-[10px] text-neutral-light">Last Login</p>
+                        <span className="text-slate-700 font-medium">
+                          {new Date(selectedUser.last_login).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {Array.isArray(selectedUser.businesses) && selectedUser.businesses.length > 0 && (
+                    <div className="bg-surfaceAlt rounded-xl p-3">
+                      <p className="text-[10px] text-neutral-light uppercase tracking-wider mb-2">Businesses</p>
+                      <div className="space-y-1.5">
+                        {selectedUser.businesses.map((biz: any, idx: number) => (
+                          <div key={idx} className="flex items-center gap-2 text-sm">
+                            <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center text-primary text-[10px] font-bold shrink-0">
+                              {(biz.name || biz.business_name || '?').charAt(0).toUpperCase()}
+                            </div>
+                            <span className="text-slate-700 font-medium truncate">{biz.name || biz.business_name || `Business #${biz.business_id || idx}`}</span>
+                            {biz.role && (
+                              <span className="text-[10px] text-neutral-light capitalize ml-auto shrink-0">{biz.role}</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+
+          <div className="px-6 py-4 border-t border-slate-200 flex items-center gap-3 rounded-b-2xl">
+            {!selectedUser.is_verified && (
+              <button
+                onClick={() => { handleVerifyUser(selectedUser.email); setSelectedUser(null) }}
+                disabled={selectedUser.user_id === user?.id}
+                className="px-4 py-2.5 bg-warning text-white rounded-xl text-sm font-medium hover:bg-warning-dark transition-colors disabled:opacity-50"
+              >
+                Verify User
+              </button>
+            )}
+            <button
+              onClick={() => { handleToggleActive(selectedUser.user_id); setSelectedUser(null) }}
+              disabled={selectedUser.user_id === user?.id}
+              className="px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-50"
+            >
+              Toggle Active
+            </button>
+            <button
+              onClick={() => setSelectedUser(null)}
+              className="px-4 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors ml-auto"
+            >
+              Close
+            </button>
+          </div>
+        </Modal>
       )}
     </DashboardLayout>
   )

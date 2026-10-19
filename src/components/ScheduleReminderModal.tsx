@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import { reminderAPI } from '@/lib/api'
 import { parseApiError } from '@/lib/utils'
 import { compareDateKeys, formatDateLabel, todayDateKey } from '@/lib/dates'
+import Modal from '@/components/ui/Modal'
 
 export interface ReminderDebt {
   debt_id: number
@@ -184,20 +185,18 @@ export default function ScheduleReminderModal({ businessId, customer, defaultDeb
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-slate-200 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
-          <h3 className="font-semibold text-slate-900">Schedule Reminder</h3>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
-          >
-            <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
+    <Modal onClose={onClose} closeOnOverlay={false} panelClassName="w-full max-w-lg max-h-[90vh] overflow-y-auto p-0">
+      <div className="sticky top-0 bg-white border-b border-slate-200 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
+        <h3 className="font-semibold text-slate-900">Schedule Reminder</h3>
+        <button
+          onClick={onClose}
+          className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
+        >
+          <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
 
         {outstandingDebts.length === 0 ? (
           <div className="px-6 py-10 text-center">
@@ -346,7 +345,6 @@ export default function ScheduleReminderModal({ businessId, customer, defaultDeb
             </div>
           </form>
         )}
-      </div>
-    </div>
+    </Modal>
   )
 }

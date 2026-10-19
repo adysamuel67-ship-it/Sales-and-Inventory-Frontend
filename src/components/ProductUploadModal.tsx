@@ -5,6 +5,7 @@ import { productAPI } from '@/lib/api'
 import { parseApiError } from '@/lib/utils'
 import Button from '@/components/ui/Button'
 import { BoxIcon, XIcon, CheckCircleIcon, AlertTriangleIcon } from '@/components/ui/Icons'
+import Modal from '@/components/ui/Modal'
 
 interface ColumnReference {
   field: string
@@ -183,26 +184,24 @@ export default function ProductUploadModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-slate-200 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary-light rounded-xl flex items-center justify-center">
-              <BoxIcon className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-slate-900">Import Products</h3>
-              <p className="text-xs text-neutral-light">Upload a CSV or Excel file to add products in bulk</p>
-            </div>
+    <Modal onClose={onClose} closeOnOverlay={false} panelClassName="w-full max-w-2xl max-h-[90vh] overflow-y-auto p-0">
+      <div className="sticky top-0 bg-white border-b border-slate-200 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-primary-light rounded-xl flex items-center justify-center">
+            <BoxIcon className="w-5 h-5 text-primary" />
           </div>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
-          >
-            <XIcon className="w-4 h-4 text-slate-500" />
-          </button>
+          <div>
+            <h3 className="font-semibold text-slate-900">Import Products</h3>
+            <p className="text-xs text-neutral-light">Upload a CSV or Excel file to add products in bulk</p>
+          </div>
         </div>
+        <button
+          onClick={onClose}
+          className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
+        >
+          <XIcon className="w-4 h-4 text-slate-500" />
+        </button>
+      </div>
 
         <div className="px-4 sm:px-6 py-5 space-y-5">
           {/* Accepted formats + template */}
@@ -390,7 +389,6 @@ export default function ProductUploadModal({
             {uploading ? 'Importing...' : 'Import Products'}
           </Button>
         </div>
-      </div>
-    </div>
+    </Modal>
   )
 }
