@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
 import NoBusinessGuide from '@/components/NoBusinessGuide'
 import SaleDetailModal from '@/components/SaleDetailModal'
+import DateRangePicker from '@/components/ui/DateRangePicker'
 import { useAuth } from '@/lib/auth'
 import { saleAPI, productAPI, customerAPI, adminAPI } from '@/lib/api'
 import { useBusinessId } from '@/lib/useBusinessId'
@@ -373,34 +374,13 @@ export default function SalesPage() {
               Custom
             </button>
             {showDatePicker && (
-              <div className="absolute left-0 top-full mt-2 w-64 bg-white rounded-xl shadow-lg border border-slate-200 p-4 z-50">
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="block text-[10px] text-slate-400 mb-1">From</label>
-                    <input
-                      type="date"
-                      value={draftDateFilter.start}
-                      onChange={(e) => setDraftDateFilter((prev) => ({ ...prev, start: e.target.value }))}
-                      className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:border-primary outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] text-slate-400 mb-1">To</label>
-                    <input
-                      type="date"
-                      value={draftDateFilter.end}
-                      onChange={(e) => setDraftDateFilter((prev) => ({ ...prev, end: e.target.value }))}
-                      className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:border-primary outline-none"
-                    />
-                  </div>
-                </div>
-                <button
-                  onClick={handleApplyCustomDate}
-                  className="w-full mt-3 px-3 py-2 bg-primary text-white rounded-lg text-xs font-medium hover:bg-primary-dark transition-colors"
-                >
-                  Apply
-                </button>
-              </div>
+              <DateRangePicker
+                start={draftDateFilter.start}
+                end={draftDateFilter.end}
+                onChange={setDraftDateFilter}
+                onApply={handleApplyCustomDate}
+                onClose={() => setShowDatePicker(false)}
+              />
             )}
           </div>
         </div>

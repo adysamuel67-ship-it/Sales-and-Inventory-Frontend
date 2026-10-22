@@ -14,6 +14,8 @@ import Button from '@/components/ui/Button'
 import EmptyState from '@/components/ui/EmptyState'
 import Modal from '@/components/ui/Modal'
 import ProductCombobox from '@/components/ui/ProductCombobox'
+import QuickAddProductModal from '@/components/QuickAddProductModal'
+import DateRangePicker from '@/components/ui/DateRangePicker'
 import { PlusIcon, ChartIcon } from '@/components/ui/Icons'
 type SaleRecord = MappedSale
 
@@ -69,6 +71,7 @@ export default function SalesPage() {
   const [showCustomerPicker, setShowCustomerPicker] = useState(false)
   const [existingCustomers, setExistingCustomers] = useState<any[]>([])
   const [customerSearch, setCustomerSearch] = useState('')
+  const [quickAddProduct, setQuickAddProduct] = useState<{ index: number; name: string } | null>(null)
   const [selectedSales, setSelectedSales] = useState<Set<number>>(new Set())
   const [selectMode, setSelectMode] = useState(false)
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false)
@@ -106,6 +109,25 @@ export default function SalesPage() {
       (c.email || '').toLowerCase().includes(q)
     )
   }, [existingCustomers, customerSearch])
+
+  const handleQuickProductCreated = (product: Product) => {
+    const index = quickAddProduct?.index ?? -1
+    setProducts((prev) => {
+      const exists = prev.some((p) => p.product_id === product.product_id)
+      return exists
+        ? prev.map((p) => (p.product_id === product.product_id ? { ...p, ...product } : p))
+        : [...prev, product]
+    })
+    setLineItems((prev) => {
+      if (index < 0 || index >= prev.length) return prev
+      const updated = [...prev]
+      updated[index] = { ...updated[index], product_id: String(product.product_id) }
+      return updated
+    })
+    setQuickAddProduct(null)
+    setError('')
+    setSuccess(`"${product.name}" added to inventory`)
+  }
 
   const loadData = useCallback(async () => {
     if (!businessId) return
@@ -567,6 +589,7 @@ export default function SalesPage() {
                       }}
                       excludeIds={selectedIds}
                       placeholder={idx === 0 ? 'Search products by name, SKU or category' : 'Search for another product'}
+                      onCreateProduct={(name) => setQuickAddProduct({ index: idx, name })}
                     />
                     <div className="flex items-center gap-2">
                       <div className="relative">
@@ -830,34 +853,13 @@ export default function SalesPage() {
               Custom
             </button>
             {showDatePicker && (
-              <div className="absolute left-0 top-full mt-2 w-64 bg-white rounded-xl shadow-lg border border-slate-200 p-4 z-50">
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="block text-[10px] text-slate-400 mb-1">From</label>
-                    <input
-                      type="date"
-                      value={draftDateFilter.start}
-                      onChange={(e) => setDraftDateFilter((prev) => ({ ...prev, start: e.target.value }))}
-                      className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:border-primary outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] text-slate-400 mb-1">To</label>
-                    <input
-                      type="date"
-                      value={draftDateFilter.end}
-                      onChange={(e) => setDraftDateFilter((prev) => ({ ...prev, end: e.target.value }))}
-                      className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:border-primary outline-none"
-                    />
-                  </div>
-                </div>
-                <button
-                  onClick={handleApplyCustomDate}
-                  className="w-full mt-3 px-3 py-2 bg-primary text-white rounded-lg text-xs font-medium hover:bg-primary-dark transition-colors"
-                >
-                  Apply
-                </button>
-              </div>
+              <DateRangePicker
+                start={draftDateFilter.start}
+                end={draftDateFilter.end}
+                onChange={setDraftDateFilter}
+                onApply={handleApplyCustomDate}
+                onClose={() => setShowDatePicker(false)}
+              />
             )}
           </div>
         </div>
@@ -1291,6 +1293,15 @@ export default function SalesPage() {
             </button>
           </div>
         </Modal>
+      )}
+
+      {quickAddProduct && (
+        <QuickAddProductModal
+          businessId={businessId}
+          initialName={quickAddProduct.name}
+          onClose={() => setQuickAddProduct(null)}
+          onCreated={handleQuickProductCreated}
+        />
       )}
 
       {showCustomerPicker && (

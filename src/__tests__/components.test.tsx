@@ -38,7 +38,8 @@ import RevenueChart from '@/components/RevenueChart'
 import RecentSales from '@/components/RecentSales'
 import LowStockAlerts from '@/components/LowStockAlerts'
 import ProductCombobox from '@/components/ui/ProductCombobox'
-import { render, screen, fireEvent } from '@testing-library/react'
+import DateRangePicker from '@/components/ui/DateRangePicker'
+import { render, screen, fireEvent, within } from '@testing-library/react'
 
 describe('KpiCard', () => {
   const testIcon = <span data-testid="test-icon">ICON</span>
@@ -466,5 +467,72 @@ describe('ProductCombobox', () => {
     expect(input.getAttribute('aria-expanded')).toBe('false')
     fireEvent.focus(input)
     expect(input.getAttribute('aria-expanded')).toBe('true')
+  })
+
+  it('offers to create the searched product when onCreateProduct is provided', () => {
+    const onCreateProduct = jest.fn()
+    const { input } = setup({ onCreateProduct })
+    fireEvent.focus(input)
+    fireEvent.change(input, { target: { value: 'Sugar' } })
+    fireEvent.click(screen.getByTestId('quick-add-product'))
+    expect(onCreateProduct).toHaveBeenCalledWith('Sugar')
+  })
+
+  it('creates a product with Enter when the search has no matches', () => {
+    const onCreateProduct = jest.fn()
+    const { input } = setup({ onCreateProduct })
+    fireEvent.focus(input)
+    fireEvent.change(input, { target: { value: 'Sugar' } })
+    fireEvent.keyDown(input, { key: 'Enter' })
+    expect(onCreateProduct).toHaveBeenCalledWith('Sugar')
+  })
+})
+
+describe('DateRangePicker', () => {
+  function setup() {
+    const onChange = jest.fn()
+    const onApply = jest.fn()
+    const onClose = jest.fn()
+    const view = render(
+      <DateRangePicker
+        start="2024-01-01"
+        end="2024-01-31"
+        onChange={onChange}
+        onApply={onApply}
+        onClose={onClose}
+      />
+    )
+    return { onChange, onApply, onClose, view }
+  }
+
+  it('renders the phone view as a dialog outside the page container', () => {
+    const { view } = setup()
+    const sheet = screen.getByTestId('date-range-sheet')
+    expect(sheet).toBeInTheDocument()
+    expect(sheet.getAttribute('role')).toBe('dialog')
+    expect(view.container.contains(sheet)).toBe(false)
+  })
+
+  it('updates the draft range from the phone sheet', () => {
+    const { onChange } = setup()
+    const sheet = screen.getByTestId('date-range-sheet')
+    fireEvent.change(within(sheet).getByLabelText('From'), { target: { value: '2024-02-01' } })
+    expect(onChange).toHaveBeenCalledWith({ start: '2024-02-01', end: '2024-01-31' })
+  })
+
+  it('applies and cancels from both presentations', () => {
+    const { onApply, onClose } = setup()
+    const sheet = screen.getByTestId('date-range-sheet')
+    const popover = screen.getByTestId('date-range-popover')
+
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Apply' }))
+    expect(onApply).toHaveBeenCalledTimes(1)
+
+    fireEvent.click(within(popover).getByRole('button', { name: 'Apply' }))
+    expect(onApply).toHaveBeenCalledTimes(2)
+
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Cancel' }))
+    fireEvent.click(within(popover).getByRole('button', { name: 'Cancel' }))
+    expect(onClose).toHaveBeenCalledTimes(2)
   })
 })

@@ -25,6 +25,11 @@ interface Props {
   autoFocus?: boolean
   className?: string
   id?: string
+  /**
+   * When provided, the list gains an "add new product" row. Useful for flows
+   * where the product being sold may not exist in the inventory yet.
+   */
+  onCreateProduct?: (name: string) => void
 }
 
 const MAX_RESULTS = 50
@@ -49,6 +54,7 @@ export default function ProductCombobox({
   autoFocus = false,
   className = '',
   id,
+  onCreateProduct,
 }: Props) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
@@ -121,6 +127,14 @@ export default function ProductCombobox({
     setOpen(false)
   }
 
+  const triggerCreate = () => {
+    if (!onCreateProduct) return
+    const name = query.trim()
+    setQuery('')
+    setOpen(false)
+    onCreateProduct(name)
+  }
+
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
       e.preventDefault()
@@ -139,6 +153,9 @@ export default function ProductCombobox({
         // preventDefault stops the enclosing <form> submitting on Enter.
         e.preventDefault()
         commit(String(results[activeIndex].product_id))
+      } else if (open && onCreateProduct && query.trim()) {
+        e.preventDefault()
+        triggerCreate()
       }
       return
     }
@@ -168,7 +185,6 @@ export default function ProductCombobox({
           setOpen(true)
           // Typing after a selection means "pick something else", so clear it.
           if (value) onChange('')
-          if (value) onChange('')
         }}
         onKeyDown={onKeyDown}
       />
@@ -183,6 +199,7 @@ export default function ProductCombobox({
           selectedId={String(value)}
           onHover={setActiveIndex}
           onSelect={commit}
+          onCreate={onCreateProduct ? triggerCreate : undefined}
         />
       )}
     </div>
@@ -271,6 +288,7 @@ function ProductComboboxList({
   selectedId,
   onHover,
   onSelect,
+  onCreate,
 }: {
   listRef: React.RefObject<HTMLUListElement>
   listboxId: string
@@ -281,7 +299,12 @@ function ProductComboboxList({
   selectedId: string
   onHover: (i: number) => void
   onSelect: (productId: string) => void
+  onCreate?: () => void
 }) {
+  const createLabel = query.trim()
+    ? `Add "${query.trim()}" as a new product`
+    : 'Add a new product'
+
   return (
     <ul
       ref={listRef}
@@ -309,6 +332,33 @@ function ProductComboboxList({
             />
           </li>
         ))
+      )}
+
+      {onCreate && (
+        <li
+          role="none"
+          className={results.length > 0 ? 'mt-1 border-t border-slate-100 pt-1' : 'mt-1'}
+        >
+          <button
+            type="button"
+            data-testid="quick-add-product"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={onCreate}
+            className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-primary transition-colors duration-100 hover:bg-primary-light"
+          >
+            <svg
+              className="h-4 w-4 shrink-0"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+              aria-hidden="true"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            <span className="min-w-0 truncate">{createLabel}</span>
+          </button>
+        </li>
       )}
     </ul>
   )
