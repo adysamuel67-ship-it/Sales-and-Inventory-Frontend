@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/lib/auth'
 import { businessAPI } from '@/lib/api'
-import { isAdminRole, isSuperAdminUser, parseApiError } from '@/lib/utils'
+import { isAdminRole, isSuperAdminUser, extractArray } from '@/lib/utils'
 import PageHeader from '@/components/ui/PageHeader'
 import Alert from '@/components/ui/Alert'
 import { LockIcon, ChevronRightIcon } from '@/components/ui/Icons'
@@ -27,9 +27,25 @@ export default function SettingsPage() {
   const [deleting, setDeleting] = useState(false)
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
   const [leaving, setLeaving] = useState(false)
+  const [members, setMembers] = useState<any[]>([])
+  const [membersLoading, setMembersLoading] = useState(false)
+  const [togglingId, setTogglingId] = useState<number | null>(null)
 
 
-  const isOwner = isSuperAdminUser(user) || isAdminRole(user?.business_role || user?.role)
+  const isOwner = isSuperAdminUser(user) || isAdminRole(user?.business_role || user?.role) || user?.role === 'manager'
+
+  const loadMembers = useCallback(async () => {
+    if (!businessId) return
+    setMembersLoading(true)
+    try {
+      const res = await businessAPI.listMembers(businessId)
+      setMembers(extractArray(res.data))
+    } catch {
+      // ignore
+    } finally {
+      setMembersLoading(false)
+    }
+  }, [businessId])
 
   const loadSettings = useCallback(async () => {
     if (!businessId) return
@@ -61,7 +77,33 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (businessId) loadSettings()
-  }, [businessId, loadSettings])
+    if (businessId && (isOwner || user?.business_role === 'manager' || user?.role === 'manager')) {
+      loadMembers()
+    }
+  }, [businessId, loadSettings, isOwner, user?.business_role, user?.role, loadMembers])
+
+  const toggleReport = async (memberId: number, currentlyAllowed: boolean) => {
+    if (!businessId) return
+    setTogglingId(memberId)
+    setError('')
+    setSuccess('')
+    try {
+      await businessAPI.blockReport(businessId, memberId, currentlyAllowed ? 0 : 1)
+      setSuccess(currentlyAllowed ? 'Reports access blocked' : 'Reports access enabled')
+      await loadMembers()
+    } catch (err: any) {
+      const detail = err.response?.data?.detail
+      if (Array.isArray(detail)) {
+        setError(detail.map((e: any) => e.msg).join(', '))
+      } else if (typeof detail === 'string') {
+        setError(detail)
+      } else {
+        setError('Failed to update report access')
+      }
+    } finally {
+      setTogglingId(null)
+    }
+  }
 
 
   const handleSave = async (e: React.FormEvent) => {
@@ -232,6 +274,60 @@ export default function SettingsPage() {
                   </button>
                 )}
               </div>
+            </div>
+          )}
+
+          {(isOwner || user?.business_role === 'manager' || user?.role === 'manager') && (
+            <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6 mb-4">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="font-semibold text-slate-900">Team Members</h3>
+                  <p className="text-xs text-neutral-light mt-1">Control who can receive business reports/SMS</p>
+                </div>
+              </div>
+
+              {membersLoading ? (
+                <div className="py-6 text-center">
+                  <div className="w-6 h-6 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+                </div>
+              ) : members.length > 0 ? (
+                <div className="divide-y divide-slate-100">
+                  {members.map((m: any) => {
+                    const memberId = m.member_id || m.id || m.business_member_id
+                    const allowed = m.get_report === true
+                    const isSelf = m.user_id === user?.id
+                    const displayName = m.name || m.user?.name || m.full_name || 'Unknown'
+                    const role = m.role || m.user_role || m.business_role || 'member'
+                    if (!memberId) return null
+                    return (
+                      <div key={memberId} className="flex items-center justify-between py-3 gap-3">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center text-sm font-bold shrink-0">
+                            {displayName.charAt(0).toUpperCase()}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-slate-900 truncate">{displayName}</p>
+                            <p className="text-xs text-neutral-light capitalize truncate">{String(role).replace('_', ' ')}</p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => toggleReport(memberId, allowed)}
+                          disabled={togglingId === memberId || isSelf}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-50 shrink-0 ${
+                            allowed
+                              ? 'bg-success-light text-success hover:bg-success/10'
+                              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                          }`}
+                        >
+                          {togglingId === memberId ? 'Updating...' : allowed ? 'Reports: Allowed' : 'Reports: Blocked'}
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : (
+                <p className="text-sm text-neutral-light text-center py-4">No members found</p>
+              )}
             </div>
           )}
 
