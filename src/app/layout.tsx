@@ -35,7 +35,7 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: `${SITE_NAME} | Free Sales & Inventory Tracking App with Debt & SMS Reminders for Ghana`,
+    default: `${SITE_NAME} | Free Sales, Inventory & Debt Tracking with SMS Reminders for Ghana`,
     template: `%s | ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
@@ -73,7 +73,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     siteName: SITE_NAME,
-    title: `${SITE_NAME} | Free Sales & Inventory Tracking App with Debt & SMS Reminders for Ghana`,
+    title: `${SITE_NAME} | Free Sales, Inventory & Debt Tracking with SMS Reminders for Ghana`,
     description: SITE_DESCRIPTION,
     url: SITE_URL,
     locale: 'en_GH',
@@ -90,7 +90,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     site: '@businessbotgh',
     creator: '@businessbotgh',
-    title: `${SITE_NAME} | Free Sales & Inventory Tracking App with Debt & SMS Reminders for Ghana`,
+    title: `${SITE_NAME} | Free Sales, Inventory & Debt Tracking with SMS Reminders for Ghana`,
     description: SITE_DESCRIPTION,
     images: ['/og-image.png'],
   },
@@ -177,8 +177,7 @@ const siteJsonLd = {
       featureList: [
         'Sales Tracking',
         'Inventory Management',
-        'Debt Tracking',
-        'Automatic SMS Reminders',
+        'Debt Tracking with Automatic SMS Reminders',
         'Customer Management',
         'Profit Reports',
         'Multi-Business Support',

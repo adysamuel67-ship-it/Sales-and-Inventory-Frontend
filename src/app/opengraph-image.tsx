@@ -53,7 +53,7 @@ export default async function OpengraphImage() {
             Sales &amp; Inventory Tracking for Ghanaian Businesses
           </div>
           <div style={{ color: '#CBD5E1', fontSize: 28, marginTop: 24 }}>
-            Record sales, track stock and follow up on debts — free, from any phone.
+            Record sales, track stock and follow up on debts with SMS reminders — free, from any phone.
           </div>
         </div>
 

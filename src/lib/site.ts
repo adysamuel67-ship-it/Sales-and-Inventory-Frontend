@@ -1,6 +1,6 @@
 export const SITE_NAME = 'Business Bot GH'
 
-export const SITE_TAGLINE = 'Sales & Inventory Tracking for Ghanaian Businesses'
+export const SITE_TAGLINE = 'Sales, Inventory, Debt Tracking & SMS Reminders for Ghanaian Businesses'
 
 export const COMPANY_NAME = 'Whisper Systems'
 

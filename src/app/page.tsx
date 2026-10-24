@@ -12,23 +12,23 @@ import ProfitChart from '@/components/landing/ProfitChart'
 import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, COMPANY_NAME, SUPPORT_PHONE_DISPLAY, SUPPORT_PHONE_TEL, absoluteUrl, SITE_URL } from '@/lib/site'
 
 export const metadata: Metadata = {
-  title: 'Free Sales and Inventory Tracking App with Debt & SMS Reminders | Business Bot GH Ghana',
+  title: 'Free Sales, Inventory & Debt Tracking App with SMS Reminders | Business Bot GH',
   description: 'Free sales and inventory tracking app for Ghanaian businesses. Record sales, manage stock, track debts with automatic SMS reminders, customers & profit reports. Works on any phone.',
   keywords: [
     'sales and inventory tracking app Ghana',
     'free inventory management system Ghana',
     'debt tracking with sms reminders',
+    'automatic sms reminders Ghana',
     'credit sales management software Ghana',
     'pos system for small business Ghana',
     'stock tracking app Ghana',
     'business management app Ghana free',
-    'sales tracking software Ghana',
   ],
   alternates: { canonical: SITE_URL },
   openGraph: {
     type: 'website',
     url: SITE_URL,
-    title: 'Free Sales and Inventory Tracking App with Debt & SMS Reminders | Business Bot GH',
+    title: 'Free Sales, Inventory & Debt Tracking App with SMS Reminders | Business Bot GH',
     description: 'Track sales, inventory, debts with automatic SMS reminders. Free for Ghanaian traders & small businesses. Works on any phone.',
     images: [
       {
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Free Sales and Inventory Tracking App with Debt & SMS Reminders | Business Bot GH',
+    title: 'Free Sales, Inventory & Debt Tracking App with SMS Reminders | Business Bot GH',
     description: 'Track sales, inventory, debts with automatic SMS reminders. Free for Ghanaian traders & small businesses.',
     images: ['/og-image.png'],
   },
@@ -192,7 +192,7 @@ export default function Home() {
     featureList: [
       'Sales Tracking',
       'Inventory Management',
-      'Debt Tracking with SMS Reminders',
+      'Debt Tracking with Automatic SMS Reminders',
       'Customer Management',
       'Profit Reports',
       'Mobile Money Support',
