@@ -88,7 +88,7 @@ export default function ReportsPage() {
   const [togglingId, setTogglingId] = useState<number | null>(null)
   const [reportMsg, setReportMsg] = useState('')
 
-  const isOwner = isSuperAdminUser(user) || isAdminRole(user?.business_role || user?.role) || user?.role === 'manager'
+  const isOwner = isSuperAdminUser(user) || isAdminRole(user?.business_role || user?.role) || user?.role === 'owner'
 
   const loadReports = useCallback(async () => {
     if (!businessId) return
@@ -606,7 +606,7 @@ export default function ReportsPage() {
 
           <SmsReportPanel businessId={businessId} summary={saleSummary} />
 
-          {(isOwner || user?.business_role === 'manager' || user?.role === 'manager') && (
+          {((isOwner || user?.role === 'manager' || user?.business_role === 'manager') && ((isOwner || user?.role === 'super_admin' || user?.role === 'admin') || members.some((m:any)=>(m.user_id===user?.id)))) && (
             <section className="mb-6 bg-surface rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
               <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
                 <div>
@@ -627,6 +627,8 @@ export default function ReportsPage() {
                     const displayName = m.name || m.user?.name || m.full_name || 'Unknown'
                     const role = m.role || m.user_role || m.business_role || 'member'
                     if (!memberId) return null
+                    if (user?.role === 'manager' && !isSelf) return null
+                    if ((user?.business_role === 'manager' || user?.role === 'manager') && !isOwner && !isSelf) return null
                     return (
                       <div key={memberId} className="flex items-center justify-between px-5 py-3 gap-3">
                         <div className="flex items-center gap-3 min-w-0">
@@ -638,7 +640,7 @@ export default function ReportsPage() {
                             <p className="text-xs text-neutral-light capitalize truncate">{String(role).replace('_', ' ')}</p>
                           </div>
                         </div>
-                        {isSelf && (
+                        {(isSelf || isOwner) && (
                           <button
                             onClick={() => toggleReport(memberId, allowed)}
                             disabled={togglingId === memberId}

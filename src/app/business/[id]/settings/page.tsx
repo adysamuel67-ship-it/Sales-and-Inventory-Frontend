@@ -323,20 +323,22 @@ export default function SettingsPage() {
                             <p className="text-xs text-neutral-light capitalize truncate">{String(role).replace('_', ' ')}</p>
                           </div>
                         </div>
-                        <button
-                          onClick={() => toggleReport(memberId, allowed)}
-                          disabled={togglingId === memberId}
-                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 ${
-                            allowed ? 'bg-primary' : 'bg-slate-300'
-                          }`}
-                          aria-label={allowed ? 'Block reports' : 'Allow reports'}
-                        >
-                          <span
-                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                              allowed ? 'translate-x-6' : 'translate-x-1'
+                        {isSelf && (
+                          <button
+                            onClick={() => toggleReport(memberId, allowed)}
+                            disabled={togglingId === memberId}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 ${
+                              allowed ? 'bg-primary' : 'bg-slate-300'
                             }`}
-                          />
-                        </button>
+                            aria-label={allowed ? 'Block reports' : 'Allow reports'}
+                          >
+                            <span
+                              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                allowed ? 'translate-x-6' : 'translate-x-1'
+                              }`}
+                            />
+                          </button>
+                        )}
                       </div>
                     )
                   })}
