@@ -84,14 +84,26 @@ export default function SettingsPage() {
 
   const toggleReport = async (memberId: number, currentlyAllowed: boolean) => {
     if (!businessId) return
+    setMembers((prev) =>
+      prev.map((m) =>
+        (m.member_id || m.id || m.business_member_id) === memberId
+          ? { ...m, get_report: !currentlyAllowed }
+          : m
+      )
+    )
     setTogglingId(memberId)
     setError('')
-    setSuccess('')
+    setSuccess(currentlyAllowed ? 'Reports access blocked' : 'Reports access enabled')
     try {
       await businessAPI.blockReport(businessId, memberId, currentlyAllowed ? 0 : 1)
-      setSuccess(currentlyAllowed ? 'Reports access blocked' : 'Reports access enabled')
-      await loadMembers()
     } catch (err: any) {
+      setMembers((prev) =>
+        prev.map((m) =>
+          (m.member_id || m.id || m.business_member_id) === memberId
+            ? { ...m, get_report: currentlyAllowed }
+            : m
+        )
+      )
       const detail = err.response?.data?.detail
       if (Array.isArray(detail)) {
         setError(detail.map((e: any) => e.msg).join(', '))
@@ -100,6 +112,7 @@ export default function SettingsPage() {
       } else {
         setError('Failed to update report access')
       }
+      setSuccess('')
     } finally {
       setTogglingId(null)
     }

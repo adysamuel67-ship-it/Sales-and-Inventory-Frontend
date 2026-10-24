@@ -233,14 +233,25 @@ export default function ReportsPage() {
 
   const toggleReport = async (memberId: number, currentlyAllowed: boolean) => {
     if (!businessId) return
+    setMembers((prev) =>
+      prev.map((m) =>
+        (m.member_id || m.id || m.business_member_id) === memberId
+          ? { ...m, get_report: !currentlyAllowed }
+          : m
+      )
+    )
+    setReportMsg(currentlyAllowed ? 'Reports access blocked' : 'Reports access enabled')
     setTogglingId(memberId)
-    setReportMsg('')
-    setError('')
     try {
       await businessAPI.blockReport(businessId, memberId, currentlyAllowed ? 0 : 1)
-      setReportMsg(currentlyAllowed ? 'Reports access blocked' : 'Reports access enabled')
-      await loadMembers()
     } catch (err: any) {
+      setMembers((prev) =>
+        prev.map((m) =>
+          (m.member_id || m.id || m.business_member_id) === memberId
+            ? { ...m, get_report: currentlyAllowed }
+            : m
+        )
+      )
       const detail = err.response?.data?.detail
       if (Array.isArray(detail)) setError(detail.map((e: any) => e.msg).join(', '))
       else if (typeof detail === 'string') setError(detail)
@@ -627,20 +638,22 @@ export default function ReportsPage() {
                             <p className="text-xs text-neutral-light capitalize truncate">{String(role).replace('_', ' ')}</p>
                           </div>
                         </div>
-                        <button
-                          onClick={() => toggleReport(memberId, allowed)}
-                          disabled={togglingId === memberId}
-                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 ${
-                            allowed ? 'bg-primary' : 'bg-slate-300'
-                          }`}
-                          aria-label={allowed ? 'Block reports' : 'Allow reports'}
-                        >
-                          <span
-                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                              allowed ? 'translate-x-6' : 'translate-x-1'
+                        {isSelf && (
+                          <button
+                            onClick={() => toggleReport(memberId, allowed)}
+                            disabled={togglingId === memberId}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 ${
+                              allowed ? 'bg-primary' : 'bg-slate-300'
                             }`}
-                          />
-                        </button>
+                            aria-label={allowed ? 'Block reports' : 'Allow reports'}
+                          >
+                            <span
+                              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                allowed ? 'translate-x-6' : 'translate-x-1'
+                              }`}
+                            />
+                          </button>
+                        )}
                       </div>
                     )
                   })}
