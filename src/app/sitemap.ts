@@ -1,23 +1,38 @@
-import type { MetadataRoute } from 'next'
-import { absoluteUrl } from '@/lib/site'
-
-export const dynamic = 'force-static'
-
-const publicRoutes = [
-  { path: '/', changeFrequency: 'weekly', priority: 1 },
-  { path: '/signup', changeFrequency: 'monthly', priority: 0.9 },
-  { path: '/login', changeFrequency: 'monthly', priority: 0.6 },
-  { path: '/terms', changeFrequency: 'yearly', priority: 0.3 },
-  { path: '/privacy', changeFrequency: 'yearly', priority: 0.3 },
-] as const
+import { MetadataRoute } from 'next'
+import { SITE_URL } from '@/lib/site'
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const lastModified = new Date()
-
-  return publicRoutes.map((route) => ({
-    url: absoluteUrl(route.path),
-    lastModified,
-    changeFrequency: route.changeFrequency,
-    priority: route.priority,
-  }))
+  const baseUrl = SITE_URL
+  return [
+    {
+      url: baseUrl,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 1,
+    },
+    {
+      url: `${baseUrl}/login`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/signup`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/terms`,
+      lastModified: new Date(),
+      changeFrequency: 'yearly',
+      priority: 0.3,
+    },
+    {
+      url: `${baseUrl}/privacy`,
+      lastModified: new Date(),
+      changeFrequency: 'yearly',
+      priority: 0.3,
+    },
+  ]
 }

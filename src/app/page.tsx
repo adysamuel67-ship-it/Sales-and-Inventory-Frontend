@@ -12,13 +12,26 @@ import ProfitChart from '@/components/landing/ProfitChart'
 import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, COMPANY_NAME, SUPPORT_PHONE_DISPLAY, SUPPORT_PHONE_TEL, absoluteUrl } from '@/lib/site'
 
 export const metadata: Metadata = {
-  title: `${SITE_NAME} — Free Sales & Inventory Tracking App for Ghanaian Businesses`,
+  title: `${SITE_NAME} — Free Sales and Inventory Tracking App for Ghanaian Businesses | Debt & SMS Reminders`,
   description: SITE_DESCRIPTION,
   alternates: { canonical: '/' },
+  keywords: [
+    'sales and inventory tracking',
+    'sales and inventory software Ghana',
+    'free sales and inventory app',
+    'inventory and sales management',
+    'debt tracking with SMS reminders',
+    'pos and inventory Ghana',
+  ],
   openGraph: {
     type: 'website',
     url: '/',
-    title: `${SITE_NAME} — Free Sales & Inventory Tracking App for Ghanaian Businesses`,
+    title: `${SITE_NAME} — Free Sales and Inventory Tracking App for Ghanaian Businesses`,
+    description: SITE_DESCRIPTION,
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: `${SITE_NAME} — Free Sales and Inventory Tracking App for Ghanaian Businesses`,
     description: SITE_DESCRIPTION,
   },
 }
