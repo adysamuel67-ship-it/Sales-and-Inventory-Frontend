@@ -925,9 +925,11 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
 
         {/* Consistent 8px-grid page canvas: 16px gutters on mobile out to 32px
             on large screens, with a capped measure for line-length comfort. */}
-        <main className="px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+        <main className="px-4 py-6 pb-24 sm:px-6 sm:py-8 sm:pb-8 lg:px-8 lg:pb-8">
           <div className="mx-auto max-w-7xl">{children}</div>
         </main>
+      </div>
+      <BottomNav />
       </div>
 
       {selectedApproval && (() => {

@@ -23,7 +23,7 @@ export const SUPPORT_EMAIL = 'adysamuel68@gmail.com'
 export const SUPPORT_EMAIL_SUBJECT = 'Business Bot GH — Support Request'
 
 export const SITE_DESCRIPTION =
-  'Business Bot GH is a free sales and inventory tracking platform built for Ghanaian traders, market shops and small businesses. Record sales, manage stock, follow up on debts and see clear profit reports from your phone or laptop.'
+  'Business Bot GH is a free sales and inventory tracking platform built for Ghanaian traders, market shops and small businesses. Record sales, manage stock, track debts with automatic SMS reminders, follow up on customers and see clear profit reports from your phone or laptop.'
 
 export const SITE_URL = (
   process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
