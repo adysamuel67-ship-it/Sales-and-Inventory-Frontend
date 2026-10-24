@@ -630,13 +630,16 @@ export default function ReportsPage() {
                         <button
                           onClick={() => toggleReport(memberId, allowed)}
                           disabled={togglingId === memberId}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-50 shrink-0 ${
-                            allowed
-                              ? 'bg-success-light text-success hover:bg-success/10'
-                              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 ${
+                            allowed ? 'bg-primary' : 'bg-slate-300'
                           }`}
+                          aria-label={allowed ? 'Block reports' : 'Allow reports'}
                         >
-                          {togglingId === memberId ? 'Updating...' : allowed ? 'Reports: Allowed' : 'Reports: Blocked'}
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                              allowed ? 'translate-x-6' : 'translate-x-1'
+                            }`}
+                          />
                         </button>
                       </div>
                     )
