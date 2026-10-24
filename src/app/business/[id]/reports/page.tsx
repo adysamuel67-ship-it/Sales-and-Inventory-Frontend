@@ -345,7 +345,7 @@ export default function ReportsPage() {
             </button>
 
             {showDatePicker && (
-              <div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-xl shadow-lg border border-slate-200 p-4 z-50">
+              <div className="absolute left-0 top-full z-50 mt-2 w-[min(20rem,calc(100vw-2rem))] rounded-xl border border-slate-200 bg-white p-4 shadow-lg sm:left-auto sm:right-0 sm:w-72">
                 <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-3">Quick Select</p>
                 <div className="flex flex-wrap gap-2 mb-4">
                   {datePresets.map((preset) => (
@@ -363,7 +363,7 @@ export default function ReportsPage() {
                   ))}
                 </div>
                 <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">Custom Range</p>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   <div>
                     <label className="block text-[10px] text-slate-400 mb-1">From</label>
                     <input
