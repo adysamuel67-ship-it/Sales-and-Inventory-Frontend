@@ -16,6 +16,7 @@ import { useAuth } from '@/lib/auth'
 import { reportAPI, saleAPI, productAPI } from '@/lib/api'
 import { extractArray, extractSummary, mapSale, mapLowStock, generateDateLabels, isStaffRole, parseApiError, getDateRange, formatCedi, formatNumber, isDeletedProduct } from '@/lib/utils'
 import PageHeader from '@/components/ui/PageHeader'
+import DateFilterPopover from '@/components/ui/DateFilterPopover'
 import Alert from '@/components/ui/Alert'
 import Skeleton from '@/components/ui/Skeleton'
 
@@ -362,51 +363,16 @@ export default function BusinessDashboardPage() {
           </button>
 
           {showDatePicker && (
-            <div className="absolute left-0 top-full z-50 mt-2 w-[min(20rem,calc(100vw-2rem))] rounded-xl border border-slate-200 bg-white p-4 shadow-lg sm:left-auto sm:right-0 sm:w-72">
-              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-3">Quick Select</p>
-              <div className="flex flex-wrap gap-2 mb-4">
-                {datePresets.map((preset) => (
-                  <button
-                    key={preset.days}
-                    onClick={() => handlePresetChange(preset.days)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                      activePreset === preset.days
-                        ? 'bg-primary text-white'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                    }`}
-                  >
-                    {preset.label}
-                  </button>
-                ))}
-              </div>
-              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">Custom Range</p>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                <div>
-                  <label className="block text-[10px] text-slate-400 mb-1">From</label>
-                  <input
-                    type="date"
-                    value={draftDateRange.start}
-                    onChange={(e) => handleCustomDateChange('start', e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:border-primary outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] text-slate-400 mb-1">To</label>
-                  <input
-                    type="date"
-                    value={draftDateRange.end}
-                    onChange={(e) => handleCustomDateChange('end', e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:border-primary outline-none"
-                  />
-                </div>
-              </div>
-              <button
-                onClick={handleApplyCustomDate}
-                className="w-full mt-3 px-3 py-2 bg-primary text-white rounded-lg text-xs font-medium hover:bg-primary-dark transition-colors"
-              >
-                Apply
-              </button>
-            </div>
+            <DateFilterPopover
+              presets={datePresets.map((preset) => ({ label: preset.label, value: preset.days }))}
+              activePreset={activePreset}
+              onPreset={handlePresetChange}
+              start={draftDateRange.start}
+              end={draftDateRange.end}
+              onChange={setDraftDateRange}
+              onApply={handleApplyCustomDate}
+              onClose={() => setShowDatePicker(false)}
+            />
           )}
         </div>
         )}

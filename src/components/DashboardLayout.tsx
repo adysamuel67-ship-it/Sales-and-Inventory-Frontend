@@ -18,6 +18,7 @@ import {
 } from '@/lib/api'
 import type { NotificationItem } from '@/lib/api'
 import BusinessBotLogo from './BusinessBotLogo'
+import BottomNav from './BottomNav'
 import AppLoadingSplash from './AppLoadingSplash'
 import GuideDownloadButton from './GuideDownloadButton'
 import Modal from '@/components/ui/Modal'
@@ -930,7 +931,6 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
         </main>
       </div>
       <BottomNav />
-      </div>
 
       {selectedApproval && (() => {
         const a = selectedApproval

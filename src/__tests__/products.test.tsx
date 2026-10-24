@@ -414,13 +414,22 @@ describe('Dashboard mobile layout', () => {
     expect(page).toContain('grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4')
   })
 
-  it('caps the date popover to the viewport and left-anchors it on phones', () => {
-    expect(page).toContain('w-[min(20rem,calc(100vw-2rem))]')
-    expect(page).toContain('sm:left-auto sm:right-0')
+  it('uses the phone-safe date filter popover', () => {
+    expect(page).toContain('<DateFilterPopover')
+    const popover = readFileSync(
+      join(process.cwd(), 'src/components/ui/DateFilterPopover.tsx'),
+      'utf8'
+    )
+    expect(popover).toContain('sm:hidden')
+    expect(popover).toContain('date-filter-sheet')
   })
 
   it('stacks the custom date range fields on phones', () => {
-    expect(page).toContain('grid grid-cols-1 gap-2 sm:grid-cols-2')
+    const popover = readFileSync(
+      join(process.cwd(), 'src/components/ui/DateFilterPopover.tsx'),
+      'utf8'
+    )
+    expect(popover).toContain('grid grid-cols-1 gap-2 sm:grid-cols-2')
   })
 })
 

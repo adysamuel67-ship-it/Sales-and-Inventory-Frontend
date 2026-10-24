@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
 import PageHeader from '@/components/ui/PageHeader'
+import DateFilterPopover from '@/components/ui/DateFilterPopover'
 import Alert from '@/components/ui/Alert'
 import NoBusinessGuide from '@/components/NoBusinessGuide'
 import KpiCard from '@/components/KpiCard'
@@ -302,56 +303,16 @@ export default function DashboardPage() {
               anchored right overflows off the left edge of a phone, which is
               what caused the date fields to be clipped. */}
           {showDatePicker && (
-            <div className="absolute left-0 top-full z-50 mt-2 w-[min(20rem,calc(100vw-2rem))] animate-scale-in rounded-xl border border-slate-200 bg-white p-4 shadow-popover sm:left-auto sm:right-0 sm:w-72">
-              <p className="mb-3 text-micro uppercase tracking-[0.08em] text-neutral-light">Quick Select</p>
-              <div className="mb-4 flex flex-wrap gap-2">
-                {datePresets.map((preset) => (
-                  <button
-                    key={preset.days}
-                    type="button"
-                    onClick={() => handlePresetChange(preset.days)}
-                    className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150 ${
-                      activePreset === preset.days
-                        ? 'bg-primary text-white shadow-sm'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                    }`}
-                  >
-                    {preset.label}
-                  </button>
-                ))}
-              </div>
-              <p className="mb-2 text-micro uppercase tracking-[0.08em] text-neutral-light">Custom Range</p>
-              {/* Date inputs are wide by nature, so they stack rather than
-                  squeeze into two columns on a phone. */}
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                <div>
-                  <label htmlFor="dash-date-from" className="mb-1 block text-[11px] font-medium text-slate-600">From</label>
-                  <input
-                    id="dash-date-from"
-                    type="date"
-                    value={draftDateRange.start}
-                    onChange={(e) => handleCustomDateChange('start', e.target.value)}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs text-slate-900 transition-all duration-150 focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/10"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="dash-date-to" className="mb-1 block text-[11px] font-medium text-slate-600">To</label>
-                  <input
-                    id="dash-date-to"
-                    type="date"
-                    value={draftDateRange.end}
-                    onChange={(e) => handleCustomDateChange('end', e.target.value)}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs text-slate-900 transition-all duration-150 focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/10"
-                  />
-                </div>
-              </div>
-              <button
-                onClick={handleApplyCustomDate}
-                className="mt-3 h-9 w-full rounded-lg bg-primary text-xs font-semibold text-white shadow-sm transition-all duration-150 hover:bg-primary-dark"
-              >
-                Apply
-              </button>
-            </div>
+            <DateFilterPopover
+              presets={datePresets.map((preset) => ({ label: preset.label, value: preset.days }))}
+              activePreset={activePreset}
+              onPreset={handlePresetChange}
+              start={draftDateRange.start}
+              end={draftDateRange.end}
+              onChange={setDraftDateRange}
+              onApply={handleApplyCustomDate}
+              onClose={() => setShowDatePicker(false)}
+            />
           )}
         </div>
         }
