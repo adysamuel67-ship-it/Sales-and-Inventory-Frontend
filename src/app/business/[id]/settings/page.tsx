@@ -306,13 +306,13 @@ export default function SettingsPage() {
                             {displayName.charAt(0).toUpperCase()}
                           </div>
                           <div className="min-w-0">
-                            <p className="text-sm font-medium text-slate-900 truncate">{displayName}</p>
+                            <p className="text-sm font-medium text-slate-900 truncate">{displayName}{isSelf ? ' (You)' : ''}</p>
                             <p className="text-xs text-neutral-light capitalize truncate">{String(role).replace('_', ' ')}</p>
                           </div>
                         </div>
                         <button
                           onClick={() => toggleReport(memberId, allowed)}
-                          disabled={togglingId === memberId || isSelf}
+                          disabled={togglingId === memberId}
                           className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-50 shrink-0 ${
                             allowed
                               ? 'bg-success-light text-success hover:bg-success/10'

@@ -239,8 +239,10 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
       return [
         { label: 'Overview', icon: 'admin', href: '/admin', id: 'admin' },
         { label: 'Users', icon: 'admin-users', href: '/admin/users', id: 'admin-users' },
+        { label: 'Members', icon: 'admin-users', href: '/admin/members', id: 'admin-members' },
         { label: 'Businesses', icon: 'admin-businesses', href: '/admin/businesses', id: 'admin-businesses' },
         { label: 'Business Keys', icon: 'admin-keys', href: '/admin/keys', id: 'admin-keys' },
+        { label: 'Report Access', icon: 'reports', href: '/admin/report-access', id: 'admin-report-access' },
         { label: 'Low Stock', icon: 'admin-low-stock', href: '/admin/low-stock', id: 'admin-low-stock' },
         { label: 'Jobs', icon: 'admin-jobs', href: '/admin/jobs', id: 'admin-jobs' },
       ]
@@ -248,6 +250,7 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
     return [
       { label: 'Overview', icon: 'admin', href: '/admin', id: 'admin' },
       { label: 'Members', icon: 'admin-users', href: '/admin/members', id: 'admin-members' },
+      { label: 'Report Access', icon: 'reports', href: '/admin/report-access', id: 'admin-report-access' },
     ]
   }, [isSuperAdmin])
 

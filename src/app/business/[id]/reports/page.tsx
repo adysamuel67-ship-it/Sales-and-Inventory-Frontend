@@ -2,10 +2,11 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useParams } from 'next/navigation'
-import { reportAPI, saleAPI, productAPI, customerAPI } from '@/lib/api'
+import { reportAPI, saleAPI, productAPI, customerAPI, businessAPI } from '@/lib/api'
+import { useAuth } from '@/lib/auth'
 import dynamic from 'next/dynamic'
 const RevenueChart = dynamic(() => import('@/components/RevenueChart'), { ssr: false })
-import { extractArray, extractProfit, extractSummary, getDateRange, parseApiError, formatCedi, aggregateProductPerformance, type ProductPerformance } from '@/lib/utils'
+import { extractArray, extractProfit, extractSummary, getDateRange, parseApiError, formatCedi, aggregateProductPerformance, type ProductPerformance, isAdminRole, isSuperAdminUser } from '@/lib/utils'
 import PageHeader from '@/components/ui/PageHeader'
 import Alert from '@/components/ui/Alert'
 import EmptyState from '@/components/ui/EmptyState'
@@ -67,6 +68,7 @@ function extractSaleArray(data: any): any[] {
 export default function ReportsPage() {
   const params = useParams()
   const businessId = parseInt(params?.id as string)
+  const { user } = useAuth()
   const [profit, setProfit] = useState<ProfitData | null>(null)
   const [summary, setSummary] = useState<SummaryData | null>(null)
   const [saleSummary, setSaleSummary] = useState<SaleSummaryData | null>(null)
@@ -81,6 +83,12 @@ export default function ReportsPage() {
   const [activePreset, setActivePreset] = useState(30)
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [draftDateRange, setDraftDateRange] = useState(() => getDateRange(30))
+  const [members, setMembers] = useState<any[]>([])
+  const [membersLoading, setMembersLoading] = useState(false)
+  const [togglingId, setTogglingId] = useState<number | null>(null)
+  const [reportMsg, setReportMsg] = useState('')
+
+  const isOwner = isSuperAdminUser(user) || isAdminRole(user?.business_role || user?.role) || user?.role === 'manager'
 
   const loadReports = useCallback(async () => {
     if (!businessId) return
@@ -210,9 +218,45 @@ export default function ReportsPage() {
     }
   }, [businessId, dateRange.start, dateRange.end])
 
+  const loadMembers = useCallback(async () => {
+    if (!businessId || !isOwner) return
+    setMembersLoading(true)
+    try {
+      const res = await businessAPI.listMembers(businessId)
+      setMembers(extractArray(res.data))
+    } catch {
+      // ignore
+    } finally {
+      setMembersLoading(false)
+    }
+  }, [businessId, isOwner])
+
+  const toggleReport = async (memberId: number, currentlyAllowed: boolean) => {
+    if (!businessId) return
+    setTogglingId(memberId)
+    setReportMsg('')
+    setError('')
+    try {
+      await businessAPI.blockReport(businessId, memberId, currentlyAllowed ? 0 : 1)
+      setReportMsg(currentlyAllowed ? 'Reports access blocked' : 'Reports access enabled')
+      await loadMembers()
+    } catch (err: any) {
+      const detail = err.response?.data?.detail
+      if (Array.isArray(detail)) setError(detail.map((e: any) => e.msg).join(', '))
+      else if (typeof detail === 'string') setError(detail)
+      else setError('Failed to update report access')
+    } finally {
+      setTogglingId(null)
+    }
+  }
+
   useEffect(() => {
     loadReports()
   }, [loadReports])
+
+  useEffect(() => {
+    loadMembers()
+  }, [loadMembers])
 
   useEffect(() => {
     if (!businessId) return
@@ -343,6 +387,11 @@ export default function ReportsPage() {
       {error && (
         <div className="mb-6">
           <Alert kind="error">{error}</Alert>
+        </div>
+      )}
+      {reportMsg && (
+        <div className="mb-6">
+          <Alert kind="success">{reportMsg}</Alert>
         </div>
       )}
 
@@ -545,6 +594,59 @@ export default function ReportsPage() {
           )}
 
           <SmsReportPanel businessId={businessId} summary={saleSummary} />
+
+          {(isOwner || user?.business_role === 'manager' || user?.role === 'manager') && (
+            <section className="mb-6 bg-surface rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+              <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+                <div>
+                  <h2 className="font-semibold text-slate-900">Report Access Control</h2>
+                  <p className="text-xs text-neutral-light mt-0.5">Block or unblock users from receiving reports/SMS</p>
+                </div>
+              </div>
+              {membersLoading ? (
+                <div className="px-5 py-6 text-center">
+                  <div className="w-6 h-6 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+                </div>
+              ) : members.length > 0 ? (
+                <div className="divide-y divide-slate-100">
+                  {members.map((m: any) => {
+                    const memberId = m.member_id || m.id || m.business_member_id
+                    const allowed = m.get_report === true
+                    const isSelf = m.user_id === user?.id
+                    const displayName = m.name || m.user?.name || m.full_name || 'Unknown'
+                    const role = m.role || m.user_role || m.business_role || 'member'
+                    if (!memberId) return null
+                    return (
+                      <div key={memberId} className="flex items-center justify-between px-5 py-3 gap-3">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center text-sm font-bold shrink-0">
+                            {displayName.charAt(0).toUpperCase()}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-slate-900 truncate">{displayName}{isSelf ? ' (You)' : ''}</p>
+                            <p className="text-xs text-neutral-light capitalize truncate">{String(role).replace('_', ' ')}</p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => toggleReport(memberId, allowed)}
+                          disabled={togglingId === memberId}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-50 shrink-0 ${
+                            allowed
+                              ? 'bg-success-light text-success hover:bg-success/10'
+                              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                          }`}
+                        >
+                          {togglingId === memberId ? 'Updating...' : allowed ? 'Reports: Allowed' : 'Reports: Blocked'}
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className="px-5 py-6 text-center text-neutral-light text-sm">No members found</div>
+              )}
+            </section>
+          )}
 
           <div className="mb-6">
             <RevenueChart data={chartData} />
