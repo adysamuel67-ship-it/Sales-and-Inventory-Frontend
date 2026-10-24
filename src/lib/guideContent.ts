@@ -3,19 +3,6 @@ import type { PdfSection } from '@/lib/pdf'
 /**
  * The how-it-works guide, kept as data so the on-screen summary and the
  * downloadable PDF can never drift apart.
- *
- * Every statement here was checked against the backend rather than guessed:
- *
- * - add_sale() refuses a sale whose quantity exceeds stock, then decrements
- *   each product by the quantity sold.
- * - delete_sale() walks the sale's line items and adds each quantity back to the
- *   product, so stock returns to exactly where it was before the sale.
- * - update_sale() restores every old line item to stock first, then deducts the
- *   new lines, so editing quantities nets out correctly.
- * - Any sale leaving amount_paid below the total creates a Debt linked by
- *   sale_id; a fully paid sale creates none. Deleting the sale deletes the
- *   debt's transactions.
- * - Debts settle oldest-first in update_customer_with_debt().
  */
 
 export const GUIDE_SECTIONS: PdfSection[] = [
@@ -24,11 +11,13 @@ export const GUIDE_SECTIONS: PdfSection[] = [
     body: [
       'Every sale is a list of products and quantities. The system checks your stock before saving, so you can never sell more than you actually have.',
       'Stock is reduced the moment the sale is saved. If a sale cannot go through, nothing changes - you are not left with a half-finished sale.',
+      'Profit is calculated automatically using cost price vs selling price for every line item.',
     ],
     bullets: [
       'Choose the products and enter how many of each you are selling.',
       'Pick the payment method: cash, mobile money or card.',
       'Mark it fully paid, or enter part payment to put the rest on credit.',
+      'Roles: Admin/Manager/Cashier can record sales (with role restrictions).',
     ],
   },
   {
@@ -36,12 +25,13 @@ export const GUIDE_SECTIONS: PdfSection[] = [
     body: [
       'If the amount paid is less than the total, the difference becomes a debt. You must select a customer when this happens, because the debt is tracked against them, not the sale.',
       'A debt is linked to the sale that created it, so the two always move together. If the sale is removed, its payment history goes with it.',
-      'When you record a payment against a customer, the oldest unpaid debt is settled first. Pay off debts in order and your ledger stays honest.',
+      'When you record a payment against a customer, the oldest unpaid debt is settled first (FIFO).',
     ],
     bullets: [
       'Fully paid sales create no debt at all.',
       'Debt defaults to being due 30 days after the sale unless you set another date.',
       'Selling on credit without choosing a customer is rejected, on purpose.',
+      'One customer can carry several debts over time; payments clear oldest first.',
     ],
   },
   {
@@ -55,6 +45,7 @@ export const GUIDE_SECTIONS: PdfSection[] = [
       'Changing a quantity does not double-count stock.',
       'Setting the sale to fully paid clears any remaining debt.',
       'You can set the date the debt is due while editing.',
+      'Profit is recalculated automatically based on updated items.',
     ],
   },
   {
@@ -68,6 +59,7 @@ export const GUIDE_SECTIONS: PdfSection[] = [
       'Product quantities are restored, not just adjusted down.',
       'Debt linked to the deleted sale is cleaned up too.',
       'Deleting is permanent - there is no undo button.',
+      'Only Admin or Super Admin can delete sales.',
     ],
   },
   {
@@ -81,6 +73,7 @@ export const GUIDE_SECTIONS: PdfSection[] = [
       'A product must be active to be sold.',
       'Deleting a product is not the same as deactivating it - deactivate to keep your history.',
       'Profit is calculated per line item, so multi-item sales total correctly.',
+      'Restock adds quantity to existing inventory; low stock alerts when below threshold.',
     ],
   },
   {
@@ -92,7 +85,8 @@ export const GUIDE_SECTIONS: PdfSection[] = [
     bullets: [
       'Save a phone number early - it takes seconds and enables reminders.',
       'One customer can carry several debts over time.',
-      'Payments reduce the oldest unpaid debt first.',
+      'Payments reduce the oldest unpaid debt first (FIFO).',
+      'Customer is required for credit sales.',
     ],
   },
   {
@@ -107,6 +101,7 @@ export const GUIDE_SECTIONS: PdfSection[] = [
       'The message preview shows exactly what the customer will receive.',
       'Customers without a phone number cannot receive reminders.',
       'Only managers and administrators can schedule reminders.',
+      'You can pause/resume or manage scheduled reminders.',
     ],
   },
   {
@@ -119,6 +114,7 @@ export const GUIDE_SECTIONS: PdfSection[] = [
       'Pick a range from the presets, or set your own dates.',
       'Best sellers are ranked by units sold over the period.',
       'The SMS report goes to admins and managers who have a phone number saved.',
+      'Track revenue by payment method (cash, mobile money, card).',
     ],
   },
   {
@@ -126,6 +122,11 @@ export const GUIDE_SECTIONS: PdfSection[] = [
     body: [
       'The daily, weekly and monthly reports are produced on a schedule and delivered to every admin and manager who has a phone number on file.',
       'If a report is not arriving, the most common cause is a missing phone number on the account receiving it. Check Settings first.',
+    ],
+    bullets: [
+      'Verify phone numbers are saved for recipients (Admins/Managers).',
+      'Check if the number is valid for SMS delivery.',
+      'Reports run on schedule - allow time for delivery.',
     ],
   },
 ]
