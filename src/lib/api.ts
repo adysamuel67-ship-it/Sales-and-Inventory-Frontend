@@ -346,10 +346,18 @@ export const businessAPI = {
   getBusinessKey: (businessId: number) => api.get(`/businesses/business_key/${businessId}`),
   listMembers: (businessId: number) => api.get(`/businesses/${businessId}/members`),
   getBusinessMembers: (businessId: number) => api.get(`/businesses/${businessId}/members`),
-  blockReport: (businessId: number, businessMemberId: number, dir: 0 | 1) =>
-    api.post(`/businesses/block_report/${businessId}/${businessMemberId}`, undefined, { params: { dir } }),
-  toggleReport: (businessId: number, businessMemberId: number, dir: 0 | 1) =>
-    api.post(`/businesses/block_report/${businessId}/${businessMemberId}`, undefined, { params: { dir } }),
+  blockReport: (businessId: number, businessMemberId: number | null | undefined, dir: 0 | 1) => {
+    if (businessMemberId == null || businessMemberId === 0) {
+      return api.post(`/businesses/block_report/${businessId}`, undefined, { params: { dir } })
+    }
+    return api.post(`/businesses/block_report/${businessId}/${businessMemberId}`, undefined, { params: { dir } })
+  },
+  toggleReport: (businessId: number, businessMemberId: number | null | undefined, dir: 0 | 1) => {
+    if (businessMemberId == null || businessMemberId === 0) {
+      return api.post(`/businesses/block_report/${businessId}`, undefined, { params: { dir } })
+    }
+    return api.post(`/businesses/block_report/${businessId}/${businessMemberId}`, undefined, { params: { dir } })
+  },
   sendApproval: (data: { business_key: string; reason: string; role: string }) =>
     api.post('/businesses/approvals/send_approval', data),
   getApprovals: (businessId: number, status?: string) =>

@@ -82,7 +82,7 @@ export default function SettingsPage() {
     }
   }, [businessId, loadSettings, isOwner, user?.business_role, user?.role, loadMembers])
 
-  const toggleReport = async (memberId: number, currentlyAllowed: boolean) => {
+  const toggleReport = async (memberId: number, currentlyAllowed: boolean, isSelf?: boolean) => {
     if (!businessId) return
     setMembers((prev) =>
       prev.map((m) =>
@@ -95,7 +95,7 @@ export default function SettingsPage() {
     setError('')
     setSuccess(currentlyAllowed ? 'Reports access blocked' : 'Reports access enabled')
     try {
-      await businessAPI.blockReport(businessId, memberId, currentlyAllowed ? 0 : 1)
+      await businessAPI.blockReport(businessId, isSelf ? null : memberId, currentlyAllowed ? 0 : 1)
     } catch (err: any) {
       setMembers((prev) =>
         prev.map((m) =>
@@ -325,7 +325,7 @@ export default function SettingsPage() {
                         </div>
                         {isSelf && (
                           <button
-                            onClick={() => toggleReport(memberId, allowed)}
+                            onClick={() => toggleReport(memberId, allowed, isSelf)}
                             disabled={togglingId === memberId}
                             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 ${
                               allowed ? 'bg-primary' : 'bg-slate-300'
