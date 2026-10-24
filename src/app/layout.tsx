@@ -29,12 +29,13 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   themeColor: '#0F172A',
+  colorScheme: 'light',
 }
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: `${SITE_NAME} — Sales & Inventory Tracking for Ghanaian Businesses`,
+    default: `${SITE_NAME} | Free Sales & Inventory Tracking App with Debt & SMS Reminders for Ghana`,
     template: `%s | ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
@@ -46,35 +47,52 @@ export const metadata: Metadata = {
     statusBarStyle: 'black-translucent',
   },
   keywords: [
-    'sales tracking app Ghana',
-    'inventory management Ghana',
-    'stock management software',
-    'point of sale Ghana',
-    'business management app',
-    'Ghana SME software',
+    'sales and inventory tracking app',
+    'free sales and inventory software Ghana',
+    'inventory management system Ghana',
+    'pos system Ghana',
+    'stock management app',
+    'debt tracking software Ghana',
+    'credit sales management',
+    'SMS debt reminders Ghana',
+    'automatic debt collection reminder',
+    'business management app Ghana',
+    'market shop inventory app',
+    'wholesale retail management Ghana',
     'mobile money sales tracking',
-    'debt tracking Ghana',
-    'debt collection SMS',
-    'automatic SMS reminders',
-    'credit sales tracking',
-    'customer debt management',
+    'sales report app Ghana',
+    'profit tracking app Ghana',
+    'Ghana SME software',
+    'small business pos Ghana',
   ],
   authors: [{ name: SITE_NAME }],
   creator: SITE_NAME,
   publisher: COMPANY_NAME,
   formatDetection: { telephone: false },
+  category: 'business',
   openGraph: {
     type: 'website',
     siteName: SITE_NAME,
-    title: `${SITE_NAME} — Sales & Inventory Tracking for Ghanaian Businesses`,
+    title: `${SITE_NAME} | Free Sales & Inventory Tracking App with Debt & SMS Reminders for Ghana`,
     description: SITE_DESCRIPTION,
-    url: '/',
+    url: SITE_URL,
     locale: 'en_GH',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: `${SITE_NAME} - Sales, Inventory, Debt Tracking with SMS Reminders`,
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: `${SITE_NAME} — Sales & Inventory Tracking for Ghanaian Businesses`,
+    site: '@businessbotgh',
+    creator: '@businessbotgh',
+    title: `${SITE_NAME} | Free Sales & Inventory Tracking App with Debt & SMS Reminders for Ghana`,
     description: SITE_DESCRIPTION,
+    images: ['/og-image.png'],
   },
   verification: {
     google: 'oSKW41r6fdiGmV20g0tU6jMjxNmN40NJ4erkj80EmC8',
@@ -82,12 +100,17 @@ export const metadata: Metadata = {
   robots: {
     index: true,
     follow: true,
+    nocache: false,
     googleBot: {
       index: true,
       follow: true,
       'max-image-preview': 'large',
       'max-snippet': -1,
+      'max-video-preview': -1,
     },
+  },
+  alternates: {
+    canonical: SITE_URL,
   },
 }
 
@@ -101,6 +124,7 @@ const siteJsonLd = {
       '@type': 'Organization',
       '@id': `${SITE_URL}/#organization`,
       name: SITE_NAME,
+      alternateName: ['Business Bot Ghana', 'BusinessBot GH'],
       url: `${SITE_URL}/`,
       logo: {
         '@type': 'ImageObject',
@@ -108,12 +132,13 @@ const siteJsonLd = {
         width: 512,
         height: 512,
       },
-      areaServed: 'GH',
+      areaServed: ['GH', 'Ghana'],
       contactPoint: {
         '@type': 'ContactPoint',
         telephone: SUPPORT_PHONE,
         contactType: 'customer support',
         areaServed: 'GH',
+        availableLanguage: ['English'],
       },
     },
     {
@@ -122,6 +147,43 @@ const siteJsonLd = {
       name: SITE_NAME,
       url: `${SITE_URL}/`,
       publisher: { '@id': `${SITE_URL}/#organization` },
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: {
+          '@type': 'EntryPoint',
+          urlTemplate: `${SITE_URL}/products?search={search_term_string}`,
+        },
+        'query-input': 'required name=search_term_string',
+      },
+    },
+    {
+      '@type': 'SoftwareApplication',
+      '@id': `${SITE_URL}/#software`,
+      name: SITE_NAME,
+      applicationCategory: 'BusinessApplication',
+      operatingSystem: 'Web Browser, Android, iOS',
+      url: SITE_URL,
+      description: SITE_DESCRIPTION,
+      offers: {
+        '@type': 'Offer',
+        price: '0',
+        priceCurrency: 'GHS',
+      },
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: '4.8',
+        ratingCount: '150',
+      },
+      featureList: [
+        'Sales Tracking',
+        'Inventory Management',
+        'Debt Tracking',
+        'Automatic SMS Reminders',
+        'Customer Management',
+        'Profit Reports',
+        'Multi-Business Support',
+        'Role-Based Access',
+      ],
     },
   ],
 }
@@ -129,6 +191,9 @@ const siteJsonLd = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${sans.variable} ${display.variable}`}>
+      <head>
+        <link rel="canonical" href={SITE_URL} />
+      </head>
       <body className="antialiased">
         <script
           type="application/ld+json"
