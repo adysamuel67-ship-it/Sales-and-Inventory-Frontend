@@ -347,9 +347,9 @@ export const businessAPI = {
   listMembers: (businessId: number) => api.get(`/businesses/${businessId}/members`),
   getBusinessMembers: (businessId: number) => api.get(`/businesses/${businessId}/members`),
   blockReport: (businessId: number, businessMemberId: number, dir: 0 | 1) =>
-    api.post(`/block_report/${businessId}/${businessMemberId}`, undefined, { params: { dir } }),
+    api.post(`/businesses/block_report/${businessId}/${businessMemberId}`, undefined, { params: { dir } }),
   toggleReport: (businessId: number, businessMemberId: number, dir: 0 | 1) =>
-    api.post(`/block_report/${businessId}/${businessMemberId}`, undefined, { params: { dir } }),
+    api.post(`/businesses/block_report/${businessId}/${businessMemberId}`, undefined, { params: { dir } }),
   sendApproval: (data: { business_key: string; reason: string; role: string }) =>
     api.post('/businesses/approvals/send_approval', data),
   getApprovals: (businessId: number, status?: string) =>
