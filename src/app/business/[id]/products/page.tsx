@@ -43,15 +43,13 @@ export default function ProductsPage() {
   const [form, setForm] = useState({
     name: '', price: '', cost_price: '', quantity: '', unit: 'units', low_stock_threshold: '10', category: '', description: '', sku: '',
   })
-  const [saving, setSaving] = useState(false)
   const [showRestockModal, setShowRestockModal] = useState(false)
   const [restockProduct, setRestockProduct] = useState<Product | null>(null)
   const [restockQty, setRestockQty] = useState('')
-  const [restocking, setRestocking] = useState(false)
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (silent = false) => {
     if (!businessId || isNaN(businessId)) return
-    setLoading(true)
+    if (!silent) setLoading(true)
     try {
       const res = await productAPI.list(businessId)
       const items = extractArray(res.data).map(normalizeProduct)
@@ -62,7 +60,7 @@ export default function ProductsPage() {
     } catch (err: any) {
       setError(parseApiError(err))
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }, [businessId])
 
@@ -123,33 +121,66 @@ export default function ProductsPage() {
     setShowAdd(true)
   }
 
-  const saveProduct = async (e: React.FormEvent) => {
+  const saveProduct = (e: React.FormEvent) => {
     e.preventDefault()
-    setSaving(true)
-    try {
-      const payload = {
-        name: form.name,
-        price: parseFloat(form.price) || 0,
-        cost_price: parseFloat(form.cost_price) || 0,
-        quantity: parseInt(form.quantity) || 0,
-        unit: form.unit || 'units',
-        low_stock_threshold: parseInt(form.low_stock_threshold) || 10,
-        category: form.category || undefined,
-        description: form.description || undefined,
-        sku: form.sku || undefined,
-      }
-      if (editProduct) {
-        await productAPI.update(businessId!, editProduct.product_id, payload)
-      } else {
-        await productAPI.create(businessId!, payload)
-      }
-      setShowAdd(false)
-      load()
-    } catch (err: any) {
-      setError(parseApiError(err))
-    } finally {
-      setSaving(false)
+    const payload = {
+      name: form.name,
+      price: parseFloat(form.price) || 0,
+      cost_price: parseFloat(form.cost_price) || 0,
+      quantity: parseInt(form.quantity) || 0,
+      unit: form.unit || 'units',
+      low_stock_threshold: parseInt(form.low_stock_threshold) || 10,
+      category: form.category || undefined,
+      description: form.description || undefined,
+      sku: form.sku || undefined,
     }
+
+    // Close the form and paint the change straight away. The server call runs
+    // in the background and only rolls the row back if it actually fails.
+    setShowAdd(false)
+    setError('')
+    setUploadNotice('')
+
+    if (editProduct) {
+      const previous = editProduct
+      const optimistic: Product = { ...previous, ...payload }
+      setAllProducts(prev => prev.map(p => (p.product_id === previous.product_id ? optimistic : p)))
+      productAPI.update(businessId!, previous.product_id, payload)
+        .then(() => setUploadNotice(`${payload.name} updated`))
+        .catch((err: any) => {
+          setAllProducts(prev => prev.map(p => (p.product_id === previous.product_id ? previous : p)))
+          setUploadNotice('')
+          setError(parseApiError(err) || 'Failed to update product')
+        })
+      return
+    }
+
+    const tempId = -Date.now()
+    const optimistic: Product = { ...payload, product_id: tempId, is_active: true }
+    setAllProducts(prev => [optimistic, ...prev])
+    if (payload.category) {
+      const category = payload.category
+      setCategories(prev => (prev.includes(category) ? prev : [...prev, category]))
+    }
+    setUploadNotice(`${payload.name} added`)
+    productAPI.create(businessId!, payload)
+      .then((res) => {
+        const raw = res.data?.data ?? res.data
+        const created = raw?.product ?? raw
+        if (created && (created.product_id ?? created.id) != null) {
+          const normalized = normalizeProduct({ ...payload, ...created })
+          setAllProducts(prev => prev.map(p => (p.product_id === tempId ? normalized : p)))
+        } else {
+          // Some deployments only return a success message; sync quietly.
+          setAllProducts(prev => prev.filter(p => p.product_id !== tempId))
+          load(true)
+        }
+      })
+      .catch((err: any) => {
+        setAllProducts(prev => prev.filter(p => p.product_id !== tempId))
+        setUploadNotice('')
+        setError(parseApiError(err) || 'Failed to add product')
+      })
   }
 
   const handleDelete = () => {
@@ -252,7 +283,7 @@ export default function ProductsPage() {
     setShowRestockModal(true)
   }
 
-  const handleRestock = async (e: React.FormEvent) => {
+  const handleRestock = (e: React.FormEvent) => {
     e.preventDefault()
     if (!businessId || !restockProduct) return
     const qty = parseInt(restockQty)
@@ -260,23 +291,33 @@ export default function ProductsPage() {
       setError('Please enter a valid quantity to add')
       return
     }
-    setRestocking(true)
+    const target = restockProduct
+    setShowRestockModal(false)
+    setRestockProduct(null)
     setError('')
-    try {
-      const res = await productAPI.restock(businessId, restockProduct.product_id, qty)
-      const updated = res.data?.data ?? res.data
-      setAllProducts(prev => prev.map(p =>
-        p.product_id === restockProduct.product_id
-          ? { ...p, quantity: updated?.quantity ?? p.quantity + qty }
-          : p
-      ))
-      setShowRestockModal(false)
-      setUploadNotice(`${qty} ${restockProduct.unit || 'units'} added to ${restockProduct.name}`)
-    } catch (err: any) {
-      setError(parseApiError(err) || 'Failed to restock product')
-    } finally {
-      setRestocking(false)
-    }
+    setUploadNotice('')
+    setAllProducts(prev => prev.map(p =>
+      p.product_id === target.product_id
+        ? { ...p, quantity: (p.quantity ?? 0) + qty }
+        : p
+    ))
+    setUploadNotice(`${qty} ${target.unit || 'units'} added to ${target.name}`)
+    productAPI.restock(businessId, target.product_id, qty)
+      .then((res) => {
+        const updated = res.data?.data ?? res.data
+        if (updated?.quantity != null) {
+          setAllProducts(prev => prev.map(p =>
+            p.product_id === target.product_id ? { ...p, quantity: updated.quantity } : p
+          ))
+        }
+      })
+      .catch((err: any) => {
+        setAllProducts(prev => prev.map(p =>
+          p.product_id === target.product_id ? { ...p, quantity: target.quantity } : p
+        ))
+        setUploadNotice('')
+        setError(parseApiError(err) || 'Failed to restock product')
+      })
   }
 
   const handleToggleActive = async (p: Product) => {
@@ -735,10 +776,9 @@ export default function ProductsPage() {
                 </button>
                 <button
                   type="submit"
-                  disabled={restocking}
-                  className="flex-1 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-50"
+                  className="flex-1 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors"
                 >
-                  {restocking ? 'Adding...' : 'Add Stock'}
+                  Add Stock
                 </button>
               </div>
             </form>
@@ -807,8 +847,8 @@ export default function ProductsPage() {
               </div>
               <div className="flex gap-2 pt-2">
                 <button type="button" onClick={() => setShowAdd(false)} className="flex-1 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors">Cancel</button>
-                <button type="submit" disabled={saving} className="flex-1 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-50">
-                  {saving ? 'Saving...' : editProduct ? 'Update' : 'Add Product'}
+                <button type="submit" className="flex-1 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors">
+                  {editProduct ? 'Update' : 'Add Product'}
                 </button>
               </div>
             </form>
