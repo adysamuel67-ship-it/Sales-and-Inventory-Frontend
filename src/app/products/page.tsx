@@ -133,6 +133,17 @@ export default function ProductsPage() {
     )
   }
 
+  if (businessId) {
+    router.replace(`/business/${businessId}/products`)
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center py-16">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+      </DashboardLayout>
+    )
+  }
+
   return (
     <DashboardLayout>
       <div className="flex items-center justify-between mb-6">
