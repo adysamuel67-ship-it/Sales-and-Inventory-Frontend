@@ -88,9 +88,13 @@ describe('API modules', () => {
     const { authAPI } = require('../lib/api')
     expect(typeof authAPI.login).toBe('function')
     expect(typeof authAPI.signUp).toBe('function')
-    expect(typeof authAPI.logout).toBe('function')
     expect(typeof authAPI.sendVerification).toBe('function')
     expect(typeof authAPI.verifyEmail).toBe('function')
+  })
+
+  it('authAPI has no logout method - /auth/logout is a server no-op now', async () => {
+    const { authAPI } = require('../lib/api')
+    expect((authAPI as any).logout).toBeUndefined()
   })
 
   it('authAPI.login calls the correct endpoint', async () => {

@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { profileAPI, businessAPI, authAPI, setTokenRefreshCallback, setAuthLogoutCallback, getUserIdFromToken, tryProactiveRefresh, startAutoRefresh, stopAutoRefresh, isTokenExpired, decodeJwt, resetLogoutGuard } from '@/lib/api'
+import { profileAPI, businessAPI, setTokenRefreshCallback, setAuthLogoutCallback, getUserIdFromToken, tryProactiveRefresh, startAutoRefresh, stopAutoRefresh, isTokenExpired, decodeJwt, resetLogoutGuard } from '@/lib/api'
 import { SUPER_ADMIN_EMAIL } from '@/lib/utils'
 
 interface User {
@@ -180,7 +180,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(() => {
     stopAutoRefresh()
-    authAPI.logout().catch(() => {})
+    // /auth/logout is a no-op on the server: signing out is purely
+    // client-side. Delete both tokens (and the rest of the session) from
+    // storage and redirect. Server tokens stay valid until they expire.
     localStorage.removeItem('token')
     localStorage.removeItem('refresh_token')
     localStorage.removeItem('user')
@@ -211,6 +213,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setTokenRefreshCallback(null)
       setAuthLogoutCallback(null)
     }
+  }, [logout])
+
+  // The server no longer revokes tokens, so sign-out in one tab does not
+  // propagate anywhere else on its own. localStorage fires a `storage` event
+  // in every *other* tab when a key is removed, so a token removed by a
+  // sign-out (or a forced logout) in one tab signs this tab out too. Other
+  // devices stay logged in until their own tokens expire - that is inherent
+  // to client-side revocation.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const onStorage = (event: StorageEvent) => {
+      if ((event.key === 'token' || event.key === 'refresh_token') && event.newValue === null) {
+        logout()
+      }
+    }
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
   }, [logout])
 
   const fetchProfileRef = useRef(fetchProfile)

@@ -3,10 +3,11 @@
  *
  * Verifies:
  * 1. Signing out clears every auth key from storage
- * 2. Signing out calls the logout endpoint and stops token auto-refresh
+ * 2. Signing out is purely client-side and stops token auto-refresh
  * 3. Signing out returns the user to the sign-in page   <- the regression
  * 4. A forced sign-out (dead refresh token) behaves the same way
- * 5. /auth/logout is exempt from the 401 cascade and carries the access token
+ * 5. No client ever calls /auth/logout, which is a server no-op now
+ * 6. A sign-out in another tab signs this tab out via the storage event
  */
 
 import React from 'react'
@@ -23,7 +24,6 @@ jest.mock('next/navigation', () => ({
 jest.mock('@/lib/api', () => ({
   profileAPI: { getMyProfile: jest.fn(() => Promise.resolve({ data: null })) },
   businessAPI: { myBusinesses: jest.fn(() => Promise.resolve({ data: null })) },
-  authAPI: { logout: jest.fn(() => Promise.resolve()) },
   setTokenRefreshCallback: jest.fn(),
   setAuthLogoutCallback: jest.fn(),
   getUserIdFromToken: jest.fn(() => null),
@@ -37,7 +37,7 @@ jest.mock('@/lib/api', () => ({
 
 import { useRouter } from 'next/navigation'
 import { AuthProvider, useAuth } from '@/lib/auth'
-import { authAPI, setAuthLogoutCallback, stopAutoRefresh } from '@/lib/api'
+import { setAuthLogoutCallback, stopAutoRefresh } from '@/lib/api'
 
 const replace = jest.fn()
 const push = jest.fn()
@@ -110,20 +110,21 @@ describe('signing out', () => {
     expect(replace).toHaveBeenCalledWith('/login')
   })
 
-  it('calls the logout endpoint and stops token auto-refresh', async () => {
+  it('signs out purely client-side and stops token auto-refresh', async () => {
     seedSession()
     await renderProvider()
     await signOut()
 
-    expect(authAPI.logout).toHaveBeenCalled()
     expect(stopAutoRefresh).toHaveBeenCalled()
+    expect(localStorage.getItem('token')).toBeNull()
+    expect(localStorage.getItem('refresh_token')).toBeNull()
   })
 
   it('does not try to sign the user out before they confirm', async () => {
     seedSession()
     await renderProvider()
 
-    expect(authAPI.logout).not.toHaveBeenCalled()
+    expect(localStorage.getItem('token')).toBe('access-123')
     expect(replace).not.toHaveBeenCalled()
   })
 
@@ -163,39 +164,68 @@ describe('forced sign-out from an expired session', () => {
   })
 })
 
-describe('the logout request itself', () => {
-  const src = readFileSync(join(process.cwd(), 'src/lib/api.ts'), 'utf8')
+describe('a sign-out in another tab', () => {
+  // Server-side sessions are never revoked anymore, so the only thing that
+  // propagates a sign-out between tabs is the storage event fired when
+  // another tab removes the tokens.
+  it('signs this tab out when the other tab removes the access token', async () => {
+    seedSession()
+    await renderProvider()
 
-  it('exempts /auth/logout from the 401 cascade', () => {
-    const handler = src.slice(src.indexOf('function handle401Interceptor'))
+    await act(async () => {
+      window.dispatchEvent(new StorageEvent('storage', { key: 'token', newValue: null }))
+    })
 
-    // The exemption has to be both computed and used. Asserting only that the
-    // identifier appears somewhere in the file would pass even if the guard
-    // were computed and then dropped from the condition.
-    const declaration = handler
-      .split('\n')
-      .find(line => line.includes('const isLogoutEndpoint'))
-    const condition = handler
-      .split('\n')
-      .find(line => line.includes("error.response?.status === 401"))
-
-    expect(declaration).toContain("url.includes('/auth/logout')")
-    expect(condition).toContain('!isLogoutEndpoint')
+    expect(localStorage.getItem('token')).toBeNull()
+    expect(localStorage.getItem('refresh_token')).toBeNull()
+    expect(replace).toHaveBeenCalledWith('/login')
   })
 
-  it('still attaches the access token to the logout request', () => {
-    const attachToken = src.slice(src.indexOf('async function attachToken'), src.indexOf('api.interceptors.request.use'))
-    // Excluding /auth/logout from the request interceptor would strip the
-    // credential the server needs to revoke the session.
-    expect(attachToken).not.toContain('/auth/logout')
+  it('also reacts to the refresh token being removed', async () => {
+    seedSession()
+    await renderProvider()
 
-    const logoutCall = src.slice(src.indexOf('logout: () =>'), src.indexOf('sendVerification'))
-    expect(logoutCall).toContain("localStorage.getItem('token')")
-    expect(logoutCall).toContain('Authorization')
+    await act(async () => {
+      window.dispatchEvent(new StorageEvent('storage', { key: 'refresh_token', newValue: null }))
+    })
+
+    expect(localStorage.getItem('token')).toBeNull()
+    expect(replace).toHaveBeenCalledWith('/login')
   })
 
-  it('matches the mobile client, which already excluded /auth/logout', () => {
-    const mobile = readFileSync(join(process.cwd(), 'mobile/src/lib/api.ts'), 'utf8')
-    expect(mobile).toContain("url.includes('/auth/logout')")
+  it('ignores storage events that are not a sign-out', async () => {
+    seedSession()
+    await renderProvider()
+
+    await act(async () => {
+      window.dispatchEvent(new StorageEvent('storage', { key: 'token', newValue: 'rotated-by-other-tab' }))
+      window.dispatchEvent(new StorageEvent('storage', { key: 'current_business_id', newValue: null }))
+    })
+
+    expect(localStorage.getItem('token')).toBe('access-123')
+    expect(replace).not.toHaveBeenCalled()
+  })
+})
+
+describe('logout stays client-side', () => {
+  const read = (p: string) => readFileSync(join(process.cwd(), p), 'utf8')
+
+  it('the web api client never posts to /auth/logout', () => {
+    expect(read('src/lib/api.ts')).not.toContain("'/auth/logout'")
+  })
+
+  it('the mobile api client never posts to /auth/logout', () => {
+    expect(read('mobile/src/lib/api.ts')).not.toContain("'/auth/logout'")
+  })
+
+  it('AuthProvider signs out by deleting both tokens from storage', () => {
+    const src = read('src/lib/auth.tsx')
+    expect(src).toContain("localStorage.removeItem('token')")
+    expect(src).toContain("localStorage.removeItem('refresh_token')")
+    expect(src).not.toMatch(/authAPI\.logout/)
+  })
+
+  it('AuthProvider listens for storage events across tabs', () => {
+    expect(read('src/lib/auth.tsx')).toContain("window.addEventListener('storage'")
   })
 })

@@ -74,19 +74,14 @@ function extractAccessToken(data: any): string | null {
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
 /**
- * Refreshes the access token, tolerating the refresh-token rotation race.
+ * Refreshes the access token.
  *
- * The backend rotates the refresh token on every refresh, invalidating the
- * previous one immediately. With more than one tab open - and the app
- * proactively refreshing on a timer in each tab - tab A can rotate the token
- * between tab B reading it and posting it. Tab B then gets a 401 on an
- * otherwise perfectly valid session and gets logged out.
- *
- * So: re-read the stored token before every attempt, and if a 401 comes back
- * while localStorage now holds a *different* token, retry with that instead of
- * treating the session as dead. A definitive 401/403 only ends the session
- * after the retries are exhausted. Network failures never log the user out -
- * a trader on a patchy connection must not lose their session for it.
+ * The backend no longer rotates refresh tokens: previously issued tokens stay
+ * valid until they expire, and /auth/refresh simply returns the latest pair.
+ * A 401/403 therefore means the session is genuinely dead - it ends
+ * immediately, with no replay race to tolerate. Network failures still retry
+ * and never log the user out - a trader on a patchy connection must not lose
+ * their session for it.
  */
 async function performTokenRefresh(): Promise<string> {
   let lastError: any = null
@@ -109,6 +104,7 @@ async function performTokenRefresh(): Promise<string> {
       const newToken = extractAccessToken(data)
       if (!newToken) throw new Error('No access token in refresh response')
 
+      // Always keep the newest pair the server returned.
       const newRefresh = data.refresh_token || refreshToken
       localStorage.setItem('token', newToken)
       localStorage.setItem('refresh_token', newRefresh)
@@ -119,15 +115,7 @@ async function performTokenRefresh(): Promise<string> {
       const status = err?.response?.status
 
       if (status === 401 || status === 403) {
-        // Did another tab rotate the token while this request was in flight?
-        const current = localStorage.getItem('refresh_token')
-        if (current && current !== refreshToken) {
-          continue
-        }
-        if (attempt < 2) {
-          await sleep(750)
-          continue
-        }
+        // The refresh token is genuinely expired or invalid.
         doLogout()
         throw err
       }
@@ -199,15 +187,7 @@ function handle401Interceptor(instance: any) {
       url.includes('/auth/otp/verification') || url.includes('/auth/verify_user') ||
       url.includes('/auth/forgot_password') || url.includes('/auth/verify/forgot_password')
 
-    // /auth/logout is deliberately absent from the list above so the request
-    // interceptor still attaches the access token, but a 401 from it here must
-    // not re-enter doLogout(): the session is already being torn down, so it
-    // would fire a second logout request while the first is still settling.
-    // The mobile api client excludes it from both interceptors for the same
-    // reason.
-    const isLogoutEndpoint = url.includes('/auth/logout')
-
-    if (error.response?.status === 401 && typeof window !== 'undefined' && !isAuthEndpoint && !isLogoutEndpoint) {
+    if (error.response?.status === 401 && typeof window !== 'undefined' && !isAuthEndpoint) {
       if (originalRequest._retry === 'done') {
         doLogout()
         return Promise.reject(error)
@@ -296,14 +276,9 @@ export const authAPI = {
       new URLSearchParams({ username: data.email, password: data.password }),
       { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
     ),
-  logout: () => {
-    // logout() clears localStorage synchronously, before this request's
-    // interceptor gets a chance to read the token, so the credential has to be
-    // snapshotted here. Otherwise the sign-out call goes out unauthenticated and
-    // the server never records the revocation. The request body is left alone.
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
-    return api.post('/auth/logout', undefined, token ? { headers: { Authorization: `Bearer ${token}` } } : undefined).catch(() => {})
-  },
+  // No logout method on purpose: /auth/logout is a no-op on the server now.
+  // Signing out is purely client-side - see AuthProvider.logout, which clears
+  // storage and redirects. Server tokens stay valid until they expire.
   sendVerification: (email: string) =>
     api.post('/auth/otp/get_code', { email }),
   verifyEmail: (data: { email: string; code: string }) =>

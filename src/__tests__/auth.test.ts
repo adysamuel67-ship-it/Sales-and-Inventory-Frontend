@@ -10,7 +10,7 @@
  * 6. Logout clears all auth state
  * 7. Auth logout callback mechanism
  * 8. Navigation preserves auth state
- * 9. Refresh-token rotation race does not log the user out (multi-tab)
+ * 9. A dead refresh token (401/403) ends the session immediately
  * 10. Sign out lives in settings behind a confirmation
  */
 
@@ -470,54 +470,52 @@ describe('profileApi does NOT redirect on failure', () => {
   })
 })
 
-describe('Refresh-token rotation race (multi-tab)', () => {
-  // The backend rotates the refresh token on every refresh (auth/service.py
-  // writes user.refresh_token = hash(new_refresh_token)), invalidating the
-  // previous one immediately. Two tabs refreshing at once therefore race, and
-  // the loser used to be logged out for a session that was still valid.
-  it('re-reads the stored refresh token before every attempt', () => {
+describe('Refresh failure policy (no token rotation)', () => {
+  // The backend no longer rotates refresh tokens: previously issued tokens
+  // stay valid until they expire and /auth/refresh always returns the latest
+  // pair. A 401/403 is therefore definitive - the stored refresh token is
+  // expired or invalid - and the session ends immediately. There is no
+  // replay race to tolerate, so no retry logic may stand between the 401 and
+  // the logout.
+  const refreshBody = () => {
     const src = readFileSync(join(process.cwd(), 'src/lib/api.ts'), 'utf8')
-    const body = src.slice(src.indexOf('async function performTokenRefresh'), src.indexOf('function startRefresh'))
+    return src.slice(src.indexOf('async function performTokenRefresh'), src.indexOf('function startRefresh'))
+  }
 
-    // The read must happen inside the loop, not once before it.
-    const loopIndex = body.indexOf('for (let attempt')
-    const readIndex = body.indexOf("localStorage.getItem('refresh_token')")
-    expect(loopIndex).toBeGreaterThan(-1)
-    expect(readIndex).toBeGreaterThan(loopIndex)
+  it('ends the session immediately when /auth/refresh returns 401/403', () => {
+    const body = refreshBody()
+    const branches = body.split('if (status === 401 || status === 403)')
+    expect(branches.length).toBe(2)
+    expect(branches[1]).toContain('doLogout()')
+    expect(branches[1]).toContain('throw err')
+    // No retry, no backoff, no second attempt once the refresh token is dead.
+    expect(branches[1]).not.toContain('sleep(750)')
+    expect(branches[1]).not.toMatch(/\bcontinue\b/)
   })
 
-  it('retries when the stored token changed underneath it', () => {
-    const src = readFileSync(join(process.cwd(), 'src/lib/api.ts'), 'utf8')
-    const body = src.slice(src.indexOf('async function performTokenRefresh'), src.indexOf('function startRefresh'))
-
-    // The 401 branch compares the token it sent against what is now stored,
-    // and bails out to the next attempt when they differ.
-    expect(body).toMatch(/current\s*&&\s*current\s*!==\s*refreshToken/)
-    const race = body.indexOf('current !== refreshToken')
-    expect(race).toBeGreaterThan(-1)
-    const after = body.slice(race, race + 120)
-    expect(after).toMatch(/\)\s*\{\s*continue/)
-  })
-
-  it('only ends the session after the retries are exhausted', () => {
-    const src = readFileSync(join(process.cwd(), 'src/lib/api.ts'), 'utf8')
-    const body = src.slice(src.indexOf('async function performTokenRefresh'), src.indexOf('function startRefresh'))
-
-    // doLogout must be guarded by an attempt check, and must come after a retry.
-    const logoutAt = body.indexOf('doLogout()')
-    const guard = body.lastIndexOf('attempt < 2', logoutAt)
-    expect(guard).toBeGreaterThan(-1)
+  it('has no rotation-race tolerance left', () => {
+    const body = refreshBody()
+    expect(body).not.toMatch(/current\s*&&\s*current\s*!==\s*refreshToken/)
+    expect(body).not.toMatch(/sleep\(750\)/)
   })
 
   it('does not log out on a network failure', () => {
-    const src = readFileSync(join(process.cwd(), 'src/lib/api.ts'), 'utf8')
-    const body = src.slice(src.indexOf('async function performTokenRefresh'), src.indexOf('function startRefresh'))
+    const body = refreshBody()
 
     // Only the 401/403 branch may call doLogout; the offline/5xx branch must not.
     const branches = body.split('if (status === 401 || status === 403)')
     expect(branches.length).toBe(2)
     expect(branches[0]).not.toContain('doLogout()')
     expect(branches[1]).toContain('doLogout()')
+
+    const networkBranch = body.slice(body.indexOf('// Offline'))
+    expect(networkBranch).not.toContain('doLogout()')
+  })
+
+  it('always stores the latest pair returned by /auth/refresh', () => {
+    const body = refreshBody()
+    expect(body).toContain('data.refresh_token || refreshToken')
+    expect(body).toContain("localStorage.setItem('refresh_token', newRefresh)")
   })
 
   it('the 401 interceptor no longer signs out when a refresh merely fails', () => {

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { profileAPI, businessAPI, authAPI, decodeJwt, isTokenExpired, setAuthLogoutCallback } from './api'
+import { profileAPI, businessAPI, decodeJwt, isTokenExpired, setAuthLogoutCallback } from './api'
 import type { User, Business } from '@/types'
 
 interface AuthContextType {
@@ -148,9 +148,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const logout = useCallback(async () => {
-    try {
-      await authAPI.logout()
-    } catch {}
+    // /auth/logout is a no-op on the server: signing out is purely
+    // client-side. Delete both tokens (and the rest of the session) from
+    // storage. Server tokens stay valid until they expire.
     await AsyncStorage.multiRemove(['token', 'refresh_token', 'user', 'current_business_id'])
     setToken(null)
     setUser(null)

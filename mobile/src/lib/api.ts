@@ -91,7 +91,7 @@ function startRefresh(): Promise<string> {
 async function attachToken(config: any) {
   const url = config?.url || ''
   const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/refresh') ||
-    url.includes('/auth/logout') || url.includes('/users/sign_up') || url.includes('/auth/otp/get_code') ||
+    url.includes('/users/sign_up') || url.includes('/auth/otp/get_code') ||
     url.includes('/auth/otp/verification') || url.includes('/auth/verify_user') ||
     url.includes('/auth/forgot_password') || url.includes('/auth/verify/forgot_password')
   if (!isAuthEndpoint) {
@@ -113,7 +113,7 @@ api.interceptors.response.use(
     const originalRequest = error.config
     const url = originalRequest?.url || ''
     const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/refresh') ||
-      url.includes('/auth/logout') || url.includes('/users/sign_up') || url.includes('/auth/otp/get_code') ||
+      url.includes('/users/sign_up') || url.includes('/auth/otp/get_code') ||
       url.includes('/auth/otp/verification') || url.includes('/auth/verify_user') ||
       url.includes('/auth/forgot_password') || url.includes('/auth/verify/forgot_password')
 
@@ -178,15 +178,9 @@ export const authAPI = {
       new URLSearchParams({ username: data.email, password: data.password }).toString(),
       { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
     ),
-  logout: async () => {
-    try {
-      const refreshToken = await AsyncStorage.getItem('refresh_token')
-      const accessToken = await AsyncStorage.getItem('token')
-      if (refreshToken && accessToken) {
-        await api.post('/auth/logout', { access_token: accessToken, refresh_token: refreshToken, token_type: 'Bearer' }, { timeout: 10000 })
-      }
-    } catch {}
-  },
+  // No logout method on purpose: /auth/logout is a no-op on the server now.
+  // Signing out is purely client-side - see AuthProvider.logout, which clears
+  // storage. Server tokens stay valid until they expire.
   sendVerification: (email: string) => api.post('/auth/otp/get_code', { email }),
   verifyEmail: (data: { email: string; code: string }) =>
     api.post('/auth/otp/verification', { email: data.email, otp: data.code }),
