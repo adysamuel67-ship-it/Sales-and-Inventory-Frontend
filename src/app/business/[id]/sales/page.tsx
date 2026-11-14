@@ -15,8 +15,9 @@ import EmptyState from '@/components/ui/EmptyState'
 import Modal from '@/components/ui/Modal'
 import ProductCombobox from '@/components/ui/ProductCombobox'
 import QuickAddProductModal from '@/components/QuickAddProductModal'
+import BarcodeScanModal from '@/components/BarcodeScanModal'
 import DateRangePicker from '@/components/ui/DateRangePicker'
-import { PlusIcon, ChartIcon } from '@/components/ui/Icons'
+import { PlusIcon, ChartIcon, ScanIcon } from '@/components/ui/Icons'
 type SaleRecord = MappedSale
 
 interface Product {
@@ -71,7 +72,8 @@ export default function SalesPage() {
   const [showCustomerPicker, setShowCustomerPicker] = useState(false)
   const [existingCustomers, setExistingCustomers] = useState<any[]>([])
   const [customerSearch, setCustomerSearch] = useState('')
-  const [quickAddProduct, setQuickAddProduct] = useState<{ index: number; name: string } | null>(null)
+  const [quickAddProduct, setQuickAddProduct] = useState<{ index: number; name: string; barcode?: string } | null>(null)
+  const [showScan, setShowScan] = useState(false)
   const [selectedSales, setSelectedSales] = useState<Set<number>>(new Set())
   const [selectMode, setSelectMode] = useState(false)
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false)
@@ -127,6 +129,57 @@ export default function SalesPage() {
     setQuickAddProduct(null)
     setError('')
     setSuccess(`"${product.name}" added to inventory`)
+  }
+
+  const openQuickAddForScan = (name: string, barcode: string) => {
+    const emptyIndex = lineItems.findIndex((item) => !item.product_id)
+    const index = emptyIndex >= 0 ? emptyIndex : lineItems.length
+    if (emptyIndex < 0) setLineItems((prev) => [...prev, { product_id: '', quantity: '' }])
+    setShowScan(false)
+    setQuickAddProduct({ index, name, barcode })
+  }
+
+  const handleScannedProduct = (product: Product) => {
+    setShowScan(false)
+    setProducts((prev) => {
+      const exists = prev.some((p) => p.product_id === product.product_id)
+      return exists
+        ? prev.map((p) => (p.product_id === product.product_id ? { ...p, ...product } : p))
+        : [product, ...prev]
+    })
+    setLineItems((prev) => {
+      const updated = [...prev]
+      const existingIndex = updated.findIndex((item) => item.product_id === String(product.product_id))
+      if (existingIndex >= 0) {
+        const current = parseInt(updated[existingIndex].quantity, 10)
+        updated[existingIndex] = {
+          ...updated[existingIndex],
+          quantity: String((isNaN(current) ? 0 : current) + 1),
+        }
+        return updated
+      }
+      const emptyIndex = updated.findIndex((item) => !item.product_id)
+      if (emptyIndex >= 0) {
+        updated[emptyIndex] = {
+          ...updated[emptyIndex],
+          product_id: String(product.product_id),
+          quantity: updated[emptyIndex].quantity || '1',
+        }
+        return updated
+      }
+      return [...updated, { product_id: String(product.product_id), quantity: '1' }]
+    })
+    setError('')
+  }
+
+  const handleScanSuggestion = (barcode: string, suggestedName: string) => {
+    if (!canEditSale) return
+    openQuickAddForScan(suggestedName, barcode)
+  }
+
+  const handleScanCreate = (barcode: string) => {
+    if (!canEditSale) return
+    openQuickAddForScan('', barcode)
   }
 
   const loadData = useCallback(async () => {
@@ -570,7 +623,17 @@ export default function SalesPage() {
           </div>
           <form onSubmit={handleCreate} className="space-y-5">
             <div className="space-y-3">
-              <label className="mb-1.5 block text-[13px] font-medium text-slate-700">Products</label>
+              <div className="mb-1.5 flex items-center justify-between gap-2">
+                <label className="block text-[13px] font-medium text-slate-700">Products</label>
+                <button
+                  type="button"
+                  onClick={() => setShowScan(true)}
+                  className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary-light/50"
+                >
+                  <ScanIcon className="h-3.5 w-3.5" />
+                  Scan barcode
+                </button>
+              </div>
               {lineItems.map((item, idx) => {
                 const selectedIds = lineItems.filter((li) => li.product_id).map((li) => li.product_id)
                 const availableProducts = products.filter((p) => !selectedIds.includes(String(p.product_id)) || p.product_id === parseInt(item.product_id))
@@ -588,7 +651,7 @@ export default function SalesPage() {
                         setLineItems(updated)
                       }}
                       excludeIds={selectedIds}
-                      placeholder={idx === 0 ? 'Search products by name, SKU or category' : 'Search for another product'}
+                      placeholder={idx === 0 ? 'Search products by name, SKU, barcode or category' : 'Search for another product'}
                       onCreateProduct={(name) => setQuickAddProduct({ index: idx, name })}
                     />
                     <div className="flex items-center gap-2">
@@ -1295,10 +1358,23 @@ export default function SalesPage() {
         </Modal>
       )}
 
+      {showScan && (
+        <BarcodeScanModal
+          businessId={businessId}
+          canCreate={canEditSale}
+          productActionLabel="Add to sale"
+          onClose={() => setShowScan(false)}
+          onProduct={handleScannedProduct}
+          onSuggestion={handleScanSuggestion}
+          onCreate={handleScanCreate}
+        />
+      )}
+
       {quickAddProduct && (
         <QuickAddProductModal
           businessId={businessId}
           initialName={quickAddProduct.name}
+          initialBarcode={quickAddProduct.barcode}
           onClose={() => setQuickAddProduct(null)}
           onCreated={handleQuickProductCreated}
         />

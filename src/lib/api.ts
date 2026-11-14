@@ -378,6 +378,8 @@ export const productAPI = {
     api.put(`/products/${businessId}/${productId}/deactivate`),
   lowStock: (businessId: number) =>
     api.get(`/products/${businessId}/low_stock`),
+  scan: (businessId: number, barcode: string) =>
+    api.get(`/products/${businessId}/scan/${encodeURIComponent(barcode.trim())}`),
   upload: (businessId: number, file: File, onProgress?: (percent: number) => void) => {
     const formData = new FormData()
     formData.append('file', file)
@@ -468,7 +470,7 @@ export const reminderAPI = {
   create: (businessId: number, data: ReminderPayload) =>
     api.post(`/debts/reminders/${businessId}`, data),
   list: (businessId: number, params?: Record<string, any>) =>
-    api.get(`/debts/reminders/${businessId}`, { data: params ?? {} }),
+    api.get(`/debts/reminders/${businessId}`, { params }),
   update: (businessId: number, reminderId: number, data: ReminderUpdatePayload) =>
     api.put(`/debts/reminders/${businessId}/${reminderId}`, data),
   delete: (businessId: number, reminderId: number) =>

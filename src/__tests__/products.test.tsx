@@ -398,7 +398,7 @@ describe('Product row actions', () => {
   })
 
   it('clicking a row opens the detail modal, which carries every action', () => {
-    expect(page).toContain('onClick={() => setDetailProduct(p)}')
+    expect(page).toMatch(/onClick=\{\(\) => setDetailProduct\((?:p|product)\)\}/)
     expect(modal).toContain('onEdit?.(product)')
     expect(modal).toContain('onRestock?.(product)')
     expect(modal).toContain('onToggleActive?.(product)')

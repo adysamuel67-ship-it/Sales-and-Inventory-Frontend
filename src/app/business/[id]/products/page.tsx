@@ -4,16 +4,106 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import { productAPI } from '@/lib/api'
 import { normalizeProduct, extractArray, parseApiError, isAdminRole, formatCedi, isDeletedProduct, formatDeletedAt } from '@/lib/utils'
+import {
+  filterProducts,
+  inventoryStatus,
+  lowStockThreshold,
+  marginPercent,
+  productQuantity,
+  sortProducts,
+  stockLevelPercent,
+  stockValue,
+  summarizeInventory,
+  type InventoryStatus,
+  type ProductSortKey,
+  type ProductView,
+  type SortDirection,
+  type StockFilter,
+} from '@/lib/products'
 import type { Product } from '@/lib/types'
 import { useAuth } from '@/lib/auth'
 import ProductDetailModal from '@/components/ProductDetailModal'
 import ProductUploadModal from '@/components/ProductUploadModal'
+import BarcodeScanModal from '@/components/BarcodeScanModal'
+import KpiCard from '@/components/KpiCard'
 import PageHeader from '@/components/ui/PageHeader'
 import Alert from '@/components/ui/Alert'
+import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import EmptyState from '@/components/ui/EmptyState'
 import Modal from '@/components/ui/Modal'
-import { PlusIcon, BoxIcon } from '@/components/ui/Icons'
+import {
+  AlertTriangleIcon,
+  BoxIcon,
+  CashIcon,
+  ChartIcon,
+  PlusIcon,
+  ScanIcon,
+  SearchIcon,
+  TrashIcon,
+  XIcon,
+} from '@/components/ui/Icons'
+
+const STOCK_META: Record<
+  InventoryStatus,
+  {
+    label: string
+    color: 'emerald' | 'amber' | 'red'
+    bar: string
+    text: string
+    avatar: string
+  }
+> = {
+  in_stock: {
+    label: 'In stock',
+    color: 'emerald',
+    bar: 'bg-emerald-500',
+    text: 'text-emerald-700',
+    avatar: 'bg-emerald-50 text-emerald-700',
+  },
+  low_stock: {
+    label: 'Low stock',
+    color: 'amber',
+    bar: 'bg-amber-500',
+    text: 'text-amber-700',
+    avatar: 'bg-amber-50 text-amber-700',
+  },
+  out_of_stock: {
+    label: 'Out of stock',
+    color: 'red',
+    bar: 'bg-rose-500',
+    text: 'text-rose-700',
+    avatar: 'bg-rose-50 text-rose-700',
+  },
+}
+
+const SORT_OPTIONS: { key: ProductSortKey; direction: SortDirection; label: string }[] = [
+  { key: 'name', direction: 'asc', label: 'Name A–Z' },
+  { key: 'name', direction: 'desc', label: 'Name Z–A' },
+  { key: 'quantity', direction: 'asc', label: 'Stock: low to high' },
+  { key: 'quantity', direction: 'desc', label: 'Stock: high to low' },
+  { key: 'value', direction: 'desc', label: 'Stock value: high to low' },
+  { key: 'margin', direction: 'desc', label: 'Margin: high to low' },
+  { key: 'price', direction: 'desc', label: 'Price: high to low' },
+]
+
+function sortValue(key: ProductSortKey, direction: SortDirection): string {
+  return `${key}:${direction}`
+}
+
+const EMPTY_PRODUCT_FORM = {
+  name: '',
+  price: '',
+  cost_price: '',
+  quantity: '',
+  unit: 'units',
+  low_stock_threshold: '10',
+  category: '',
+  description: '',
+  sku: '',
+  barcode: '',
+}
+
 export default function ProductsPage() {
   const params = useParams()
   const businessId = parseInt(params?.id as string)
@@ -22,9 +112,10 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
-  const [sortKey, setSortKey] = useState<string>('name')
+  const [sortKey, setSortKey] = useState<ProductSortKey>('name')
   const [sortAsc, setSortAsc] = useState(true)
   const [showAdd, setShowAdd] = useState(false)
+  const [showScan, setShowScan] = useState(false)
   const [showUpload, setShowUpload] = useState(false)
   const [uploadNotice, setUploadNotice] = useState('')
   const [selected, setSelected] = useState<Set<number>>(new Set())
@@ -34,15 +125,13 @@ export default function ProductsPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; product: Product | null }>({ open: false, product: null })
   const [categories, setCategories] = useState<string[]>([])
   const [selectedCategory, setSelectedCategory] = useState('')
-  const [lowStockOnly, setLowStockOnly] = useState(false)
-  const [productView, setProductView] = useState<'active' | 'deleted'>('active')
+  const [stockFilter, setStockFilter] = useState<StockFilter>('all')
+  const [productView, setProductView] = useState<ProductView>('active')
   const [detailProduct, setDetailProduct] = useState<Product | null>(null)
   const [showExportDropdown, setShowExportDropdown] = useState(false)
   const [exporting, setExporting] = useState(false)
   const exportRef = useRef<HTMLDivElement>(null)
-  const [form, setForm] = useState({
-    name: '', price: '', cost_price: '', quantity: '', unit: 'units', low_stock_threshold: '10', category: '', description: '', sku: '',
-  })
+  const [form, setForm] = useState({ ...EMPTY_PRODUCT_FORM })
   const [showRestockModal, setShowRestockModal] = useState(false)
   const [restockProduct, setRestockProduct] = useState<Product | null>(null)
   const [restockQty, setRestockQty] = useState('')
@@ -69,43 +158,40 @@ export default function ProductsPage() {
   const activeProducts = useMemo(() => allProducts.filter(p => !isDeletedProduct(p)), [allProducts])
   const deletedProducts = useMemo(() => allProducts.filter(p => isDeletedProduct(p)), [allProducts])
 
+  const inventory = useMemo(() => summarizeInventory(activeProducts), [activeProducts])
+
   const displayed = useMemo(() => {
-    let items = [...(productView === 'deleted' ? deletedProducts : activeProducts)]
-    if (search) {
-      const q = search.toLowerCase()
-      items = items.filter(p =>
-        p.name?.toLowerCase().includes(q) ||
-        p.category?.toLowerCase().includes(q) ||
-        p.sku?.toLowerCase().includes(q)
-      )
-    }
-    if (productView === 'active' && selectedCategory) items = items.filter(p => p.category === selectedCategory)
-    if (productView === 'active' && lowStockOnly) items = items.filter(p => p.quantity <= (p.low_stock_threshold ?? 10))
-    items.sort((a, b) => {
-      let va = (a as any)[sortKey], vb = (b as any)[sortKey]
-      if (typeof va === 'string') va = va.toLowerCase()
-      if (typeof vb === 'string') vb = vb.toLowerCase()
-      if (va == null) return 1
-      if (vb == null) return -1
-      return sortAsc ? (va > vb ? 1 : -1) : (va < vb ? 1 : -1)
+    const scoped = productView === 'deleted' ? deletedProducts : activeProducts
+    const filtered = filterProducts(scoped, {
+      search,
+      category: productView === 'active' ? selectedCategory : '',
+      status: productView === 'active' ? stockFilter : 'all',
     })
-    return items
-  }, [activeProducts, deletedProducts, productView, search, sortKey, sortAsc, selectedCategory, lowStockOnly])
+    return sortProducts(filtered, sortKey, sortAsc ? 'asc' : 'desc')
+  }, [activeProducts, deletedProducts, productView, search, sortKey, sortAsc, selectedCategory, stockFilter])
 
-  const stats = useMemo(() => ({
-    total: activeProducts.length,
-    lowStock: activeProducts.filter(p => p.quantity <= (p.low_stock_threshold ?? 10)).length,
-    outOfStock: activeProducts.filter(p => p.quantity === 0).length,
-    totalValue: activeProducts.reduce((sum, p) => sum + (p.price * p.quantity), 0),
-  }), [activeProducts])
+  const handleSort = (key: ProductSortKey) => {
+    if (sortKey === key) setSortAsc((asc) => !asc)
+    else {
+      setSortKey(key)
+      setSortAsc(key === 'name')
+    }
+  }
 
-  const handleSort = (key: string) => {
-    if (sortKey === key) setSortAsc(!sortAsc)
-    else { setSortKey(key); setSortAsc(true) }
+  const selectStockFilter = (filter: StockFilter) => {
+    setProductView('active')
+    setStockFilter(filter)
+  }
+
+  const sortSelection = sortValue(sortKey, sortAsc ? 'asc' : 'desc')
+  const setSortSelection = (value: string) => {
+    const [key, direction] = value.split(':') as [ProductSortKey, SortDirection]
+    setSortKey(key)
+    setSortAsc(direction === 'asc')
   }
 
   const openAdd = () => {
-    setForm({ name: '', price: '', cost_price: '', quantity: '', unit: 'units', low_stock_threshold: '10', category: '', description: '', sku: '' })
+    setForm({ ...EMPTY_PRODUCT_FORM })
     setEditProduct(null)
     setShowAdd(true)
   }
@@ -115,7 +201,7 @@ export default function ProductsPage() {
       name: p.name || '', price: String(p.price ?? ''), cost_price: String(p.cost_price ?? ''),
       quantity: String(p.quantity ?? ''), unit: p.unit || 'units',
       low_stock_threshold: String(p.low_stock_threshold ?? 10), category: p.category || '',
-      description: p.description || '', sku: p.sku || '',
+      description: p.description || '', sku: p.sku || '', barcode: p.barcode || '',
     })
     setEditProduct(p)
     setShowAdd(true)
@@ -133,6 +219,7 @@ export default function ProductsPage() {
       category: form.category || undefined,
       description: form.description || undefined,
       sku: form.sku || undefined,
+      barcode: form.barcode.trim() || null,
     }
 
     // Close the form and paint the change straight away. The server call runs
@@ -334,14 +421,52 @@ export default function ProductsPage() {
 
   const canEdit = isAdminRole(user?.business_role || user?.role)
 
+  const handleScannedProduct = (p: Product) => {
+    setShowScan(false)
+    setAllProducts(prev =>
+      prev.some(x => x.product_id === p.product_id)
+        ? prev.map(x => (x.product_id === p.product_id ? { ...x, ...p } : x))
+        : [p, ...prev]
+    )
+    setDetailProduct(p)
+  }
+
+  const handleScanSuggestion = (code: string, suggestedName: string) => {
+    setShowScan(false)
+    if (!canEdit) return
+    setForm({ ...EMPTY_PRODUCT_FORM, name: suggestedName, barcode: code })
+    setEditProduct(null)
+    setShowAdd(true)
+    setUploadNotice(`Barcode matched “${suggestedName}” in Open Food Facts. Add a price and stock to save it.`)
+  }
+
+  const handleScanCreate = (code: string) => {
+    setShowScan(false)
+    if (!canEdit) return
+    setForm({ ...EMPTY_PRODUCT_FORM, barcode: code })
+    setEditProduct(null)
+    setShowAdd(true)
+  }
+
   return (
     <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
       <PageHeader
         eyebrow="Inventory"
         title="Products"
-        subtitle={`${stats.total} products · ${stats.lowStock} low stock · ${stats.outOfStock} out of stock`}
+        subtitle={
+          loading
+            ? 'Loading your inventory…'
+            : `${inventory.total} products · ${inventory.totalUnits.toLocaleString()} units on hand · ${formatCedi(inventory.costValue)} at cost`
+        }
         actions={
           <div className="flex items-center gap-2">
+            <Button
+              variant="secondary"
+              onClick={() => setShowScan(true)}
+              leftIcon={<ScanIcon className="w-4 h-4" />}
+            >
+              Scan
+            </Button>
             <div ref={exportRef} className="relative">
               <Button
                 variant="secondary"
@@ -396,69 +521,221 @@ export default function ProductsPage() {
         }
       />
 
-      {/* Stats cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {[
-          { label: 'Total Products', value: stats.total, color: 'text-slate-900' },
-          { label: 'Low Stock', value: stats.lowStock, color: stats.lowStock > 0 ? 'text-warning' : 'text-slate-900' },
-          { label: 'Out of Stock', value: stats.outOfStock, color: stats.outOfStock > 0 ? 'text-danger' : 'text-slate-900' },
-          { label: 'Inventory Value', value: formatCedi(stats.totalValue), color: 'text-primary' },
-        ].map((s, i) => (
-          <div key={i} className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-5">
-            <p className="text-xs font-medium text-neutral-light">{s.label}</p>
-            <p className={`text-xl sm:text-2xl font-bold mt-1 ${s.color}`}>{s.value}</p>
-          </div>
-        ))}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+        <KpiCard
+          title="Products"
+          value={inventory.total}
+          subtitle={`${inventory.totalUnits.toLocaleString()} units on hand`}
+          icon={<BoxIcon className="h-5 w-5" />}
+          color="primary"
+          loading={loading}
+        />
+        <KpiCard
+          title="Inventory value"
+          value={formatCedi(inventory.costValue)}
+          subtitle={`${formatCedi(inventory.retailValue)} retail · ${inventory.blendedMargin.toFixed(1)}% margin`}
+          icon={<CashIcon className="h-5 w-5" />}
+          color="success"
+          loading={loading}
+        />
+        <KpiCard
+          title="Low stock"
+          value={inventory.lowStock}
+          subtitle={
+            inventory.lowStock > 0
+              ? `At or below reorder point${inventory.lowStock === 1 ? '' : 's'}`
+              : 'Everything is above threshold'
+          }
+          icon={<AlertTriangleIcon className="h-5 w-5" />}
+          color="warning"
+          loading={loading}
+        />
+        <KpiCard
+          title="Out of stock"
+          value={inventory.outOfStock}
+          subtitle={
+            inventory.outOfStock > 0
+              ? `${inventory.inactive} inactive product${inventory.inactive === 1 ? '' : 's'} in catalogue`
+              : 'All stocked items are available'
+          }
+          icon={<ChartIcon className="h-5 w-5" />}
+          color="danger"
+          loading={loading}
+        />
       </div>
 
-      {/* Filters */}
-      <div className="bg-white rounded-xl border border-slate-200 p-3 sm:p-4 space-y-3">
-        <div className="flex items-center gap-1 bg-slate-100 rounded-xl p-1 w-full sm:w-fit">
-          <button
-            onClick={() => { setProductView('active'); clearSelection() }}
-            className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all min-h-[40px] ${
-              productView === 'active' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
-            }`}
-          >
-            Products
-            <span className={`px-1.5 py-0.5 rounded-md text-[11px] font-semibold ${productView === 'active' ? 'bg-primary/10 text-primary' : 'bg-slate-200 text-slate-500'}`}>{activeProducts.length}</span>
-          </button>
-          <button
-            onClick={() => { setProductView('deleted'); clearSelection() }}
-            className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all min-h-[40px] ${
-              productView === 'deleted' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
-            }`}
-          >
-            Deleted
-            <span className={`px-1.5 py-0.5 rounded-md text-[11px] font-semibold ${productView === 'deleted' ? 'bg-danger/10 text-danger' : 'bg-slate-200 text-slate-500'}`}>{deletedProducts.length}</span>
-          </button>
-        </div>
-        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-          <input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Search products..."
-            className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-          />
-          {productView === 'active' && (
-            <>
-              <select
-                value={selectedCategory}
-                onChange={e => setSelectedCategory(e.target.value)}
-                className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-              >
-                <option value="">All Categories</option>
-                {categories.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
+      <div className="surface-card overflow-hidden">
+        <div className="space-y-3 p-3 sm:p-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <div className="flex w-full items-center gap-1 rounded-xl bg-slate-100 p-1 sm:w-fit">
               <button
-                onClick={() => setLowStockOnly(!lowStockOnly)}
-                className={`px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${lowStockOnly ? 'bg-warning-light border-warning text-warning' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                type="button"
+                onClick={() => { setProductView('active'); clearSelection() }}
+                aria-pressed={productView === 'active'}
+                className={`flex min-h-[40px] flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-lg px-3.5 text-sm font-medium transition-colors sm:flex-none ${
+                  productView === 'active'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
               >
-                Low Stock
+                Products
+                <span
+                  className={`rounded-full px-1.5 py-0.5 text-[11px] font-semibold ${
+                    productView === 'active' ? 'bg-slate-100 text-slate-600' : 'bg-slate-200/70 text-slate-500'
+                  }`}
+                >
+                  {activeProducts.length}
+                </span>
               </button>
-            </>
-          )}
+              <button
+                type="button"
+                onClick={() => { setProductView('deleted'); clearSelection() }}
+                aria-pressed={productView === 'deleted'}
+                className={`flex min-h-[40px] flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-lg px-3.5 text-sm font-medium transition-colors sm:flex-none ${
+                  productView === 'deleted'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                Deleted
+                <span
+                  className={`rounded-full px-1.5 py-0.5 text-[11px] font-semibold ${
+                    productView === 'deleted' ? 'bg-rose-50 text-rose-600' : 'bg-slate-200/70 text-slate-500'
+                  }`}
+                >
+                  {deletedProducts.length}
+                </span>
+              </button>
+            </div>
+
+            <div className="relative flex-1">
+              <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-light" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search by name, SKU, or category..."
+                className="min-h-[44px] w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-10 pr-9 text-sm text-slate-900 shadow-xs outline-none transition-all placeholder:text-slate-400 hover:border-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10"
+              />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch('')}
+                  aria-label="Clear search"
+                  className="absolute right-2.5 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-lg text-neutral-light transition-colors hover:bg-slate-100 hover:text-slate-700"
+                >
+                  <XIcon className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              aria-label="Filter by category"
+              disabled={productView === 'deleted'}
+              className="min-h-[44px] rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-700 shadow-xs outline-none transition-all hover:border-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
+            >
+              <option value="">All categories</option>
+              {categories.map((category) => (
+                <option key={category} value={category}>{category}</option>
+              ))}
+            </select>
+
+            <select
+              value={sortSelection}
+              onChange={(e) => setSortSelection(e.target.value)}
+              aria-label="Sort products"
+              className="min-h-[44px] rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-700 shadow-xs outline-none transition-all hover:border-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10"
+            >
+              {SORT_OPTIONS.map((option) => (
+                <option key={sortValue(option.key, option.direction)} value={sortValue(option.key, option.direction)}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3">
+            {productView === 'active' ? (
+              <div className="flex flex-wrap items-center gap-1.5">
+                {([
+                  { key: 'all' as StockFilter, label: 'All products', count: inventory.total },
+                  { key: 'in_stock' as StockFilter, label: 'In stock', count: inventory.inStock },
+                  { key: 'low_stock' as StockFilter, label: 'Low stock', count: inventory.lowStock },
+                  { key: 'out_of_stock' as StockFilter, label: 'Out of stock', count: inventory.outOfStock },
+                ]).map((filter) => {
+                  const active = stockFilter === filter.key
+                  const tone =
+                    filter.key === 'all'
+                      ? 'bg-primary-light text-primary ring-primary/20'
+                      : filter.key === 'in_stock'
+                        ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20'
+                        : filter.key === 'low_stock'
+                          ? 'bg-amber-50 text-amber-700 ring-amber-600/20'
+                          : 'bg-rose-50 text-rose-700 ring-rose-600/20'
+                  return (
+                    <button
+                      key={filter.key}
+                      type="button"
+                      aria-pressed={active}
+                      onClick={() => selectStockFilter(filter.key)}
+                      className={`inline-flex min-h-[34px] items-center gap-1.5 rounded-full px-3 text-xs font-medium ring-1 ring-inset transition-colors ${
+                        active ? tone : 'bg-white text-slate-600 ring-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      {filter.label}
+                      <span className="tabular-nums opacity-75">{filter.count}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            ) : (
+              <p className="text-xs text-neutral-light">
+                Deleted products are read-only and kept for historical sales.
+              </p>
+            )}
+            <p className="text-xs text-neutral-light">
+              {productView === 'active' ? (
+                stockFilter === 'all' ? (
+                  `${displayed.length} product${displayed.length === 1 ? '' : 's'} shown`
+                ) : (
+                  `${displayed.length} ${STOCK_META[stockFilter].label.toLowerCase()} product${displayed.length === 1 ? '' : 's'}`
+                )
+              ) : (
+                `${displayed.length} deleted product${displayed.length === 1 ? '' : 's'}`
+              )}
+            </p>
+          </div>
         </div>
+
+        {productView === 'active' && inventory.total > 0 && (
+          <div className="grid grid-cols-3 border-t border-slate-100">
+            {(['in_stock', 'low_stock', 'out_of_stock'] as InventoryStatus[]).map((status) => {
+              const meta = STOCK_META[status]
+              const count = status === 'in_stock' ? inventory.inStock : status === 'low_stock' ? inventory.lowStock : inventory.outOfStock
+              const share = inventory.total > 0 ? Math.round((count / inventory.total) * 100) : 0
+              return (
+                <button
+                  key={status}
+                  type="button"
+                  onClick={() => selectStockFilter(status)}
+                  aria-pressed={stockFilter === status}
+                  className={`border-l border-slate-100 px-4 py-3 text-left transition-colors first:border-l-0 hover:bg-slate-50 ${
+                    stockFilter === status ? 'bg-slate-50' : ''
+                  }`}
+                >
+                  <span className="flex items-center gap-1.5 text-micro uppercase tracking-[0.08em] text-neutral-light">
+                    <span className={`h-1.5 w-1.5 rounded-full ${meta.bar}`} aria-hidden="true" />
+                    {meta.label}
+                  </span>
+                  <span className={`mt-1 block text-base font-semibold ${meta.text}`}>{count}</span>
+                  <span className="text-[11px] text-neutral-light">{share}% of catalogue</span>
+                </button>
+              )
+            })}
+          </div>
+        )}
       </div>
 
       {productView === 'deleted' && !loading && (
@@ -475,15 +752,21 @@ export default function ProductsPage() {
 
       {/* Bulk selection bar */}
       {canEdit && !loading && productView === 'active' && displayed.length > 0 && (
-        <div className={`flex flex-wrap items-center gap-3 bg-white rounded-xl border p-3 transition-colors ${selectMode || selected.size > 0 ? 'border-primary/40 ring-2 ring-primary/10' : 'border-slate-200'}`}>
-          <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer select-none">
+        <div
+          className={`flex flex-wrap items-center gap-3 rounded-xl border p-3 transition-colors ${
+            selectMode || selected.size > 0
+              ? 'border-primary/40 bg-primary-light/40 ring-2 ring-primary/10'
+              : 'border-slate-200 bg-white'
+          }`}
+        >
+          <label className="flex cursor-pointer select-none items-center gap-2 text-sm text-slate-700">
             <input
               type="checkbox"
-              checked={displayed.length > 0 && displayed.every((p: any) => selected.has(p.product_id))}
+              checked={displayed.length > 0 && displayed.every((p) => selected.has(p.product_id))}
               onChange={toggleSelectAll}
-              className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary/30"
+              className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary/30"
             />
-            <span className="font-medium">Select all</span>
+            <span className="font-medium">Select all shown</span>
           </label>
 
           {selected.size > 0 && (
@@ -496,13 +779,9 @@ export default function ProductsPage() {
                   variant="dangerOutline"
                   size="sm"
                   onClick={() => setBulkDeleteConfirm(true)}
-                  leftIcon={
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                    </svg>
-                  }
+                  leftIcon={<TrashIcon className="h-3.5 w-3.5" />}
                 >
-                  Delete Selected
+                  Delete selected
                 </Button>
                 <Button variant="ghost" size="sm" onClick={clearSelection}>
                   Cancel
@@ -531,175 +810,344 @@ export default function ProductsPage() {
 
       {/* Loading */}
       {loading && (
-        <div className="flex justify-center py-16">
-          <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+        <div className="space-y-3">
+          <div className="surface-card flex items-center justify-between gap-3 p-4">
+            <div className="skeleton h-4 w-40" />
+            <div className="skeleton h-9 w-28 rounded-xl" />
+          </div>
+          <div className="surface-card overflow-hidden">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="flex items-center gap-4 border-b border-slate-100 px-5 py-4 last:border-b-0">
+                <div className="skeleton h-9 w-9 rounded-xl" />
+                <div className="min-w-0 flex-1 space-y-2">
+                  <div className="skeleton h-4 w-1/3" />
+                  <div className="skeleton h-3 w-1/4" />
+                </div>
+                <div className="skeleton hidden h-4 w-20 sm:block" />
+                <div className="skeleton h-6 w-20 rounded-full" />
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
       {/* Empty */}
       {!loading && displayed.length === 0 && (
-        <EmptyState
-          icon={<BoxIcon className="w-6 h-6 text-primary" />}
-          title={productView === 'deleted' ? 'No deleted products' : 'No products found'}
-          description={
-            productView === 'deleted'
-              ? 'Products you delete will appear here.'
-              : activeProducts.length === 0
-                ? 'Add your first product to start selling'
-                : 'Try adjusting your filters'
-          }
-          action={productView === 'active' && canEdit && activeProducts.length === 0 ? (
-            <Button size="sm" onClick={openAdd} leftIcon={<PlusIcon className="w-3.5 h-3.5" />}>
-              Add Product
-            </Button>
-          ) : undefined}
-        />
+        <div className="surface-card">
+          <EmptyState
+            icon={<BoxIcon className="w-6 h-6 text-primary" />}
+            title={
+              productView === 'deleted'
+                ? 'No deleted products'
+                : activeProducts.length === 0
+                  ? 'Your inventory is empty'
+                  : 'No products match these filters'
+            }
+            description={
+              productView === 'deleted'
+                ? 'Products you delete will appear here for reference.'
+                : activeProducts.length === 0
+                  ? 'Add your first product to start tracking stock, pricing, and margins.'
+                  : stockFilter !== 'all'
+                    ? `No ${STOCK_META[stockFilter].label.toLowerCase()} products right now.`
+                    : 'Try a different search term or category.'
+            }
+            action={
+              productView === 'active' && activeProducts.length === 0 && canEdit ? (
+                <Button size="sm" onClick={openAdd} leftIcon={<PlusIcon className="h-3.5 w-3.5" />}>
+                  Add product
+                </Button>
+              ) : productView === 'active' && (stockFilter !== 'all' || selectedCategory || search) ? (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => { setStockFilter('all'); setSelectedCategory(''); setSearch('') }}
+                >
+                  Clear filters
+                </Button>
+              ) : undefined
+            }
+          />
+        </div>
       )}
 
       {/* Desktop table (md+) */}
       {!loading && displayed.length > 0 && (
-        <div className="hidden md:block bg-white rounded-xl border border-slate-200 overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-slate-200 text-left text-xs text-neutral-light uppercase tracking-wider">
-                {canEdit && productView === 'active' && (
-                  <th className="px-4 py-3 w-10">
-                    <input
-                      type="checkbox"
-                      checked={displayed.length > 0 && displayed.every((p: any) => selected.has(p.product_id))}
-                      onChange={toggleSelectAll}
-                      onClick={(e) => e.stopPropagation()}
-                      className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary/30"
-                    />
-                  </th>
-                )}
-                {[
-                  { key: 'name', label: 'Product' },
-                  { key: 'price', label: 'Price' },
-                  { key: 'cost_price', label: 'Cost' },
-                  { key: 'quantity', label: 'Stock' },
-                  { key: 'category', label: 'Category' },
-                ].map(col => (
+        <div className="surface-card hidden overflow-hidden md:block">
+          <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-5 py-3.5">
+            <div>
+              <h2 className="text-section-title text-slate-900">Inventory</h2>
+              <p className="mt-0.5 text-xs text-neutral-light">
+                {productView === 'active' ? 'Stock levels update as sales and restocks are recorded.' : 'Deleted products remain for historical reference.'}
+              </p>
+            </div>
+            <Badge color={productView === 'deleted' ? 'rose' : 'slate'}>
+              {displayed.length} item{displayed.length === 1 ? '' : 's'}
+            </Badge>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="data-table w-full">
+              <thead>
+                <tr>
+                  {canEdit && productView === 'active' && (
+                    <th className="w-10">
+                      <input
+                        type="checkbox"
+                        checked={displayed.length > 0 && displayed.every((p) => selected.has(p.product_id))}
+                        onChange={toggleSelectAll}
+                        className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary/30"
+                        aria-label="Select all products"
+                      />
+                    </th>
+                  )}
                   <th
-                    key={col.key}
-                    className="px-4 py-3 cursor-pointer hover:text-slate-900 transition-colors select-none"
-                    onClick={() => handleSort(col.key)}
+                    className="cursor-pointer select-none hover:text-slate-900"
+                    onClick={() => handleSort('name')}
                   >
-                    {col.label} {sortKey === col.key ? (sortAsc ? '↑' : '↓') : ''}
+                    Product {sortKey === 'name' ? (sortAsc ? '↑' : '↓') : ''}
                   </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {displayed.map(p => {
-                const isLow = p.quantity <= (p.low_stock_threshold ?? 10)
-                const isOut = p.quantity === 0
-                return (
-                  <tr
-                    key={p.product_id}
-                    className={`border-b border-slate-50 transition-colors ${selected.has(p.product_id) ? 'bg-primary-light/60' : 'hover:bg-slate-50/50 cursor-pointer'}`}
-                    onClick={() => setDetailProduct(p)}
+                  <th
+                    className="cursor-pointer select-none hover:text-slate-900"
+                    onClick={() => handleSort('quantity')}
                   >
-                    {canEdit && productView === 'active' && (
-                      <td className="px-4 py-3 w-10">
-                        <input
-                          type="checkbox"
-                          checked={selected.has(p.product_id)}
-                          onChange={() => toggleSelect(p.product_id)}
-                          onClick={(e) => e.stopPropagation()}
-                          className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary/30"
-                        />
+                    On hand {sortKey === 'quantity' ? (sortAsc ? '↑' : '↓') : ''}
+                  </th>
+                  <th>Status</th>
+                  <th
+                    className="cursor-pointer select-none text-right hover:text-slate-900"
+                    onClick={() => handleSort('cost_price')}
+                  >
+                    Unit cost {sortKey === 'cost_price' ? (sortAsc ? '↑' : '↓') : ''}
+                  </th>
+                  <th
+                    className="cursor-pointer select-none text-right hover:text-slate-900"
+                    onClick={() => handleSort('price')}
+                  >
+                    Price {sortKey === 'price' ? (sortAsc ? '↑' : '↓') : ''}
+                  </th>
+                  <th
+                    className="cursor-pointer select-none text-right hover:text-slate-900"
+                    onClick={() => handleSort('margin')}
+                  >
+                    Margin {sortKey === 'margin' ? (sortAsc ? '↑' : '↓') : ''}
+                  </th>
+                  <th
+                    className="cursor-pointer select-none text-right hover:text-slate-900"
+                    onClick={() => handleSort('value')}
+                  >
+                    Stock value {sortKey === 'value' ? (sortAsc ? '↑' : '↓') : ''}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {displayed.map((product) => {
+                  const status = inventoryStatus(product)
+                  const meta = STOCK_META[status]
+                  const margin = marginPercent(product)
+                  const threshold = lowStockThreshold(product)
+                  const quantity = productQuantity(product)
+                  return (
+                    <tr
+                      key={product.product_id}
+                      className={`cursor-pointer ${selected.has(product.product_id) ? 'bg-primary-light/60' : ''}`}
+                      onClick={() => setDetailProduct(product)}
+                    >
+                      {canEdit && productView === 'active' && (
+                        <td>
+                          <input
+                            type="checkbox"
+                            checked={selected.has(product.product_id)}
+                            onChange={() => toggleSelect(product.product_id)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary/30"
+                            aria-label={`Select ${product.name}`}
+                          />
+                        </td>
+                      )}
+                      <td>
+                        <div className="flex items-center gap-3">
+                          <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-sm font-semibold ${meta.avatar}`}>
+                            {product.name?.charAt(0)?.toUpperCase() || '?'}
+                          </span>
+                          <div className="min-w-0">
+                            <div className="truncate font-medium text-slate-900">{product.name}</div>
+                            <div className="mt-0.5 truncate text-xs text-neutral-light">
+                              {product.sku ? <span className="font-mono">{product.sku}</span> : 'No SKU'}
+                              {product.category ? <span> · {product.category}</span> : null}
+                            </div>
+                            {product.barcode ? (
+                              <div className="mt-0.5 truncate font-mono text-[11px] text-neutral-light">
+                                {product.barcode}
+                              </div>
+                            ) : null}
+                            {isDeletedProduct(product) && (
+                              <Badge color="rose" className="mt-1">
+                                Deleted{product.deleted_at ? ` · ${formatDeletedAt(product.deleted_at)}` : ''}
+                              </Badge>
+                            )}
+                            {!isDeletedProduct(product) && product.is_active === false && (
+                              <Badge color="slate" className="mt-1">Inactive</Badge>
+                            )}
+                          </div>
+                        </div>
                       </td>
-                    )}
-                    <td className="px-4 py-3">
-                      <div className="font-medium text-slate-900">{p.name}</div>
-                      {p.sku && <div className="text-xs text-neutral-light font-mono mt-0.5">SKU: {p.sku}</div>}
-                      {p.is_active === false && !isDeletedProduct(p) && (
-                        <span className="inline-block px-1.5 py-0.5 mt-1 text-[10px] font-medium uppercase tracking-wider bg-slate-100 text-slate-500 rounded">Inactive</span>
-                      )}
-                      {isDeletedProduct(p) && (
-                        <span className="inline-block px-1.5 py-0.5 mt-1 text-[10px] font-medium uppercase tracking-wider bg-danger-light text-danger rounded">
-                          Deleted{p.deleted_at ? ` · ${formatDeletedAt(p.deleted_at)}` : ''}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 font-medium text-slate-900">{formatCedi(p.price)}</td>
-                    <td className="px-4 py-3 text-slate-600">{formatCedi(p.cost_price)}</td>
-                    <td className="px-4 py-3">
-                      <span className={`font-medium ${isOut ? 'text-danger' : isLow ? 'text-warning' : 'text-slate-900'}`}>
-                        {p.quantity}
-                      </span>
-                      <span className="text-neutral-light ml-1 text-xs">{p.unit}</span>
-                      {isLow && !isOut && <span className="ml-1.5 text-xs text-warning">⚠</span>}
-                    </td>
-                    <td className="px-4 py-3 text-slate-600">{p.category || '—'}</td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
+                      <td>
+                        <div className="flex items-baseline gap-1">
+                          <span className={`text-sm font-semibold ${meta.text}`}>{quantity}</span>
+                          <span className="text-[11px] text-neutral-light">{product.unit}</span>
+                        </div>
+                        <div className="mt-1.5 h-1.5 w-24 overflow-hidden rounded-full bg-slate-100">
+                          <div
+                            className={`h-full rounded-full ${meta.bar}`}
+                            style={{ width: `${stockLevelPercent(product)}%` }}
+                          />
+                        </div>
+                        <div className="mt-1 text-[11px] text-neutral-light">Reorder at {threshold}</div>
+                      </td>
+                      <td>
+                        <Badge color={meta.color} dot>{meta.label}</Badge>
+                      </td>
+                      <td className="text-right text-slate-600">{formatCedi(product.cost_price)}</td>
+                      <td className="text-right font-medium text-slate-900">{formatCedi(product.price)}</td>
+                      <td className="text-right">
+                        {margin == null ? (
+                          <span className="text-neutral-light">—</span>
+                        ) : (
+                          <>
+                            <div className={`font-medium ${margin < 0 ? 'text-danger' : 'text-slate-800'}`}>
+                              {margin.toFixed(1)}%
+                            </div>
+                            <div className="text-[11px] text-neutral-light">
+                              {formatCedi(Number(product.price) - Number(product.cost_price))} / unit
+                            </div>
+                          </>
+                        )}
+                      </td>
+                      <td className="text-right">
+                        <div className="font-semibold text-slate-900">{formatCedi(stockValue(product))}</div>
+                        <div className="text-[11px] text-neutral-light">at cost</div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
       {/* Mobile cards (< md) */}
       {!loading && displayed.length > 0 && (
-        <div className="md:hidden space-y-3">
-          {displayed.map(p => {
-            const isLow = p.quantity <= (p.low_stock_threshold ?? 10)
-            const isOut = p.quantity === 0
+        <div className="space-y-3 md:hidden">
+          {displayed.map((product) => {
+            const status = inventoryStatus(product)
+            const meta = STOCK_META[status]
+            const margin = marginPercent(product)
+            const threshold = lowStockThreshold(product)
+            const quantity = productQuantity(product)
             return (
-              <div
-                key={p.product_id}
-                className={`bg-white rounded-xl border border-slate-200 p-4 cursor-pointer hover:shadow-sm transition-shadow ${selected.has(p.product_id) ? 'border-primary/50 ring-2 ring-primary/10' : ''}`}
-                onClick={() => setDetailProduct(p)}
+              <article
+                key={product.product_id}
+                className={`surface-card cursor-pointer p-4 transition-shadow hover:shadow-md ${
+                  selected.has(product.product_id) ? 'ring-2 ring-primary/15' : ''
+                }`}
+                onClick={() => setDetailProduct(product)}
               >
-                <div className="flex items-start justify-between gap-2">
+                <div className="flex items-start gap-3">
                   {canEdit && productView === 'active' && (
                     <input
                       type="checkbox"
-                      checked={selected.has(p.product_id)}
-                      onChange={() => toggleSelect(p.product_id)}
+                      checked={selected.has(product.product_id)}
+                      onChange={() => toggleSelect(product.product_id)}
                       onClick={(e) => e.stopPropagation()}
-                      className="w-4 h-4 mt-1 rounded border-slate-300 text-primary focus:ring-primary/30 shrink-0"
+                      className="mt-1 h-4 w-4 shrink-0 rounded border-slate-300 text-primary focus:ring-primary/30"
+                      aria-label={`Select ${product.name}`}
                     />
                   )}
+                  <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-semibold ${meta.avatar}`}>
+                    {product.name?.charAt(0)?.toUpperCase() || '?'}
+                  </span>
                   <div className="min-w-0 flex-1">
-                    <h3 className="font-medium text-slate-900 truncate">{p.name}</h3>
-                    {p.sku && <p className="text-xs text-neutral-light font-mono mt-0.5">SKU: {p.sku}</p>}
-                    {isDeletedProduct(p) && p.deleted_at && (
-                      <p className="text-xs text-neutral-light mt-0.5">Deleted {formatDeletedAt(p.deleted_at)}</p>
-                    )}
-                  </div>
-                  {isDeletedProduct(p) ? (
-                    <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-danger-light text-danger shrink-0">Deleted</span>
-                  ) : isOut ? (
-                    <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-danger-light text-danger shrink-0">Out</span>
-                  ) : isLow ? (
-                    <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-warning-light text-warning shrink-0">Low</span>
-                  ) : p.is_active === false ? (
-                    <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-500 shrink-0">Inactive</span>
-                  ) : null}
-                </div>
-                <div className="mt-3 grid grid-cols-3 gap-2 text-sm">
-                  <div>
-                    <p className="text-xs text-neutral-light">Price</p>
-                    <p className="font-medium text-slate-900">{formatCedi(p.price)}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-neutral-light">Stock</p>
-                    <p className={`font-medium ${isOut ? 'text-danger' : isLow ? 'text-warning' : 'text-slate-900'}`}>
-                      {p.quantity} <span className="text-xs font-normal text-neutral-light">{p.unit}</span>
+                    <h3 className="truncate font-medium text-slate-900">{product.name}</h3>
+                    <p className="mt-0.5 truncate text-xs text-neutral-light">
+                      {product.sku ? <span className="font-mono">{product.sku}</span> : 'No SKU'}
+                      {product.category ? <span> · {product.category}</span> : null}
                     </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-neutral-light">Category</p>
-                    <p className="font-medium text-slate-900">{p.category || '—'}</p>
+                    {product.barcode ? (
+                      <p className="mt-0.5 truncate font-mono text-[11px] text-neutral-light">{product.barcode}</p>
+                    ) : null}
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      {isDeletedProduct(product) ? (
+                        <>
+                          <Badge color="rose">Deleted</Badge>
+                          {product.deleted_at && (
+                            <span className="self-center text-[11px] text-neutral-light">
+                              {formatDeletedAt(product.deleted_at)}
+                            </span>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <Badge color={meta.color} dot>{meta.label}</Badge>
+                          {product.is_active === false && <Badge color="slate">Inactive</Badge>}
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
+
+                <div className="mt-3 grid grid-cols-3 gap-2 rounded-xl bg-slate-50 px-3 py-2.5">
+                  <div>
+                    <p className="text-[11px] uppercase tracking-wide text-neutral-light">On hand</p>
+                    <p className={`mt-0.5 text-sm font-semibold ${meta.text}`}>
+                      {quantity} <span className="text-[11px] font-normal text-neutral-light">{product.unit}</span>
+                    </p>
+                    <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-white">
+                      <div className={`h-full rounded-full ${meta.bar}`} style={{ width: `${stockLevelPercent(product)}%` }} />
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-[11px] uppercase tracking-wide text-neutral-light">Price</p>
+                    <p className="mt-0.5 text-sm font-semibold text-slate-900">{formatCedi(product.price)}</p>
+                    <p className="text-[11px] text-neutral-light">Cost {formatCedi(product.cost_price)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] uppercase tracking-wide text-neutral-light">Value</p>
+                    <p className="mt-0.5 text-sm font-semibold text-slate-900">{formatCedi(stockValue(product))}</p>
+                    <p className="text-[11px] text-neutral-light">at cost</p>
+                  </div>
+                </div>
+
+                <div className="mt-3 flex items-center justify-between gap-3">
+                  <p className="text-[11px] text-neutral-light">
+                    Reorder at {threshold}
+                    {margin != null && <span> · {margin.toFixed(1)}% margin</span>}
+                  </p>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={(e) => { e.stopPropagation(); setDetailProduct(product) }}
+                  >
+                    View
+                  </Button>
+                </div>
+              </article>
             )
           })}
         </div>
+      )}
+
+      {/* Barcode Scan Modal */}
+      {showScan && (
+        <BarcodeScanModal
+          businessId={businessId}
+          canCreate={canEdit}
+          onClose={() => setShowScan(false)}
+          onProduct={handleScannedProduct}
+          onSuggestion={handleScanSuggestion}
+          onCreate={handleScanCreate}
+        />
       )}
 
       {/* Product Detail Modal */}
@@ -837,9 +1285,22 @@ export default function ProductsPage() {
                   <input value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} placeholder="e.g. Beverages" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
                 </div>
               </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">SKU</label>
-                <input value={form.sku} onChange={e => setForm({ ...form, sku: e.target.value })} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">SKU</label>
+                  <input value={form.sku} onChange={e => setForm({ ...form, sku: e.target.value })} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+                </div>
+                <div>
+                  <label htmlFor="product-barcode" className="block text-xs font-medium text-slate-700 mb-1">Barcode</label>
+                  <input
+                    id="product-barcode"
+                    value={form.barcode}
+                    onChange={e => setForm({ ...form, barcode: e.target.value })}
+                    placeholder="Scan or type"
+                    autoComplete="off"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg font-mono text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  />
+                </div>
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-700 mb-1">Description</label>

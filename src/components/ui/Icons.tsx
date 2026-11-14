@@ -122,6 +122,14 @@ export function CheckCircleIcon({ className }: IconProps) {
   )
 }
 
+export function ScanIcon({ className }: IconProps) {
+  return (
+    <Svg className={className}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 7.5V5.25A1.5 1.5 0 015.25 3.75H7.5m9 0h2.25a1.5 1.5 0 011.5 1.5V7.5m0 9v2.25a1.5 1.5 0 01-1.5 1.5H16.5m-9 0H5.25a1.5 1.5 0 01-1.5-1.5V16.5M7.5 8.25v7.5M10.5 8.25v7.5M13.5 8.25v7.5M16.5 8.25v7.5" />
+    </Svg>
+  )
+}
+
 export function RefreshIcon({ className }: IconProps) {
   return (
     <Svg className={className}>

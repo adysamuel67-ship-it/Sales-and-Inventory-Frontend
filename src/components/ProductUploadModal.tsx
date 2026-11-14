@@ -46,7 +46,14 @@ const COLUMN_REFERENCES: ColumnReference[] = [
   {
     field: 'sku',
     label: 'SKU / Code',
-    aliases: ['sku', 'sku number', 'barcode', 'product code', 'code'],
+    aliases: ['sku', 'sku number', 'product code', 'code'],
+  },
+  {
+    field: 'barcode',
+    label: 'Barcode',
+    type: 'Text',
+    aliases: ['barcode', 'bar code', 'ean', 'upc', 'barcode number'],
+    note: 'Must be unique within a business',
   },
   {
     field: 'category',
@@ -90,11 +97,12 @@ function buildCsvTemplate(): string {
     'quantity',
     'cost_price',
     'sku',
+    'barcode',
     'category',
     'low_stock_threshold',
     'description',
   ]
-  const row = ['Example Product', '25.00', '50', '15.00', 'SKU-001', 'Beverages', '10', 'Optional note about the item']
+  const row = ['Example Product', '25.00', '50', '15.00', 'SKU-001', '5901234123457', 'Beverages', '10', 'Optional note about the item']
   return [headers.join(','), row.join(',')].join('\n')
 }
 

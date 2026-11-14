@@ -1,6 +1,17 @@
 'use client'
 
 import Modal from '@/components/ui/Modal'
+import Badge from '@/components/ui/Badge'
+import { formatCedi, formatDeletedAt, isDeletedProduct } from '@/lib/utils'
+import {
+  inventoryStatus,
+  lowStockThreshold,
+  marginPercent,
+  productQuantity,
+  stockLevelPercent,
+  stockValue,
+  type InventoryStatus,
+} from '@/lib/products'
 import type { Product } from '@/lib/types'
 
 interface Props {
@@ -13,155 +24,233 @@ interface Props {
   onToggleActive?: (product: Product) => void
 }
 
-export default function ProductDetailModal({ product, onClose, canManage, onEdit, onDelete, onRestock, onToggleActive }: Props) {
-  const margin = product.price > 0 && product.cost_price > 0
-    ? ((product.price - product.cost_price) / product.price * 100).toFixed(1)
-    : null
-  const isLowStock = product.quantity <= (product.low_stock_threshold ?? 10)
-  const isOutOfStock = product.quantity === 0
+const STATUS_META: Record<
+  InventoryStatus,
+  { label: string; color: 'emerald' | 'amber' | 'red'; bar: string; plate: string }
+> = {
+  in_stock: {
+    label: 'In stock',
+    color: 'emerald',
+    bar: 'bg-emerald-500',
+    plate: 'bg-emerald-50 text-emerald-700',
+  },
+  low_stock: {
+    label: 'Low stock',
+    color: 'amber',
+    bar: 'bg-amber-500',
+    plate: 'bg-amber-50 text-amber-700',
+  },
+  out_of_stock: {
+    label: 'Out of stock',
+    color: 'red',
+    bar: 'bg-rose-500',
+    plate: 'bg-rose-50 text-rose-700',
+  },
+}
+
+function formatDate(value?: string) {
+  if (!value) return ''
+  const date = new Date(value)
+  return isNaN(date.getTime())
+    ? ''
+    : date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+}
+
+export default function ProductDetailModal({
+  product,
+  onClose,
+  canManage,
+  onEdit,
+  onDelete,
+  onRestock,
+  onToggleActive,
+}: Props) {
+  const status = inventoryStatus(product)
+  const meta = STATUS_META[status]
+  const margin = marginPercent(product)
+  const quantity = productQuantity(product)
+  const threshold = lowStockThreshold(product)
+  const deleted = isDeletedProduct(product)
 
   return (
     <Modal onClose={onClose} panelClassName="w-full max-w-lg max-h-[90vh] overflow-y-auto">
-      {/* Header */}
-      <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
-        <h3 className="font-semibold text-slate-900">Product Details</h3>
+      <div className="sticky top-0 z-10 flex items-center justify-between rounded-t-2xl border-b border-slate-200 bg-white px-6 py-4">
+        <div>
+          <h3 className="font-semibold text-slate-900">Product details</h3>
+          <p className="mt-0.5 text-xs text-neutral-light">Inventory, pricing, and product information</p>
+        </div>
         <button
           onClick={onClose}
-          className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
+          aria-label="Close product details"
+          className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-slate-100"
         >
-          <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="h-4 w-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
       </div>
 
-      <div className="px-6 py-5 space-y-5">
-        {/* Product icon + name + status */}
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
-            <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
-            </svg>
-          </div>
+      <div className="space-y-5 px-6 py-5">
+        <div className="flex items-start gap-4">
+          <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-lg font-semibold ${meta.plate}`}>
+            {product.name?.charAt(0)?.toUpperCase() || '?'}
+          </span>
           <div className="min-w-0 flex-1">
-            <p className="text-lg font-bold text-slate-900 truncate">{product.name}</p>
-            {product.sku && (
-              <p className="text-xs text-neutral-light font-mono">SKU: {product.sku}</p>
-            )}
-          </div>
-          {isOutOfStock ? (
-            <span className="inline-block px-2.5 py-1 rounded-full text-xs font-medium bg-danger-light text-danger shrink-0">Out of Stock</span>
-          ) : isLowStock ? (
-            <span className="inline-block px-2.5 py-1 rounded-full text-xs font-medium bg-warning-light text-warning shrink-0">Low Stock</span>
-          ) : (
-            <span className="inline-block px-2.5 py-1 rounded-full text-xs font-medium bg-success-light text-success shrink-0">In Stock</span>
-          )}
-        </div>
-
-        {/* Price + Cost + Margin */}
-        <div className="grid grid-cols-3 gap-3">
-          <div className="bg-surfaceAlt rounded-xl p-3">
-            <p className="text-xs text-neutral-light mb-1">Selling Price</p>
-            <p className="text-sm font-bold text-slate-900">GH₵{product.price.toFixed(2)}</p>
-          </div>
-          <div className="bg-surfaceAlt rounded-xl p-3">
-            <p className="text-xs text-neutral-light mb-1">Cost Price</p>
-            <p className="text-sm font-bold text-slate-900">GH₵{product.cost_price.toFixed(2)}</p>
-          </div>
-          <div className="bg-surfaceAlt rounded-xl p-3">
-            <p className="text-xs text-neutral-light mb-1">Margin</p>
-            <p className="text-sm font-bold text-slate-900">{margin !== null ? `${margin}%` : '—'}</p>
-          </div>
-        </div>
-
-        {/* Stock + Unit */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-surfaceAlt rounded-xl p-4">
-            <p className="text-xs text-neutral-light mb-1">Stock Quantity</p>
-            <div className="flex items-baseline gap-1">
-              <span className="text-xl font-bold text-slate-900">{product.quantity}</span>
-              <span className="text-xs text-neutral-light">{product.unit}</span>
+            <p className="truncate text-lg font-bold text-slate-900">{product.name}</p>
+            <p className="mt-0.5 truncate text-xs text-neutral-light">
+              {product.sku ? <span className="font-mono">{product.sku}</span> : 'No SKU'}
+              {product.category ? <span> · {product.category}</span> : null}
+            </p>
+            {product.barcode ? (
+              <p className="mt-0.5 truncate font-mono text-[11px] text-neutral-light">{product.barcode}</p>
+            ) : null}
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              <Badge color={meta.color} dot>{meta.label}</Badge>
+              {product.is_active === false && !deleted && <Badge color="slate">Inactive</Badge>}
+              {deleted && (
+                <Badge color="rose">
+                  Deleted{product.deleted_at ? ` · ${formatDeletedAt(product.deleted_at)}` : ''}
+                </Badge>
+              )}
             </div>
-            {isLowStock && !isOutOfStock && (
-              <p className="text-xs text-warning mt-1">
-                Below threshold ({product.low_stock_threshold ?? 10})
+          </div>
+        </div>
+
+        <section className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-micro uppercase tracking-[0.08em] text-neutral-light">On hand</p>
+              <p className={`mt-1 text-2xl font-bold ${status === 'out_of_stock' ? 'text-rose-700' : status === 'low_stock' ? 'text-amber-700' : 'text-slate-900'}`}>
+                {quantity}{' '}
+                <span className="text-sm font-medium text-neutral-light">{product.unit}</span>
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-micro uppercase tracking-[0.08em] text-neutral-light">Reorder point</p>
+              <p className="mt-1 text-lg font-semibold text-slate-900">{threshold}</p>
+            </div>
+          </div>
+          <div className="mt-3 h-2 overflow-hidden rounded-full bg-white">
+            <div className={`h-full rounded-full ${meta.bar}`} style={{ width: `${stockLevelPercent(product)}%` }} />
+          </div>
+          {status === 'low_stock' && (
+            <p className="mt-2 text-xs font-medium text-amber-700">
+              At or below the reorder point. Restock soon to avoid a stock-out.
+            </p>
+          )}
+          {status === 'out_of_stock' && (
+            <p className="mt-2 text-xs font-medium text-rose-700">
+              This product is unavailable for sale until it is restocked.
+            </p>
+          )}
+        </section>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-xl border border-slate-200 p-3.5">
+            <p className="text-[11px] uppercase tracking-wide text-neutral-light">Selling price</p>
+            <p className="mt-1 text-base font-semibold text-slate-900">{formatCedi(product.price)}</p>
+          </div>
+          <div className="rounded-xl border border-slate-200 p-3.5">
+            <p className="text-[11px] uppercase tracking-wide text-neutral-light">Unit cost</p>
+            <p className="mt-1 text-base font-semibold text-slate-900">{formatCedi(product.cost_price)}</p>
+          </div>
+          <div className="rounded-xl border border-slate-200 p-3.5">
+            <p className="text-[11px] uppercase tracking-wide text-neutral-light">Margin</p>
+            <p className={`mt-1 text-base font-semibold ${margin != null && margin < 0 ? 'text-rose-700' : 'text-slate-900'}`}>
+              {margin == null ? '—' : `${margin.toFixed(1)}%`}
+            </p>
+            {margin != null && (
+              <p className="mt-0.5 text-[11px] text-neutral-light">
+                {formatCedi(Number(product.price) - Number(product.cost_price))} profit / unit
               </p>
             )}
           </div>
-          <div className="bg-surfaceAlt rounded-xl p-4">
-            <p className="text-xs text-neutral-light mb-1">Category</p>
-            <p className="text-sm font-medium text-slate-900">{product.category || 'Uncategorized'}</p>
+          <div className="rounded-xl border border-slate-200 p-3.5">
+            <p className="text-[11px] uppercase tracking-wide text-neutral-light">Stock value</p>
+            <p className="mt-1 text-base font-semibold text-slate-900">{formatCedi(stockValue(product))}</p>
+            <p className="mt-0.5 text-[11px] text-neutral-light">
+              {formatCedi(stockValue(product, 'retail'))} at retail
+            </p>
           </div>
         </div>
 
-        {/* Description */}
-        {product.description && (
-          <div className="bg-surfaceAlt rounded-xl p-4">
-            <p className="text-xs text-neutral-light mb-1">Description</p>
-            <p className="text-sm text-slate-700 leading-relaxed">{product.description}</p>
+        {product.barcode && (
+          <div className="flex items-center justify-between gap-4 rounded-xl border border-slate-200 px-4 py-3">
+            <p className="text-[11px] uppercase tracking-wide text-neutral-light">Barcode</p>
+            <p className="truncate font-mono text-sm font-medium text-slate-900">{product.barcode}</p>
           </div>
         )}
 
-{/* Timestamps */}
-      <div className="bg-surfaceAlt rounded-xl p-4 space-y-2">
-        {product.created_at && (
-          <div className="flex items-center gap-2 text-sm">
-            <svg className="w-4 h-4 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
-            </svg>
-            <span className="text-slate-700">Added {new Date(product.created_at).toLocaleDateString()}</span>
+        {product.description && (
+          <div className="rounded-xl border border-slate-200 p-4">
+            <p className="text-[11px] uppercase tracking-wide text-neutral-light">Description</p>
+            <p className="mt-1.5 text-sm leading-relaxed text-slate-700">{product.description}</p>
           </div>
         )}
-        {product.updated_at && (
-          <div className="flex items-center gap-2 text-sm">
-            <svg className="w-4 h-4 text-neutral-light shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" />
-            </svg>
-            <span className="text-slate-700">Updated {new Date(product.updated_at).toLocaleDateString()}</span>
+
+        {(product.created_at || product.updated_at) && (
+          <div className="flex flex-wrap gap-x-6 gap-y-2 border-t border-slate-100 pt-4 text-xs text-neutral-light">
+            {product.created_at && (
+              <p>
+                Added <span className="font-medium text-slate-700">{formatDate(product.created_at)}</span>
+              </p>
+            )}
+            {product.updated_at && (
+              <p>
+                Updated <span className="font-medium text-slate-700">{formatDate(product.updated_at)}</span>
+              </p>
+            )}
+          </div>
+        )}
+
+        {canManage && deleted && (
+          <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs leading-relaxed text-neutral-light">
+            This product is deleted. Its stock and sales history are kept for records, but it can no longer be sold or restocked.
+          </p>
+        )}
+
+        {canManage && !deleted && (
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={() => onEdit?.(product)}
+              className="rounded-xl bg-primary-light py-2.5 text-sm font-medium text-primary transition-colors hover:bg-primary/15"
+            >
+              Edit Product
+            </button>
+            <button
+              onClick={() => onRestock?.(product)}
+              className="rounded-xl bg-emerald-50 py-2.5 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-100"
+            >
+              Restock
+            </button>
+            <button
+              onClick={() => onToggleActive?.(product)}
+              className={`rounded-xl py-2.5 text-sm font-medium transition-colors ${
+                product.is_active === false
+                  ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                  : 'bg-amber-50 text-amber-700 hover:bg-amber-100'
+              }`}
+            >
+              {product.is_active === false ? 'Activate' : 'Deactivate'}
+            </button>
+            <button
+              onClick={() => onDelete?.(product)}
+              className="rounded-xl bg-rose-50 py-2.5 text-sm font-medium text-rose-700 transition-colors hover:bg-rose-100"
+            >
+              Delete Product
+            </button>
           </div>
         )}
       </div>
 
-      {/* Manage actions */}
-      {canManage && (
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            onClick={() => onEdit?.(product)}
-            className="py-2.5 text-sm font-medium text-primary bg-primary-light rounded-xl hover:bg-primary/15 transition-colors"
-          >
-            Edit Product
-          </button>
-          <button
-            onClick={() => onRestock?.(product)}
-            className="py-2.5 text-sm font-medium text-success bg-success-light rounded-xl hover:bg-success/15 transition-colors"
-          >
-            Restock
-          </button>
-          <button
-            onClick={() => onToggleActive?.(product)}
-            className={`py-2.5 text-sm font-medium rounded-xl transition-colors ${product.is_active === false ? 'text-success bg-success-light hover:bg-success/15' : 'text-warning bg-warning-light hover:bg-warning/15'}`}
-          >
-            {product.is_active === false ? 'Activate' : 'Deactivate'}
-          </button>
-          <button
-            onClick={() => onDelete?.(product)}
-            className="py-2.5 text-sm font-medium text-danger bg-danger-light rounded-xl hover:bg-danger/15 transition-colors"
-          >
-            Delete Product
-          </button>
-        </div>
-      )}
-    </div>
-
-    {/* Close button */}
-    <div className="sticky bottom-0 bg-white border-t border-slate-200 px-6 py-4 rounded-b-2xl">
-      <button
-        onClick={onClose}
-        className="w-full py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors"
-      >
-        Close
-      </button>
-    </div>
+      <div className="sticky bottom-0 rounded-b-2xl border-t border-slate-200 bg-white px-6 py-4">
+        <button
+          onClick={onClose}
+          className="w-full rounded-xl bg-slate-100 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-200"
+        >
+          Close
+        </button>
+      </div>
     </Modal>
   )
 }

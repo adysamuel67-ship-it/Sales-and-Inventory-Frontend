@@ -10,11 +10,12 @@ import Alert from '@/components/ui/Alert'
 interface Props {
   businessId: number
   initialName?: string
+  initialBarcode?: string
   onClose: () => void
   onCreated: (product: Product) => void
 }
 
-function makeForm(name = '') {
+function makeForm(name = '', barcode = '') {
   return {
     name,
     price: '',
@@ -24,6 +25,7 @@ function makeForm(name = '') {
     low_stock_threshold: '10',
     category: '',
     sku: '',
+    barcode,
     description: '',
   }
 }
@@ -36,8 +38,14 @@ function makeForm(name = '') {
  * minimum needed to sell the item, saves it to the inventory, and hands the
  * created product back so the sale line can select it immediately.
  */
-export default function QuickAddProductModal({ businessId, initialName = '', onClose, onCreated }: Props) {
-  const [form, setForm] = useState(() => makeForm(initialName))
+export default function QuickAddProductModal({
+  businessId,
+  initialName = '',
+  initialBarcode = '',
+  onClose,
+  onCreated,
+}: Props) {
+  const [form, setForm] = useState(() => makeForm(initialName, initialBarcode))
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -85,6 +93,7 @@ export default function QuickAddProductModal({ businessId, initialName = '', onC
       category: form.category.trim() || undefined,
       description: form.description.trim() || undefined,
       sku: form.sku.trim() || undefined,
+      barcode: form.barcode.trim() || null,
     }
 
     try {
@@ -268,17 +277,32 @@ export default function QuickAddProductModal({ businessId, initialName = '', onC
           </div>
         </div>
 
-        <div>
-          <label htmlFor="quick-product-sku" className={labelClass}>
-            SKU
-          </label>
-          <input
-            id="quick-product-sku"
-            value={form.sku}
-            onChange={(e) => update('sku', e.target.value)}
-            placeholder="Optional product code"
-            className={inputClass}
-          />
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label htmlFor="quick-product-sku" className={labelClass}>
+              SKU
+            </label>
+            <input
+              id="quick-product-sku"
+              value={form.sku}
+              onChange={(e) => update('sku', e.target.value)}
+              placeholder="Optional code"
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label htmlFor="quick-product-barcode" className={labelClass}>
+              Barcode
+            </label>
+            <input
+              id="quick-product-barcode"
+              value={form.barcode}
+              onChange={(e) => update('barcode', e.target.value)}
+              placeholder="Scan or type"
+              autoComplete="off"
+              className={`${inputClass} font-mono`}
+            />
+          </div>
         </div>
 
         <div>

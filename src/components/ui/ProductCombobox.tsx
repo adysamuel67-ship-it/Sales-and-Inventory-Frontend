@@ -9,6 +9,7 @@ export interface ProductOption {
   price: number
   quantity: number
   sku?: string
+  barcode?: string | null
   category?: string
   low_stock_threshold?: number
   is_active?: boolean
@@ -50,7 +51,7 @@ export default function ProductCombobox({
   value,
   onChange,
   excludeIds = [],
-  placeholder = 'Search products by name, SKU or category',
+  placeholder = 'Search products by name, SKU, barcode or category',
   autoFocus = false,
   className = '',
   id,
@@ -82,7 +83,7 @@ export default function ProductCombobox({
 
     const filtered = q
       ? pool.filter((p) =>
-          [p.name, p.sku, p.category].some((field) => (field || '').toLowerCase().includes(q))
+          [p.name, p.sku, p.barcode, p.category].some((field) => (field || '').toLowerCase().includes(q))
         )
       : pool
 
@@ -408,7 +409,7 @@ function ProductOptionRow({
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium text-slate-900">{p.name}</p>
         <p className="mt-0.5 truncate text-xs text-neutral-light">
-          {[p.sku ? `SKU ${p.sku}` : null, p.category].filter(Boolean).join(' · ') ||
+          {[p.sku ? `SKU ${p.sku}` : null, p.barcode, p.category].filter(Boolean).join(' · ') ||
             'No SKU or category'}
         </p>
       </div>
