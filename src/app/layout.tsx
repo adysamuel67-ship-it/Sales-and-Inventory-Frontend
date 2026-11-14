@@ -4,7 +4,6 @@ import './globals.css'
 import { AuthProvider } from '@/lib/auth'
 import { COMPANY_NAME, SITE_DESCRIPTION, SITE_NAME, SITE_URL, SUPPORT_PHONE } from '@/lib/site'
 import OfflineBanner from '@/components/OfflineBanner'
-import InstallAppPrompt from '@/components/InstallAppPrompt'
 import ServiceWorkerRegister from '@/components/ServiceWorkerRegister'
 
 // Self-hosted at build time by next/font: no render-blocking request to a
@@ -203,7 +202,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <OfflineBanner />
           {children}
         </AuthProvider>
-        <InstallAppPrompt />
         <ServiceWorkerRegister />
       </body>
     </html>
