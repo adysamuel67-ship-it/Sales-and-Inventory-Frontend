@@ -23,6 +23,13 @@ export default function CustomersTopPage() {
     }
   }, [profileLoaded, isAuthenticated, isUnverified, router])
 
+  // Always land on the business-scoped page so the layout matches the one
+  // reached from the sidebar. Doing this in an effect (not during render)
+  // makes the redirect reliable.
+  useEffect(() => {
+    if (businessId) router.replace(`/business/${businessId}/customers`)
+  }, [businessId, router])
+
   if (isLoading || !isAuthenticated || !profileLoaded) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -45,7 +52,6 @@ export default function CustomersTopPage() {
   }
 
   if (businessId) {
-    router.replace(`/business/${businessId}/customers`)
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center py-16">

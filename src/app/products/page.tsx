@@ -55,6 +55,13 @@ export default function ProductsPage() {
     }
   }, [profileLoaded, isAuthenticated, isUnverified, router])
 
+  // Always land on the business-scoped page so the layout matches the one
+  // reached from the sidebar. Doing this in an effect (not during render)
+  // makes the redirect reliable.
+  useEffect(() => {
+    if (businessId) router.replace(`/business/${businessId}/products`)
+  }, [businessId, router])
+
   const loadProducts = useCallback(async () => {
     if (!businessId) return
     setLoading(true)
@@ -134,7 +141,6 @@ export default function ProductsPage() {
   }
 
   if (businessId) {
-    router.replace(`/business/${businessId}/products`)
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center py-16">

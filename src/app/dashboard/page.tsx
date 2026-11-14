@@ -121,6 +121,12 @@ export default function DashboardPage() {
     }
   }, [profileLoaded, isAuthenticated, isUnverified, router])
 
+  // Prefer the business-scoped dashboard so the layout is identical no matter
+  // which navigation entry point (sidebar or mobile bottom bar) was used.
+  useEffect(() => {
+    if (businessId) router.replace(`/business/${businessId}/dashboard`)
+  }, [businessId, router])
+
   useEffect(() => {
     if (!isAuthenticated || !profileLoaded || businessesLoading || businessesFetched.current) return
     if (!currentBusiness && businesses.length === 0) {
