@@ -1,13 +1,15 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { productAPI } from '@/lib/api'
 import type { Product } from '@/lib/types'
 import { formatCedi, normalizeProduct, parseApiError } from '@/lib/utils'
-import { BARCODE_FORMATS, cameraScanningSupported, normalizeBarcode } from '@/lib/barcode'
+import { normalizeBarcode } from '@/lib/barcode'
+import { useBarcodeScanner } from '@/lib/useBarcodeScanner'
 import Modal from '@/components/ui/Modal'
 import Alert from '@/components/ui/Alert'
 import Button from '@/components/ui/Button'
+import CameraPermission from '@/components/permissions/CameraPermission'
 import { ScanIcon, SearchIcon, XIcon } from '@/components/ui/Icons'
 
 type LookupState = 'idle' | 'looking' | 'local' | 'external' | 'not_found' | 'error'
@@ -44,32 +46,22 @@ export default function BarcodeScanModal({
   const [product, setProduct] = useState<Product | null>(null)
   const [suggestedName, setSuggestedName] = useState('')
   const [feedback, setFeedback] = useState('')
-  const [cameraActive, setCameraActive] = useState(false)
-  const [cameraError, setCameraError] = useState('')
 
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const streamRef = useRef<MediaStream | null>(null)
-  const detectorRef = useRef<any>(null)
-  const frameRef = useRef<number | null>(null)
   const lookupRef = useRef<(code: string) => void>(() => {})
-  const supported = cameraScanningSupported()
 
-  const releaseCamera = useCallback(() => {
-    if (frameRef.current != null) {
-      cancelAnimationFrame(frameRef.current)
-      frameRef.current = null
-    }
-    streamRef.current?.getTracks().forEach((track) => track.stop())
-    streamRef.current = null
-    detectorRef.current = null
-  }, [])
-
-  const stopCamera = useCallback(() => {
-    releaseCamera()
-    setCameraActive(false)
-  }, [releaseCamera])
-
-  useEffect(() => () => releaseCamera(), [releaseCamera])
+  const {
+    supported,
+    cameraActive,
+    cameraError,
+    permissionStatus,
+    videoRef,
+    startCamera,
+    stopCamera,
+  } = useBarcodeScanner({
+    onDetected: (raw) => lookupRef.current(raw),
+    stopOnDetect: true,
+    autoStart: true,
+  })
 
   const reset = () => {
     stopCamera()
@@ -78,7 +70,6 @@ export default function BarcodeScanModal({
     setProduct(null)
     setSuggestedName('')
     setFeedback('')
-    setCameraError('')
   }
 
   const lookup = useCallback(
@@ -128,72 +119,6 @@ export default function BarcodeScanModal({
 
   lookupRef.current = lookup
 
-  const scanFrame = useCallback(async () => {
-    const video = videoRef.current
-    const detector = detectorRef.current
-    if (video && detector && video.readyState >= 2) {
-      try {
-        const codes = await detector.detect(video)
-        const raw = codes?.[0]?.rawValue
-        if (raw) {
-          lookupRef.current(String(raw))
-          return
-        }
-      } catch {
-        // A dropped frame should not end the scan loop.
-      }
-    }
-    frameRef.current = requestAnimationFrame(() => void scanFrame())
-  }, [])
-
-  const startCamera = useCallback(async () => {
-    setCameraError('')
-    setFeedback('')
-
-    try {
-      const Detector = (window as any).BarcodeDetector
-      let formats = BARCODE_FORMATS
-      if (typeof Detector.getSupportedFormats === 'function') {
-        const supportedFormats: string[] = await Detector.getSupportedFormats()
-        const filtered = BARCODE_FORMATS.filter((format) => supportedFormats.includes(format))
-        if (filtered.length > 0) formats = filtered
-      }
-
-      detectorRef.current = new Detector({ formats })
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: 'environment' } },
-        audio: false,
-      })
-      streamRef.current = stream
-
-      const video = videoRef.current
-      if (!video) throw new Error('Video element unavailable')
-      video.srcObject = stream
-      await video.play().catch(() => {})
-
-      setCameraActive(true)
-      void scanFrame()
-    } catch (err: any) {
-      releaseCamera()
-      setCameraActive(false)
-      setCameraError(
-        err?.name === 'NotAllowedError'
-          ? 'Camera access was blocked. Type the barcode below, or allow camera access from your browser’s site controls.'
-          : 'Camera could not be started. Type the barcode below instead.'
-      )
-    }
-  }, [releaseCamera, scanFrame])
-
-  // Open the camera as soon as the scanner appears so the browser shows its
-  // native “allow camera” prompt instead of asking users to find site settings.
-  const autoStartedRef = useRef(false)
-  useEffect(() => {
-    if (!supported || autoStartedRef.current) return
-    autoStartedRef.current = true
-    const timer = setTimeout(() => void startCamera(), 150)
-    return () => clearTimeout(timer)
-  }, [supported, startCamera])
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (state === 'looking') return
@@ -242,7 +167,12 @@ export default function BarcodeScanModal({
           </Button>
         </div>
 
-        {cameraError && <Alert kind="warning">{cameraError}</Alert>}
+        <CameraPermission
+          supported={supported}
+          status={permissionStatus}
+          error={cameraError}
+          onRetry={startCamera}
+        />
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
