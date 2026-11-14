@@ -1,71 +1,91 @@
 'use client'
 
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
-import { debtAPI, customerAPI, saleAPI } from '@/lib/api'
-import { extractArray, parseApiError, isAdminRole, MappedSale, formatCedi } from '@/lib/utils'
-import { compareDateKeys, daysUntilDateKey, formatDateLabel } from '@/lib/dates'
-import SaleDetailModal from '@/components/SaleDetailModal'
+import { debtAPI, customerAPI } from '@/lib/api'
+import { extractArray, parseApiError, isAdminRole, formatCedi } from '@/lib/utils'
+import { formatDateLabel } from '@/lib/dates'
+import {
+  AGING_BUCKETS,
+  AGING_LABELS,
+  aggregateDebtRows,
+  daysOverdue,
+  daysUntilDue,
+  debtorStatus,
+  filterDebtors,
+  filterDebtorsByAging,
+  hasOverdueDebt,
+  isOverdue,
+  oldestDebtDate,
+  openDebts,
+  sortDebtors,
+  summarizeAging,
+  summarizeDebts,
+  summarizeDueSoon,
+  type AgingBucket,
+  type AgingFilter,
+  type DebtSort,
+  type DebtTab,
+  type DebtorStatus,
+} from '@/lib/debts'
+import type { Debtor, DebtPayment, DebtRecord, DebtSummary } from '@/lib/types'
 import ScheduleReminderModal from '@/components/ScheduleReminderModal'
 import RemindersSection from '@/components/RemindersSection'
+import DebtProfileModal from '@/components/DebtProfileModal'
 import PageHeader from '@/components/ui/PageHeader'
 import Alert from '@/components/ui/Alert'
+import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import EmptyState from '@/components/ui/EmptyState'
-import { PlusIcon, CashIcon } from '@/components/ui/Icons'
+import {
+  PlusIcon,
+  CashIcon,
+  SearchIcon,
+  CalendarIcon,
+  AlertTriangleIcon,
+  BellIcon,
+  XIcon,
+} from '@/components/ui/Icons'
 import Modal from '@/components/ui/Modal'
-interface DebtRecord {
-  debt_id: number
-  sale_id?: number
-  amount: number
-  due_date: string
-  is_paid: boolean
-  created_at: string
+
+const STATUS_META: Record<DebtorStatus, { label: string; color: 'red' | 'amber' | 'emerald' }> = {
+  overdue: { label: 'Overdue', color: 'red' },
+  pending: { label: 'Pending', color: 'amber' },
+  paid: { label: 'Settled', color: 'emerald' },
 }
 
-interface CustomerWithDebt {
-  customer_id: number
-  customer_name: string
-  customer_email?: string
-  customer_phone?: string
-  total_debt: number
-  debts: DebtRecord[]
+const AGING_TONE: Record<AgingBucket, { bar: string; amount: string; active: string }> = {
+  current: {
+    bar: 'bg-emerald-500',
+    amount: 'text-emerald-700',
+    active: 'bg-emerald-50/70 ring-1 ring-inset ring-emerald-200',
+  },
+  '1-30': {
+    bar: 'bg-amber-500',
+    amount: 'text-amber-700',
+    active: 'bg-amber-50/70 ring-1 ring-inset ring-amber-200',
+  },
+  '31-60': {
+    bar: 'bg-orange-500',
+    amount: 'text-orange-700',
+    active: 'bg-orange-50/70 ring-1 ring-inset ring-orange-200',
+  },
+  '61-90': {
+    bar: 'bg-rose-500',
+    amount: 'text-rose-700',
+    active: 'bg-rose-50/70 ring-1 ring-inset ring-rose-200',
+  },
+  '90+': {
+    bar: 'bg-red-600',
+    amount: 'text-red-700',
+    active: 'bg-red-50/70 ring-1 ring-inset ring-red-200',
+  },
 }
 
-interface DebtSummary {
-  total_outstanding: number
-  total_customers: number
-  total_overdue: number
-  overdue_amount: number
-}
-
-interface CustomerTransaction {
-  transaction_id: number
-  debt_id: number
-  performer_id: number
-  business_id: number
-  customer_id?: number
-  amount_paid: number
-  note?: string
-  created_at: string
-  customer_name?: string
-  customer_phone?: string
-  customer_email?: string
-  customer_address?: string
-}
-
-type Tab = 'all' | 'overdue' | 'paid' | 'reminders'
-
-function isOverdue(dueDate: string): boolean {
-  const days = daysUntilDateKey(dueDate)
-  return days != null && days < 0
-}
-
-function daysUntilDue(dueDate: string): number {
-  const days = daysUntilDateKey(dueDate)
-  return days ?? 0
-}
+type CustomerWithDebt = Debtor
+type CustomerTransaction = DebtPayment
+type Tab = DebtTab | 'reminders'
 
 export default function DebtsPage() {
   const params = useParams()
@@ -79,7 +99,8 @@ export default function DebtsPage() {
   const [success, setSuccess] = useState('')
   const [search, setSearch] = useState('')
   const [activeTab, setActiveTab] = useState<Tab>('all')
-  const [sortOrder, setSortOrder] = useState<'highest' | 'lowest' | 'oldest'>('highest')
+  const [sortOrder, setSortOrder] = useState<DebtSort>('oldest')
+  const [agingFilter, setAgingFilter] = useState<AgingFilter>('all')
 
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [paymentCustomer, setPaymentCustomer] = useState<CustomerWithDebt | null>(null)
@@ -100,16 +121,10 @@ export default function DebtsPage() {
   const [addDebtNewPhone, setAddDebtNewPhone] = useState('')
   const [addDebtNewEmail, setAddDebtNewEmail] = useState('')
 
-  const [showDetailModal, setShowDetailModal] = useState(false)
-  const [detailCustomer, setDetailCustomer] = useState<CustomerWithDebt | null>(null)
-
-  const [detailSale, setDetailSale] = useState<MappedSale | null>(null)
-
   const [showProfileModal, setShowProfileModal] = useState(false)
   const [profileCustomer, setProfileCustomer] = useState<CustomerWithDebt | null>(null)
   const [profileTransactions, setProfileTransactions] = useState<CustomerTransaction[]>([])
   const [profileLoading, setProfileLoading] = useState(false)
-  const [profileSales, setProfileSales] = useState<any[]>([])
 
   const [showDebtDetailModal, setShowDebtDetailModal] = useState(false)
   const [debtDetailData, setDebtDetailData] = useState<{ debt: DebtRecord; customer: CustomerWithDebt } | null>(null)
@@ -149,127 +164,71 @@ export default function DebtsPage() {
     setLoading(true)
     setError('')
     try {
-      const [debtRes, totalRes] = await Promise.allSettled([
-        debtAPI.listCustomersWithDebt(businessId),
-        debtAPI.getTotalDebt(businessId),
-      ])
-
-      if (debtRes.status === 'fulfilled') {
-        const raw = debtRes.value.data
-        const arr = extractArray(raw)
-        const customerMap = new Map<number, CustomerWithDebt>()
-
-        for (const item of arr) {
-          const debt = item.debt || item
-          const custId = Number(debt.customer_id ?? item.customer_id ?? item.user_id ?? item.id)
-          if (!custId) continue
-
-          const debtAmount = Number(debt.amount ?? debt.customer_debt ?? debt.total_debt ?? item.customer_debt ?? item.amount ?? 0)
-          const existing = customerMap.get(custId)
-
-          if (existing) {
-            existing.total_debt += debtAmount
-            if (debt.debt_id || debt.id) {
-              existing.debts.push({
-                debt_id: debt.debt_id ?? debt.id,
-                sale_id: debt.sale_id ?? undefined,
-                amount: debtAmount,
-                due_date: debt.due_date || '',
-                is_paid: debt.is_paid ?? false,
-                created_at: debt.created_at || '',
-              })
-            }
-          } else {
-            customerMap.set(custId, {
-              customer_id: custId,
-              customer_name: item.customer_name ?? item.name ?? `Customer #${custId}`,
-              customer_email: item.customer_email ?? item.email ?? '',
-              customer_phone: item.customer_phone ?? item.phone ?? '',
-              total_debt: debtAmount,
-              debts: (debt.debt_id || debt.id) ? [{
-                debt_id: debt.debt_id ?? debt.id,
-                sale_id: debt.sale_id ?? undefined,
-                amount: debtAmount,
-                due_date: debt.due_date || '',
-                is_paid: debt.is_paid ?? false,
-                created_at: debt.created_at || '',
-              }] : [],
-            })
-          }
-        }
-
-        const customerList = Array.from(customerMap.values())
-        setCustomers(customerList)
-
-        let totalOutstanding = 0
-        let totalCustomers = 0
-        let totalOverdue = 0
-        let overdueAmount = 0
-
-        for (const c of customerList) {
-          if (c.total_debt > 0) {
-            totalOutstanding += c.total_debt
-            totalCustomers++
-            for (const d of c.debts) {
-              if (!d.is_paid && d.due_date && isOverdue(d.due_date)) {
-                totalOverdue++
-                overdueAmount += d.amount
-              }
-            }
-          }
-        }
-
-        setSummary({
-          total_outstanding: totalOutstanding,
-          total_customers: totalCustomers,
-          total_overdue: totalOverdue,
-          overdue_amount: overdueAmount,
-        })
-      } else {
-        setError(parseApiError(debtRes.reason?.response ? debtRes.reason : { message: 'Failed to load debts' }))
-      }
-
-      try {
-        const custRes = await customerAPI.list(businessId)
-        setAllCustomers(extractArray(custRes.data))
-      } catch {
-        // Non-critical
-      }
+      const debtRes = await debtAPI.listCustomersWithDebt(businessId)
+      const customerList = aggregateDebtRows(extractArray(debtRes.data))
+      setCustomers(customerList)
+      setSummary(summarizeDebts(customerList))
     } catch (err: any) {
       setError(parseApiError(err))
-    } finally {
-      setLoading(false)
     }
+
+    try {
+      const custRes = await customerAPI.list(businessId)
+      setAllCustomers(extractArray(custRes.data))
+    } catch {
+      // Non-critical
+    }
+
+    setLoading(false)
   }, [businessId])
 
   useEffect(() => {
     if (businessId) loadDebts()
   }, [businessId, loadDebts])
 
-  const debtCustomers = customers.filter((c) => c.total_debt > 0)
-  const paidCustomers = customers.filter((c) => c.total_debt <= 0 || c.debts.every((d) => d.is_paid))
+  const debtCustomers = useMemo(() => customers.filter((c) => c.total_debt > 0), [customers])
+  const paidCustomers = useMemo(() => customers.filter((c) => c.total_debt <= 0), [customers])
+  const overdueCustomers = useMemo(() => debtCustomers.filter((c) => hasOverdueDebt(c)), [debtCustomers])
+  const aging = useMemo(() => summarizeAging(customers), [customers])
+  const dueSoon = useMemo(() => summarizeDueSoon(customers), [customers])
 
-  const displayedCustomers = activeTab === 'paid' ? paidCustomers : debtCustomers
-
-  const overdueCustomers = debtCustomers.filter((c) =>
-    c.debts.some((d) => !d.is_paid && d.due_date && isOverdue(d.due_date))
+  const listTab: DebtTab = activeTab === 'reminders' ? 'all' : activeTab
+  const effectiveAging: AgingFilter = listTab === 'all' ? agingFilter : 'all'
+  const filtered = useMemo(
+    () =>
+      sortDebtors(
+        filterDebtorsByAging(filterDebtors(customers, listTab, search), effectiveAging),
+        sortOrder
+      ),
+    [customers, listTab, search, effectiveAging, sortOrder]
   )
 
-  const tabFiltered = activeTab === 'overdue' ? overdueCustomers : displayedCustomers
+  const changeTab = (tab: Tab) => {
+    setActiveTab(tab)
+    setAgingFilter('all')
+  }
 
-  const sorted = [...tabFiltered].sort((a, b) => {
-    if (sortOrder === 'highest') return b.total_debt - a.total_debt
-    if (sortOrder === 'lowest') return a.total_debt - b.total_debt
-    const aDate = a.debts[0]?.created_at || ''
-    const bDate = b.debts[0]?.created_at || ''
-    return new Date(aDate).getTime() - new Date(bDate).getTime()
-  })
+  const toggleAging = (bucket: AgingBucket) => {
+    setActiveTab('all')
+    setAgingFilter((current) => (current === bucket ? 'all' : bucket))
+  }
 
-  const filtered = sorted.filter((c) =>
-    c.customer_name?.toLowerCase().includes(search.toLowerCase()) ||
-    c.customer_email?.toLowerCase().includes(search.toLowerCase()) ||
-    c.customer_phone?.includes(search)
-  )
+  const dueHint = (dueDate: string) => {
+    if (!dueDate) return 'No due date'
+    if (isOverdue(dueDate)) {
+      const days = daysOverdue(dueDate)
+      return `${days} day${days === 1 ? '' : 's'} overdue`
+    }
+    const days = daysUntilDue(dueDate)
+    if (days === 0) return 'Due today'
+    return `Due in ${days} day${days === 1 ? '' : 's'}`
+  }
+
+  const avatarTone: Record<DebtorStatus, string> = {
+    overdue: 'bg-rose-50 text-danger',
+    pending: 'bg-amber-50 text-warning',
+    paid: 'bg-emerald-50 text-success',
+  }
 
   const openPayment = (customer: CustomerWithDebt) => {
     setPaymentCustomer(customer)
@@ -410,54 +369,32 @@ export default function DebtsPage() {
     }
   }
 
-  const openDetail = (customer: CustomerWithDebt) => {
-    setDetailCustomer(customer)
-    setShowDetailModal(true)
-  }
-
   const openProfile = async (customer: CustomerWithDebt) => {
     setProfileCustomer(customer)
     setShowProfileModal(true)
     setProfileLoading(true)
     setProfileTransactions([])
-    setProfileSales([])
 
     try {
-      const [txnRes, salesRes] = await Promise.allSettled([
-        debtAPI.getCustomerTransactions(businessId, customer.customer_id),
-        saleAPI.list(businessId),
-      ])
-
-      if (txnRes.status === 'fulfilled') {
-        const raw = txnRes.value.data
-        const arr = extractArray(raw)
-        setProfileTransactions(arr.map((item: any) => {
-          const txn = item.transactions || item
-          return {
-            transaction_id: txn.transaction_id ?? txn.id ?? item.transaction_id ?? item.id,
-            debt_id: txn.debt_id ?? item.debt_id,
-            performer_id: txn.performer_id ?? item.performer_id,
-            business_id: txn.business_id ?? item.business_id,
-            customer_id: txn.customer_id ?? item.customer_id,
-            amount_paid: Number(txn.amount_paid ?? item.amount_paid ?? 0),
-            note: txn.note || item.note || '',
-            created_at: txn.created_at || item.created_at || '',
-            customer_name: item.customer_name || txn.customer_name,
-            customer_phone: item.customer_phone || txn.customer_phone,
-            customer_email: item.customer_email || txn.customer_email,
-            customer_address: item.customer_address || txn.customer_address,
-          }
-        }))
-      }
-
-      if (salesRes.status === 'fulfilled') {
-        const sales = extractArray(salesRes.value.data)
-        const customerSales = sales.filter((s: any) => {
-          const saleCid = s.customer_id ?? s.customer?.customer_id
-          return saleCid != null && Number(saleCid) === Number(customer.customer_id)
-        })
-        setProfileSales(customerSales)
-      }
+      const txnRes = await debtAPI.getCustomerTransactions(businessId, customer.customer_id)
+      const arr = extractArray(txnRes.data)
+      setProfileTransactions(arr.map((item: any) => {
+        const txn = item.transactions || item
+        return {
+          transaction_id: txn.transaction_id ?? txn.id ?? item.transaction_id ?? item.id,
+          debt_id: txn.debt_id ?? item.debt_id,
+          performer_id: txn.performer_id ?? item.performer_id,
+          business_id: txn.business_id ?? item.business_id,
+          customer_id: txn.customer_id ?? item.customer_id,
+          amount_paid: Number(txn.amount_paid ?? item.amount_paid ?? 0),
+          note: txn.note || item.note || '',
+          created_at: txn.created_at || item.created_at || '',
+          customer_name: item.customer_name || txn.customer_name,
+          customer_phone: item.customer_phone || txn.customer_phone,
+          customer_email: item.customer_email || txn.customer_email,
+          customer_address: item.customer_address || txn.customer_address,
+        }
+      }))
     } catch {
     } finally {
       setProfileLoading(false)
@@ -471,7 +408,7 @@ export default function DebtsPage() {
       <PageHeader
         eyebrow="Credit & Collections"
         title="Debt Tracker"
-        subtitle="Track and manage customer debts"
+        subtitle="Track outstanding balances, aging, and collections"
         actions={isAdmin && (
           <Button onClick={openAddDebt} leftIcon={<PlusIcon className="w-4 h-4" />}>
             Add Debt
@@ -491,191 +428,401 @@ export default function DebtsPage() {
       )}
 
       {loading ? (
-        <div className="space-y-6">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="skeleton h-24 rounded-2xl" />
+        <div className="space-y-4 sm:space-y-6">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="skeleton h-28 rounded-2xl" />
             ))}
           </div>
-          <div className="skeleton h-48 rounded-2xl" />
+          <div className="skeleton h-32 rounded-2xl" />
+          <div className="flex items-center justify-between gap-3">
+            <div className="skeleton h-10 w-72 rounded-xl" />
+            <div className="skeleton h-4 w-20" />
+          </div>
+          <div className="skeleton h-72 rounded-2xl" />
         </div>
       ) : (
-        <>
-          {summary && (
-            <div className="grid grid-cols-2 gap-3 mb-6">
-              <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-5">
-                <p className="text-xs text-neutral-light uppercase tracking-wider">Outstanding</p>
-                <p className="text-2xl font-bold text-danger mt-1">{formatCurrency(summary.total_outstanding)}</p>
-                <p className="text-[10px] text-neutral-light mt-1">{summary.total_customers} customer{summary.total_customers !== 1 ? 's' : ''}</p>
-              </div>
-              <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-5">
-                <p className="text-xs text-neutral-light uppercase tracking-wider">Overdue</p>
-                <p className="text-2xl font-bold text-warning mt-1">{summary.total_overdue}</p>
-                <p className="text-[10px] text-neutral-light mt-1">{formatCurrency(summary.overdue_amount)} overdue</p>
-              </div>
-            </div>
-          )}
+        <div className="space-y-4 sm:space-y-6">
+            {summary && (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+                <section className="surface-card kpi-card p-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-micro uppercase tracking-[0.08em] text-neutral-light">Outstanding</p>
+                      <p className="mt-1 truncate text-kpi text-slate-900">{formatCurrency(summary.total_outstanding)}</p>
+                    </div>
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-light text-primary">
+                      <CashIcon className="h-5 w-5" />
+                    </span>
+                  </div>
+                  <p className="mt-2 text-xs text-neutral-light">
+                    Across {summary.total_customers} customer{summary.total_customers !== 1 ? 's' : ''}
+                  </p>
+                </section>
 
-          <div className="flex items-center gap-1 mb-4 bg-slate-100 rounded-xl p-1 w-fit">
-            {([
-              { key: 'all' as Tab, label: `In Debt (${debtCustomers.length})` },
-              { key: 'overdue' as Tab, label: `Overdue (${overdueCustomers.length})` },
-              { key: 'paid' as Tab, label: `Paid (${paidCustomers.length})` },
-              { key: 'reminders' as Tab, label: 'Reminders' },
-            ]).map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
-                  activeTab === tab.key
-                    ? 'bg-white text-slate-900 shadow-sm'
-                    : 'text-slate-500 hover:text-slate-700'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
+                <section className="surface-card kpi-card p-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-micro uppercase tracking-[0.08em] text-neutral-light">Overdue</p>
+                      <p className="mt-1 truncate text-kpi text-danger">{formatCurrency(summary.overdue_amount)}</p>
+                    </div>
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-danger">
+                      <AlertTriangleIcon className="h-5 w-5" />
+                    </span>
+                  </div>
+                  <p className="mt-2 text-xs text-neutral-light">
+                    {summary.total_overdue} invoice{summary.total_overdue !== 1 ? 's' : ''} past due
+                  </p>
+                </section>
 
-          {activeTab === 'reminders' ? (
-            <RemindersSection businessId={businessId} />
-          ) : (
-            <>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
-            <div className="relative flex-1 w-full sm:w-auto">
-                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-light" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search by name, phone, or email..."
-                  className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
-                />
+                <section className="surface-card kpi-card p-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-micro uppercase tracking-[0.08em] text-neutral-light">Due this week</p>
+                      <p className="mt-1 truncate text-kpi text-warning">{formatCurrency(dueSoon.amount)}</p>
+                    </div>
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-warning">
+                      <CalendarIcon className="h-5 w-5" />
+                    </span>
+                  </div>
+                  <p className="mt-2 text-xs text-neutral-light">
+                    {dueSoon.debts} debt{dueSoon.debts !== 1 ? 's' : ''} coming due in 7 days
+                  </p>
+                </section>
               </div>
-              <select
-                value={sortOrder}
-                onChange={(e) => setSortOrder(e.target.value as typeof sortOrder)}
-                className="px-3 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-primary outline-none min-h-[44px]"
-              >
-                <option value="highest">Highest Debt</option>
-                <option value="lowest">Lowest Debt</option>
-                <option value="oldest">Oldest First</option>
-              </select>
-            </div>
-  
-            <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm">
-              {filtered.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="text-xs text-neutral-light uppercase tracking-wider border-b border-slate-200">
-                        <th className="text-left px-5 py-3 font-medium">Customer</th>
-                        <th className="text-right px-5 py-3 font-medium">Debt</th>
-                        <th className="text-center px-5 py-3 font-medium hidden sm:table-cell">Status</th>
-                        <th className="text-right px-5 py-3 font-medium">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filtered.map((customer) => {
-                        const hasOverdue = customer.debts.some((d) => !d.is_paid && d.due_date && isOverdue(d.due_date))
-                        return (
-                          <tr key={customer.customer_id} className="border-t border-slate-50 table-row-hover">
-                            <td className="px-5 py-3.5">
-                              <button
-                                onClick={() => openProfile(customer)}
-                                className="flex items-center gap-3 text-left hover:opacity-80 transition-opacity"
-                              >
-                                <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold shrink-0 ${
-                                  hasOverdue ? 'bg-danger-light text-danger' : 'bg-warning-light text-warning'
-                                }`}>
-                                  {customer.customer_name?.charAt(0)?.toUpperCase() || '?'}
-                                </div>
-                                <div>
-                                  <div className="font-medium text-slate-900 underline decoration-dotted underline-offset-2 cursor-pointer">{customer.customer_name}</div>
-                                  {customer.customer_phone && (
-                                    <div className="text-xs text-neutral-light mt-0.5">{customer.customer_phone}</div>
-                                  )}
-                                </div>
-                              </button>
-                            </td>
-                            <td className="px-5 py-3.5 text-right">
-                              <span className={`font-semibold ${customer.total_debt >= 100 ? 'text-danger' : 'text-warning'}`}>
-                                {formatCurrency(customer.total_debt)}
-                              </span>
-                            </td>
-                            <td className="px-5 py-3.5 text-center hidden sm:table-cell">
-                              {hasOverdue ? (
-                                <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-danger-light text-danger">
-                                  Overdue
-                                </span>
-                              ) : customer.total_debt > 0 ? (
-                                <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-warning-light text-warning">
-                                  Pending
-                                </span>
-                              ) : (
-                                <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-success-light text-success">
-                                  Paid
-                                </span>
-                              )}
-                            </td>
-                            <td className="px-5 py-3.5 text-right">
-                              <div className="flex items-center gap-2 justify-end">
-                                <button
-                                  onClick={() => openProfile(customer)}
-                                  className="px-2.5 py-1 text-xs font-medium text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors"
-                                >
-                                  Details
-                                </button>
-                                {canRemind && (
-                                  customer.total_debt > 0 ? (
-                                    <button
-                                      onClick={() => openReminder(customer)}
-                                      className="px-2.5 py-1 text-xs font-medium text-primary bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors"
-                                    >
-                                      Remind
-                                    </button>
-                                  ) : (
-                                    <button
-                                      disabled
-                                      title="Debt settled"
-                                      className="px-2.5 py-1 text-xs font-medium text-slate-400 bg-slate-100 rounded-lg cursor-not-allowed"
-                                    >
-                                      Debt settled
-                                    </button>
-                                  )
-                                )}
-                                {customer.total_debt > 0 && canPayDebt && (
-                                  <button
-                                    onClick={() => openPayment(customer)}
-                                    className="px-2.5 py-1 text-xs font-medium text-white bg-primary rounded-lg hover:bg-primary-dark transition-colors"
-                                  >
-                                    Pay
-                                  </button>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
+            )}
+
+            <section className="surface-card overflow-hidden">
+              <div className="flex flex-col gap-2 border-b border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+                <div>
+                  <h2 className="text-section-title text-slate-900">Receivables aging</h2>
+                  <p className="mt-0.5 text-xs text-neutral-light">
+                    {agingFilter === 'all'
+                      ? 'Click a bucket to focus the list below.'
+                      : `Showing ${AGING_LABELS[agingFilter]} balances only.`}
+                  </p>
                 </div>
-              ) : (
-                <EmptyState
-                  icon={<CashIcon className="w-6 h-6 text-primary" />}
-                  title={search ? 'No customers match your search' :
-                    activeTab === 'overdue' ? 'No overdue debts' :
-                    activeTab === 'paid' ? 'No paid debts yet' :
-                    'No outstanding debts'}
-                  description={search ? 'Try a different search term' : 'All customers are up to date'}
-                />
+                {agingFilter !== 'all' && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setAgingFilter('all')}
+                    leftIcon={<XIcon className="h-3.5 w-3.5" />}
+                  >
+                    Clear filter
+                  </Button>
+                )}
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-5">
+                {AGING_BUCKETS.map((bucket) => {
+                  const entry = aging[bucket]
+                  const active = agingFilter === bucket
+                  const tone = AGING_TONE[bucket]
+                  return (
+                    <button
+                      key={bucket}
+                      type="button"
+                      aria-pressed={active}
+                      onClick={() => toggleAging(bucket)}
+                      className={`flex flex-col items-start gap-1 border-b border-slate-100 px-4 py-4 text-left transition-colors even:border-l sm:border-b-0 sm:border-l sm:first:border-l-0 ${
+                        active ? tone.active : 'hover:bg-slate-50'
+                      }`}
+                    >
+                      <span className={`h-1 w-8 rounded-full ${tone.bar}`} aria-hidden="true" />
+                      <span className="mt-1 text-micro uppercase tracking-[0.08em] text-neutral-light">
+                        {AGING_LABELS[bucket]}
+                      </span>
+                      <span className={`text-base font-semibold ${tone.amount}`}>{formatCurrency(entry.amount)}</span>
+                      <span className="text-[11px] text-neutral-light">
+                        {entry.customers} customer{entry.customers !== 1 ? 's' : ''} · {entry.debts} debt{entry.debts !== 1 ? 's' : ''}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </section>
+
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-1 overflow-x-auto rounded-xl bg-slate-100 p-1">
+                {([
+                  { key: 'all' as Tab, label: 'In debt', count: debtCustomers.length },
+                  { key: 'overdue' as Tab, label: 'Overdue', count: overdueCustomers.length },
+                  { key: 'paid' as Tab, label: 'Settled', count: paidCustomers.length },
+                  { key: 'reminders' as Tab, label: 'Reminders', count: undefined },
+                ]).map((tab) => (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    onClick={() => changeTab(tab.key)}
+                    aria-pressed={activeTab === tab.key}
+                    className={`flex min-h-[40px] items-center gap-2 whitespace-nowrap rounded-lg px-3.5 text-sm font-medium transition-colors ${
+                      activeTab === tab.key
+                        ? 'bg-white text-slate-900 shadow-sm'
+                        : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                  >
+                    {tab.label}
+                    {tab.count != null && (
+                      <span
+                        className={`rounded-full px-1.5 py-0.5 text-[11px] font-semibold ${
+                          activeTab === tab.key ? 'bg-slate-100 text-slate-600' : 'bg-slate-200/70 text-slate-500'
+                        }`}
+                      >
+                        {tab.count}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+              {activeTab !== 'reminders' && (
+                <p className="text-xs text-neutral-light">
+                  {filtered.length} result{filtered.length !== 1 ? 's' : ''}
+                </p>
               )}
             </div>
-            </>
-          )}
-        </>
+
+            {activeTab === 'reminders' ? (
+              <RemindersSection businessId={businessId} />
+            ) : (
+              <div className="space-y-3">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <div className="relative flex-1">
+                    <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-light" />
+                    <input
+                      type="text"
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder="Search by name, phone, or email..."
+                      className="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-10 pr-9 text-sm text-slate-900 shadow-xs outline-none transition-all placeholder:text-slate-400 hover:border-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10 min-h-[44px]"
+                    />
+                    {search && (
+                      <button
+                        type="button"
+                        onClick={() => setSearch('')}
+                        aria-label="Clear search"
+                        className="absolute right-2.5 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-lg text-neutral-light transition-colors hover:bg-slate-100 hover:text-slate-700"
+                      >
+                        <XIcon className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
+                  <select
+                    value={sortOrder}
+                    onChange={(e) => setSortOrder(e.target.value as DebtSort)}
+                    aria-label="Sort debts"
+                    className="rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-700 shadow-xs outline-none transition-all hover:border-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10 min-h-[44px]"
+                  >
+                    <option value="oldest">Oldest due first</option>
+                    <option value="highest">Highest balance</option>
+                    <option value="lowest">Lowest balance</option>
+                  </select>
+                </div>
+
+                <section className="surface-card overflow-hidden">
+                  {filtered.length > 0 ? (
+                    <>
+                      <div className="hidden md:block">
+                        <table className="data-table w-full">
+                          <thead>
+                            <tr>
+                              <th>Customer</th>
+                              <th>Status</th>
+                              <th className="text-right">Outstanding</th>
+                              <th>Oldest due</th>
+                              <th className="text-right">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {filtered.map((customer) => {
+                              const status = debtorStatus(customer)
+                              const meta = STATUS_META[status]
+                              const oldest = oldestDebtDate(customer)
+                              const open = openDebts(customer)
+                              return (
+                                <tr key={customer.customer_id}>
+                                  <td>
+                                    <button
+                                      type="button"
+                                      onClick={() => openProfile(customer)}
+                                      className="flex items-center gap-3 text-left"
+                                    >
+                                      <span
+                                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${avatarTone[status]}`}
+                                      >
+                                        {customer.customer_name?.charAt(0)?.toUpperCase() || '?'}
+                                      </span>
+                                      <span className="min-w-0">
+                                        <span className="block truncate font-medium text-slate-900">{customer.customer_name}</span>
+                                        {(customer.customer_phone || customer.customer_email) && (
+                                          <span className="mt-0.5 block truncate text-xs text-neutral-light">
+                                            {customer.customer_phone || customer.customer_email}
+                                          </span>
+                                        )}
+                                      </span>
+                                    </button>
+                                  </td>
+                                  <td>
+                                    <Badge color={meta.color} dot>
+                                      {meta.label}
+                                    </Badge>
+                                  </td>
+                                  <td className="text-right">
+                                    <div className="font-semibold text-slate-900">{formatCurrency(customer.total_debt)}</div>
+                                    <div className="text-[11px] text-neutral-light">
+                                      {open.length} open debt{open.length !== 1 ? 's' : ''}
+                                    </div>
+                                  </td>
+                                  <td>
+                                    {oldest ? (
+                                      <>
+                                        <div className="text-slate-700">{formatDateLabel(oldest)}</div>
+                                        <div className={`text-[11px] ${isOverdue(oldest) ? 'font-medium text-danger' : 'text-neutral-light'}`}>
+                                          {dueHint(oldest)}
+                                        </div>
+                                      </>
+                                    ) : (
+                                      <span className="text-xs text-neutral-light">No due date</span>
+                                    )}
+                                  </td>
+                                  <td className="text-right">
+                                    <div className="flex justify-end gap-2">
+                                      {customer.total_debt > 0 && canRemind && (
+                                        <Button
+                                          variant="ghost"
+                                          size="xs"
+                                          onClick={() => openReminder(customer)}
+                                          leftIcon={<BellIcon className="h-3.5 w-3.5" />}
+                                        >
+                                          Remind
+                                        </Button>
+                                      )}
+                                      {customer.total_debt > 0 && canPayDebt && (
+                                        <Button size="xs" onClick={() => openPayment(customer)}>
+                                          Pay
+                                        </Button>
+                                      )}
+                                      {customer.total_debt <= 0 && (
+                                        <Button variant="secondary" size="xs" onClick={() => openProfile(customer)}>
+                                          View
+                                        </Button>
+                                      )}
+                                    </div>
+                                  </td>
+                                </tr>
+                              )
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      <div className="divide-y divide-slate-100 md:hidden">
+                        {filtered.map((customer) => {
+                          const status = debtorStatus(customer)
+                          const meta = STATUS_META[status]
+                          const oldest = oldestDebtDate(customer)
+                          const open = openDebts(customer)
+                          return (
+                            <article key={customer.customer_id} className="p-4">
+                              <button
+                                type="button"
+                                onClick={() => openProfile(customer)}
+                                className="flex w-full items-start gap-3 text-left"
+                              >
+                                <span
+                                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${avatarTone[status]}`}
+                                >
+                                  {customer.customer_name?.charAt(0)?.toUpperCase() || '?'}
+                                </span>
+                                <span className="min-w-0 flex-1">
+                                  <span className="block truncate font-medium text-slate-900">{customer.customer_name}</span>
+                                  {(customer.customer_phone || customer.customer_email) && (
+                                    <span className="mt-0.5 block truncate text-xs text-neutral-light">
+                                      {customer.customer_phone || customer.customer_email}
+                                    </span>
+                                  )}
+                                </span>
+                                <Badge color={meta.color} dot>
+                                  {meta.label}
+                                </Badge>
+                              </button>
+                              <div className="mt-3 grid grid-cols-2 gap-3 rounded-xl bg-slate-50 px-3 py-2.5">
+                                <div>
+                                  <p className="text-[11px] uppercase tracking-wide text-neutral-light">Outstanding</p>
+                                  <p className="mt-0.5 text-sm font-semibold text-slate-900">{formatCurrency(customer.total_debt)}</p>
+                                  <p className="text-[11px] text-neutral-light">{open.length} open debt{open.length !== 1 ? 's' : ''}</p>
+                                </div>
+                                <div>
+                                  <p className="text-[11px] uppercase tracking-wide text-neutral-light">Oldest due</p>
+                                  <p className="mt-0.5 text-sm text-slate-800">{oldest ? formatDateLabel(oldest) : 'No due date'}</p>
+                                  <p className={`text-[11px] ${oldest && isOverdue(oldest) ? 'font-medium text-danger' : 'text-neutral-light'}`}>
+                                    {dueHint(oldest)}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="mt-3 flex items-center gap-2">
+                                {customer.total_debt > 0 && canRemind && (
+                                  <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    className="flex-1"
+                                    onClick={() => openReminder(customer)}
+                                    leftIcon={<BellIcon className="h-4 w-4" />}
+                                  >
+                                    Remind
+                                  </Button>
+                                )}
+                                {customer.total_debt > 0 && canPayDebt && (
+                                  <Button size="sm" className="flex-1" onClick={() => openPayment(customer)}>
+                                    Record payment
+                                  </Button>
+                                )}
+                                {customer.total_debt <= 0 && (
+                                  <Button variant="secondary" size="sm" className="flex-1" onClick={() => openProfile(customer)}>
+                                    View history
+                                  </Button>
+                                )}
+                              </div>
+                            </article>
+                          )
+                        })}
+                      </div>
+                    </>
+                  ) : (
+                    <EmptyState
+                      icon={<CashIcon className="w-6 h-6 text-primary" />}
+                      title={
+                        search
+                          ? 'No customers match your search'
+                          : agingFilter !== 'all'
+                            ? `No ${AGING_LABELS[agingFilter]} balances`
+                            : activeTab === 'overdue'
+                              ? 'No overdue debts'
+                              : activeTab === 'paid'
+                                ? 'No settled customers yet'
+                                : 'No outstanding debts'
+                      }
+                      description={
+                        search
+                          ? 'Try a different search term'
+                          : agingFilter !== 'all'
+                            ? 'Try another aging bucket or clear the filter'
+                            : activeTab === 'paid'
+                              ? 'Customers who clear their balance will appear here'
+                              : 'All customers are up to date'
+                      }
+                      action={
+                        agingFilter !== 'all' ? (
+                          <Button variant="secondary" size="sm" onClick={() => setAgingFilter('all')}>
+                            Clear aging filter
+                          </Button>
+                        ) : undefined
+                      }
+                    />
+                  )}
+                </section>
+              </div>
+            )}
+          </div>
       )}
 
       {showPaymentModal && paymentCustomer && (
@@ -898,296 +1045,29 @@ export default function DebtsPage() {
         </Modal>
       )}
 
-      {showDetailModal && detailCustomer && (
-        <Modal onClose={() => setShowDetailModal(false)} panelClassName="w-full max-w-lg max-h-[90vh] overflow-y-auto">
-          <div className="sticky top-0 bg-white border-b border-slate-200 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between">
-            <h3 className="font-semibold text-slate-900">Debt Details</h3>
-            <button
-              onClick={() => setShowDetailModal(false)}
-              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
-            >
-              <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-          <div className="px-4 sm:px-6 py-5">
-            <div className="flex items-center gap-3 sm:gap-4 mb-5 sm:mb-6">
-              <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-danger-light flex items-center justify-center text-base sm:text-lg font-bold text-danger shrink-0">
-                {detailCustomer.customer_name?.charAt(0)?.toUpperCase() || '?'}
-              </div>
-              <div className="min-w-0 flex-1">
-                <h4 className="text-base sm:text-lg font-semibold text-slate-900 truncate">{detailCustomer.customer_name}</h4>
-                {detailCustomer.customer_phone && (
-                  <p className="text-sm text-neutral-light">{detailCustomer.customer_phone}</p>
-                )}
-              </div>
-            </div>
-
-            <div className="bg-danger-light rounded-xl p-4 mb-6">
-              <p className="text-xs text-neutral-light mb-1">Total Outstanding</p>
-              <p className="text-2xl font-bold text-danger">{formatCurrency(detailCustomer.total_debt)}</p>
-            </div>
-
-            {detailCustomer.debts.length > 0 ? (
-              <div>
-                <h5 className="text-sm font-semibold text-slate-900 mb-3">Debt Records</h5>
-                <div className="space-y-2">
-                  {detailCustomer.debts.map((debt) => {
-                    const overdue = !debt.is_paid && debt.due_date && isOverdue(debt.due_date)
-                    const daysLeft = debt.due_date ? daysUntilDue(debt.due_date) : null
-                    return (
-                      <div key={debt.debt_id} className="flex items-center justify-between py-3 px-4 bg-surfaceAlt rounded-xl text-sm">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium text-slate-900">{formatCurrency(debt.amount)}</span>
-                            <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
-                              debt.is_paid ? 'bg-success-light text-success' : overdue ? 'bg-danger-light text-danger' : 'bg-warning-light text-warning'
-                            }`}>
-                              {debt.is_paid ? 'Paid' : overdue ? 'Overdue' : 'Pending'}
-                            </span>
-                          </div>
-                          {debt.due_date && (
-                            <p className="text-xs text-neutral-light mt-1">
-                              Due: {formatDateLabel(debt.due_date)}
-                              {overdue && <span className="text-danger ml-1">(overdue)</span>}
-                              {!overdue && !debt.is_paid && daysLeft != null && (
-                                <span className="ml-1">({daysLeft} day{daysLeft !== 1 ? 's' : ''} left)</span>
-                              )}
-                            </p>
-                          )}
-                          {debt.created_at && (
-                            <p className="text-xs text-neutral-light mt-0.5">
-                              Created: {new Date(debt.created_at).toLocaleDateString()}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            ) : (
-              <p className="text-sm text-neutral-light text-center py-4">No debt records found</p>
-            )}
-          </div>
-          <div className="sticky bottom-0 bg-white border-t border-slate-200 px-4 sm:px-6 py-4 rounded-b-2xl flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            {detailCustomer.total_debt > 0 && canPayDebt && (
-              <button
-                onClick={() => {
-                  setShowDetailModal(false)
-                  openPayment(detailCustomer)
-                }}
-                className="px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors min-h-[44px]"
-              >
-                Record Payment
-              </button>
-            )}
-            <button
-              onClick={() => setShowDetailModal(false)}
-              className="px-4 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors min-h-[44px]"
-            >
-              Close
-            </button>
-          </div>
-        </Modal>
-      )}
-
       {showProfileModal && profileCustomer && (
-        <Modal onClose={() => setShowProfileModal(false)} panelClassName="w-full max-w-lg max-h-[90vh] overflow-y-auto">
-          <div className="sticky top-0 bg-white border-b border-slate-200 px-4 sm:px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
-            <h3 className="font-semibold text-slate-900">Customer Profile</h3>
-            <button
-              onClick={() => setShowProfileModal(false)}
-              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
-            >
-              <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-
-          <div className="px-4 sm:px-6 py-5">
-            <div className="flex items-center gap-3 sm:gap-4 mb-5 sm:mb-6">
-              <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-primary/10 flex items-center justify-center text-base sm:text-lg font-bold text-primary shrink-0">
-                {profileCustomer.customer_name?.charAt(0)?.toUpperCase() || '?'}
-              </div>
-              <div className="min-w-0 flex-1">
-                <h4 className="text-base sm:text-lg font-semibold text-slate-900 truncate">{profileCustomer.customer_name}</h4>
-                <div className="flex items-center gap-1 sm:gap-2 mt-0.5 text-xs sm:text-sm flex-wrap">
-                  {profileCustomer.customer_phone && (
-                    <span className="text-neutral-light truncate">{profileCustomer.customer_phone}</span>
-                  )}
-                  {profileCustomer.customer_email && (
-                    <span className="text-neutral-light truncate hidden sm:inline">| {profileCustomer.customer_email}</span>
-                  )}
-                </div>
-              </div>
-            </div>
-
-              <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-5 sm:mb-6">
-                <div className="bg-warning-light rounded-xl p-2.5 sm:p-4">
-                  <p className="text-[10px] sm:text-xs text-neutral-light mb-0.5 sm:mb-1">Total Borrowed</p>
-                  <p className="text-sm sm:text-lg font-bold text-warning">
-                    {profileLoading ? '...' : formatCurrency(profileCustomer.debts.reduce((sum, d) => sum + (d.is_paid ? 0 : d.amount), 0))}
-                  </p>
-                </div>
-                <div className="bg-success-light rounded-xl p-2.5 sm:p-4">
-                  <p className="text-[10px] sm:text-xs text-neutral-light mb-0.5 sm:mb-1">Total Paid</p>
-                  <p className="text-sm sm:text-lg font-bold text-success">
-                    {profileLoading ? '...' : formatCurrency(profileTransactions.filter(t => t.amount_paid > 0).reduce((sum, t) => sum + t.amount_paid, 0))}
-                  </p>
-                </div>
-                <div className="bg-surfaceAlt rounded-xl p-2.5 sm:p-4">
-                  <p className="text-[10px] sm:text-xs text-neutral-light mb-0.5 sm:mb-1">Transactions</p>
-                  <p className="text-sm sm:text-lg font-semibold text-slate-900">
-                    {profileLoading ? '...' : profileTransactions.length}
-                  </p>
-                </div>
-              </div>
-
-              {(() => {
-                const unpaidDebts = profileCustomer.debts
-                  .filter((d) => !d.is_paid)
-                  .sort((a, b) => {
-                    if (!a.due_date) return 1
-                    if (!b.due_date) return -1
-                    return compareDateKeys(a.due_date, b.due_date)
-                  })
-                return unpaidDebts.length > 0 ? (
-                  <div className="mb-6">
-                    <h5 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
-                      <span>Borrowed</span>
-                      <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-warning-light text-warning">{unpaidDebts.length}</span>
-                    </h5>
-                    <div className="space-y-2">
-                      {unpaidDebts.map((debt) => {
-                        const overdue = debt.due_date && isOverdue(debt.due_date)
-                        const daysLeft = debt.due_date ? daysUntilDue(debt.due_date) : null
-                        return (
-                          <div key={debt.debt_id} onClick={() => { setDebtDetailData({ debt, customer: profileCustomer }); setShowDebtDetailModal(true) }} className="flex items-center justify-between py-2.5 px-3 bg-surfaceAlt rounded-lg text-sm cursor-pointer hover:bg-slate-100 transition-colors">
-                            <div>
-                              <span className="font-medium text-slate-900">{formatCurrency(debt.amount)}</span>
-                              {debt.due_date && (
-                                <span className="text-xs text-neutral-light ml-2">
-                                  Due {formatDateLabel(debt.due_date)}
-                                </span>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-2">
-                              {overdue ? (
-                                <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-danger-light text-danger">Overdue</span>
-                              ) : daysLeft != null ? (
-                                <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-warning-light text-warning">{daysLeft}d left</span>
-                              ) : null}
-                              {canRemind && (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    openReminder(profileCustomer, debt.debt_id)
-                                  }}
-                                  className="px-2.5 py-1 text-xs font-medium text-primary bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors"
-                                >
-                                  Remind
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                ) : null
-              })()}
-
-              {profileLoading ? (
-                <div className="py-6 text-center">
-                  <div className="w-6 h-6 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-                </div>
-              ) : (
-                <>
-                  {(() => {
-                    const borrows = profileTransactions.filter(t => t.amount_paid === 0)
-                    const payments = profileTransactions.filter(t => t.amount_paid > 0)
-                    return (
-                      <>
-                        {borrows.length > 0 && (
-                          <div className="mb-6">
-                            <h5 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
-                              <span>Borrowed</span>
-                              <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-warning-light text-warning">{borrows.length}</span>
-                            </h5>
-                            <div className="space-y-2">
-                              {borrows.map((txn) => (
-                                <div key={txn.transaction_id} onClick={() => { setTxnDetailData(txn); setShowTxnDetailModal(true) }} className="flex items-center justify-between py-2.5 px-3 bg-surfaceAlt rounded-lg text-sm cursor-pointer hover:bg-slate-100 transition-colors">
-                                  <div>
-                                    <span className="font-medium text-slate-900">{txn.note || 'Borrowed'}</span>
-                                    <p className="text-xs text-neutral-light mt-0.5">
-                                      {new Date(txn.created_at).toLocaleDateString()} at {new Date(txn.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                    </p>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                        {payments.length > 0 && (
-                          <div>
-                            <h5 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
-                              <span>Payments</span>
-                              <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-success-light text-success">{payments.length}</span>
-                            </h5>
-                            <div className="space-y-2">
-                              {payments.map((txn) => (
-                                <div key={txn.transaction_id} onClick={() => { setTxnDetailData(txn); setShowTxnDetailModal(true) }} className="flex items-center justify-between py-2.5 px-3 bg-surfaceAlt rounded-lg text-sm cursor-pointer hover:bg-slate-100 transition-colors">
-                                  <div>
-                                    <span className="font-medium text-success">{formatCurrency(txn.amount_paid)}</span>
-                                    <p className="text-xs text-neutral-light mt-0.5">
-                                      {new Date(txn.created_at).toLocaleDateString()} at {new Date(txn.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                    </p>
-                                    {txn.note && (
-                                      <p className="text-xs text-neutral-light mt-0.5">{txn.note}</p>
-                                    )}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                        {profileTransactions.length === 0 && (
-                          <div className="text-center py-4">
-                            <p className="text-sm text-neutral-light">No transactions yet</p>
-                          </div>
-                        )}
-                      </>
-                    )
-                  })()}
-                </>
-              )}
-            </div>
-
-            <div className="sticky bottom-0 bg-white border-t border-slate-200 px-4 sm:px-6 py-4 rounded-b-2xl flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-              {profileCustomer.total_debt > 0 && isAdmin && (
-                <button
-                  onClick={() => {
-                    setShowProfileModal(false)
-                    openPayment(profileCustomer)
-                  }}
-                  className="px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors min-h-[44px]"
-                >
-                  Record Payment
-                </button>
-              )}
-              <button
-                onClick={() => setShowProfileModal(false)}
-                className="px-4 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors min-h-[44px]"
-              >
-                Close
-              </button>
-            </div>
-        </Modal>
+        <DebtProfileModal
+          customer={profileCustomer}
+          transactions={profileTransactions}
+          loading={profileLoading}
+          canPayDebt={canPayDebt}
+          canRemind={canRemind}
+          onClose={() => setShowProfileModal(false)}
+          onRecordPayment={() => {
+            setShowProfileModal(false)
+            openPayment(profileCustomer)
+          }}
+          onRemind={(debtId) => openReminder(profileCustomer, debtId)}
+          onViewDebt={(debt) => {
+            setDebtDetailData({ debt, customer: profileCustomer })
+            setShowDebtDetailModal(true)
+          }}
+          onViewTransaction={(txn) => {
+            setTxnDetailData(txn)
+            setShowTxnDetailModal(true)
+          }}
+        />
       )}
-      {detailSale && <SaleDetailModal sale={detailSale} onClose={() => setDetailSale(null)} />}
 
       {showReminderModal && reminderCustomer && (
         <ScheduleReminderModal

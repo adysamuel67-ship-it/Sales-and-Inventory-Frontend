@@ -6,7 +6,7 @@ import {
 import { useRouter, useLocalSearchParams } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { debtAPI, customerAPI } from '@/lib/api'
-import { extractArray, formatCurrency, parseApiError, isAdminRole } from '@/lib/utils'
+import { extractArray, formatCurrency, parseApiError, isAdminRole, isOverdueDate, dueDateValue } from '@/lib/utils'
 import { Colors, BORDER_RADIUS, SHADOW, FONTS } from '@/lib/constants'
 import { useAuth } from '@/lib/auth'
 import Button from '@/components/ui/Button'
@@ -41,7 +41,7 @@ export default function DebtsScreen() {
   const [showPayModal, setShowPayModal] = useState(false)
   const [payTarget, setPayTarget] = useState<any>(null)
   const [payAmount, setPayAmount] = useState('')
-  const [payFullyPaid, setPayFullyPaid] = useState(true)
+  const [payFullyPaid, setPayFullyPaid] = useState(false)
   const [payNote, setPayNote] = useState('')
   const [payLoading, setPayLoading] = useState(false)
   const [payError, setPayError] = useState('')
@@ -69,22 +69,31 @@ export default function DebtsScreen() {
       ])
       if (debtsRes.status === 'fulfilled') {
         const raw = extractArray(debtsRes.value.data)
-        setDebts(raw.map((d: any) => ({
-          customer_id: d.debt?.customer_id || d.customer_id,
-          name: d.customer_name || d.name || 'Unknown',
-          phone: d.customer_phone || d.phone || '',
-          email: d.customer_email || d.email || '',
-          amount: d.debt?.amount || d.amount || 0,
-          debt_id: d.debt?.debt_id || d.debt_id,
-          is_paid: d.debt?.is_paid ?? d.is_paid ?? false,
-          due_date: d.debt?.due_date || d.due_date,
-          status: (d.debt?.is_paid ?? false) ? 'paid' : 'pending',
-        })))
+        const mapped = raw.map((d: any) => {
+          const isPaid = d.debt?.is_paid ?? d.is_paid ?? false
+          const dueDate = d.debt?.due_date || d.due_date
+          return {
+            customer_id: d.debt?.customer_id || d.customer_id,
+            name: d.customer_name || d.name || 'Unknown',
+            phone: d.customer_phone || d.phone || '',
+            email: d.customer_email || d.email || '',
+            amount: d.debt?.amount || d.amount || 0,
+            debt_id: d.debt?.debt_id || d.debt_id,
+            is_paid: isPaid,
+            due_date: dueDate,
+            created_at: d.debt?.created_at || d.created_at,
+            status: isPaid ? 'paid' : isOverdueDate(dueDate) ? 'overdue' : 'pending',
+          }
+        })
+        setDebts(mapped)
+        setOverdueCount(mapped.filter((d) => !d.is_paid && d.status === 'overdue').length)
       }
       if (totalRes.status === 'fulfilled') {
         const data = totalRes.value.data?.data || totalRes.value.data
         setTotalDebt(Number(data?.total_debt || data?.total || 0))
-        setOverdueCount(Number(data?.overdue_count || data?.overdue || 0))
+        if (debtsRes.status !== 'fulfilled') {
+          setOverdueCount(Number(data?.overdue_count || data?.overdue || 0))
+        }
       }
       if (custsRes.status === 'fulfilled') setCustomers(extractArray(custsRes.value.data))
     } catch { setError('Failed to load debts') }
@@ -97,14 +106,14 @@ export default function DebtsScreen() {
   const filtered = debts.filter((d) => {
     const q = search.toLowerCase()
     const nameMatch = (d.name || d.customer_name || '').toLowerCase().includes(q) || (d.phone || d.customer_phone || '').includes(q)
-    const status = (d.status || '').toLowerCase()
-    const tabMatch = tabFilter === 'all' || (tabFilter === 'overdue' && (status === 'overdue' || status === 'pending')) || (tabFilter === 'paid' && status === 'paid')
+    const paid = Boolean(d.is_paid) || (d.status || '').toLowerCase() === 'paid'
+    const overdue = !paid && (d.status || '').toLowerCase() === 'overdue'
+    const tabMatch = tabFilter === 'paid' ? paid : tabFilter === 'overdue' ? overdue : !paid
     return nameMatch && tabMatch
   }).sort((a, b) => {
     if (sortType === 'highest') return Number(b.amount || b.debt_amount || 0) - Number(a.amount || a.debt_amount || 0)
     if (sortType === 'lowest') return Number(a.amount || a.debt_amount || 0) - Number(b.amount || b.debt_amount || 0)
-    if (sortType === 'oldest') return Number(a.customer_id || 0) - Number(b.customer_id || 0)
-    return 0
+    return dueDateValue(a.due_date || a.created_at) - dueDateValue(b.due_date || b.created_at)
   })
 
   const handleRecordPayment = async () => {
@@ -117,7 +126,7 @@ export default function DebtsScreen() {
       if (!payFullyPaid) payload.amount = amount
       if (payNote.trim()) payload.note = payNote.trim()
       await debtAPI.updateDebt(businessId, payTarget.customer_id || payTarget.id, payload)
-      setShowPayModal(false); setPayTarget(null); setPayAmount(''); setPayNote('')
+      setShowPayModal(false); setPayTarget(null); setPayAmount(''); setPayNote(''); setPayFullyPaid(false)
       await fetchData()
     } catch (err: any) { setPayError(parseApiError(err)) } finally { setPayLoading(false) }
   }
@@ -175,7 +184,7 @@ export default function DebtsScreen() {
     if (isPaid) return Colors.success
     const s = (status || '').toLowerCase()
     if (s === 'paid') return Colors.success
-    if (s === 'overdue' || s === 'pending') return Colors.danger
+    if (s === 'overdue') return Colors.danger
     return Colors.warning
   }
 
@@ -206,7 +215,7 @@ export default function DebtsScreen() {
             <Text style={styles.detailBtnText}>Details</Text>
           </TouchableOpacity>
           {!item.is_paid && status !== 'paid' && (
-            <TouchableOpacity style={styles.payBtn} onPress={() => { setPayTarget(item); setPayAmount(''); setPayFullyPaid(true); setPayNote(''); setShowPayModal(true) }}>
+            <TouchableOpacity style={styles.payBtn} onPress={() => { setPayTarget(item); setPayAmount(''); setPayFullyPaid(false); setPayNote(''); setShowPayModal(true) }}>
               <Text style={styles.payBtnText}>Record Payment</Text>
             </TouchableOpacity>
           )}
@@ -220,7 +229,9 @@ export default function DebtsScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.topBar}>
-        <View style={{ width: 32 }} />
+        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} accessibilityLabel="Go back">
+          <Ionicons name="chevron-back" size={24} color={Colors.text} />
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>Debts</Text>
         {isAdmin && (
           <TouchableOpacity style={styles.addBtn} onPress={() => { setIsNewCustomer(false); setAddForm({ customer_id: '', amount: '', due_date: '', note: '', new_customer_name: '', new_customer_phone: '' }); setShowAddModal(true); setAddError('') }}>

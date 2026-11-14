@@ -16,6 +16,9 @@ import {
   isPlatformAdmin,
   isNewAccount,
   NEW_ACCOUNT_WINDOW_DAYS,
+  parseDateOnly,
+  isOverdueDate,
+  dueDateValue,
 } from '../lib/utils'
 
 describe('isNewAccount', () => {
@@ -337,4 +340,30 @@ describe('isPlatformAdmin', () => {
     expect(isPlatformAdmin({ role: 'user', email: 'test@test.com' })).toBe(false)
   })
   it('returns false for null', () => expect(isPlatformAdmin(null)).toBe(false))
+})
+
+describe('debt due-date helpers', () => {
+  const now = new Date(2026, 5, 15, 12, 0, 0)
+
+  it('parses date-only values in local time', () => {
+    const parsed = parseDateOnly('2026-06-15')
+    expect(parsed?.getFullYear()).toBe(2026)
+    expect(parsed?.getMonth()).toBe(5)
+    expect(parsed?.getDate()).toBe(15)
+    expect(parseDateOnly('')).toBeNull()
+    expect(parseDateOnly(null)).toBeNull()
+    expect(parseDateOnly('nonsense')).toBeNull()
+  })
+
+  it('treats only dates before today as overdue', () => {
+    expect(isOverdueDate('2026-06-14', now)).toBe(true)
+    expect(isOverdueDate('2026-06-15', now)).toBe(false)
+    expect(isOverdueDate('2026-06-16', now)).toBe(false)
+    expect(isOverdueDate(undefined, now)).toBe(false)
+  })
+
+  it('sorts missing due dates last', () => {
+    expect(dueDateValue('2026-06-15')).toBeLessThan(dueDateValue('2026-06-16'))
+    expect(dueDateValue(undefined)).toBe(Number.MAX_SAFE_INTEGER)
+  })
 })

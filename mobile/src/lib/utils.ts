@@ -244,6 +244,33 @@ export function formatDate(dateStr: string): string {
   }
 }
 
+export function parseDateOnly(value?: string | null): Date | null {
+  if (!value) return null
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value.trim())
+  if (match) {
+    const [, year, month, day] = match
+    const date = new Date(Number(year), Number(month) - 1, Number(day))
+    if (!isNaN(date.getTime())) return date
+  }
+  const parsed = new Date(value)
+  if (isNaN(parsed.getTime())) return null
+  parsed.setHours(0, 0, 0, 0)
+  return parsed
+}
+
+export function isOverdueDate(dueDate?: string | null, now: Date = new Date()): boolean {
+  const due = parseDateOnly(dueDate)
+  if (!due) return false
+  const today = new Date(now)
+  today.setHours(0, 0, 0, 0)
+  return due.getTime() < today.getTime()
+}
+
+export function dueDateValue(value?: string | null): number {
+  const due = parseDateOnly(value)
+  return due ? due.getTime() : Number.MAX_SAFE_INTEGER
+}
+
 export function formatDateTime(dateStr: string): string {
   if (!dateStr) return ''
   try {

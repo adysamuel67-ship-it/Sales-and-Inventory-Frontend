@@ -140,6 +140,15 @@ export default function MoreScreen() {
             <Ionicons name="chevron-forward" size={18} color={Colors.textLight} />
           </TouchableOpacity>
         )}
+        {currentBusiness && (
+          <TouchableOpacity style={styles.menuRow} onPress={() => router.push(`/business/${currentBusiness.business_id}/debts`)}>
+            <View style={[styles.menuIcon, { backgroundColor: '#FEE2E2' }]}>
+              <Ionicons name="wallet-outline" size={20} color={Colors.danger} />
+            </View>
+            <Text style={styles.menuLabel}>Debts</Text>
+            <Ionicons name="chevron-forward" size={18} color={Colors.textLight} />
+          </TouchableOpacity>
+        )}
         {!isNew && (
           <TouchableOpacity style={styles.menuRow} onPress={() => { if (currentBusiness) router.push(`/business/${currentBusiness.business_id}/reports`) }}>
             <View style={[styles.menuIcon, { backgroundColor: '#EFF4FF' }]}>
