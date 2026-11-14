@@ -91,8 +91,8 @@ export default memo(function KpiCard({
             <p
               className={`mt-1.5 break-words font-display font-bold leading-tight tracking-tight text-slate-900 tabular-nums ${
                 dense
-                  ? 'text-lg sm:text-xl'
-                  : 'text-xl sm:text-2xl lg:text-kpi'
+                  ? 'text-base sm:text-xl'
+                  : 'text-lg sm:text-2xl lg:text-kpi'
               }`}
             >
               {value}

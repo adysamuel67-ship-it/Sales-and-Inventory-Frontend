@@ -374,7 +374,7 @@ export default function ReportsPage() {
 
       {loading ? (
         <div className="space-y-6">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className="skeleton h-24 rounded-2xl" />
             ))}
@@ -384,17 +384,17 @@ export default function ReportsPage() {
       ) : (
         <>
           {profit && (
-            <div className="grid grid-cols-2 gap-3 mb-6">
+            <div className="grid grid-cols-1 gap-3 mb-6 sm:grid-cols-2">
               <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-5">
                 <p className="text-xs text-neutral-light uppercase tracking-wider">Revenue</p>
-                <p className="text-2xl font-bold text-slate-900 mt-1">
+                <p className="text-lg font-bold break-words tabular-nums text-slate-900 mt-1 sm:text-2xl">
                   {formatCedi(profit.total_revenue)}
                 </p>
                 <p className="text-[10px] text-neutral-light mt-1">{dateSubtitle}</p>
               </div>
               <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-5">
                 <p className="text-xs text-neutral-light uppercase tracking-wider">Profit</p>
-                <p className="text-2xl font-bold text-success mt-1">
+                <p className="text-lg font-bold break-words tabular-nums text-success mt-1 sm:text-2xl">
                   {formatCedi(profit.total_profit)}
                 </p>
                 {profitMargin && (
@@ -403,14 +403,14 @@ export default function ReportsPage() {
               </div>
               <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-5">
                 <p className="text-xs text-neutral-light uppercase tracking-wider">Cost</p>
-                <p className="text-2xl font-bold text-slate-900 mt-1">
+                <p className="text-lg font-bold break-words tabular-nums text-slate-900 mt-1 sm:text-2xl">
                   {formatCedi(profit.total_cost)}
                 </p>
               </div>
               {summary && (
                 <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-5">
                   <p className="text-xs text-neutral-light uppercase tracking-wider">Sales Count</p>
-                  <p className="text-2xl font-bold text-slate-900 mt-1">
+                  <p className="text-lg font-bold break-words tabular-nums text-slate-900 mt-1 sm:text-2xl">
                     {summary.total_sales.toLocaleString()}
                   </p>
                 </div>
@@ -419,16 +419,16 @@ export default function ReportsPage() {
           )}
 
           {summary && !profit && (
-            <div className="grid grid-cols-2 gap-3 mb-6">
+            <div className="grid grid-cols-1 gap-3 mb-6 sm:grid-cols-2">
               <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-5">
                 <p className="text-xs text-neutral-light uppercase tracking-wider">Revenue</p>
-                <p className="text-2xl font-bold text-slate-900 mt-1">
+                <p className="text-lg font-bold break-words tabular-nums text-slate-900 mt-1 sm:text-2xl">
                   {formatCedi(summary.total_revenue)}
                 </p>
               </div>
               <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-5">
                 <p className="text-xs text-neutral-light uppercase tracking-wider">Profit</p>
-                <p className="text-2xl font-bold text-success mt-1">
+                <p className="text-lg font-bold break-words tabular-nums text-success mt-1 sm:text-2xl">
                   {formatCedi(summary.total_profit)}
                 </p>
               </div>
@@ -436,35 +436,35 @@ export default function ReportsPage() {
           )}
 
           {saleSummary && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
+            <div className="grid grid-cols-1 gap-3 mb-6 sm:grid-cols-3">
               <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-4">
                 <p className="text-xs text-neutral-light uppercase tracking-wider">Units Sold</p>
-                <p className="text-xl font-bold text-slate-900 mt-1">
+                <p className="text-lg font-bold break-words tabular-nums text-slate-900 mt-1 sm:text-xl">
                   {(saleSummary.sold_quantity ?? 0).toLocaleString()}
                 </p>
               </div>
               <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-4">
                 <p className="text-xs text-neutral-light uppercase tracking-wider">Cash</p>
-                <p className="text-xl font-bold text-slate-900 mt-1">
+                <p className="text-lg font-bold break-words tabular-nums text-slate-900 mt-1 sm:text-xl">
                   {formatCedi(saleSummary.cash_total ?? 0)}
                 </p>
               </div>
               <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-4">
                 <p className="text-xs text-neutral-light uppercase tracking-wider">Mobile Money</p>
-                <p className="text-xl font-bold text-slate-900 mt-1">
+                <p className="text-lg font-bold break-words tabular-nums text-slate-900 mt-1 sm:text-xl">
                   {formatCedi(saleSummary.momo_total ?? 0)}
                 </p>
               </div>
               <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-4">
                 <p className="text-xs text-neutral-light uppercase tracking-wider">Card</p>
-                <p className="text-xl font-bold text-slate-900 mt-1">
+                <p className="text-lg font-bold break-words tabular-nums text-slate-900 mt-1 sm:text-xl">
                   {formatCedi(saleSummary.card_total ?? 0)}
                 </p>
               </div>
               {saleSummary.best_selling_product && (
                 <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-4 col-span-2 sm:col-span-1">
                   <p className="text-xs text-neutral-light uppercase tracking-wider">Best Seller</p>
-                  <p className="text-xl font-bold text-primary mt-1 truncate">
+                  <p className="text-lg font-bold text-primary mt-1 truncate sm:text-xl">
                     {saleSummary.best_selling_product}
                   </p>
                 </div>

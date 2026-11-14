@@ -29,3 +29,24 @@ export function cameraScanningSupported(): boolean {
     typeof navigator.mediaDevices?.getUserMedia === 'function'
   )
 }
+
+/**
+ * Ask the browser for camera access while we still have a user gesture (for
+ * example during sign-up). The returned stream is closed immediately: the
+ * permission grant is what matters, not keeping a camera open on a form.
+ */
+export async function requestCameraPermission(): Promise<'granted' | 'denied' | 'unsupported'> {
+  if (typeof navigator === 'undefined' || typeof navigator.mediaDevices?.getUserMedia !== 'function') {
+    return 'unsupported'
+  }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: 'environment' } },
+      audio: false,
+    })
+    stream.getTracks().forEach((track) => track.stop())
+    return 'granted'
+  } catch {
+    return 'denied'
+  }
+}

@@ -146,12 +146,16 @@ export default function BarcodeScanModal({
     frameRef.current = requestAnimationFrame(() => void scanFrame())
   }, [])
 
-  const startCamera = async () => {
+  const startCamera = useCallback(async () => {
     setCameraError('')
     setFeedback('')
 
     try {
       const Detector = (window as any).BarcodeDetector
+      if (typeof Detector !== 'function') {
+        setCameraError('Camera scanning is not supported in this browser. Type the barcode below instead.')
+        return
+      }
       let formats = BARCODE_FORMATS
       if (typeof Detector.getSupportedFormats === 'function') {
         const supportedFormats: string[] = await Detector.getSupportedFormats()
@@ -182,7 +186,18 @@ export default function BarcodeScanModal({
           : 'Camera could not be started. Type the barcode below instead.'
       )
     }
-  }
+  }, [releaseCamera, scanFrame])
+
+  // Ask for camera access as soon as the scanner opens. The explicit "Use
+  // camera" button stays as a retry path for browsers that ignore the
+  // programmatic request until a direct tap.
+  const autoStartedRef = useRef(false)
+  useEffect(() => {
+    if (!supported || autoStartedRef.current) return
+    autoStartedRef.current = true
+    const timer = setTimeout(() => void startCamera(), 150)
+    return () => clearTimeout(timer)
+  }, [supported, startCamera])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -193,10 +208,10 @@ export default function BarcodeScanModal({
   return (
     <Modal
       onClose={onClose}
-      panelClassName="w-full max-w-md max-h-[90vh] overflow-y-auto"
+      panelClassName="max-sm:fixed max-sm:inset-0 max-sm:h-[100dvh] max-sm:w-full max-sm:max-w-none max-sm:overflow-y-auto max-sm:overscroll-contain max-sm:rounded-none sm:relative sm:inset-auto sm:h-auto sm:max-h-[calc(100dvh-2rem)] sm:max-w-md sm:overflow-y-auto sm:rounded-2xl"
       aria-labelledby="barcode-scan-title"
     >
-      <div className="sticky top-0 z-10 flex items-center justify-between rounded-t-2xl border-b border-slate-200 bg-white px-6 py-4">
+      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3.5 pt-[calc(0.875rem+env(safe-area-inset-top))] max-sm:rounded-none sm:rounded-t-2xl sm:px-6 sm:py-4 sm:pt-4">
         <div>
           <h3 id="barcode-scan-title" className="flex items-center gap-2 font-semibold text-slate-900">
             <ScanIcon className="h-5 w-5 text-primary" />
@@ -216,23 +231,28 @@ export default function BarcodeScanModal({
         </button>
       </div>
 
-      <div className="space-y-4 px-6 py-5">
-        {cameraActive ? (
-          <div className="space-y-2">
-            <div className="relative overflow-hidden rounded-xl border border-slate-300 bg-slate-900">
-              <video ref={videoRef} className="h-48 w-full object-cover" muted playsInline />
-              <div className="pointer-events-none absolute inset-6 rounded-lg border-2 border-white/80" />
-              <span className="absolute inset-x-0 bottom-2 text-center text-xs font-medium text-white/90">
-                Align the barcode inside the frame
-              </span>
-            </div>
-            <Button variant="secondary" size="sm" fullWidth onClick={stopCamera}>
-              Stop camera
-            </Button>
+      <div className="space-y-4 px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:px-6 sm:py-5">
+        {/* Keep the video mounted even while inactive: swapping it in after
+            getUserMedia resolves would attach the stream to an element React
+            had already replaced. */}
+        <div className={cameraActive ? 'space-y-2' : 'hidden'}>
+          <div className="relative overflow-hidden rounded-xl border border-slate-300 bg-slate-900">
+            <video
+              ref={videoRef}
+              className="h-[45dvh] max-h-[22rem] min-h-[11rem] w-full object-cover"
+              muted
+              playsInline
+              autoPlay
+            />
+            <div className="pointer-events-none absolute left-1/2 top-1/2 h-[30%] w-[82%] -translate-x-1/2 -translate-y-1/2 rounded-lg border-2 border-white/80 shadow-[0_0_0_9999px_rgba(0,0,0,0.28)]" />
+            <span className="absolute inset-x-0 bottom-2 text-center text-xs font-medium text-white/90">
+              Align the barcode inside the frame
+            </span>
           </div>
-        ) : (
-          <video ref={videoRef} className="hidden" muted playsInline />
-        )}
+          <Button variant="secondary" size="sm" fullWidth onClick={stopCamera}>
+            Stop camera
+          </Button>
+        </div>
 
         {supported && !cameraActive && (
           <Button

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import AuthLayout from '@/components/AuthLayout'
 import { authAPI } from '@/lib/api'
+import { requestCameraPermission } from '@/lib/barcode'
 
 export default function SignUpPage() {
   const router = useRouter()
@@ -48,6 +49,9 @@ export default function SignUpPage() {
       return
     }
     setError('')
+    // Ask for the camera while this submit is still a user gesture. Barcode
+    // scanning later reuses this grant; declining leaves manual entry intact.
+    void requestCameraPermission()
     setLoading(true)
     try {
       await authAPI.signUp(form)

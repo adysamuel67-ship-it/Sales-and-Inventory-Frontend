@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import BusinessBotLogo from '@/components/BusinessBotLogo'
 import LandingAuthActions from '@/components/LandingAuthActions'
+import LandingRedirect from '@/components/LandingRedirect'
 import DashboardPreview from '@/components/landing/DashboardPreview'
 import MobileCtaBar from '@/components/landing/MobileCtaBar'
 import PhonePreview from '@/components/landing/PhonePreview'
@@ -203,6 +204,8 @@ export default function Home() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+
+      <LandingRedirect />
 
       <MobileCtaBar />
 
