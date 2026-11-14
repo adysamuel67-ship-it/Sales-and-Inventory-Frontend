@@ -146,7 +146,7 @@ export default function BarcodeScanModal({
     frameRef.current = requestAnimationFrame(() => void scanFrame())
   }, [])
 
-  const startCamera = async () => {
+  const startCamera = useCallback(async () => {
     setCameraError('')
     setFeedback('')
 
@@ -178,11 +178,21 @@ export default function BarcodeScanModal({
       setCameraActive(false)
       setCameraError(
         err?.name === 'NotAllowedError'
-          ? 'Camera permission was not allowed. Tap “Allow camera” to try again, or type the barcode below.'
+          ? 'Camera access was blocked. Type the barcode below, or allow camera access from your browser’s site controls.'
           : 'Camera could not be started. Type the barcode below instead.'
       )
     }
-  }
+  }, [releaseCamera, scanFrame])
+
+  // Open the camera as soon as the scanner appears so the browser shows its
+  // native “allow camera” prompt instead of asking users to find site settings.
+  const autoStartedRef = useRef(false)
+  useEffect(() => {
+    if (!supported || autoStartedRef.current) return
+    autoStartedRef.current = true
+    const timer = setTimeout(() => void startCamera(), 150)
+    return () => clearTimeout(timer)
+  }, [supported, startCamera])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -217,40 +227,20 @@ export default function BarcodeScanModal({
       </div>
 
       <div className="space-y-4 px-6 py-5">
-        {cameraActive ? (
-          <div className="space-y-2">
-            <div className="relative overflow-hidden rounded-xl border border-slate-300 bg-slate-900">
-              <video ref={videoRef} className="h-48 w-full object-cover" muted playsInline />
-              <div className="pointer-events-none absolute inset-6 rounded-lg border-2 border-white/80" />
-              <span className="absolute inset-x-0 bottom-2 text-center text-xs font-medium text-white/90">
-                Align the barcode inside the frame
-              </span>
-            </div>
-            <Button variant="secondary" size="sm" fullWidth onClick={stopCamera}>
-              Stop camera
-            </Button>
+        {/* Keep the video mounted while inactive so the stream is not attached
+            to an element React replaces when the camera becomes active. */}
+        <div className={cameraActive ? 'space-y-2' : 'hidden'}>
+          <div className="relative overflow-hidden rounded-xl border border-slate-300 bg-slate-900">
+            <video ref={videoRef} className="h-48 w-full object-cover" muted playsInline autoPlay />
+            <div className="pointer-events-none absolute inset-6 rounded-lg border-2 border-white/80" />
+            <span className="absolute inset-x-0 bottom-2 text-center text-xs font-medium text-white/90">
+              Align the barcode inside the frame
+            </span>
           </div>
-        ) : (
-          <video ref={videoRef} className="hidden" muted playsInline />
-        )}
-
-        {supported && !cameraActive && (
-          <div className="rounded-xl border border-primary/20 bg-primary-light/40 p-4">
-            <p className="text-sm font-semibold text-slate-900">Enable camera scanning</p>
-            <p className="mt-1 text-xs leading-relaxed text-slate-600">
-              Tap “Allow camera”, then choose Allow in the browser prompt. You can also type the barcode below.
-            </p>
-            <Button
-              variant="secondary"
-              fullWidth
-              className="mt-3"
-              onClick={() => void startCamera()}
-              leftIcon={<ScanIcon className="h-4 w-4" />}
-            >
-              Allow camera
-            </Button>
-          </div>
-        )}
+          <Button variant="secondary" size="sm" fullWidth onClick={stopCamera}>
+            Stop camera
+          </Button>
+        </div>
 
         {cameraError && <Alert kind="warning">{cameraError}</Alert>}
 
