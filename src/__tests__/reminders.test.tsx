@@ -328,13 +328,13 @@ describe('Reminder API routes', () => {
     expect(spy).toHaveBeenCalledWith('/debts/reminders/3', expect.objectContaining({ debt_id: 12 }))
   })
 
-  it('list gets /debts/reminders/{business_id} with filters in the body', async () => {
+  it('list gets /debts/reminders/{business_id} with filters as query params', async () => {
     const { reminderAPI } = await import('@/lib/api')
     const spy = jest.spyOn(require('@/lib/api').default, 'get').mockResolvedValue({ data: [] })
     await reminderAPI.list(3)
-    expect(spy).toHaveBeenCalledWith('/debts/reminders/3', { data: {} })
+    expect(spy).toHaveBeenCalledWith('/debts/reminders/3', { params: undefined })
     await reminderAPI.list(3, { status: 'failed' })
-    expect(spy).toHaveBeenLastCalledWith('/debts/reminders/3', { data: { status: 'failed' } })
+    expect(spy).toHaveBeenLastCalledWith('/debts/reminders/3', { params: { status: 'failed' } })
   })
 
   it('update puts to the reminder id', async () => {

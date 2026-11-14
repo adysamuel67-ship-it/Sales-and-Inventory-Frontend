@@ -9,7 +9,7 @@ import Modal from '@/components/ui/Modal'
 export interface ReminderDebt {
   debt_id: number
   amount: number
-  due_date: string
+  due_date?: string
   is_paid: boolean
 }
 
