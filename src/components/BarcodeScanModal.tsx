@@ -182,22 +182,11 @@ export default function BarcodeScanModal({
       setCameraActive(false)
       setCameraError(
         err?.name === 'NotAllowedError'
-          ? 'Camera access was denied. Allow it in your browser settings or type the barcode below.'
+          ? 'Camera permission was not allowed. Tap “Allow camera” to try again, or type the barcode below.'
           : 'Camera could not be started. Type the barcode below instead.'
       )
     }
   }, [releaseCamera, scanFrame])
-
-  // Ask for camera access as soon as the scanner opens. The explicit "Use
-  // camera" button stays as a retry path for browsers that ignore the
-  // programmatic request until a direct tap.
-  const autoStartedRef = useRef(false)
-  useEffect(() => {
-    if (!supported || autoStartedRef.current) return
-    autoStartedRef.current = true
-    const timer = setTimeout(() => void startCamera(), 150)
-    return () => clearTimeout(timer)
-  }, [supported, startCamera])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -255,14 +244,21 @@ export default function BarcodeScanModal({
         </div>
 
         {supported && !cameraActive && (
-          <Button
-            variant="secondary"
-            fullWidth
-            onClick={() => void startCamera()}
-            leftIcon={<ScanIcon className="h-4 w-4" />}
-          >
-            Use camera
-          </Button>
+          <div className="rounded-xl border border-primary/20 bg-primary-light/40 p-4">
+            <p className="text-sm font-semibold text-slate-900">Enable camera scanning</p>
+            <p className="mt-1 text-xs leading-relaxed text-slate-600">
+              Tap “Allow camera”, then choose Allow in the browser prompt. You can also type the barcode below.
+            </p>
+            <Button
+              variant="secondary"
+              fullWidth
+              className="mt-3"
+              onClick={() => void startCamera()}
+              leftIcon={<ScanIcon className="h-4 w-4" />}
+            >
+              Allow camera
+            </Button>
+          </div>
         )}
 
         {cameraError && <Alert kind="warning">{cameraError}</Alert>}

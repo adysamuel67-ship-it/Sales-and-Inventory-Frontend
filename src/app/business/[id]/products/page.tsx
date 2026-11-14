@@ -459,7 +459,7 @@ export default function ProductsPage() {
             : `${inventory.total} products · ${inventory.totalUnits.toLocaleString()} units on hand · ${formatCedi(inventory.costValue)} at cost`
         }
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Button
               variant="secondary"
               onClick={() => setShowScan(true)}
