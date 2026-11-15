@@ -230,10 +230,13 @@ export default function ProductsPage() {
 
     if (editProduct) {
       const previous = editProduct
-      const optimistic: Product = { ...previous, ...payload }
+      const optimistic: Product = { ...previous, ...payload, pending: true }
       setAllProducts(prev => prev.map(p => (p.product_id === previous.product_id ? optimistic : p)))
       productAPI.update(businessId!, previous.product_id, payload)
-        .then(() => setUploadNotice(`${payload.name} updated`))
+        .then(() => {
+          setAllProducts(prev => prev.map(p => (p.product_id === previous.product_id ? { ...p, pending: false } : p)))
+          setUploadNotice(`${payload.name} updated`)
+        })
         .catch((err: any) => {
           setAllProducts(prev => prev.map(p => (p.product_id === previous.product_id ? previous : p)))
           setUploadNotice('')
@@ -243,7 +246,7 @@ export default function ProductsPage() {
     }
 
     const tempId = -Date.now()
-    const optimistic: Product = { ...payload, product_id: tempId, is_active: true }
+    const optimistic: Product = { ...payload, product_id: tempId, is_active: true, pending: true }
     setAllProducts(prev => [optimistic, ...prev])
     if (payload.category) {
       const category = payload.category
@@ -255,7 +258,7 @@ export default function ProductsPage() {
         const raw = res.data?.data ?? res.data
         const created = raw?.product ?? raw
         if (created && (created.product_id ?? created.id) != null) {
-          const normalized = normalizeProduct({ ...payload, ...created })
+          const normalized = { ...normalizeProduct({ ...payload, ...created }), pending: false }
           setAllProducts(prev => prev.map(p => (p.product_id === tempId ? normalized : p)))
         } else {
           // Some deployments only return a success message; sync quietly.
@@ -989,6 +992,9 @@ export default function ProductsPage() {
                             {!isDeletedProduct(product) && product.is_active === false && (
                               <Badge color="slate" className="mt-1">Inactive</Badge>
                             )}
+                            {product.pending && (
+                              <Badge color="amber" dot className="mt-1">Saving…</Badge>
+                            )}
                           </div>
                         </div>
                       </td>
@@ -1093,6 +1099,7 @@ export default function ProductsPage() {
                           {product.is_active === false && <Badge color="slate">Inactive</Badge>}
                         </>
                       )}
+                      {product.pending && <Badge color="amber" dot>Saving…</Badge>}
                     </div>
                   </div>
                 </div>

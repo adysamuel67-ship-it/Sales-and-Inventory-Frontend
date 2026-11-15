@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
 import { saleAPI, productAPI, customerAPI, adminAPI } from '@/lib/api'
 import { extractArray, normalizeProduct, mapSale, parseApiError, isStaffRole, isAdminRole, MappedSale, formatPayment, formatCedi, isDeletedProduct } from '@/lib/utils'
+import { resolvePendingProducts } from '@/lib/pendingProducts'
 import SaleDetailModal from '@/components/SaleDetailModal'
 import SaleEditModal from '@/components/SaleEditModal'
 import SaleReceiptModal from '@/components/SaleReceiptModal'
@@ -79,6 +80,7 @@ export default function SalesPage() {
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false)
   const [syncFailures, setSyncFailures] = useState<Record<number, string>>({})
   const tempIdRef = useRef(0)
+  const creatingSaleRef = useRef(false)
   const retryRef = useRef<Map<number, any>>(new Map())
 
   const isStaff = isStaffRole(user?.business_role || user?.role)
@@ -129,6 +131,33 @@ export default function SalesPage() {
     setQuickAddProduct(null)
     setError('')
     setSuccess(`"${product.name}" added to inventory`)
+  }
+
+  const handleQuickProductSaved = (pending: Product, saved: Product) => {
+    setProducts((prev) =>
+      prev.map((p) => (p.product_id === pending.product_id ? { ...p, ...saved, pending: false } : p))
+    )
+    setLineItems((prev) =>
+      prev.map((item) =>
+        parseInt(item.product_id) === pending.product_id
+          ? { ...item, product_id: String(saved.product_id) }
+          : item
+      )
+    )
+    setSuccess(`"${saved.name}" saved to inventory`)
+  }
+
+  const handleQuickProductFailed = (pending: Product, message: string) => {
+    setProducts((prev) => prev.filter((p) => p.product_id !== pending.product_id))
+    setLineItems((prev) =>
+      prev.map((item) =>
+        parseInt(item.product_id) === pending.product_id
+          ? { ...item, product_id: '' }
+          : item
+      )
+    )
+    setSuccess('')
+    setError(message || `Could not save "${pending.name}" to inventory`)
   }
 
   const openQuickAddForScan = (name: string, barcode: string) => {
@@ -339,14 +368,34 @@ export default function SalesPage() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!businessId || validLineItems.length === 0) return
+    if (!businessId || validLineItems.length === 0 || creatingSaleRef.current) return
     setError('')
     setSuccess('')
 
-    const items = validLineItems.map((item) => ({
+    const rawItems = validLineItems.map((item) => ({
       product_id: parseInt(item.product_id),
       quantity: parseInt(item.quantity),
     }))
+    let items = rawItems
+    const resolvedProducts = new Map<number, Product>()
+
+    if (rawItems.some((item) => item.product_id < 0)) {
+      creatingSaleRef.current = true
+      try {
+        const resolved = await resolvePendingProducts(rawItems.map((item) => item.product_id))
+        resolved.forEach((product) => resolvedProducts.set(product.product_id, product))
+        items = rawItems.map((item) => ({
+          ...item,
+          product_id: resolved.get(item.product_id)?.product_id ?? item.product_id,
+        }))
+      } catch (err) {
+        creatingSaleRef.current = false
+        setError(err instanceof Error ? err.message : 'A newly added product is still saving. Please try again.')
+        return
+      }
+      creatingSaleRef.current = false
+    }
+
     const paid = effectiveAmountPaid
     const name = customerName.trim()
     const phone = customerPhone.trim()
@@ -362,7 +411,7 @@ export default function SalesPage() {
       id: tempId,
       product:
         items
-          .map((i) => products.find((p) => p.product_id === i.product_id)?.name || `Product #${i.product_id}`)
+          .map((i) => resolvedProducts.get(i.product_id)?.name || products.find((p) => p.product_id === i.product_id)?.name || `Product #${i.product_id}`)
           .join(', ') || 'Unknown',
       qty: items.reduce((s, i) => s + i.quantity, 0),
       amount: total,
@@ -558,9 +607,18 @@ export default function SalesPage() {
         title="Sales"
         subtitle="Record and view your sales"
         actions={
-          <Button onClick={() => setShowForm(!showForm)} leftIcon={<PlusIcon className="w-4 h-4" />}>
-            Record Sale
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="secondary"
+              onClick={() => router.push(`/business/${businessId}/pos`)}
+              leftIcon={<ScanIcon className="w-4 h-4" />}
+            >
+              POS mode
+            </Button>
+            <Button onClick={() => setShowForm(!showForm)} leftIcon={<PlusIcon className="w-4 h-4" />}>
+              Record Sale
+            </Button>
+          </div>
         }
       />
 
@@ -640,20 +698,27 @@ export default function SalesPage() {
                 const currentItemProduct = products.find((p) => p.product_id === parseInt(item.product_id))
                 return (
                   <div key={idx} className="flex flex-col gap-2 sm:flex-row sm:items-start">
-                    <ProductCombobox
-                      id={`line-product-${idx}`}
-                      className="flex-1"
-                      products={availableProducts}
-                      value={item.product_id}
-                      onChange={(pid) => {
-                        const updated = [...lineItems]
-                        updated[idx] = { ...updated[idx], product_id: pid }
-                        setLineItems(updated)
-                      }}
-                      excludeIds={selectedIds}
-                      placeholder={idx === 0 ? 'Search products by name, SKU, barcode or category' : 'Search for another product'}
-                      onCreateProduct={(name) => setQuickAddProduct({ index: idx, name })}
-                    />
+                    <div className="min-w-0 flex-1">
+                      <ProductCombobox
+                        id={`line-product-${idx}`}
+                        products={availableProducts}
+                        value={item.product_id}
+                        onChange={(pid) => {
+                          const updated = [...lineItems]
+                          updated[idx] = { ...updated[idx], product_id: pid }
+                          setLineItems(updated)
+                        }}
+                        excludeIds={selectedIds}
+                        placeholder={idx === 0 ? 'Search products by name, SKU, barcode or category' : 'Search for another product'}
+                        onCreateProduct={(name) => setQuickAddProduct({ index: idx, name })}
+                      />
+                      {currentItemProduct?.pending && (
+                        <p className="mt-1 flex items-center gap-1.5 text-[11px] font-medium text-amber-600">
+                          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-500" aria-hidden="true" />
+                          Saving product…
+                        </p>
+                      )}
+                    </div>
                     <div className="flex items-center gap-2">
                       <div className="relative">
                         <input
@@ -1377,6 +1442,8 @@ export default function SalesPage() {
           initialBarcode={quickAddProduct.barcode}
           onClose={() => setQuickAddProduct(null)}
           onCreated={handleQuickProductCreated}
+          onSaved={handleQuickProductSaved}
+          onSaveFailed={handleQuickProductFailed}
         />
       )}
 

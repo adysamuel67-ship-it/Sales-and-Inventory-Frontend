@@ -99,7 +99,41 @@ describe('Adding a product while recording a sale', () => {
     )
   })
 
-  it('keeps the sale form open and shows the API error when product creation fails', async () => {
+  it('closes the form immediately and selects the product while it saves in the background', async () => {
+    let resolveCreate!: (value: any) => void
+    productCreateMock.mockReturnValue(new Promise((resolve) => { resolveCreate = resolve }))
+
+    const input = await openSaleForm()
+    fireEvent.change(input, { target: { value: 'Sugar' } })
+    fireEvent.click(screen.getByTestId('quick-add-product'))
+
+    fireEvent.change(screen.getByLabelText(/selling price/i), { target: { value: '5' } })
+    fireEvent.change(screen.getByLabelText(/quantity in stock/i), { target: { value: '25' } })
+    fireEvent.click(screen.getByRole('button', { name: /add & select/i }))
+
+    await waitFor(() =>
+      expect(screen.queryByRole('heading', { name: /add product/i })).not.toBeInTheDocument()
+    )
+    expect(screen.getByText(/saving product/i)).toBeInTheDocument()
+    expect(productCreateMock).toHaveBeenCalledTimes(1)
+
+    fireEvent.change(screen.getByLabelText(/quantity for sugar/i), { target: { value: '2' } })
+    fireEvent.click(screen.getByRole('button', { name: /confirm sale/i }))
+
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(recordMock).not.toHaveBeenCalled()
+
+    resolveCreate({ data: { product_id: 99, name: 'Sugar', price: 5, quantity: 25, is_active: true } })
+
+    await waitFor(() =>
+      expect(recordMock).toHaveBeenCalledWith(1, expect.objectContaining({
+        list_items: [{ product_id: 99, quantity: 2 }],
+      }))
+    )
+    expect(screen.queryByText(/saving product/i)).not.toBeInTheDocument()
+  })
+
+  it('closes the form and shows the API error when product creation fails', async () => {
     productCreateMock.mockRejectedValue({ response: { data: { detail: 'A product with this name already exists' } } })
 
     const input = await openSaleForm()
@@ -111,6 +145,8 @@ describe('Adding a product while recording a sale', () => {
     fireEvent.click(screen.getByRole('button', { name: /add & select/i }))
 
     expect(await screen.findByText(/already exists/i)).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /add product/i })).toBeInTheDocument()
+    await waitFor(() =>
+      expect(screen.queryByRole('heading', { name: /add product/i })).not.toBeInTheDocument()
+    )
   })
 })

@@ -15,6 +15,7 @@ export interface Product {
   updated_at?: string
   deleted_at?: string | null
   deleted?: boolean
+  pending?: boolean
 }
 
 export interface DebtRecord {

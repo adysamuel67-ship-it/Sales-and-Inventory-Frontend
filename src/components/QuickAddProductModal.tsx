@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { productAPI } from '@/lib/api'
 import { extractArray, normalizeProduct, parseApiError } from '@/lib/utils'
+import { newTempProductId, registerPendingProductCreate } from '@/lib/pendingProducts'
 import type { Product } from '@/lib/types'
 import Modal from '@/components/ui/Modal'
 import Alert from '@/components/ui/Alert'
@@ -13,6 +14,8 @@ interface Props {
   initialBarcode?: string
   onClose: () => void
   onCreated: (product: Product) => void
+  onSaved?: (pending: Product, saved: Product) => void
+  onSaveFailed?: (pending: Product, message: string) => void
 }
 
 function makeForm(name = '', barcode = '') {
@@ -30,31 +33,23 @@ function makeForm(name = '', barcode = '') {
   }
 }
 
-/**
- * Inline product creation for the sale form.
- *
- * A cashier should not have to abandon an in-progress sale, navigate to
- * Products, create the item, come back and start over. This captures the
- * minimum needed to sell the item, saves it to the inventory, and hands the
- * created product back so the sale line can select it immediately.
- */
 export default function QuickAddProductModal({
   businessId,
   initialName = '',
   initialBarcode = '',
   onClose,
   onCreated,
+  onSaved,
+  onSaveFailed,
 }: Props) {
   const [form, setForm] = useState(() => makeForm(initialName, initialBarcode))
-  const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
   const update = (field: keyof ReturnType<typeof makeForm>, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }))
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (saving) return
 
     const name = form.name.trim()
     if (!name) {
@@ -80,7 +75,6 @@ export default function QuickAddProductModal({
       return
     }
 
-    setSaving(true)
     setError('')
 
     const payload = {
@@ -96,35 +90,56 @@ export default function QuickAddProductModal({
       barcode: form.barcode.trim() || null,
     }
 
-    try {
-      const res = await productAPI.create(businessId, payload)
-      const raw = res.data?.data ?? res.data
-      const candidate = raw?.product ?? raw
-      let created: Product | null =
-        candidate && (candidate.product_id ?? candidate.id) != null
-          ? normalizeProduct({ ...payload, ...candidate })
-          : null
-
-      // Some deployments only return a success message. Fall back to the
-      // refreshed catalogue so the new line item can still be selected.
-      if (!created) {
-        const listRes = await productAPI.list(businessId)
-        created =
-          extractArray(listRes.data)
-            .map(normalizeProduct)
-            .find((p) => (p.name || '').trim().toLowerCase() === name.toLowerCase()) || null
-      }
-
-      if (!created) {
-        throw new Error('Product was saved but could not be loaded. Please refresh and try again.')
-      }
-
-      onCreated(created)
-    } catch (err: any) {
-      setError(parseApiError(err))
-    } finally {
-      setSaving(false)
+    const pending: Product = {
+      product_id: newTempProductId(),
+      name,
+      price,
+      cost_price: costPrice,
+      quantity,
+      unit: payload.unit,
+      low_stock_threshold: payload.low_stock_threshold,
+      category: payload.category,
+      description: payload.description,
+      sku: payload.sku,
+      barcode: payload.barcode,
+      is_active: true,
+      pending: true,
     }
+
+    const save = (async (): Promise<Product | null> => {
+      try {
+        const res = await productAPI.create(businessId, payload)
+        const raw = res.data?.data ?? res.data
+        const candidate = raw?.product ?? raw
+        let created: Product | null =
+          candidate && (candidate.product_id ?? candidate.id) != null
+            ? normalizeProduct({ ...payload, ...candidate })
+            : null
+
+        if (!created) {
+          const listRes = await productAPI.list(businessId)
+          created =
+            extractArray(listRes.data)
+              .map(normalizeProduct)
+              .find((p) => (p.name || '').trim().toLowerCase() === name.toLowerCase()) || null
+        }
+
+        if (!created) {
+          throw new Error('Product was saved but could not be loaded. Please refresh and try again.')
+        }
+
+        const saved: Product = { ...created, pending: false }
+        onSaved?.(pending, saved)
+        return saved
+      } catch (err: any) {
+        onSaveFailed?.(pending, parseApiError(err))
+        return null
+      }
+    })()
+
+    registerPendingProductCreate(pending.product_id, save)
+    onCreated(pending)
+    onClose()
   }
 
   const inputClass =
@@ -134,7 +149,6 @@ export default function QuickAddProductModal({
   return (
     <Modal
       onClose={onClose}
-      closeOnOverlay={!saving}
       panelClassName="w-full max-w-lg max-h-[90vh] overflow-y-auto"
       aria-labelledby="quick-add-product-title"
     >
@@ -150,7 +164,6 @@ export default function QuickAddProductModal({
         <button
           type="button"
           onClick={onClose}
-          disabled={saving}
           aria-label="Close add product"
           className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-slate-100 disabled:opacity-50"
         >
@@ -323,17 +336,15 @@ export default function QuickAddProductModal({
           <button
             type="button"
             onClick={onClose}
-            disabled={saving}
             className="flex-1 rounded-xl bg-slate-100 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-200 disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             type="submit"
-            disabled={saving}
             className="flex-1 rounded-xl bg-primary py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-dark disabled:opacity-60"
           >
-            {saving ? 'Adding...' : 'Add & Select'}
+            Add &amp; Select
           </button>
         </div>
       </form>
