@@ -23,6 +23,7 @@ import NavIcon from './NavIcon'
 import AppLoadingSplash from './AppLoadingSplash'
 import GuideDownloadButton from './GuideDownloadButton'
 import Modal from '@/components/ui/Modal'
+import Button from '@/components/ui/Button'
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -46,7 +47,7 @@ function formatNotifTime(iso?: string): string {
 }
 
 export default function DashboardLayout({ children, businessId: propBusinessId }: DashboardLayoutProps) {
-  const { user, businesses, currentBusiness, switchBusiness, profileLoaded } = useAuth()
+  const { user, businesses, currentBusiness, switchBusiness, profileLoaded, logout } = useAuth()
   const pathname = usePathname()
   const router = useRouter()
   const params = useParams()
@@ -56,6 +57,7 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const [sidebarProfileOpen, setSidebarProfileOpen] = useState(false)
+  const [signOutOpen, setSignOutOpen] = useState(false)
   const [bizSwitcherOpen, setBizSwitcherOpen] = useState(false)
   const [adminOpen, setAdminOpen] = useState(false)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
@@ -818,6 +820,89 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
                 {visibleNavItems.find((item) => isNavItemActive(item.href))?.label || 'Dashboard'}
               </h1>
             </div>
+
+            <div ref={profileRef} className="relative shrink-0">
+              <button
+                type="button"
+                onClick={() => setProfileOpen((open) => !open)}
+                aria-label="Open profile menu"
+                aria-haspopup="menu"
+                aria-expanded={profileOpen}
+                className="flex min-h-[44px] items-center gap-2 rounded-full p-1 pr-2 transition-colors hover:bg-slate-100"
+              >
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-white">
+                  {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+                </span>
+                <span className="hidden min-w-0 text-left sm:block">
+                  <span className="block max-w-[10rem] truncate text-[13px] font-medium leading-tight text-slate-900">
+                    {user?.name || 'Account'}
+                  </span>
+                  <span className="block max-w-[10rem] truncate text-[11px] capitalize leading-tight text-neutral-light">
+                    {(effectiveRole || 'user').replace('_', ' ')}
+                  </span>
+                </span>
+                <svg className={`hidden h-3.5 w-3.5 text-slate-400 transition-transform sm:block ${profileOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {profileOpen && (
+                <div
+                  role="menu"
+                  aria-label="Profile"
+                  className="absolute right-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-xl border border-slate-200 bg-white py-1.5 shadow-xl"
+                >
+                  <div className="border-b border-slate-100 px-3.5 py-2.5">
+                    <p className="truncate text-[13px] font-semibold text-slate-900">
+                      {user?.name || 'Account'}
+                    </p>
+                    {user?.email && (
+                      <p className="mt-0.5 truncate text-[11px] text-neutral-light">{user.email}</p>
+                    )}
+                    <span className="mt-1.5 inline-block rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary">
+                      {(effectiveRole || 'user').replace('_', ' ')}
+                    </span>
+                  </div>
+                  <Link
+                    href="/profile"
+                    role="menuitem"
+                    onClick={() => setProfileOpen(false)}
+                    className="flex min-h-[40px] items-center gap-2.5 px-3.5 py-2.5 text-[13px] text-slate-700 transition-colors hover:bg-slate-50"
+                  >
+                    <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    My Profile
+                  </Link>
+                  <Link
+                    href="/settings"
+                    role="menuitem"
+                    onClick={() => setProfileOpen(false)}
+                    className="flex min-h-[40px] items-center gap-2.5 px-3.5 py-2.5 text-[13px] text-slate-700 transition-colors hover:bg-slate-50"
+                  >
+                    <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
+                    </svg>
+                    Account settings
+                  </Link>
+                  <div className="my-1 border-t border-slate-100" />
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setProfileOpen(false)
+                      setSignOutOpen(true)
+                    }}
+                    className="flex min-h-[40px] w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-[13px] text-rose-600 transition-colors hover:bg-rose-50"
+                  >
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8} aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    Sign out
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </header>
 
@@ -912,6 +997,31 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
           </Modal>
         )
       })()}
+
+      {signOutOpen && (
+        <Modal
+          onClose={() => setSignOutOpen(false)}
+          panelClassName="w-full max-w-md animate-scale-in border border-slate-200 p-6 shadow-popover"
+          role="alertdialog"
+          aria-labelledby="layout-signout-title"
+        >
+          <h2 id="layout-signout-title" className="text-section-title text-slate-900">
+            Sign out of Business Bot GH?
+          </h2>
+          <p className="mt-2 text-sm leading-relaxed text-slate-600">
+            You will be returned to the sign-in page. Nothing in your account is
+            deleted, and you can sign straight back in.
+          </p>
+          <div className="mt-6 flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setSignOutOpen(false)}>
+              Stay signed in
+            </Button>
+            <Button variant="danger" onClick={logout}>
+              Sign out
+            </Button>
+          </div>
+        </Modal>
+      )}
     </div>
   )
 }

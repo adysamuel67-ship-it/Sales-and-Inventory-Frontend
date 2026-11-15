@@ -52,7 +52,7 @@ jest.mock('@/lib/auth', () => ({
 }))
 
 import DashboardLayout from '@/components/DashboardLayout'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { useAuth } from '@/lib/auth'
 
 describe('DashboardLayout', () => {
@@ -126,6 +126,21 @@ describe('DashboardLayout', () => {
 
     expect(screen.getByText('Business Bot')).toBeTruthy()
     expect(screen.getByText('Sales & Inventory')).toBeTruthy()
+  })
+
+  it('exposes profile and sign out from the top bar', () => {
+    render(
+      <DashboardLayout>
+        <div>Content</div>
+      </DashboardLayout>
+    )
+
+    fireEvent.click(screen.getByLabelText('Open profile menu'))
+    expect(screen.getByRole('menuitem', { name: /my profile/i })).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('menuitem', { name: /sign out/i }))
+    expect(screen.getByRole('alertdialog')).toBeTruthy()
+    expect(screen.getByText(/sign out of business bot gh/i)).toBeTruthy()
   })
 
   it('header renders without redundant elements', () => {
