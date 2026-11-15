@@ -2,12 +2,13 @@
   "name": "Business Bot GH — Sales & Inventory Tracking",
   "short_name": "Business Bot",
   "description": "Free sales and inventory tracking with debt tracking and automatic SMS reminders for Ghanaian traders, market shops and small businesses.",
+  "id": "/",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#FFFFFF",
-  "theme_color": "#14213D",
+  "theme_color": "#0F172A",
   "icons": [
     {
       "src": "/icon-192.png",

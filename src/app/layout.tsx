@@ -4,6 +4,7 @@ import './globals.css'
 import { AuthProvider } from '@/lib/auth'
 import { COMPANY_NAME, SITE_DESCRIPTION, SITE_NAME, SITE_URL, SUPPORT_PHONE } from '@/lib/site'
 import OfflineBanner from '@/components/OfflineBanner'
+import InstallAppPrompt from '@/components/InstallAppPrompt'
 import ServiceWorkerRegister from '@/components/ServiceWorkerRegister'
 
 // Self-hosted at build time by next/font: no render-blocking request to a
@@ -41,6 +42,13 @@ export const metadata: Metadata = {
   description: SITE_DESCRIPTION,
   applicationName: SITE_NAME,
   manifest: '/manifest.json',
+  icons: {
+    icon: [
+      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icon-512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: [{ url: '/icon-192.png', sizes: '192x192', type: 'image/png' }],
+  },
   appleWebApp: {
     capable: true,
     title: SITE_NAME,
@@ -202,6 +210,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <OfflineBanner />
           {children}
         </AuthProvider>
+        <InstallAppPrompt />
         <ServiceWorkerRegister />
       </body>
     </html>
