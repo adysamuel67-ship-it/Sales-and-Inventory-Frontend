@@ -137,6 +137,9 @@ describe('DashboardLayout', () => {
 
     fireEvent.click(screen.getByLabelText('Open profile menu'))
     expect(screen.getByRole('menuitem', { name: /my profile/i })).toBeTruthy()
+    expect(
+      screen.getByRole('menuitem', { name: /install app/i }).getAttribute('href')
+    ).toBe('/settings#install-app')
 
     fireEvent.click(screen.getByRole('menuitem', { name: /sign out/i }))
     expect(screen.getByRole('alertdialog')).toBeTruthy()

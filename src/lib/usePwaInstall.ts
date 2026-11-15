@@ -16,6 +16,8 @@ import {
 
 export type PwaInstallMode = 'native' | 'ios'
 
+export type PwaInstallResult = 'accepted' | 'dismissed' | 'unavailable' | 'failed'
+
 export interface PwaInstallState {
   /** The prompt is currently on screen. */
   visible: boolean
@@ -25,9 +27,11 @@ export interface PwaInstallState {
   installing: boolean
   /** iOS instructions have been expanded. */
   instructionsOpen: boolean
+  /** The native installer could not open, so manual steps are shown instead. */
+  manualFallback: boolean
   /** A deferred Chromium install event exists, so Install App can work. */
   canInstall: boolean
-  install: () => Promise<void>
+  install: () => Promise<PwaInstallResult>
   dismiss: () => void
   showInstructions: () => void
 }
@@ -49,6 +53,7 @@ export function usePwaInstall(): PwaInstallState {
   const [mode, setMode] = useState<PwaInstallMode>('native')
   const [installing, setInstalling] = useState(false)
   const [instructionsOpen, setInstructionsOpen] = useState(false)
+  const [manualFallback, setManualFallback] = useState(false)
 
   const deferredPrompt = useRef<BeforeInstallPromptEvent | null>(null)
   const revealTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -67,6 +72,7 @@ export function usePwaInstall(): PwaInstallState {
     if (!mounted.current) return
     setVisible(false)
     setInstructionsOpen(false)
+    setManualFallback(false)
   }, [clearRevealTimer])
 
   const scheduleReveal = useCallback(
@@ -162,11 +168,15 @@ export function usePwaInstall(): PwaInstallState {
     }
   }, [clearRevealTimer, hide, scheduleReveal])
 
-  const install = useCallback(async () => {
+  const install = useCallback(async (): Promise<PwaInstallResult> => {
     const event = deferredPrompt.current
-    if (!event) return
+    if (!event) {
+      setManualFallback(true)
+      return 'unavailable'
+    }
 
     setInstalling(true)
+    setManualFallback(false)
     try {
       await event.prompt()
       const choice = await event.userChoice
@@ -174,15 +184,18 @@ export function usePwaInstall(): PwaInstallState {
       if (choice.outcome === 'accepted') {
         markAppInstalled()
         hide()
-        return
+        return 'accepted'
       }
 
       // Cancelled: back off for a week instead of asking again immediately.
       markInstallCancelled()
       hide()
+      return 'dismissed'
     } catch {
-      markInstallCancelled()
-      hide()
+      // The native dialog never opened. Keep the prompt on screen and show the
+      // browser-menu steps so the user is not left with a dead button.
+      if (mounted.current) setManualFallback(true)
+      return 'failed'
     } finally {
       deferredPrompt.current = null
       if (mounted.current) setInstalling(false)
@@ -203,6 +216,7 @@ export function usePwaInstall(): PwaInstallState {
     mode,
     installing,
     instructionsOpen,
+    manualFallback,
     canInstall: mode === 'native',
     install,
     dismiss,

@@ -150,6 +150,33 @@ describe('InstallAppPrompt', () => {
     expect(screen.queryByText(TITLE)).not.toBeInTheDocument()
   })
 
+  it('shows manual Chrome steps when the native installer throws', async () => {
+    render(<InstallAppPrompt />)
+    const installEvent = makeInstallEvent('accepted')
+    installEvent.prompt.mockRejectedValueOnce(new Error('blocked'))
+
+    fireEvent(window, installEvent.event)
+    revealNotification()
+
+    jest.useRealTimers()
+    fireEvent.click(screen.getByRole('button', { name: /^install app$/i }))
+
+    expect(await screen.findByText(/the install dialog did not open/i)).toBeInTheDocument()
+    expect(screen.getByText(/open chrome’s menu/i)).toBeInTheDocument()
+    expect(screen.getByText(TITLE)).toBeInTheDocument()
+  })
+
+  it('offers manual Chrome steps without opening the native dialog', () => {
+    render(<InstallAppPrompt />)
+    fireEvent(window, makeInstallEvent('accepted').event)
+    revealNotification()
+
+    fireEvent.click(screen.getByRole('button', { name: /install manually/i }))
+
+    expect(screen.getByText(/open chrome’s menu/i)).toBeInTheDocument()
+    expect(screen.getByText(/add to home screen/i)).toBeInTheDocument()
+  })
+
   it('never shows when already running as an installed app', () => {
     const display = mockDisplayMode(true)
     try {

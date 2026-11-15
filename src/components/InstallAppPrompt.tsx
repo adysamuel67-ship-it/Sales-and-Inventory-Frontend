@@ -1,7 +1,7 @@
 'use client'
 
 import Image from 'next/image'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { SITE_NAME } from '@/lib/site'
 import { usePwaInstall } from '@/lib/usePwaInstall'
 import Button from '@/components/ui/Button'
@@ -11,6 +11,12 @@ const IOS_STEPS = [
   { title: 'Open Safari', detail: `Open ${SITE_NAME} in Safari if you are using another browser.` },
   { title: 'Tap Share', detail: 'Tap the Share button in the Safari toolbar.' },
   { title: 'Add to Home Screen', detail: 'Choose “Add to Home Screen”, then tap Add.' },
+]
+
+const MANUAL_STEPS = [
+  { title: 'Open Chrome’s menu', detail: 'Tap the ⋮ button in the top-right corner.' },
+  { title: 'Choose “Install app”', detail: 'If you do not see it, choose “Add to Home screen”.' },
+  { title: 'Confirm', detail: 'Tap Install or Add. Business Bot will appear on your home screen.' },
 ]
 
 /**
@@ -26,14 +32,19 @@ export default function InstallAppPrompt() {
     mode,
     installing,
     instructionsOpen,
+    manualFallback,
     canInstall,
     install,
     dismiss,
     showInstructions,
   } = usePwaInstall()
+  const [manualOpen, setManualOpen] = useState(false)
 
   useEffect(() => {
-    if (!visible) return
+    if (!visible) {
+      setManualOpen(false)
+      return
+    }
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') dismiss()
     }
@@ -44,6 +55,7 @@ export default function InstallAppPrompt() {
   if (!visible) return null
 
   const isIos = mode === 'ios'
+  const showManualSteps = !isIos && (manualFallback || manualOpen)
 
   return (
     <div
@@ -125,22 +137,59 @@ export default function InstallAppPrompt() {
               Not now
             </Button>
           </div>
+        ) : showManualSteps ? (
+          <>
+            <p className="mt-3 text-xs leading-relaxed text-slate-600">
+              {manualFallback
+                ? 'The install dialog did not open. You can still install it from Chrome:'
+                : `If the button does not work, install ${SITE_NAME} from Chrome's menu:`}
+            </p>
+            <ol className="mt-3 space-y-2 rounded-xl bg-surfaceAlt p-3 text-xs text-slate-600">
+              {MANUAL_STEPS.map((step, index) => (
+                <li key={step.title} className="flex gap-2.5">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
+                    {index + 1}
+                  </span>
+                  <span>
+                    <span className="font-medium text-slate-900">{step.title}.</span> {step.detail}
+                  </span>
+                </li>
+              ))}
+            </ol>
+            <div className="mt-3 flex items-center gap-2">
+              <Button size="sm" fullWidth onClick={dismiss}>
+                Got it
+              </Button>
+              <Button size="sm" variant="secondary" onClick={dismiss}>
+                Not now
+              </Button>
+            </div>
+          </>
         ) : (
-          <div className="mt-4 flex items-center gap-2">
-            <Button
-              size="sm"
-              fullWidth
-              loading={installing}
-              disabled={!canInstall}
-              leftIcon={<DownloadIcon className="h-4 w-4" />}
-              onClick={install}
+          <>
+            <div className="mt-4 flex items-center gap-2">
+              <Button
+                size="sm"
+                fullWidth
+                loading={installing}
+                disabled={!canInstall}
+                leftIcon={<DownloadIcon className="h-4 w-4" />}
+                onClick={install}
+              >
+                Install App
+              </Button>
+              <Button size="sm" variant="secondary" onClick={dismiss} disabled={installing}>
+                Not now
+              </Button>
+            </div>
+            <button
+              type="button"
+              onClick={() => setManualOpen(true)}
+              className="mt-2 text-[11px] font-medium text-primary underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
             >
-              Install App
-            </Button>
-            <Button size="sm" variant="secondary" onClick={dismiss} disabled={installing}>
-              Not now
-            </Button>
-          </div>
+              Install manually
+            </button>
+          </>
         )}
       </div>
     </div>

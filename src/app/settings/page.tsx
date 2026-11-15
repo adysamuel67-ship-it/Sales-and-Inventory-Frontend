@@ -81,6 +81,39 @@ export default function AccountSettingsPage() {
           </div>
         </section>
 
+        <section id="install-app" className="surface-card scroll-mt-24 overflow-hidden">
+          <header className="border-b border-slate-200 px-5 py-4 sm:px-6">
+            <h2 className="text-section-title text-slate-900">Install the app</h2>
+            <p className="mt-0.5 text-xs text-neutral-light">
+              Add Business Bot GH to your home screen for one-tap access.
+            </p>
+          </header>
+          <div className="p-5 sm:p-6">
+            <ol className="space-y-3 text-sm leading-relaxed text-slate-600">
+              <li>
+                <span className="font-semibold text-slate-900">Android (Chrome):</span> tap the
+                ⋮ menu, then choose <span className="font-medium text-slate-900">Install app</span>{' '}
+                or <span className="font-medium text-slate-900">Add to Home screen</span>.
+              </li>
+              <li>
+                <span className="font-semibold text-slate-900">iPhone or iPad (Safari):</span> tap
+                Share, then choose{' '}
+                <span className="font-medium text-slate-900">Add to Home Screen</span>.
+              </li>
+              <li>
+                <span className="font-semibold text-slate-900">Computer (Chrome or Edge):</span>{' '}
+                click the install icon in the address bar, or open the ⋮ menu and choose{' '}
+                <span className="font-medium text-slate-900">Install Business Bot</span>.
+              </li>
+            </ol>
+            <p className="mt-4 text-xs leading-relaxed text-neutral-light">
+              Already installed? Open Business Bot from your home screen or app list. If you are
+              using a browser inside WhatsApp or Facebook, open this page in Chrome or Safari
+              first.
+            </p>
+          </div>
+        </section>
+
         <section className="surface-card overflow-hidden">
           <header className="border-b border-slate-200 px-5 py-4 sm:px-6">
             <h2 className="text-section-title text-slate-900">Security</h2>
