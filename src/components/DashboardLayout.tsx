@@ -100,6 +100,7 @@ export default function DashboardLayout({ children, businessId: propBusinessId }
     { label: 'Dashboard', icon: 'dashboard', href: `${bizBase}/dashboard`, id: 'dashboard', group: 'main' },
     { label: 'Chat', icon: 'chat', href: `${bizBase}/chat`, id: 'chat', group: 'main', badge: chatUnread },
     { label: 'Sales', icon: 'sales', href: `${bizBase}/sales`, id: 'sales', group: 'main' },
+    { label: 'POS', icon: 'pos', href: `${bizBase}/pos`, id: 'pos', group: 'main' },
     { label: 'Products', icon: 'products', href: `${bizBase}/products`, id: 'products', group: 'main' },
     { label: 'Customers', icon: 'customers', href: `${bizBase}/customers`, id: 'customers', group: 'management' },
     { label: 'Debts', icon: 'debts', href: `${bizBase}/debts`, id: 'debts', group: 'management' },

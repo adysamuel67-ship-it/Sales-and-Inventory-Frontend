@@ -401,8 +401,14 @@ export const productAPI = {
 }
 
 export const saleAPI = {
-  record: (businessId: number, data: any) =>
-    api.post(`/sales/${businessId}`, data),
+  // The optional idempotency key lets POS retries reuse the same key, so a
+  // dropped response cannot create the same sale twice on the server.
+  record: (businessId: number, data: any, idempotencyKey?: string) =>
+    api.post(
+      `/sales/${businessId}`,
+      data,
+      idempotencyKey ? { headers: { 'Idempotency-Key': idempotencyKey } } : undefined
+    ),
   list: (businessId: number, params?: any) =>
     api.get(`/sales/${businessId}`, { params }),
   get: (businessId: number, saleId: number) =>

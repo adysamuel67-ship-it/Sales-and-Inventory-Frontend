@@ -20,6 +20,11 @@ export default function NavIcon({ name }: NavIconProps) {
         <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
       </svg>
     ),
+    pos: (
+      <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3.75 7.5V5.25A1.5 1.5 0 015.25 3.75H7.5m9 0h2.25a1.5 1.5 0 011.5 1.5V7.5m0 9v2.25a1.5 1.5 0 01-1.5 1.5H16.5m-9 0H5.25a1.5 1.5 0 01-1.5-1.5V16.5M7.5 8.25v7.5M10.5 8.25v7.5M13.5 8.25v7.5M16.5 8.25v7.5" />
+      </svg>
+    ),
     products: (
       <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
         <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0022 16z" />
