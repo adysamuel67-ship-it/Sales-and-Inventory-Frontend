@@ -15,10 +15,11 @@ const securityHeaders = [
     key: 'Strict-Transport-Security',
     value: 'max-age=63072000; includeSubDomains; preload',
   },
-  // Opt out of unused browser features.
+  // Allow the app itself to request the camera for barcode scanning, while
+  // still opting out of the other unused features.
   {
     key: 'Permissions-Policy',
-    value: 'camera=(), microphone=(), geolocation=()',
+    value: 'camera=(self), microphone=(), geolocation=()',
   },
   { key: 'X-DNS-Prefetch-Control', value: 'off' },
 ]

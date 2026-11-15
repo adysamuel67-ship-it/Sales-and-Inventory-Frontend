@@ -167,6 +167,18 @@ export default function BarcodeScanModal({
           </Button>
         </div>
 
+        {supported && !cameraActive && !cameraError && permissionStatus !== 'granting' && (
+          <Button
+            variant="secondary"
+            size="sm"
+            fullWidth
+            leftIcon={<ScanIcon className="h-4 w-4" />}
+            onClick={startCamera}
+          >
+            {permissionStatus === 'denied' ? 'Try camera again' : 'Enable camera'}
+          </Button>
+        )}
+
         <CameraPermission
           supported={supported}
           status={permissionStatus}

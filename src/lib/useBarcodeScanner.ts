@@ -117,6 +117,7 @@ export function useBarcodeScanner({
   }, [stopCamera])
 
   const startCamera = useCallback(async () => {
+    autoStartedRef.current = true
     setCameraError('')
 
     if (!cameraScanningSupported()) {
@@ -166,6 +167,9 @@ export function useBarcodeScanner({
 
   useEffect(() => {
     if (!autoStart || !enabled || !supported || autoStartedRef.current) return
+    // Calling getUserMedia here is what asks the browser to display its native
+    // camera permission prompt. The custom UI in CameraPermission only takes
+    // over once the request resolves as denied or the device is unavailable.
     autoStartedRef.current = true
     const timer = setTimeout(() => void startCamera(), autoStartDelay)
     return () => clearTimeout(timer)
