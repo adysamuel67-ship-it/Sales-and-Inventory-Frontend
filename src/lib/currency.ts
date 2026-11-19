@@ -1,5 +1,3 @@
-import { useSyncExternalStore } from 'react'
-
 /**
  * Currency handling.
  *
@@ -92,16 +90,11 @@ export function setActiveCurrency(code?: string | null) {
   listeners.forEach((listener) => listener())
 }
 
-function subscribe(listener: () => void) {
+export function subscribe(listener: () => void) {
   listeners.add(listener)
   return () => {
     listeners.delete(listener)
   }
-}
-
-/** Re-renders a component when the active currency changes. */
-export function useActiveCurrency(): string {
-  return useSyncExternalStore(subscribe, getActiveCurrency, () => DEFAULT_CURRENCY)
 }
 
 /** The currency symbol/code rendered by `Intl` for a currency, for input labels. */
