@@ -1,3 +1,5 @@
+import { formatMoney } from '@/lib/currency'
+
 const NAV = [
   { label: 'Dashboard', active: true },
   { label: 'Sales' },
@@ -8,8 +10,8 @@ const NAV = [
 ]
 
 const KPIS = [
-  { label: 'Revenue', value: 'GH₵ 24,580', delta: '+18%', up: true },
-  { label: 'Profit', value: 'GH₵ 6,142', delta: '+11%', up: true },
+  { label: 'Revenue', value: formatMoney(24580, 0), delta: '+18%', up: true },
+  { label: 'Profit', value: formatMoney(6142, 0), delta: '+11%', up: true },
   { label: 'Sales today', value: '63', delta: '+7', up: true },
   { label: 'Low stock', value: '4', delta: 'action', up: false },
 ]
@@ -24,10 +26,10 @@ const LOW_STOCK = [
 ]
 
 const SALES = [
-  { item: 'Rice 50kg', qty: '×2', total: 'GH₵ 1,200', time: '11:42' },
-  { item: 'Cooking Oil 25L', qty: '×1', total: 'GH₵ 285', time: '11:18' },
-  { item: 'Milo 400g', qty: '×6', total: 'GH₵ 420', time: '10:55' },
-  { item: 'Anker Power Bank', qty: '×3', total: 'GH₵ 510', time: '10:31' },
+  { item: 'Rice 50kg', qty: '×2', total: formatMoney(1200, 0), time: '11:42' },
+  { item: 'Cooking Oil 25L', qty: '×1', total: formatMoney(285, 0), time: '11:18' },
+  { item: 'Milo 400g', qty: '×6', total: formatMoney(420, 0), time: '10:55' },
+  { item: 'Anker Power Bank', qty: '×3', total: formatMoney(510, 0), time: '10:31' },
 ]
 
 export default function DashboardPreview() {

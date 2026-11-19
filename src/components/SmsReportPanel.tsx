@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { adminAPI } from '@/lib/api'
 import { extractArray } from '@/lib/utils'
+import { formatMoney } from '@/lib/currency'
 import {
   REPORT_SCHEDULES,
   reportWindow,
@@ -166,7 +167,7 @@ export default function SmsReportPanel({ businessId, summary }: Props) {
                   {segments} SMS
                 </span>
                 <span className="text-[11px] text-neutral-light">
-                  {sms.length} chars · GH¢{smsCostGhs(segments).toFixed(2)}/msg
+                  {sms.length} chars · {formatMoney(smsCostGhs(segments))}/msg
                 </span>
               </div>
               <div className="max-w-sm rounded-2xl rounded-tl-sm border border-slate-200 bg-white p-4 text-sm leading-relaxed text-slate-700">

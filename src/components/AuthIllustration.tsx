@@ -1,3 +1,5 @@
+import { formatMoney } from '@/lib/currency'
+
 export default function AuthIllustration({ variant = 'signup' }: { variant?: 'signup' | 'login' | 'verify' }) {
   if (variant === 'verify') {
     return (
@@ -164,7 +166,7 @@ export default function AuthIllustration({ variant = 'signup' }: { variant?: 'si
         <g className="auth-animate-float">
           <rect x="230" y="100" width="85" height="55" rx="10" fill="white" fillOpacity="0.95" />
           <text x="242" y="118" fontSize="8" fontWeight="600" fill="#475569">Sales Today</text>
-          <text x="242" y="133" fontSize="14" fontWeight="700" fill="#1E293B">GHS 2,450</text>
+          <text x="242" y="133" fontSize="14" fontWeight="700" fill="#1E293B">{formatMoney(2450, 0)}</text>
           <rect x="242" y="140" width="30" height="4" rx="2" fill="#DCFCE7" />
           <rect x="242" y="140" width="18" height="4" rx="2" fill="#16A34A" />
           <text x="276" y="143" fontSize="6" fill="#16A34A">+12%</text>

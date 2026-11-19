@@ -19,6 +19,7 @@ import {
 import { useAuth } from '@/lib/auth'
 import { businessAPI, adminAPI, productAPI, saleAPI, debtAPI } from '@/lib/api'
 import { extractArray, isSuperAdminUser, isDeletedProduct } from '@/lib/utils'
+import { formatMoney } from '@/lib/currency'
 import Modal from '@/components/ui/Modal'
 
 const PAGE_SIZE = 10
@@ -351,13 +352,13 @@ export default function AdminBusinessesPage() {
                   <div className="bg-surfaceAlt rounded-xl p-4">
                     <p className="text-xs text-neutral-light mb-1">Total Sales</p>
                     <p className="text-lg font-semibold text-slate-900">
-                      {profileSalesTotal !== null ? `GH₵${profileSalesTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '---'}
+                      {profileSalesTotal !== null ? formatMoney(profileSalesTotal, 2) : '---'}
                     </p>
                   </div>
                   <div className="bg-surfaceAlt rounded-xl p-4">
                     <p className="text-xs text-neutral-light mb-1">Outstanding Debt</p>
                     <p className={`text-lg font-semibold ${(profileDebtTotal ?? 0) > 0 ? 'text-danger' : 'text-success'}`}>
-                      {profileDebtTotal !== null ? `GH₵${profileDebtTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '---'}
+                      {profileDebtTotal !== null ? formatMoney(profileDebtTotal, 2) : '---'}
                     </p>
                   </div>
                 </div>

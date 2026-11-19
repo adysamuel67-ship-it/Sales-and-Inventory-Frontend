@@ -1,3 +1,5 @@
+import { formatMoney } from '@/lib/currency'
+
 const ITEMS = [
   { name: 'Rice 50kg', price: 600, stock: 3 },
   { name: 'Cooking Oil 25L', price: 285, stock: 5 },
@@ -46,7 +48,7 @@ export default function PhonePreview() {
               <div className="min-w-0">
                 <p className="text-[8px] font-semibold text-slate-800 leading-tight truncate">{it.name}</p>
                 <p className="text-[7px] text-slate-400 leading-tight">
-                  GH₵ {it.price} · {it.stock} left
+                  {formatMoney(it.price, 0)} · {it.stock} left
                 </p>
               </div>
               <div className="flex items-center gap-1 shrink-0 rounded-md bg-primary/10 px-1.5 py-0.5">
@@ -60,7 +62,7 @@ export default function PhonePreview() {
         <div className="px-3 pt-2.5">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[8px] text-slate-500">Total</span>
-            <span className="text-[12px] font-bold text-slate-900">GH₵ 1,200</span>
+            <span className="text-[12px] font-bold text-slate-900">{formatMoney(1200, 0)}</span>
           </div>
           <div className="rounded-lg bg-primary py-1.5 text-center">
             <span className="text-[9px] font-semibold text-white">Charge MoMo</span>

@@ -330,7 +330,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           title="Revenue"
-          value={summary?.total_revenue != null ? `GH₵${summary.total_revenue.toLocaleString()}` : '---'}
+          value={summary?.total_revenue != null ? formatMoney(summary.total_revenue) : '---'}
           subtitle={dateSubtitle}
           icon={
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
@@ -342,7 +342,7 @@ export default function DashboardPage() {
         />
         <KpiCard
           title="Profit"
-          value={summary?.total_profit != null ? `GH₵${summary.total_profit.toLocaleString()}` : '---'}
+          value={summary?.total_profit != null ? formatMoney(summary.total_profit) : '---'}
           subtitle={dateSubtitle}
           icon={
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">

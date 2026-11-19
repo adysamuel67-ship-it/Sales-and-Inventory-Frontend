@@ -1,3 +1,5 @@
+import { formatMoney } from '@/lib/currency'
+
 // Weekly figures, revenue against profit. The gap between the two filled areas
 // is the cost of goods, which is the thing the copy is actually claiming the
 // product makes visible.
@@ -26,14 +28,14 @@ export default function ProfitChart() {
             This week
           </p>
           <p className="font-display text-xl font-bold leading-tight text-slate-900">
-            GH₵ {totalRevenue.toLocaleString()}
+            {formatMoney(totalRevenue, 0)}
           </p>
         </div>
         <div className="flex items-center gap-4">
           <div>
             <p className="text-[10px] text-slate-400">Profit</p>
             <p className="text-sm font-semibold tabular-nums text-success">
-              GH₵ {totalProfit.toLocaleString()}
+              {formatMoney(totalProfit, 0)}
             </p>
           </div>
           <div className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
@@ -52,12 +54,12 @@ export default function ProfitChart() {
                 <div
                   className="w-full max-w-[18px] rounded-t bg-primary/20 transition-all duration-300"
                   style={{ height: `${(d.revenue / MAX) * 100}%` }}
-                  title={`Revenue GH₵ ${d.revenue.toLocaleString()}`}
+                  title={`Revenue ${formatMoney(d.revenue, 0)}`}
                 />
                 <div
                   className="w-full max-w-[18px] rounded-t bg-primary transition-all duration-300"
                   style={{ height: `${(d.profit / MAX) * 100}%` }}
-                  title={`Profit GH₵ ${d.profit.toLocaleString()}`}
+                  title={`Profit ${formatMoney(d.profit, 0)}`}
                 />
               </div>
               <span className="text-[10px] font-medium text-neutral-light">{d.label}</span>

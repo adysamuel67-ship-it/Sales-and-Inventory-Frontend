@@ -1,3 +1,5 @@
+import { formatMoney } from '@/lib/currency'
+
 const LEDGER = [
   { name: 'Ama Serwaa', phone: '024 118 5520', owed: 840, last: '2 days ago', age: 12, tone: 'amber' },
   { name: 'Kofi Mensah', phone: '055 402 7719', owed: 1250, last: '6 days ago', age: 21, tone: 'rose' },
@@ -35,7 +37,7 @@ export default function DebtLedgerPreview() {
             Owed to you
           </p>
           <p className="font-display text-lg font-bold leading-tight text-slate-900 sm:text-xl">
-            GH₵ 4,090
+            {formatMoney(4090, 0)}
           </p>
         </div>
         <span className="shrink-0 rounded-full bg-amber-50 px-2.5 py-1 text-[10px] font-semibold text-amber-700 ring-1 ring-inset ring-amber-600/20">
@@ -65,7 +67,7 @@ export default function DebtLedgerPreview() {
             </div>
             <div className="shrink-0 text-right">
               <p className="text-[13px] font-semibold tabular-nums text-slate-900">
-                GH₵ {d.owed.toLocaleString()}
+                {formatMoney(d.owed, 0)}
               </p>
               <p className="text-[10px] text-neutral-light">{d.age} days</p>
             </div>
@@ -83,7 +85,7 @@ export default function DebtLedgerPreview() {
               <span className="truncate text-slate-600">{p.name}</span>
               <span className="flex shrink-0 items-center gap-2">
                 <span className="font-semibold tabular-nums text-success">
-                  + GH₵ {p.amount}
+                  + {formatMoney(p.amount, 0)}
                 </span>
                 <span className="text-neutral-light">{p.when}</span>
               </span>

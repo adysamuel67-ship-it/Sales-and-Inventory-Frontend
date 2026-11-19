@@ -838,7 +838,7 @@ export default function SalesPage() {
             {paymentStatus === 'partial' && (
               <>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Amount Paid (GH₵)</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Amount Paid</label>
                   <input
                     type="number"
                     step="0.01"

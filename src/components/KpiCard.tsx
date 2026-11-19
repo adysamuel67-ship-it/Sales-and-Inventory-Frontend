@@ -85,7 +85,7 @@ export default memo(function KpiCard({
               <div className="skeleton h-7 w-24 sm:h-8" />
             </div>
           ) : (
-            /* Currency values like "GH₵24,580" are far wider than a phone-width
+            /* Currency values like "GHS 24,580" are far wider than a phone-width
                grid cell, so the type scales down below `sm` and is allowed to
                wrap. `tabular-nums` keeps the columns aligned when it does. */
             <p
