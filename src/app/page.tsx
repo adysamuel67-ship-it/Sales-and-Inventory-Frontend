@@ -10,6 +10,7 @@ import FactCards from '@/components/landing/FactCards'
 import DebtLedgerPreview from '@/components/landing/DebtLedgerPreview'
 import ProfitChart from '@/components/landing/ProfitChart'
 import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, COMPANY_NAME, SUPPORT_PHONE_DISPLAY, SUPPORT_PHONE_TEL, absoluteUrl, SITE_URL } from '@/lib/site'
+import { getActiveCurrency } from '@/lib/currency'
 
 export const metadata: Metadata = {
   title: 'Free Sales, Inventory & Debt Tracking App with SMS Reminders | Business Bot GH',
@@ -48,7 +49,7 @@ export const metadata: Metadata = {
 }
 
 const facts = [
-  { value: 'GH₵', label: 'Prices and totals in cedis', icon: 'cedi' as const },
+  { value: getActiveCurrency(), label: 'Prices and totals in your local currency', icon: 'cedi' as const },
   { value: 'MoMo', label: 'Mobile money payments recognised', icon: 'momo' as const },
   { value: 'Any phone', label: 'Works on a basic Android handset', icon: 'phone' as const },
   { value: 'Free', label: 'No card, no setup fee, no trial clock', icon: 'free' as const },
@@ -116,6 +117,92 @@ const features = [
   },
 ]
 
+// The complete capability list, grouped the way a shop actually thinks about
+// the work: selling, stock, credit, people, numbers and the account itself.
+// The cards above tell the story; this section makes sure nothing is missing.
+const featureGroups = [
+  {
+    title: 'Selling & POS',
+    tone: 'bg-primary',
+    items: [
+      'Record cash, mobile money and credit sales',
+      'Continuous barcode scanning at the POS',
+      'Scan to find a product or add a new one',
+      'Quick-add a product without leaving the sale',
+      'Part payments and fully paid / partial status',
+      'Print a receipt for any sale',
+      'Edit or correct a sale after it is saved',
+      'Filter sales history by date',
+    ],
+  },
+  {
+    title: 'Stock & products',
+    tone: 'bg-success',
+    items: [
+      'Selling price, cost price and stock per product',
+      'Categories and custom low-stock thresholds',
+      'Stock deducted automatically on every sale',
+      'Low-stock alerts on the dashboard',
+      'Restock a product in one step',
+      'Bulk import from CSV or Excel',
+      'Export your product list',
+      'View deleted products',
+    ],
+  },
+  {
+    title: 'Credit & reminders',
+    tone: 'bg-warning',
+    items: [
+      'A ledger of who owes you and for how long',
+      'Every part payment attached to the customer',
+      'Customer debt profiles and payment history',
+      'Schedule an SMS reminder per balance',
+      'Automatic SMS reminders on the due date',
+      'A dedicated reminders view',
+    ],
+  },
+  {
+    title: 'Customers & team',
+    tone: 'bg-blue-500',
+    items: [
+      'Customer directory with phone numbers',
+      'Full purchase history for every customer',
+      'Owner, admin, manager, cashier and viewer roles',
+      'Built-in team chat with file attachments',
+      'Edit and delete chat messages',
+      'Unread chat and notification badges',
+      'Create, switch and join multiple businesses',
+      'Approve or reject join requests',
+    ],
+  },
+  {
+    title: 'Reports & insights',
+    tone: 'bg-violet-500',
+    items: [
+      'Dashboard KPIs for revenue, profit, sales and stock',
+      'Revenue and profit trend charts',
+      'Daily fluctuation chart',
+      'Reports filtered by any date range',
+      'Top products and product performance',
+      'Profit calculated from real cost prices',
+      'Automated SMS sales reports',
+    ],
+  },
+  {
+    title: 'Account & platform',
+    tone: 'bg-slate-400',
+    items: [
+      'Country-aware currency: GHS, NGN, KES, UGX, TZS, ZAR, USD, GBP',
+      'Email verification and password reset',
+      'Profile and password management',
+      'Install the app on your home screen',
+      'Offline-safe: saved data stays saved',
+      'Works on any phone, tablet or laptop',
+      'Super-admin console for users, businesses, keys, report access, low stock and jobs',
+    ],
+  },
+]
+
 // Mirrors the real onboarding order: an account, then a business to hang the
 // data off, then products. Skipping the business step used to imply you could
 // go straight from signing up to adding stock.
@@ -155,6 +242,10 @@ const faqs = [
     a: 'Yes. One account can hold several businesses, and each business can have its own members, roles and permissions.',
   },
   {
+    q: 'What currency does it use?',
+    a: 'Business Bot uses the currency for the country you choose when you sign up — Ghanaian cedis, Nigerian naira, Kenyan shillings, Ugandan shillings, Tanzanian shillings, South African rand, US dollars or British pounds — and formats every amount the same way.',
+  },
+  {
     q: 'How do debt SMS reminders work?',
     a: 'For customers with phone numbers, you can schedule SMS reminders for outstanding debts. The message is pre-filled with the amount and due date. Reminders are sent on the scheduled day and marked as delivered.',
   },
@@ -191,12 +282,24 @@ export default function Home() {
     },
     featureList: [
       'Sales Tracking',
+      'Point of Sale with Continuous Barcode Scanning',
       'Inventory Management',
+      'Low Stock Alerts',
+      'Bulk Product Import and Export',
       'Debt Tracking with Automatic SMS Reminders',
       'Customer Management',
       'Profit Reports',
+      'Revenue and Profit Charts',
+      'Product Performance Reports',
+      'Automated SMS Sales Reports',
       'Mobile Money Support',
+      'Staff Roles and Permissions',
+      'Built-in Team Chat',
       'Multi-Business Support',
+      'Notifications',
+      'Country-Aware Currency',
+      'Installable Web App',
+      'Offline-Safe Data',
     ],
   }
 
@@ -289,7 +392,7 @@ export default function Home() {
                 anchored before the reader reaches the facts section. */}
             <dl className="mx-auto mt-10 grid max-w-2xl grid-cols-3 gap-4 border-t border-slate-200 pt-8 sm:gap-8">
               {[
-                { k: 'Cedis & MoMo', v: 'Native payment formats' },
+                { k: 'Your currency', v: 'Matched to your country' },
                 { k: 'Debt + SMS', v: 'Automatic reminders' },
                 { k: 'Live Stock', v: 'Updates as you sell' },
               ].map((s) => (
@@ -333,6 +436,61 @@ export default function Home() {
             </div>
 
             <FeatureGrid features={features} />
+          </div>
+        </section>
+
+        {/* ---------- Full feature list ----------
+            The nine cards above carry the story; this is the complete inventory
+            of what the app actually does, grouped so a buyer can scan for the
+            one capability they care about without reading every paragraph. */}
+        <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
+          <div className="mx-auto max-w-2xl text-center">
+            <p className="text-xs font-semibold uppercase tracking-widest text-primary">
+              The full list
+            </p>
+            <h2 className="mt-3 text-[1.75rem] font-bold leading-tight tracking-[-0.02em] text-slate-900 sm:text-4xl">
+              Every feature, grouped
+            </h2>
+            <p className="mt-4 text-[15px] leading-relaxed text-pretty text-slate-600 sm:text-base">
+              Everything below is included in the free account — from the first sale
+              to the reports you use to run the shop.
+            </p>
+          </div>
+
+          <div className="mt-10 grid grid-cols-1 gap-5 sm:mt-12 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
+            {featureGroups.map((group) => (
+              <div
+                key={group.title}
+                className="rounded-2xl border border-slate-200 bg-white p-6 shadow-card"
+              >
+                <div className="flex items-center gap-2.5">
+                  <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${group.tone}`} aria-hidden="true" />
+                  <h3 className="text-[15px] font-semibold tracking-tight text-slate-900">
+                    {group.title}
+                  </h3>
+                </div>
+                <ul className="mt-4 space-y-2">
+                  {group.items.map((item) => (
+                    <li
+                      key={item}
+                      className="flex items-start gap-2.5 text-[14px] leading-relaxed text-slate-600"
+                    >
+                      <svg
+                        className="mt-1 h-3.5 w-3.5 shrink-0 text-success"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        strokeWidth={2.5}
+                        aria-hidden="true"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                      </svg>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
         </section>
 
