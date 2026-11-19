@@ -1,6 +1,7 @@
 import axios from 'axios'
+import { DEFAULT_COUNTRY_CODE } from '@/lib/currency'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://smart-sales-and-inventory-ai-tracking.onrender.com'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://smart-sales-inventory-bmbn.onrender.com'
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -269,8 +270,8 @@ profileApi.interceptors.response.use(
 )
 
 export const authAPI = {
-  signUp: (data: { name: string; email: string; password: string; phone: string }) =>
-    api.post('/users/sign_up', data),
+  signUp: (data: { name: string; email: string; password: string; phone: string; country_code?: string }) =>
+    api.post('/users/sign_up', { country_code: DEFAULT_COUNTRY_CODE, ...data }),
   login: (data: { email: string; password: string }) =>
     api.post('/auth/login',
       new URLSearchParams({ username: data.email, password: data.password }),
@@ -507,11 +508,13 @@ export const reportAPI = {
   profit: (businessId: number, date: string, endDate: string) =>
     api.get(`/reports/profit/${businessId}`, { params: { date, end_date: endDate } }),
   summary: (businessId: number, date?: string, endDate?: string) =>
+    api.get(`/reports/analytics/summary/${businessId}`, {
+      params: date && endDate ? { date, end_date: endDate } : {},
+    }),
+  dashboard: (businessId: number, date?: string, endDate?: string) =>
     api.get(`/reports/analytics/dashboard/${businessId}`, {
       params: date && endDate ? { date, end_date: endDate } : {},
     }),
-  dashboard: (businessId: number) =>
-    api.get(`/reports/analytics/dashboard/${businessId}`),
   saleSummary: (businessId: number, date?: string, endDate?: string) =>
     api.get(`/reports/analytics/summary/${businessId}`, { params: date && endDate ? { date, end_date: endDate } : {} }),
   debtsReport: (businessId: number) =>

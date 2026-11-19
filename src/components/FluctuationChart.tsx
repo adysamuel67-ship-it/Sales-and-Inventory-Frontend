@@ -2,6 +2,7 @@
 
 import { memo, useMemo } from 'react'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
+import { formatMoney } from '@/lib/currency'
 
 interface ChartDataPoint {
   day: string
@@ -20,7 +21,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     <div className="bg-white p-3 rounded-xl shadow-lg border border-slate-200 text-sm">
       <p className="font-bold text-slate-900 mb-1">{label}</p>
       <p className="text-primary font-medium">
-        Revenue: GH₵{rev.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+        Revenue: {formatMoney(rev, 2)}
       </p>
     </div>
   )
@@ -92,15 +93,15 @@ export default memo(function FluctuationChart({ data }: Props) {
       <div className="grid grid-cols-3 gap-3 mb-4">
         <div className="bg-surfaceAlt rounded-xl px-3 py-2">
           <p className="text-[10px] text-neutral-light uppercase tracking-wider">Average</p>
-          <p className="text-sm font-bold text-slate-900">GH₵{stats.avg.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+          <p className="text-sm font-bold text-slate-900">{formatMoney(stats.avg, 2)}</p>
         </div>
         <div className="bg-surfaceAlt rounded-xl px-3 py-2">
           <p className="text-[10px] text-neutral-light uppercase tracking-wider">Highest</p>
-          <p className="text-sm font-bold text-emerald-600">GH₵{stats.high.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+          <p className="text-sm font-bold text-emerald-600">{formatMoney(stats.high, 2)}</p>
         </div>
         <div className="bg-surfaceAlt rounded-xl px-3 py-2">
           <p className="text-[10px] text-neutral-light uppercase tracking-wider">Lowest</p>
-          <p className="text-sm font-bold text-red-500">GH₵{stats.low.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+          <p className="text-sm font-bold text-red-500">{formatMoney(stats.low, 2)}</p>
         </div>
       </div>
 

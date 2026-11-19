@@ -78,7 +78,7 @@ describe('POS mode', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /increase quantity of coca-cola 500ml/i }))
 
-    await waitFor(() => expect(screen.getByText('GH₵38.00')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText('GHS 38.00')).toBeInTheDocument())
 
     fireEvent.click(screen.getByRole('button', { name: /complete sale/i }))
 

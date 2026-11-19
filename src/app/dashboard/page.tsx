@@ -16,6 +16,7 @@ import { useAuth } from '@/lib/auth'
 import { reportAPI, saleAPI, productAPI } from '@/lib/api'
 import { useBusinessId } from '@/lib/useBusinessId'
 import { extractArray, mapLowStock, getDateRange, isDeletedProduct } from '@/lib/utils'
+import { formatMoney } from '@/lib/currency'
 
 interface DashboardSummary {
   total_revenue: number
@@ -141,7 +142,7 @@ export default function DashboardPage() {
 
     try {
       const results = await Promise.allSettled([
-        reportAPI.summary(businessId, dateRange?.start, dateRange?.end),
+        reportAPI.dashboard(businessId, dateRange?.start, dateRange?.end),
         saleAPI.list(businessId),
         productAPI.list(businessId),
       ])

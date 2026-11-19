@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { formatCedi } from '@/lib/utils'
+import { formatMoney } from '@/lib/utils'
 
 export interface ProductOption {
   product_id: number
@@ -179,7 +179,7 @@ export default function ProductCombobox({
         placeholder={selected ? '' : placeholder}
         autoFocus={autoFocus}
         showPrice={!!selected && !open}
-        price={selected ? formatCedi(selected.price ?? 0) : ''}
+        price={selected ? formatMoney(selected.price ?? 0) : ''}
         onFocus={() => setOpen(true)}
         onChange={(v) => {
           setQuery(v)
@@ -415,7 +415,7 @@ function ProductOptionRow({
       </div>
 
       <div className="flex shrink-0 flex-col items-end gap-1">
-        <span className="text-sm font-semibold text-slate-900">{formatCedi(p.price ?? 0)}</span>
+        <span className="text-sm font-semibold text-slate-900">{formatMoney(p.price ?? 0)}</span>
         <span className={`rounded-full px-1.5 py-0.5 text-[11px] font-medium ring-1 ring-inset ${stockTone}`}>
           {out ? 'Out of stock' : `${p.quantity} in stock`}
         </span>

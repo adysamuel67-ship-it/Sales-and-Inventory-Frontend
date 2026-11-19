@@ -14,7 +14,7 @@ const RevenueChart = dynamic(() => import('@/components/RevenueChart'), { ssr: f
 const FluctuationChart = dynamic(() => import('@/components/FluctuationChart'), { ssr: false })
 import { useAuth } from '@/lib/auth'
 import { reportAPI, saleAPI, productAPI } from '@/lib/api'
-import { extractArray, extractSummary, mapSale, mapLowStock, generateDateLabels, isStaffRole, parseApiError, getDateRange, formatCedi, formatNumber, isDeletedProduct } from '@/lib/utils'
+import { extractArray, extractSummary, mapSale, mapLowStock, generateDateLabels, isStaffRole, parseApiError, getDateRange, formatMoney, formatNumber, isDeletedProduct } from '@/lib/utils'
 import PageHeader from '@/components/ui/PageHeader'
 import DateFilterPopover from '@/components/ui/DateFilterPopover'
 import Alert from '@/components/ui/Alert'
@@ -104,10 +104,10 @@ export default function BusinessDashboardPage() {
     try {
       const todayRange = getDateRange(0)
       const results = await Promise.allSettled([
-        reportAPI.summary(businessId, effectiveRange?.start, effectiveRange?.end),
+        reportAPI.dashboard(businessId, effectiveRange?.start, effectiveRange?.end),
         saleAPI.list(businessId),
         productAPI.list(businessId),
-        isStaff ? reportAPI.summary(businessId, todayRange.start, todayRange.end) : Promise.resolve(null),
+        isStaff ? reportAPI.dashboard(businessId, todayRange.start, todayRange.end) : Promise.resolve(null),
       ])
 
       const summaryRes = results[0].status === 'fulfilled' ? results[0].value : null
@@ -382,7 +382,7 @@ export default function BusinessDashboardPage() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           <KpiCard
             title="Today's Revenue"
-            value={todaySummary?.total_revenue != null ? formatCedi(todaySummary.total_revenue) : '---'}
+            value={todaySummary?.total_revenue != null ? formatMoney(todaySummary.total_revenue) : '---'}
             subtitle="Today"
             icon={kpiIcons.revenue}
             color="primary"
@@ -413,14 +413,14 @@ export default function BusinessDashboardPage() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           <KpiCard
             title="Revenue"
-            value={summary?.total_revenue != null ? formatCedi(summary.total_revenue) : '---'}
+            value={summary?.total_revenue != null ? formatMoney(summary.total_revenue) : '---'}
             subtitle={dateSubtitle}
             icon={kpiIcons.revenue}
             color="primary"
           />
           <KpiCard
             title="Profit"
-            value={summary?.total_profit != null ? formatCedi(summary.total_profit) : '---'}
+            value={summary?.total_profit != null ? formatMoney(summary.total_profit) : '---'}
             subtitle={dateSubtitle}
             icon={kpiIcons.profit}
             color="success"

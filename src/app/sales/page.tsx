@@ -10,6 +10,7 @@ import { useAuth } from '@/lib/auth'
 import { saleAPI, productAPI, customerAPI, adminAPI } from '@/lib/api'
 import { useBusinessId } from '@/lib/useBusinessId'
 import { extractArray, normalizeProduct, mapSale, MappedSale, formatPayment, isDeletedProduct } from '@/lib/utils'
+import { formatMoney } from '@/lib/currency'
 
 type SaleRecord = MappedSale
 
@@ -281,7 +282,7 @@ export default function SalesPage() {
                 <option value="">Select a product</option>
                 {products.map((p) => (
                   <option key={p.product_id} value={p.product_id}>
-                    {p.name} — GH₵{(p.price ?? 0).toFixed(2)} ({p.quantity ?? 0} in stock)
+                    {p.name} — {formatMoney(p.price ?? 0, 2)} ({p.quantity ?? 0} in stock)
                   </option>
                 ))}
               </select>
@@ -317,7 +318,7 @@ export default function SalesPage() {
             <div className="flex items-end">
               <div className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200">
                 <p className="text-xs text-neutral-light">Total Amount</p>
-                <p className="text-lg font-bold text-slate-900">GH₵{formTotal.toFixed(2)}</p>
+                <p className="text-lg font-bold text-slate-900">{formatMoney(formTotal, 2)}</p>
               </div>
             </div>
             <div className="sm:col-span-2 border-t border-slate-200 pt-4">
@@ -404,7 +405,7 @@ export default function SalesPage() {
         <div className="flex items-center gap-4 text-xs text-neutral-light">
           <span>{filteredSales.length} sales</span>
           <span>{totalQty} items</span>
-          <span className="font-semibold text-slate-900">GH₵{totalAmount.toFixed(2)}</span>
+          <span className="font-semibold text-slate-900">{formatMoney(totalAmount, 2)}</span>
         </div>
       </div>
 
@@ -445,11 +446,11 @@ export default function SalesPage() {
                 <div className="flex items-baseline gap-1 mb-3">
                   {isPartial ? (
                     <>
-                      <span className="text-lg font-bold text-danger">GH₵{balance.toFixed(2)}</span>
-                      <span className="text-xs text-neutral-light">left of GH₵{sale.amount.toFixed(2)}</span>
+                      <span className="text-lg font-bold text-danger">{formatMoney(balance, 2)}</span>
+                      <span className="text-xs text-neutral-light">left of {formatMoney(sale.amount, 2)}</span>
                     </>
                   ) : (
-                    <span className="text-lg font-bold text-slate-900">GH₵{sale.amount.toFixed(2)}</span>
+                    <span className="text-lg font-bold text-slate-900">{formatMoney(sale.amount, 2)}</span>
                   )}
                 </div>
 
@@ -457,7 +458,7 @@ export default function SalesPage() {
                   <span className="text-neutral-light">Qty: {sale.qty}</span>
                   {isPartial && (
                     <span className="text-warning font-medium">
-                      GH₵{(sale.amount_paid ?? 0).toFixed(2)} paid
+                      {formatMoney(sale.amount_paid ?? 0, 2)} paid
                     </span>
                   )}
                 </div>

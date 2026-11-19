@@ -5,10 +5,11 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import AuthLayout from '@/components/AuthLayout'
 import { authAPI } from '@/lib/api'
+import { SUPPORTED_COUNTRIES, DEFAULT_COUNTRY_CODE, currencyForCountry } from '@/lib/currency'
 
 export default function SignUpPage() {
   const router = useRouter()
-  const [form, setForm] = useState({ name: '', email: '', password: '', phone: '' })
+  const [form, setForm] = useState({ name: '', email: '', password: '', phone: '', country_code: DEFAULT_COUNTRY_CODE })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -120,6 +121,22 @@ export default function SignUpPage() {
             className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-slate-50 focus:bg-white"
             placeholder="+233 XX XXX XXXX"
           />
+        </div>
+
+        <div className="auth-animate-fade-up auth-delay-3">
+          <label className="block text-sm font-medium text-slate-700 mb-1.5">Country</label>
+          <select
+            required
+            value={form.country_code}
+            onChange={(e) => setForm({ ...form, country_code: e.target.value })}
+            className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-slate-50 focus:bg-white"
+          >
+            {SUPPORTED_COUNTRIES.map((country) => (
+              <option key={country.code} value={country.code}>
+                {country.name} — {currencyForCountry(country.code)}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="auth-animate-fade-up auth-delay-4">

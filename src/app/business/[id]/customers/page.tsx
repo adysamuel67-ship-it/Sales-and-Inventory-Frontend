@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, Suspense, useMemo } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
 import { customerAPI, saleAPI, debtAPI } from '@/lib/api'
-import { extractArray, parseApiError, isAdminRole, isStaffRole, MappedSale, formatCedi } from '@/lib/utils'
+import { extractArray, parseApiError, isAdminRole, isStaffRole, MappedSale, formatMoney } from '@/lib/utils'
 import PageHeader from '@/components/ui/PageHeader'
 import Alert from '@/components/ui/Alert'
 import Button from '@/components/ui/Button'
@@ -620,7 +620,7 @@ function CustomersContent() {
             <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
           </svg>
           <span className="text-danger font-medium">
-            Total outstanding debt: {formatCedi(totalDebt)}
+            Total outstanding debt: {formatMoney(totalDebt)}
           </span>
         </div>
       )}
@@ -673,7 +673,7 @@ function CustomersContent() {
                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold shrink-0 ${
                         debt >= 100 ? 'bg-danger-light text-danger' : 'bg-warning-light text-warning'
                       }`}>
-                        {formatCedi(debt)}
+                        {formatMoney(debt)}
                       </span>
                     )}
                   </div>
@@ -838,13 +838,13 @@ function CustomersContent() {
               <div className="bg-surfaceAlt rounded-xl p-2.5 sm:p-4">
                 <p className="text-[10px] sm:text-xs text-neutral-light mb-0.5 sm:mb-1">Total Spent</p>
                 <p className="text-sm sm:text-lg font-semibold text-slate-900">
-                  {profileLoading ? '...' : formatCedi(profileTotalSpent)}
+                  {profileLoading ? '...' : formatMoney(profileTotalSpent)}
                 </p>
               </div>
               <div className="bg-surfaceAlt rounded-xl p-2.5 sm:p-4">
                 <p className="text-[10px] sm:text-xs text-neutral-light mb-0.5 sm:mb-1">Outstanding Debt</p>
                 <p className={`text-sm sm:text-lg font-semibold ${profileTotalDebt > 0 ? 'text-danger' : 'text-success'}`}>
-                  {profileLoading ? '...' : formatCedi(profileTotalDebt)}
+                  {profileLoading ? '...' : formatMoney(profileTotalDebt)}
                 </p>
               </div>
               <div className="bg-surfaceAlt rounded-xl p-2.5 sm:p-4">
@@ -924,7 +924,7 @@ function CustomersContent() {
                               >
                                 <div>
                                   <div className="flex items-center gap-2">
-                                      <span className="font-medium text-slate-900">{formatCedi(item.amount)}</span>
+                                      <span className="font-medium text-slate-900">{formatMoney(item.amount)}</span>
                                       <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-warning-light text-warning">
                                         Borrowed
                                       </span>
@@ -936,7 +936,7 @@ function CustomersContent() {
                                   </p>
                                   {item.source === 'sale' && (
                                     <p className="text-xs text-neutral-light mt-0.5">
-                                      Paid {formatCedi(item.paid)} of {formatCedi(item.amount)}
+                                      Paid {formatMoney(item.paid)} of {formatMoney(item.amount)}
                                     </p>
                                   )}
                                 </div>
@@ -972,7 +972,7 @@ function CustomersContent() {
                               <div key={txn.transaction_id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2.5 px-3 bg-surfaceAlt rounded-lg text-sm cursor-pointer hover:bg-slate-50 transition-colors">
                                 <div>
                                   <div className="flex items-center gap-2">
-                                    <span className="font-medium text-success">{formatCedi(txn.amount_paid)}</span>
+                                    <span className="font-medium text-success">{formatMoney(txn.amount_paid)}</span>
                                     <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-success-light text-success">
                                       Payment
                                     </span>

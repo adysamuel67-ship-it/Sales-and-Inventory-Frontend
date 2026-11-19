@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { productAPI } from '@/lib/api'
 import { extractArray, normalizeProduct, parseApiError } from '@/lib/utils'
+import { currencyLabel, useActiveCurrency } from '@/lib/currency'
 import { newTempProductId, registerPendingProductCreate } from '@/lib/pendingProducts'
 import type { Product } from '@/lib/types'
 import Modal from '@/components/ui/Modal'
@@ -44,6 +45,8 @@ export default function QuickAddProductModal({
 }: Props) {
   const [form, setForm] = useState(() => makeForm(initialName, initialBarcode))
   const [error, setError] = useState('')
+  const activeCurrency = useActiveCurrency()
+  const moneyLabel = currencyLabel(activeCurrency)
 
   const update = (field: keyof ReturnType<typeof makeForm>, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }))
@@ -194,7 +197,7 @@ export default function QuickAddProductModal({
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label htmlFor="quick-product-price" className={labelClass}>
-              Selling Price (GH₵) *
+              Selling Price ({moneyLabel}) *
             </label>
             <input
               id="quick-product-price"
@@ -210,7 +213,7 @@ export default function QuickAddProductModal({
           </div>
           <div>
             <label htmlFor="quick-product-cost" className={labelClass}>
-              Cost Price (GH₵)
+              Cost Price ({moneyLabel})
             </label>
             <input
               id="quick-product-cost"

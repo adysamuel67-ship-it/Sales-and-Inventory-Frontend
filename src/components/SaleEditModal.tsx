@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { saleAPI, productAPI, customerAPI, debtAPI } from '@/lib/api'
-import { extractArray, normalizeProduct, MappedSale, formatCedi } from '@/lib/utils'
+import { extractArray, normalizeProduct, MappedSale, formatMoney } from '@/lib/utils'
 import ProductCombobox from '@/components/ui/ProductCombobox'
 import Modal from '@/components/ui/Modal'
 import { defaultDebtDueDate, outstandingBalance } from '@/lib/sms'
@@ -468,7 +468,7 @@ export default function SaleEditModal({ sale, businessId, onClose, onSaved }: Pr
             {paymentStatus === 'partial' && (
               <>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Amount Paid (GH₵)</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Amount Paid</label>
                   <input
                     type="number"
                     step="0.01"
@@ -521,7 +521,7 @@ export default function SaleEditModal({ sale, businessId, onClose, onSaved }: Pr
                 {isPartialPayment && (
                   <div className="px-4 py-3 rounded-xl bg-warning-light border border-warning/20">
                     <p className="text-xs text-warning font-medium">
-                      Balance: {formatCedi(totalAmount - effectiveAmountPaid)} remaining
+                      Balance: {formatMoney(totalAmount - effectiveAmountPaid)} remaining
                     </p>
                   </div>
                 )}
@@ -541,10 +541,10 @@ export default function SaleEditModal({ sale, businessId, onClose, onSaved }: Pr
                   </svg>
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-slate-900">
-                      Record the remaining {formatCedi(outstandingBalance(totalAmount, effectiveAmountPaid))} as debt
+                      Record the remaining {formatMoney(outstandingBalance(totalAmount, effectiveAmountPaid))} as debt
                     </p>
                     <p className="mt-0.5 text-xs text-slate-600">
-                      This amount is short of the {formatCedi(totalAmount)} total, so it is tracked as a debt
+                      This amount is short of the {formatMoney(totalAmount)} total, so it is tracked as a debt
                       against {customerName.trim() || 'this customer'}.
                     </p>
                   </div>
@@ -598,19 +598,19 @@ export default function SaleEditModal({ sale, businessId, onClose, onSaved }: Pr
                   return (
                     <div key={idx} className="flex items-center justify-between text-sm">
                       <span className="text-slate-600">{p.name} × {qty}</span>
-                      <span className="font-medium text-slate-900">{formatCedi(price * qty)}</span>
+                      <span className="font-medium text-slate-900">{formatMoney(price * qty)}</span>
                     </div>
                   )
                 })}
               </div>
               <div className="border-t border-slate-200 mt-2 pt-2">
                 <p className="text-xs text-neutral-light uppercase tracking-wider">Total Amount</p>
-                <p className="text-2xl font-bold text-slate-900 mt-1">{formatCedi(totalAmount)}</p>
+                <p className="text-2xl font-bold text-slate-900 mt-1">{formatMoney(totalAmount)}</p>
               </div>
               {paymentStatus === 'partial' && effectiveAmountPaid > 0 && (
                 <div className="flex items-center justify-between mt-2">
                   <p className="text-xs text-neutral-light">Amount Paid</p>
-                  <p className="text-sm font-semibold text-success">{formatCedi(effectiveAmountPaid)}</p>
+                  <p className="text-sm font-semibold text-success">{formatMoney(effectiveAmountPaid)}</p>
                 </div>
               )}
             </div>

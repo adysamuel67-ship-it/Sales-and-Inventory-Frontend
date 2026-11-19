@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { saleAPI } from '@/lib/api'
 import { parseApiError, formatPayment } from '@/lib/utils'
+import { formatMoney } from '@/lib/currency'
 import Alert from '@/components/ui/Alert'
 import Modal from '@/components/ui/Modal'
 
@@ -33,8 +34,7 @@ interface Props {
 }
 
 function money(value?: number | null): string {
-  const num = Number(value ?? 0)
-  return isNaN(num) ? '0.00' : num.toFixed(2)
+  return formatMoney(value, 2)
 }
 
 export default function SaleReceiptModal({ businessId, saleId, saleLabel, onClose }: Props) {
@@ -176,14 +176,14 @@ export default function SaleReceiptModal({ businessId, saleId, saleLabel, onClos
               ))}
               <div className="flex items-center justify-between border-t border-dashed border-slate-300 mt-1 pt-2 text-sm font-bold text-slate-900">
                 <span>TOTAL</span>
-                <span className="w-20 text-right">GH₵{money(data.total)}</span>
+                <span className="w-20 text-right">{money(data.total)}</span>
               </div>
             </div>
 
             <div className="border-t border-dashed border-slate-300 mt-3 pt-2 space-y-1 text-xs text-slate-700">
               <div className="flex items-center justify-between">
                 <span>Amount paid</span>
-                <span>GH₵{money(data.amount_paid)}</span>
+                <span>{money(data.amount_paid)}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span>Payment method</span>
@@ -192,7 +192,7 @@ export default function SaleReceiptModal({ businessId, saleId, saleLabel, onClos
               {balance > 0 && (
                 <div className="flex items-center justify-between text-danger font-semibold">
                   <span>Balance</span>
-                  <span>GH₵{money(balance)}</span>
+                  <span>{money(balance)}</span>
                 </div>
               )}
             </div>

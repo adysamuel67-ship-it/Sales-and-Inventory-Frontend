@@ -6,7 +6,7 @@ import { reportAPI, saleAPI, productAPI, customerAPI, businessAPI } from '@/lib/
 import { useAuth } from '@/lib/auth'
 import dynamic from 'next/dynamic'
 const RevenueChart = dynamic(() => import('@/components/RevenueChart'), { ssr: false })
-import { extractArray, extractProfit, extractSummary, getDateRange, parseApiError, formatCedi, aggregateProductPerformance, type ProductPerformance, isAdminRole, isSuperAdminUser } from '@/lib/utils'
+import { extractArray, extractProfit, extractSummary, getDateRange, parseApiError, formatMoney, aggregateProductPerformance, type ProductPerformance, isAdminRole, isSuperAdminUser } from '@/lib/utils'
 import PageHeader from '@/components/ui/PageHeader'
 import DateFilterPopover from '@/components/ui/DateFilterPopover'
 import Alert from '@/components/ui/Alert'
@@ -104,7 +104,7 @@ export default function ReportsPage() {
     try {
       const [profitRes, summaryRes, salesRes, saleSummaryRes] = await Promise.allSettled([
         reportAPI.profit(businessId, dateRange.start, dateRange.end),
-        reportAPI.summary(businessId, dateRange.start, dateRange.end),
+        reportAPI.dashboard(businessId, dateRange.start, dateRange.end),
         saleAPI.list(businessId, { date: dateRange.start, end_date: dateRange.end }),
         reportAPI.saleSummary(businessId, dateRange.start, dateRange.end),
       ])
@@ -388,14 +388,14 @@ export default function ReportsPage() {
               <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-5">
                 <p className="text-xs text-neutral-light uppercase tracking-wider">Revenue</p>
                 <p className="text-2xl font-bold text-slate-900 mt-1">
-                  {formatCedi(profit.total_revenue)}
+                  {formatMoney(profit.total_revenue)}
                 </p>
                 <p className="text-[10px] text-neutral-light mt-1">{dateSubtitle}</p>
               </div>
               <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-5">
                 <p className="text-xs text-neutral-light uppercase tracking-wider">Profit</p>
                 <p className="text-2xl font-bold text-success mt-1">
-                  {formatCedi(profit.total_profit)}
+                  {formatMoney(profit.total_profit)}
                 </p>
                 {profitMargin && (
                   <p className="text-[10px] text-neutral-light mt-1">{profitMargin}% margin</p>
@@ -404,7 +404,7 @@ export default function ReportsPage() {
               <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-5">
                 <p className="text-xs text-neutral-light uppercase tracking-wider">Cost</p>
                 <p className="text-2xl font-bold text-slate-900 mt-1">
-                  {formatCedi(profit.total_cost)}
+                  {formatMoney(profit.total_cost)}
                 </p>
               </div>
               {summary && (
@@ -423,13 +423,13 @@ export default function ReportsPage() {
               <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-5">
                 <p className="text-xs text-neutral-light uppercase tracking-wider">Revenue</p>
                 <p className="text-2xl font-bold text-slate-900 mt-1">
-                  {formatCedi(summary.total_revenue)}
+                  {formatMoney(summary.total_revenue)}
                 </p>
               </div>
               <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-5">
                 <p className="text-xs text-neutral-light uppercase tracking-wider">Profit</p>
                 <p className="text-2xl font-bold text-success mt-1">
-                  {formatCedi(summary.total_profit)}
+                  {formatMoney(summary.total_profit)}
                 </p>
               </div>
             </div>
@@ -446,19 +446,19 @@ export default function ReportsPage() {
               <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-4">
                 <p className="text-xs text-neutral-light uppercase tracking-wider">Cash</p>
                 <p className="text-xl font-bold text-slate-900 mt-1">
-                  {formatCedi(saleSummary.cash_total ?? 0)}
+                  {formatMoney(saleSummary.cash_total ?? 0)}
                 </p>
               </div>
               <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-4">
                 <p className="text-xs text-neutral-light uppercase tracking-wider">Mobile Money</p>
                 <p className="text-xl font-bold text-slate-900 mt-1">
-                  {formatCedi(saleSummary.momo_total ?? 0)}
+                  {formatMoney(saleSummary.momo_total ?? 0)}
                 </p>
               </div>
               <div className="bg-surface rounded-2xl border border-slate-200 shadow-sm p-4">
                 <p className="text-xs text-neutral-light uppercase tracking-wider">Card</p>
                 <p className="text-xl font-bold text-slate-900 mt-1">
-                  {formatCedi(saleSummary.card_total ?? 0)}
+                  {formatMoney(saleSummary.card_total ?? 0)}
                 </p>
               </div>
               {saleSummary.best_selling_product && (
@@ -519,10 +519,10 @@ export default function ReportsPage() {
                           {row.quantity.toLocaleString()}
                         </td>
                         <td className="px-5 py-3 text-right tabular-nums font-medium text-slate-900">
-                          {formatCedi(row.revenue)}
+                          {formatMoney(row.revenue)}
                         </td>
                         <td className="px-5 py-3 text-right tabular-nums font-medium text-success">
-                          {formatCedi(row.profit)}
+                          {formatMoney(row.profit)}
                         </td>
                         <td className="px-5 py-3">
                           <div className="flex items-center gap-2">
@@ -555,8 +555,8 @@ export default function ReportsPage() {
                       </span>
                     </div>
                     <div className="mt-1 flex items-center justify-between gap-3">
-                      <span className="text-xs text-neutral-light">{formatCedi(row.revenue)}</span>
-                      <span className="text-xs font-medium text-success">{formatCedi(row.profit)}</span>
+                      <span className="text-xs text-neutral-light">{formatMoney(row.revenue)}</span>
+                      <span className="text-xs font-medium text-success">{formatMoney(row.profit)}</span>
                     </div>
                     <div className="mt-2 h-1.5 rounded-full bg-slate-100 overflow-hidden">
                       <div
@@ -644,7 +644,7 @@ export default function ReportsPage() {
                 <h3 className="font-semibold text-slate-900">Debts Report</h3>
                 <p className="text-xs text-neutral-light mt-0.5">
                   {debts.filter((d) => !d.is_paid).length} unpaid ·{' '}
-                  {formatCedi(debts.filter((d) => !d.is_paid).reduce((sum, d) => sum + Number(d.amount || 0), 0))} outstanding
+                  {formatMoney(debts.filter((d) => !d.is_paid).reduce((sum, d) => sum + Number(d.amount || 0), 0))} outstanding
                 </p>
               </div>
               <div className="hidden sm:block">
@@ -669,7 +669,7 @@ export default function ReportsPage() {
                           </td>
                           <td className="px-5 py-3">
                             <span className={`font-semibold ${d.is_paid ? 'text-slate-400 line-through' : 'text-danger'}`}>
-                              {formatCedi(d.amount)}
+                              {formatMoney(d.amount)}
                             </span>
                           </td>
                           <td className="px-5 py-3 text-sm text-slate-700">
@@ -699,7 +699,7 @@ export default function ReportsPage() {
                       <div className="flex items-center justify-between">
                         <span className="font-medium text-slate-900">{customer?.name || 'Customer'}</span>
                         <span className={`font-semibold ${d.is_paid ? 'text-slate-400 line-through' : 'text-danger'}`}>
-                          {formatCedi(d.amount)}
+                          {formatMoney(d.amount)}
                         </span>
                       </div>
                       <div className="flex items-center justify-between mt-1">

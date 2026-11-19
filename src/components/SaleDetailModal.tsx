@@ -1,6 +1,7 @@
 'use client'
 
 import { MappedSale, formatPayment } from '@/lib/utils'
+import { formatMoney } from '@/lib/currency'
 import Modal from '@/components/ui/Modal'
 
 interface Props {
@@ -44,9 +45,9 @@ export default function SaleDetailModal({ sale, onClose, canEdit, onEdit }: Prop
           <div>
             <p className="text-xs text-neutral-light">Sale #{sale.id}</p>
             {isPartial ? (
-              <p className="text-lg font-bold text-danger">GH₵{balance.toLocaleString(undefined, { minimumFractionDigits: 2 })} <span className="text-sm font-medium text-neutral-light">remaining</span></p>
+              <p className="text-lg font-bold text-danger">{formatMoney(balance, 2)} <span className="text-sm font-medium text-neutral-light">remaining</span></p>
             ) : (
-              <p className="text-lg font-bold text-slate-900">GH₵{sale.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+              <p className="text-lg font-bold text-slate-900">{formatMoney(sale.amount, 2)}</p>
             )}
           </div>
         </div>
@@ -78,8 +79,8 @@ export default function SaleDetailModal({ sale, onClose, canEdit, onEdit }: Prop
               />
             </div>
             <div className="flex items-center justify-between text-xs">
-              <span className="text-success font-medium">GH₵{(sale.amount_paid ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 })} paid</span>
-              <span className="text-danger font-medium">GH₵{balance.toLocaleString(undefined, { minimumFractionDigits: 2 })} remaining</span>
+              <span className="text-success font-medium">{formatMoney(sale.amount_paid ?? 0, 2)} paid</span>
+              <span className="text-danger font-medium">{formatMoney(balance, 2)} remaining</span>
             </div>
           </div>
         )}
@@ -139,7 +140,7 @@ export default function SaleDetailModal({ sale, onClose, canEdit, onEdit }: Prop
                     <span className="text-neutral-light text-xs">× {item.quantity}</span>
                   </div>
                   {item.unit_price != null && (
-                    <span className="font-medium text-slate-900">GH₵{(Number(item.unit_price) * item.quantity).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                    <span className="font-medium text-slate-900">{formatMoney(Number(item.unit_price) * item.quantity, 2)}</span>
                   )}
                 </div>
               ))
@@ -155,18 +156,18 @@ export default function SaleDetailModal({ sale, onClose, canEdit, onEdit }: Prop
         <div className="border-t border-slate-200 pt-4 space-y-2">
           <div className="flex items-center justify-between text-sm">
             <span className="text-neutral-light">Total Sale Amount</span>
-            <span className="font-semibold text-slate-900">GH₵{sale.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+            <span className="font-semibold text-slate-900">{formatMoney(sale.amount, 2)}</span>
           </div>
           {sale.amount_paid != null && (
             <div className="flex items-center justify-between text-sm">
               <span className="text-neutral-light">Amount Paid</span>
-              <span className="font-semibold text-success">GH₵{sale.amount_paid.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+              <span className="font-semibold text-success">{formatMoney(sale.amount_paid, 2)}</span>
             </div>
           )}
           {isPartial && (
             <div className="flex items-center justify-between text-sm">
               <span className="text-neutral-light">Outstanding Balance</span>
-              <span className="font-semibold text-danger">GH₵{balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+              <span className="font-semibold text-danger">{formatMoney(balance, 2)}</span>
             </div>
           )}
         </div>

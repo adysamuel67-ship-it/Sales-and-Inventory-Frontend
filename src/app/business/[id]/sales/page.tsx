@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useMemo, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
 import { saleAPI, productAPI, customerAPI, adminAPI } from '@/lib/api'
-import { extractArray, normalizeProduct, mapSale, parseApiError, isStaffRole, isAdminRole, MappedSale, formatPayment, formatCedi, isDeletedProduct } from '@/lib/utils'
+import { extractArray, normalizeProduct, mapSale, parseApiError, isStaffRole, isAdminRole, MappedSale, formatPayment, formatMoney, isDeletedProduct } from '@/lib/utils'
 import { resolvePendingProducts } from '@/lib/pendingProducts'
 import SaleDetailModal from '@/components/SaleDetailModal'
 import SaleEditModal from '@/components/SaleEditModal'
@@ -896,7 +896,7 @@ export default function SalesPage() {
                 {isPartialPayment && (
                   <div className="px-4 py-3 rounded-xl bg-warning-light border border-warning/20">
                     <p className="text-xs text-warning font-medium">
-                      Balance: {formatCedi(formTotal - effectiveAmountPaid)} remaining
+                      Balance: {formatMoney(formTotal - effectiveAmountPaid)} remaining
                     </p>
                   </div>
                 )}
@@ -912,19 +912,19 @@ export default function SalesPage() {
                   return (
                     <div key={idx} className="flex items-center justify-between text-sm">
                       <span className="text-slate-600">{product.name} × {qty}</span>
-                      <span className="font-medium text-slate-900">{formatCedi(product.price * qty)}</span>
+                      <span className="font-medium text-slate-900">{formatMoney(product.price * qty)}</span>
                     </div>
                   )
                 })}
               </div>
               <div className="border-t border-slate-200 mt-2 pt-2">
                 <p className="text-xs text-neutral-light uppercase tracking-wider">Total Amount</p>
-                <p className="text-2xl font-bold text-slate-900 mt-1">{formatCedi(formTotal)}</p>
+                <p className="text-2xl font-bold text-slate-900 mt-1">{formatMoney(formTotal)}</p>
               </div>
               {paymentStatus === 'partial' && effectiveAmountPaid > 0 && (
                 <div className="flex items-center justify-between mt-2">
                   <p className="text-xs text-neutral-light">Amount Paid</p>
-                  <p className="text-sm font-semibold text-success">{formatCedi(effectiveAmountPaid)}</p>
+                  <p className="text-sm font-semibold text-success">{formatMoney(effectiveAmountPaid)}</p>
                 </div>
               )}
             </div>
@@ -995,7 +995,7 @@ export default function SalesPage() {
         <div className="flex items-center gap-4 text-xs text-neutral-light pt-1 border-t border-slate-50">
           <span>{filteredSales.length} sales</span>
           <span>{totalQty} items</span>
-          <span className="font-semibold text-slate-900">{formatCedi(totalAmount)}</span>
+          <span className="font-semibold text-slate-900">{formatMoney(totalAmount)}</span>
         </div>
       </div>
 
@@ -1128,7 +1128,7 @@ export default function SalesPage() {
                       <td className="px-5 py-3.5 text-center text-neutral-light">{sale.qty}</td>
                       <td className="px-5 py-3.5 text-right font-semibold text-slate-900">
                         {sale.amount > 0 ? (
-                          formatCedi(sale.amount)
+                          formatMoney(sale.amount)
                         ) : (
                           <span className="text-neutral-light text-xs">No charge</span>
                         )}
@@ -1148,10 +1148,10 @@ export default function SalesPage() {
                           <div className="flex flex-col items-center gap-0.5">
                             <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-warning-light text-warning">Partial</span>
                             <span className="text-[10px] text-neutral-light">
-                            {formatCedi(sale.amount_paid ?? 0)} of {formatCedi(sale.amount)} paid
+                            {formatMoney(sale.amount_paid ?? 0)} of {formatMoney(sale.amount)} paid
                           </span>
                             {balance > 0 && (
-                              <span className="text-[10px] text-danger font-medium">{formatCedi(balance)} remaining</span>
+                              <span className="text-[10px] text-danger font-medium">{formatMoney(balance)} remaining</span>
                             )}
                           </div>
                         ) : sale.amount_paid != null && sale.amount_paid >= sale.amount ? (
@@ -1255,13 +1255,13 @@ export default function SalesPage() {
                       </div>
                       {isBorrow ? (
                         <div className="text-right shrink-0">
-                          <p className="text-xs text-neutral-light line-through">{formatCedi(sale.amount)}</p>
-                          <p className="text-sm font-bold text-danger">{formatCedi(balance)} left</p>
+                          <p className="text-xs text-neutral-light line-through">{formatMoney(sale.amount)}</p>
+                          <p className="text-sm font-bold text-danger">{formatMoney(balance)} left</p>
                         </div>
                       ) : (
                         <p className="font-bold text-slate-900 shrink-0">
                           {sale.amount > 0 ? (
-                            formatCedi(sale.amount)
+                            formatMoney(sale.amount)
                           ) : (
                             <span className="text-neutral-light text-xs font-normal">No charge</span>
                           )}
@@ -1280,7 +1280,7 @@ export default function SalesPage() {
                         </span>
                         {isBorrow ? (
                           <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-warning-light text-warning">
-                            {formatCedi(sale.amount_paid ?? 0)} of {formatCedi(sale.amount)} paid
+                            {formatMoney(sale.amount_paid ?? 0)} of {formatMoney(sale.amount)} paid
                           </span>
                         ) : sale.amount_paid != null && sale.amount_paid >= sale.amount ? (
                           <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-success-light text-success">Paid</span>

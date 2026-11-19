@@ -9,6 +9,7 @@ import { useAuth } from '@/lib/auth'
 import { productAPI } from '@/lib/api'
 import { useBusinessId } from '@/lib/useBusinessId'
 import { extractArray, normalizeProduct, isDeletedProduct } from '@/lib/utils'
+import { formatMoney } from '@/lib/currency'
 
 interface Product {
   product_id: number
@@ -203,7 +204,7 @@ export default function ProductsPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Selling Price (GH₵)</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Selling Price</label>
               <input
                 type="number"
                 step="0.01"
@@ -216,7 +217,7 @@ export default function ProductsPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Cost Price (GH₵)</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Cost Price</label>
               <input
                 type="number"
                 step="0.01"
@@ -304,14 +305,14 @@ export default function ProductsPage() {
                 <h3 className="font-semibold text-slate-900 text-sm mb-1 truncate group-hover:text-primary transition-colors">{product.name}</h3>
 
                 <div className="flex items-baseline gap-1 mb-3">
-                  <span className="text-lg font-bold text-slate-900">GH₵{(product.price ?? 0).toFixed(2)}</span>
+                  <span className="text-lg font-bold text-slate-900">{formatMoney(product.price ?? 0, 2)}</span>
                   <span className="text-[11px] text-neutral-light">/ {product.unit || 'unit'}</span>
                 </div>
 
                 <div className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-3">
                     <span className="text-neutral-light">
-                      Cost: <span className="text-slate-700 font-medium">GH₵{(product.cost_price ?? 0).toFixed(2)}</span>
+                      Cost: <span className="text-slate-700 font-medium">{formatMoney(product.cost_price ?? 0, 2)}</span>
                     </span>
                     {margin !== null && (
                       <span className="text-success font-medium">

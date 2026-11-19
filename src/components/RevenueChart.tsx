@@ -2,6 +2,7 @@
 
 import { memo } from 'react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { formatMoney } from '@/lib/currency'
 
 interface ChartDataPoint {
   day: string
@@ -21,7 +22,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
         {payload.map((entry: any, i: number) => (
           <p key={i} style={{ color: entry.color }} className="flex items-center gap-1.5 font-medium">
             <span className="h-2 w-2 rounded-sm" style={{ backgroundColor: entry.color }} />
-            {entry.name}: GH₵{(entry.value ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            {entry.name}: {formatMoney(entry.value ?? 0, 2)}
           </p>
         ))}
       </div>

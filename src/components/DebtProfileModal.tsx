@@ -12,7 +12,7 @@ import {
   ChevronRightIcon,
   XIcon,
 } from '@/components/ui/Icons'
-import { formatCedi } from '@/lib/utils'
+import { formatMoney } from '@/lib/utils'
 import { formatDateLabel } from '@/lib/dates'
 import {
   daysOverdue,
@@ -117,13 +117,13 @@ export default function DebtProfileModal({
           <div className="rounded-xl bg-slate-50 p-3 sm:p-4">
             <p className="text-[10px] uppercase tracking-wide text-neutral-light sm:text-[11px]">Outstanding</p>
             <p className="mt-1 truncate text-sm font-bold text-danger sm:text-lg">
-              {loading ? '—' : formatCedi(outstanding)}
+              {loading ? '—' : formatMoney(outstanding)}
             </p>
           </div>
           <div className="rounded-xl bg-emerald-50/70 p-3 sm:p-4">
             <p className="text-[10px] uppercase tracking-wide text-neutral-light sm:text-[11px]">Total paid</p>
             <p className="mt-1 truncate text-sm font-bold text-success sm:text-lg">
-              {loading ? '—' : formatCedi(totalPaid)}
+              {loading ? '—' : formatMoney(totalPaid)}
             </p>
           </div>
           <div className="rounded-xl bg-slate-50 p-3 sm:p-4">
@@ -168,7 +168,7 @@ export default function DebtProfileModal({
                         <CashIcon className="h-4 w-4" />
                       </span>
                       <span className="min-w-0">
-                        <span className="block font-semibold text-slate-900">{formatCedi(debt.amount)}</span>
+                        <span className="block font-semibold text-slate-900">{formatMoney(debt.amount)}</span>
                         <span className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-neutral-light">
                           <span>{formatDateLabel(debt.due_date) || 'No due date'}</span>
                           <span className={overdue ? 'font-medium text-danger' : ''}>{dueLabel(debt.due_date)}</span>
@@ -231,7 +231,7 @@ export default function DebtProfileModal({
                     <CheckCircleIcon className="h-4 w-4" />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-semibold text-success">{formatCedi(txn.amount_paid)}</span>
+                    <span className="block text-sm font-semibold text-success">{formatMoney(txn.amount_paid)}</span>
                     <span className="mt-0.5 block truncate text-xs text-neutral-light">
                       {new Date(txn.created_at).toLocaleDateString()}
                       {txn.note ? ` · ${txn.note}` : ''}

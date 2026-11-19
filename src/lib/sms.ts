@@ -14,6 +14,7 @@
  */
 
 import { addDays, compareDateKeys, dateKey, todayDateKey } from '@/lib/dates'
+import { getActiveCurrency } from '@/lib/currency'
 
 // ── Segment maths ───────────────────────────────────────────────────────────
 // GSM-7 alphabet. A single part carries 160 characters; once the message runs
@@ -169,13 +170,14 @@ export function buildReportSms(opts: {
 }): string {
   const { summary, start, end, title } = opts
   const best = summary.best_selling_product || 'N/A'
+  const currency = getActiveCurrency()
 
   return (
     `AUTOMATED REPORT\n` +
     `${title} | ${formatReportStart(start)} - ${formatReportEnd(end)}\n` +
     `\n` +
-    `Total Revenue: GHS ${formatSmsAmount(summary.total_revenue)}\n` +
-    `Total Profit: GHS ${formatSmsAmount(summary.total_profit)}\n` +
+    `Total Revenue: ${currency} ${formatSmsAmount(summary.total_revenue)}\n` +
+    `Total Profit: ${currency} ${formatSmsAmount(summary.total_profit)}\n` +
     `Total Orders: ${formatSmsCount(summary.total_sales)}\n` +
     `Units Sold: ${formatSmsCount(summary.sold_quantity)}\n` +
     `\n` +

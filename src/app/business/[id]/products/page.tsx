@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import { productAPI } from '@/lib/api'
-import { normalizeProduct, extractArray, parseApiError, isAdminRole, formatCedi, isDeletedProduct, formatDeletedAt } from '@/lib/utils'
+import { normalizeProduct, extractArray, parseApiError, isAdminRole, formatMoney, isDeletedProduct, formatDeletedAt } from '@/lib/utils'
 import {
   filterProducts,
   inventoryStatus,
@@ -459,7 +459,7 @@ export default function ProductsPage() {
         subtitle={
           loading
             ? 'Loading your inventory…'
-            : `${inventory.total} products · ${inventory.totalUnits.toLocaleString()} units on hand · ${formatCedi(inventory.costValue)} at cost`
+            : `${inventory.total} products · ${inventory.totalUnits.toLocaleString()} units on hand · ${formatMoney(inventory.costValue)} at cost`
         }
         actions={
           <div className="flex flex-wrap items-center gap-2">
@@ -535,8 +535,8 @@ export default function ProductsPage() {
         />
         <KpiCard
           title="Inventory value"
-          value={formatCedi(inventory.costValue)}
-          subtitle={`${formatCedi(inventory.retailValue)} retail · ${inventory.blendedMargin.toFixed(1)}% margin`}
+          value={formatMoney(inventory.costValue)}
+          subtitle={`${formatMoney(inventory.retailValue)} retail · ${inventory.blendedMargin.toFixed(1)}% margin`}
           icon={<CashIcon className="h-5 w-5" />}
           color="success"
           loading={loading}
@@ -1014,8 +1014,8 @@ export default function ProductsPage() {
                       <td>
                         <Badge color={meta.color} dot>{meta.label}</Badge>
                       </td>
-                      <td className="text-right text-slate-600">{formatCedi(product.cost_price)}</td>
-                      <td className="text-right font-medium text-slate-900">{formatCedi(product.price)}</td>
+                      <td className="text-right text-slate-600">{formatMoney(product.cost_price)}</td>
+                      <td className="text-right font-medium text-slate-900">{formatMoney(product.price)}</td>
                       <td className="text-right">
                         {margin == null ? (
                           <span className="text-neutral-light">—</span>
@@ -1025,13 +1025,13 @@ export default function ProductsPage() {
                               {margin.toFixed(1)}%
                             </div>
                             <div className="text-[11px] text-neutral-light">
-                              {formatCedi(Number(product.price) - Number(product.cost_price))} / unit
+                              {formatMoney(Number(product.price) - Number(product.cost_price))} / unit
                             </div>
                           </>
                         )}
                       </td>
                       <td className="text-right">
-                        <div className="font-semibold text-slate-900">{formatCedi(stockValue(product))}</div>
+                        <div className="font-semibold text-slate-900">{formatMoney(stockValue(product))}</div>
                         <div className="text-[11px] text-neutral-light">at cost</div>
                       </td>
                     </tr>
@@ -1116,12 +1116,12 @@ export default function ProductsPage() {
                   </div>
                   <div>
                     <p className="text-[11px] uppercase tracking-wide text-neutral-light">Price</p>
-                    <p className="mt-0.5 text-sm font-semibold text-slate-900">{formatCedi(product.price)}</p>
-                    <p className="text-[11px] text-neutral-light">Cost {formatCedi(product.cost_price)}</p>
+                    <p className="mt-0.5 text-sm font-semibold text-slate-900">{formatMoney(product.price)}</p>
+                    <p className="text-[11px] text-neutral-light">Cost {formatMoney(product.cost_price)}</p>
                   </div>
                   <div>
                     <p className="text-[11px] uppercase tracking-wide text-neutral-light">Value</p>
-                    <p className="mt-0.5 text-sm font-semibold text-slate-900">{formatCedi(stockValue(product))}</p>
+                    <p className="mt-0.5 text-sm font-semibold text-slate-900">{formatMoney(stockValue(product))}</p>
                     <p className="text-[11px] text-neutral-light">at cost</p>
                   </div>
                 </div>

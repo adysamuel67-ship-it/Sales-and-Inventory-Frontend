@@ -14,6 +14,7 @@ import {
   TableCell,
 } from './ui/Table'
 import { MappedSale, formatPayment } from '@/lib/utils'
+import { formatMoney } from '@/lib/currency'
 
 type SaleRecord = MappedSale
 
@@ -138,7 +139,7 @@ export default memo(function RecentSales({ sales, businessId }: Props) {
                     </TableCell>
                     <TableCell align="right" className="font-semibold text-slate-900">
                       {sale.amount > 0 ? (
-                        `GH₵${sale.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+                        formatMoney(sale.amount, 2)
                       ) : (
                         <span className="text-xs font-normal text-neutral-light">No charge</span>
                       )}

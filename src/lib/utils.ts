@@ -1,5 +1,9 @@
 import type { Product } from '@/lib/types'
 
+// Currency-aware money formatting lives in its own module (it owns the active
+// currency store). Re-exported here so call sites keep importing from utils.
+export { formatMoney } from '@/lib/currency'
+
 export const paymentLabel: Record<string, string> = {
   cash: 'Cash',
   mobile_money: 'MoMo',
@@ -311,15 +315,7 @@ export function formatNumber(value: number | string | null | undefined): string 
   return isNaN(num) ? '0' : num.toLocaleString()
 }
 
-export function formatCedi(value: number | string | null | undefined, fractionDigits = 2): string {
-  const num = Number(value ?? 0)
-  return isNaN(num)
-    ? `GH₵${(0).toFixed(fractionDigits)}`
-    : `GH₵${num.toLocaleString(undefined, {
-        minimumFractionDigits: fractionDigits,
-        maximumFractionDigits: fractionDigits,
-      })}`
-}
+
 
 export const SUPER_ADMIN_EMAIL = 'adysamuel68@gmail.com'
 

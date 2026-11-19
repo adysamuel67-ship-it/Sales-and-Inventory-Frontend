@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
 import { debtAPI, customerAPI } from '@/lib/api'
-import { extractArray, parseApiError, isAdminRole, formatCedi } from '@/lib/utils'
+import { extractArray, parseApiError, isAdminRole, formatMoney } from '@/lib/utils'
 import { formatDateLabel } from '@/lib/dates'
 import {
   AGING_BUCKETS,
@@ -401,7 +401,7 @@ export default function DebtsPage() {
     }
   }
 
-  const formatCurrency = (amount: number) => formatCedi(amount)
+  const formatCurrency = (amount: number) => formatMoney(amount)
 
   return (
     <div>

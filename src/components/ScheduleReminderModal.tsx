@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import { reminderAPI } from '@/lib/api'
 import { parseApiError } from '@/lib/utils'
 import { compareDateKeys, formatDateLabel, todayDateKey } from '@/lib/dates'
+import { formatMoney, getActiveCurrency } from '@/lib/currency'
 import Modal from '@/components/ui/Modal'
 
 export interface ReminderDebt {
@@ -81,7 +82,7 @@ export function buildSmsPreview(opts: { customerName: string; amount: number; du
   const name = (opts.customerName || '').trim() || 'there'
   const amount = Number(opts.amount || 0).toFixed(2)
   const due = (opts.dueDate || '').slice(0, 10)
-  const base = `Hello ${name}, this is a friendly reminder about your outstanding balance of GHS ${amount}, due on ${due}.`
+  const base = `Hello ${name}, this is a friendly reminder about your outstanding balance of ${getActiveCurrency()} ${amount}, due on ${due}.`
   const note = (opts.note || '').trim()
   return note ? `${base} ${note}` : base
 }
@@ -136,8 +137,7 @@ export default function ScheduleReminderModal({ businessId, customer, defaultDeb
   const smsParts = smsPartsCount(smsPreview)
   const hasPhone = !!customer.customer_phone?.trim()
 
-  const formatAmount = (amount: number) =>
-    `GH₵${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  const formatAmount = (amount: number) => formatMoney(amount, 2)
 
   const handleDebtChange = (value: string) => {
     setSelectedDebtId(value)

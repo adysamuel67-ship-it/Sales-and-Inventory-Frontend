@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { useRouter } from 'next/navigation'
 import { profileAPI, businessAPI, setTokenRefreshCallback, setAuthLogoutCallback, getUserIdFromToken, tryProactiveRefresh, startAutoRefresh, stopAutoRefresh, isTokenExpired, decodeJwt, resetLogoutGuard } from '@/lib/api'
 import { SUPER_ADMIN_EMAIL } from '@/lib/utils'
+import { setActiveCurrency, currencyForCountry, normalizeCurrency, getStoredCurrency, DEFAULT_CURRENCY } from '@/lib/currency'
 
 interface User {
   id: number
@@ -13,9 +14,12 @@ interface User {
   role: string
   business_role?: string
   business_id?: number
+  member_id?: number
   is_verified?: boolean
   is_active?: boolean
   created_at?: string
+  country_code?: string
+  currency?: string
 }
 
 interface Business {
@@ -38,6 +42,7 @@ interface AuthContextType {
   setBusinessRole: (role: string) => void
   isAuthenticated: boolean
   isVerified: boolean
+  currency: string
   businesses: Business[]
   currentBusiness: Business | null
   switchBusiness: (business: Business) => void
@@ -59,6 +64,7 @@ const AuthContext = createContext<AuthContextType>({
   setBusinessRole: () => {},
   isAuthenticated: false,
   isVerified: false,
+  currency: DEFAULT_CURRENCY,
   businesses: [],
   currentBusiness: null,
   switchBusiness: () => {},
@@ -142,6 +148,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const jwtPayload = token ? decodeJwt(token) : null
       const iatDate = jwtPayload?.iat ? new Date(jwtPayload.iat * 1000).toISOString() : undefined
 
+      const countryCode = data.country_code || parsed?.country_code || undefined
       const profileUser: User = {
         id: data.user_id ?? data.id ?? parsed?.id,
         name: data.name || data.full_name || data.username || parsed?.name || (data.email || parsed?.email || '').split('@')[0] || 'User',
@@ -149,6 +156,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         phone: data.phone || parsed?.phone || '',
         role: data.role || parsed?.role || 'user',
         business_id: data.business_id || data.business?.id || parsed?.business_id || undefined,
+        member_id: data.member_id ?? parsed?.member_id ?? undefined,
+        country_code: countryCode,
+        currency: normalizeCurrency(data.currency || (countryCode ? currencyForCountry(countryCode) : parsed?.currency)),
         is_verified: data.is_verified ?? parsed?.is_verified ?? true,
         is_active: data.is_active ?? parsed?.is_active ?? true,
         created_at: data.created_at || data.date_joined || data.joined_at || parsed?.created_at || iatDate,
@@ -157,6 +167,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         profileUser.role = 'super_admin'
       }
       setUser(profileUser)
+      setActiveCurrency(profileUser.currency)
       localStorage.setItem('user', JSON.stringify(profileUser))
       setProfileLoaded(true)
       if (!profileUser.is_verified) {
@@ -193,6 +204,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setBusinesses([])
     setCurrentBusiness(null)
     setProfileLoaded(false)
+    setActiveCurrency(DEFAULT_CURRENCY)
     // Clearing state is not the same as signing out. The button lives on
     // /settings, which has no auth guard of its own, so without this the user
     // was left sitting on a signed-out page while the dialog promised they had
@@ -251,7 +263,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setToken(storedToken)
       if (storedRefreshToken) setRefreshTokenValue(storedRefreshToken)
       try {
-        setUser(JSON.parse(storedUser))
+        const parsedUser: User = JSON.parse(storedUser)
+        const currency = normalizeCurrency(
+          parsedUser.currency || (parsedUser.country_code ? currencyForCountry(parsedUser.country_code) : undefined)
+        )
+        const hydratedUser = { ...parsedUser, currency }
+        setUser(hydratedUser)
+        setActiveCurrency(currency)
+        localStorage.setItem('user', JSON.stringify(hydratedUser))
       } catch {
         localStorage.removeItem('user')
         setUser(null)
@@ -290,10 +309,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setRefreshTokenValue(newRefreshToken)
     }
     if (newUser) {
-      localStorage.setItem('user', JSON.stringify(newUser))
+      const currency = normalizeCurrency(
+        newUser.currency || (newUser.country_code ? currencyForCountry(newUser.country_code) : getStoredCurrency())
+      )
+      const nextUser = { ...newUser, currency }
+      localStorage.setItem('user', JSON.stringify(nextUser))
+      setUser(nextUser)
+      setActiveCurrency(currency)
+    } else {
+      setUser(null)
     }
     setToken(newToken)
-    setUser(newUser)
     startAutoRefresh(3 * 60 * 1000)
     if (newUser && !newUser.is_verified) {
       setPendingVerificationEmail(newUser.email)
@@ -316,6 +342,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setBusinessRole,
         isAuthenticated: !!token,
         isVerified: !!user?.is_verified,
+        currency: normalizeCurrency(user?.currency || getStoredCurrency()),
         businesses,
         currentBusiness,
         switchBusiness,

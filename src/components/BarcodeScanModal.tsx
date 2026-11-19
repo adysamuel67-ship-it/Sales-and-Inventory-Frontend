@@ -3,7 +3,7 @@
 import { useCallback, useRef, useState } from 'react'
 import { productAPI } from '@/lib/api'
 import type { Product } from '@/lib/types'
-import { formatCedi, normalizeProduct, parseApiError } from '@/lib/utils'
+import { formatMoney, normalizeProduct, parseApiError } from '@/lib/utils'
 import { normalizeBarcode } from '@/lib/barcode'
 import { useBarcodeScanner } from '@/lib/useBarcodeScanner'
 import Modal from '@/components/ui/Modal'
@@ -221,7 +221,7 @@ export default function BarcodeScanModal({
             <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">In your inventory</p>
             <p className="mt-1 font-semibold text-slate-900">{product.name}</p>
             <p className="mt-0.5 text-xs text-slate-600">
-              <span className="font-mono">{product.barcode || barcode}</span> · {formatCedi(product.price)}
+              <span className="font-mono">{product.barcode || barcode}</span> · {formatMoney(product.price)}
               {product.quantity != null ? ` · ${product.quantity} ${product.unit || 'units'} on hand` : ''}
             </p>
             <div className="mt-3 flex gap-2">

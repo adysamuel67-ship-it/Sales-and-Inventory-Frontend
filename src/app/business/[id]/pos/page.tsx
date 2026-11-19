@@ -20,7 +20,7 @@ import { cacheProducts, getCachedProducts } from '@/lib/posCache'
 import { resolvePendingProducts } from '@/lib/pendingProducts'
 import {
   extractArray,
-  formatCedi,
+  formatMoney,
   isDeletedProduct,
   isManagerRole,
   normalizeProduct,
@@ -284,7 +284,7 @@ export default function PosPage() {
       setPaymentMethod('cash')
       setScanNotice(null)
       idempotencyKeyRef.current = ''
-      setFlash({ text: `Sale completed — ${formatCedi(total)}`, at: Date.now() })
+      setFlash({ text: `Sale completed — ${formatMoney(total)}`, at: Date.now() })
       setNotice(`Sale completed successfully${savedSaleId != null ? ` (#${savedSaleId})` : ''}.`)
 
       if (savedSaleId != null && Number.isFinite(Number(savedSaleId))) {
@@ -441,7 +441,7 @@ export default function PosPage() {
                             )}
                           </p>
                           <p className="mt-0.5 text-xs text-neutral-light">
-                            {formatCedi(item.price)} each
+                            {formatMoney(item.price)} each
                             {item.barcode ? <span className="font-mono"> · {item.barcode}</span> : null}
                           </p>
                           {isOverStock && (
@@ -451,7 +451,7 @@ export default function PosPage() {
                           )}
                         </div>
                         <p className="shrink-0 text-sm font-semibold text-slate-900">
-                          {formatCedi(item.price * item.quantity)}
+                          {formatMoney(item.price * item.quantity)}
                         </p>
                       </div>
 
@@ -501,7 +501,7 @@ export default function PosPage() {
             </div>
             <div className="border-t border-slate-200 pt-3">
               <p className="text-xs font-semibold uppercase tracking-wider text-neutral-light">Total amount</p>
-              <p className="mt-1 text-3xl font-bold tracking-tight text-slate-900">{formatCedi(totals.total)}</p>
+              <p className="mt-1 text-3xl font-bold tracking-tight text-slate-900">{formatMoney(totals.total)}</p>
             </div>
 
             <div>

@@ -2,7 +2,7 @@
 
 import Modal from '@/components/ui/Modal'
 import Badge from '@/components/ui/Badge'
-import { formatCedi, formatDeletedAt, isDeletedProduct } from '@/lib/utils'
+import { formatMoney, formatDeletedAt, isDeletedProduct } from '@/lib/utils'
 import {
   inventoryStatus,
   lowStockThreshold,
@@ -148,11 +148,11 @@ export default function ProductDetailModal({
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-xl border border-slate-200 p-3.5">
             <p className="text-[11px] uppercase tracking-wide text-neutral-light">Selling price</p>
-            <p className="mt-1 text-base font-semibold text-slate-900">{formatCedi(product.price)}</p>
+            <p className="mt-1 text-base font-semibold text-slate-900">{formatMoney(product.price)}</p>
           </div>
           <div className="rounded-xl border border-slate-200 p-3.5">
             <p className="text-[11px] uppercase tracking-wide text-neutral-light">Unit cost</p>
-            <p className="mt-1 text-base font-semibold text-slate-900">{formatCedi(product.cost_price)}</p>
+            <p className="mt-1 text-base font-semibold text-slate-900">{formatMoney(product.cost_price)}</p>
           </div>
           <div className="rounded-xl border border-slate-200 p-3.5">
             <p className="text-[11px] uppercase tracking-wide text-neutral-light">Margin</p>
@@ -161,15 +161,15 @@ export default function ProductDetailModal({
             </p>
             {margin != null && (
               <p className="mt-0.5 text-[11px] text-neutral-light">
-                {formatCedi(Number(product.price) - Number(product.cost_price))} profit / unit
+                {formatMoney(Number(product.price) - Number(product.cost_price))} profit / unit
               </p>
             )}
           </div>
           <div className="rounded-xl border border-slate-200 p-3.5">
             <p className="text-[11px] uppercase tracking-wide text-neutral-light">Stock value</p>
-            <p className="mt-1 text-base font-semibold text-slate-900">{formatCedi(stockValue(product))}</p>
+            <p className="mt-1 text-base font-semibold text-slate-900">{formatMoney(stockValue(product))}</p>
             <p className="mt-0.5 text-[11px] text-neutral-light">
-              {formatCedi(stockValue(product, 'retail'))} at retail
+              {formatMoney(stockValue(product, 'retail'))} at retail
             </p>
           </div>
         </div>
