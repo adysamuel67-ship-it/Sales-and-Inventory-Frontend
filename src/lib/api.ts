@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { DEFAULT_COUNTRY_CODE } from '@/lib/currency'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://smart-sales-inventory-bmbn.onrender.com'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://smart-sales-and-inventory-ai-tracking.onrender.com'
 
 const api = axios.create({
   baseURL: API_BASE_URL,
