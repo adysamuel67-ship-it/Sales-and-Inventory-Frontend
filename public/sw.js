@@ -27,6 +27,15 @@ self.addEventListener('activate', (event) => {
   )
 })
 
+self.addEventListener('sync', (event) => {
+  if (event.tag !== 'bbgh-outbox') return
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+      for (const client of clients) client.postMessage({ type: 'BBGH_FLUSH_SYNC' })
+    })
+  )
+})
+
 self.addEventListener('fetch', (event) => {
   const { request } = event
   if (request.method !== 'GET') return

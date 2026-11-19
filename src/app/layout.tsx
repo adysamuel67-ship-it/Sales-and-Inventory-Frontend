@@ -4,6 +4,7 @@ import './globals.css'
 import { AuthProvider } from '@/lib/auth'
 import { COMPANY_NAME, SITE_DESCRIPTION, SITE_NAME, SITE_URL, SUPPORT_PHONE } from '@/lib/site'
 import OfflineBanner from '@/components/OfflineBanner'
+import OfflineSyncProvider from '@/components/OfflineSyncProvider'
 import InstallAppPrompt from '@/components/InstallAppPrompt'
 import ServiceWorkerRegister from '@/components/ServiceWorkerRegister'
 
@@ -190,6 +191,7 @@ const siteJsonLd = {
         'Profit Reports',
         'Multi-Business Support',
         'Role-Based Access',
+        'Offline-First Sales with Automatic Sync',
       ],
     },
   ],
@@ -208,6 +210,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
         <AuthProvider>
           <OfflineBanner />
+          <OfflineSyncProvider />
           {children}
         </AuthProvider>
         <InstallAppPrompt />

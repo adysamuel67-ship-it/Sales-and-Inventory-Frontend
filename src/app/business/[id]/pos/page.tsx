@@ -18,6 +18,8 @@ import {
 } from '@/lib/pos'
 import { cacheProducts, getCachedProducts } from '@/lib/posCache'
 import { resolvePendingProducts } from '@/lib/pendingProducts'
+import { dequeue, enqueue } from '@/lib/offlineDb'
+import { requestBackgroundSync } from '@/lib/offlineSync'
 import {
   extractArray,
   formatMoney,
@@ -258,15 +260,20 @@ export default function PosPage() {
 
       if (!idempotencyKeyRef.current) idempotencyKeyRef.current = newIdempotencyKey()
 
-      const response = await saleAPI.record(
+      const payload = {
+        list_items: items,
+        amount_paid: total,
+        payment_method: paymentMethod,
+      }
+      const op = await enqueue({
+        type: 'sale.record',
         businessId,
-        {
-          list_items: items,
-          amount_paid: total,
-          payment_method: paymentMethod,
-        },
-        idempotencyKeyRef.current
-      )
+        payload,
+        idempotencyKey: idempotencyKeyRef.current,
+      })
+
+      const response = await saleAPI.record(businessId, payload, idempotencyKeyRef.current)
+      await dequeue(op.id)
 
       const raw = response.data?.data ?? response.data
       const savedSaleId = raw?.sale_id ?? raw?.id
@@ -291,7 +298,16 @@ export default function PosPage() {
         setReceiptSaleId(Number(savedSaleId))
       }
     } catch (err) {
-      setError(parseApiError(err) || 'Could not complete the sale. The cart has been kept so you can retry.')
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+        setCart([])
+        setPaymentMethod('cash')
+        setScanNotice(null)
+        idempotencyKeyRef.current = ''
+        setNotice('Sale saved offline. It will sync automatically when you are back online.')
+        void requestBackgroundSync()
+      } else {
+        setError(parseApiError(err) || 'Could not complete the sale. The cart has been kept so you can retry.')
+      }
     } finally {
       setSubmitting(false)
     }

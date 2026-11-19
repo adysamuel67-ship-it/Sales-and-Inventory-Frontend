@@ -115,6 +115,18 @@ const features = [
     title: 'More than one shop or branch',
     body: 'One account holds every business you run, each with its own products, staff and numbers. Switch between them without juggling separate logins.',
   },
+  {
+    n: '10',
+    icon: 'sync' as const,
+    title: 'Keep selling when the signal drops',
+    body: 'Your product list stays on the device and sales are saved straight to it. Ring up the customer, hand them their goods and carry on — no signal needed.',
+  },
+  {
+    n: '11',
+    icon: 'box' as const,
+    title: 'Sales sync themselves when you are back',
+    body: 'Queued sales send automatically on reconnect, in the background. Each one carries a unique key, so a retry can never record the same sale twice.',
+  },
 ]
 
 // The complete capability list, grouped the way a shop actually thinks about
@@ -196,7 +208,11 @@ const featureGroups = [
       'Email verification and password reset',
       'Profile and password management',
       'Install the app on your home screen',
-      'Offline-safe: saved data stays saved',
+      'Products and sales cached on your device',
+      'Record sales with no internet connection',
+      'Queued sales sync automatically on reconnect',
+      'Unique key on every queued sale prevents duplicates',
+      'Background sync when the app is not in front',
       'Works on any phone, tablet or laptop',
       'Super-admin console for users, businesses, keys, report access, low stock and jobs',
     ],
@@ -235,7 +251,7 @@ const faqs = [
   },
   {
     q: 'What if the internet goes off?',
-    a: 'The app is designed for modest connections and does not stream anything heavy. If you lose signal completely, sales you have already saved stay saved.',
+    a: 'You can still sell. Products already loaded on your device stay available, and each sale is saved to the device first. When the connection returns, queued sales sync automatically in the background, and each sale has a unique key so it is never recorded twice.',
   },
   {
     q: 'Can I run more than one business?',
@@ -299,7 +315,8 @@ export default function Home() {
       'Notifications',
       'Country-Aware Currency',
       'Installable Web App',
-      'Offline-Safe Data',
+      'Offline-First Sales with Automatic Sync',
+      'Durable On-Device Sales Queue',
     ],
   }
 
@@ -427,7 +444,7 @@ export default function Home() {
                 Everything it does
               </p>
               <h2 className="mt-3 text-[1.75rem] font-bold leading-tight tracking-[-0.02em] text-slate-900 sm:text-4xl">
-                Nine things that used to eat your afternoon
+                Eleven things that used to eat your afternoon
               </h2>
               <p className="mt-4 text-[15px] leading-relaxed text-pretty text-slate-600 sm:text-base">
                 Sales, stock, customers, credit and your staff — all in one place,
@@ -440,7 +457,7 @@ export default function Home() {
         </section>
 
         {/* ---------- Full feature list ----------
-            The nine cards above carry the story; this is the complete inventory
+            The eleven cards above carry the story; this is the complete inventory
             of what the app actually does, grouped so a buyer can scan for the
             one capability they care about without reading every paragraph. */}
         <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">

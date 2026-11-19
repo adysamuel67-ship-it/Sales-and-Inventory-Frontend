@@ -6,6 +6,8 @@ import { useAuth } from '@/lib/auth'
 import { saleAPI, productAPI, customerAPI, adminAPI } from '@/lib/api'
 import { extractArray, normalizeProduct, mapSale, parseApiError, isStaffRole, isAdminRole, MappedSale, formatPayment, formatMoney, isDeletedProduct } from '@/lib/utils'
 import { resolvePendingProducts } from '@/lib/pendingProducts'
+import { cacheKey, createIdempotencyKey, dequeue, enqueue, getCached, listOutbox, setCached } from '@/lib/offlineDb'
+import { OUTBOX_SUCCESS_EVENT, registerSyncHandler, requestBackgroundSync, type OutboxSuccessDetail } from '@/lib/offlineSync'
 import SaleDetailModal from '@/components/SaleDetailModal'
 import SaleEditModal from '@/components/SaleEditModal'
 import SaleReceiptModal from '@/components/SaleReceiptModal'
@@ -82,6 +84,9 @@ export default function SalesPage() {
   const tempIdRef = useRef(0)
   const creatingSaleRef = useRef(false)
   const retryRef = useRef<Map<number, any>>(new Map())
+  const idempotencyKeysRef = useRef<Map<number, string>>(new Map())
+  const outboxIdsRef = useRef<Map<number, string>>(new Map())
+  const mergeRef = useRef<((optimistic: MappedSale, saved: MappedSale) => MappedSale) | null>(null)
 
   const isStaff = isStaffRole(user?.business_role || user?.role)
   const canEditSale = isAdminRole(user?.business_role || user?.role) || user?.business_role === 'cashier' || user?.role === 'cashier'
@@ -211,10 +216,31 @@ export default function SalesPage() {
     openQuickAddForScan('', barcode)
   }
 
+  const buildPendingSale = useCallback((op: any, productMap: Map<number, string>): MappedSale => {
+    const items: { product_id: number; quantity: number }[] = op.payload?.list_items || []
+    const localId = Number(op.localId)
+    const names = items.map((item) => productMap.get(item.product_id) || `Product #${item.product_id}`)
+    return {
+      id: Number.isFinite(localId) ? localId : -1,
+      product: names.join(', ') || 'Unknown',
+      qty: items.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0),
+      amount: Number(op.payload?.amount_paid) || 0,
+      payment: String(op.payload?.payment_method || 'cash').toLowerCase(),
+      time: new Date(op.createdAt).toLocaleString(),
+      created_at: new Date(op.createdAt).toISOString(),
+      pending: true,
+    }
+  }, [])
+
   const loadData = useCallback(async () => {
     if (!businessId) return
     setLoading(true)
     setError('')
+    const salesKey = cacheKey('sales', businessId)
+    const productsKey = cacheKey('products', businessId)
+    const [cachedSales, cachedProducts] = await Promise.all([getCached<MappedSale[]>(salesKey), getCached<Product[]>(productsKey)])
+    if (cachedProducts) setProducts(cachedProducts)
+    if (cachedSales) setAllSales((prev) => [...prev.filter((s) => s.pending), ...cachedSales])
     try {
       const [salesRes, productsRes, membersRes] = await Promise.allSettled([
         saleAPI.list(businessId),
@@ -222,7 +248,11 @@ export default function SalesPage() {
         adminAPI.listMembers(),
       ])
       const productsList = productsRes.status === 'fulfilled' ? extractArray(productsRes.value.data).map(normalizeProduct) : []
-      if (productsRes.status === 'fulfilled') setProducts(productsList.filter((p: any) => !isDeletedProduct(p)))
+      if (productsRes.status === 'fulfilled') {
+        const active = productsList.filter((p: any) => !isDeletedProduct(p))
+        setProducts(active)
+        void setCached(productsKey, active)
+      }
       const productMap = new Map<number, string>()
       for (const p of productsList) {
         productMap.set(p.product_id, p.name)
@@ -237,14 +267,35 @@ export default function SalesPage() {
           }
         }
       }
-      if (salesRes.status === 'fulfilled') setAllSales(extractArray(salesRes.value.data).map((s) => mapSale(s, productMap, userMap)))
+      const saved = salesRes.status === 'fulfilled' ? extractArray(salesRes.value.data).map((s) => mapSale(s, productMap, userMap)) : null
+      if (saved) {
+        setAllSales((prev) => [...prev.filter((s) => s.pending), ...saved])
+        void setCached(salesKey, saved)
+      } else if (!cachedSales) {
+        setError('Failed to load data')
+      }
+
+      const pending = (await listOutbox(businessId)).filter((op) => op.type === 'sale.record')
+      if (pending.length) {
+        for (const op of pending) {
+          const localId = Number(op.localId)
+          if (!Number.isFinite(localId)) continue
+          idempotencyKeysRef.current.set(localId, op.idempotencyKey)
+          outboxIdsRef.current.set(localId, op.id)
+          retryRef.current.set(localId, op.payload)
+        }
+        setAllSales((prev) => {
+          const existing = new Set(prev.map((s) => s.id))
+          return [...pending.map((op) => buildPendingSale(op, productMap)).filter((s) => !existing.has(s.id)), ...prev]
+        })
+      }
     } catch (err: any) {
       const detail = err.response?.data?.detail
-      setError(typeof detail === 'string' ? detail : 'Failed to load data')
+      setError(typeof detail === 'string' ? detail : cachedSales ? 'Showing saved sales. Updates will sync when you are back online.' : 'Failed to load data')
     } finally {
       setLoading(false)
     }
-  }, [businessId])
+  }, [businessId, buildPendingSale])
 
   const filteredSales = useMemo(() => {
     if (!dateFilter.start && !dateFilter.end) return allSales
@@ -339,10 +390,58 @@ export default function SalesPage() {
     }
     return merged
   }
+  mergeRef.current = mergeConfirmedSale
+
+  useEffect(() => {
+    if (!businessId) return
+    const unregister = registerSyncHandler('sale.record', async (op) => {
+      const res = await saleAPI.record(op.businessId, op.payload, op.idempotencyKey)
+      return res.data?.data ?? res.data
+    })
+    const onSynced = (event: Event) => {
+      const { op, result } = (event as CustomEvent<OutboxSuccessDetail>).detail
+      if (op.type !== 'sale.record' || op.businessId !== businessId) return
+      const saved = mapSale(result)
+      const localId = Number(op.localId)
+      setAllSales((prev) =>
+        prev.some((s) => s.id === localId)
+          ? prev.map((s) => (s.id === localId ? mergeRef.current?.(s, saved) ?? saved : s))
+          : [saved, ...prev]
+      )
+      retryRef.current.delete(localId)
+      idempotencyKeysRef.current.delete(localId)
+      outboxIdsRef.current.delete(localId)
+      setSyncFailures((prev) => {
+        if (!(localId in prev)) return prev
+        const next = { ...prev }
+        delete next[localId]
+        return next
+      })
+    }
+    window.addEventListener(OUTBOX_SUCCESS_EVENT, onSynced)
+    return () => {
+      unregister()
+      window.removeEventListener(OUTBOX_SUCCESS_EVENT, onSynced)
+    }
+  }, [businessId])
 
   const sendSale = async (tempId: number, payload: any) => {
+    const idempotencyKey = idempotencyKeysRef.current.get(tempId) || createIdempotencyKey('sale')
+    idempotencyKeysRef.current.set(tempId, idempotencyKey)
+    const op = await enqueue({
+      type: 'sale.record',
+      businessId,
+      payload,
+      idempotencyKey,
+      localId: String(tempId),
+    })
+    const previousId = outboxIdsRef.current.get(tempId)
+    if (previousId && previousId !== op.id) await dequeue(previousId)
+    outboxIdsRef.current.set(tempId, op.id)
     try {
-      const res = await saleAPI.record(businessId, payload)
+      const res = await saleAPI.record(businessId, payload, idempotencyKey)
+      await dequeue(op.id)
+      outboxIdsRef.current.delete(tempId)
       const raw = res.data?.data ?? res.data
       const saved = mapSale(raw)
       setAllSales((prev) => prev.map((s) => (s.id === tempId ? mergeConfirmedSale(s, saved) : s)))
@@ -363,6 +462,7 @@ export default function SalesPage() {
       setSyncFailures((prev) => ({ ...prev, [tempId]: message }))
       setSuccess('')
       setError(`Sale not saved: ${message}`)
+      void requestBackgroundSync()
     }
   }
 
@@ -510,6 +610,10 @@ export default function SalesPage() {
   }
 
   const discardSale = (tempId: number) => {
+    const opId = outboxIdsRef.current.get(tempId)
+    if (opId) void dequeue(opId)
+    outboxIdsRef.current.delete(tempId)
+    idempotencyKeysRef.current.delete(tempId)
     const saved = retryRef.current.get(tempId)
     retryRef.current.delete(tempId)
     if (saved?.items) {

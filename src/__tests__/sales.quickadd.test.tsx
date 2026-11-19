@@ -95,7 +95,7 @@ describe('Adding a product while recording a sale', () => {
     await waitFor(() =>
       expect(recordMock).toHaveBeenCalledWith(1, expect.objectContaining({
         list_items: [{ product_id: 99, quantity: 2 }],
-      }))
+      }), expect.any(String))
     )
   })
 
@@ -128,7 +128,7 @@ describe('Adding a product while recording a sale', () => {
     await waitFor(() =>
       expect(recordMock).toHaveBeenCalledWith(1, expect.objectContaining({
         list_items: [{ product_id: 99, quantity: 2 }],
-      }))
+      }), expect.any(String))
     )
     expect(screen.queryByText(/saving product/i)).not.toBeInTheDocument()
   })

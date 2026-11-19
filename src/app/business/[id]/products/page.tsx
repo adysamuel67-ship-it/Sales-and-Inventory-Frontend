@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import { productAPI } from '@/lib/api'
 import { normalizeProduct, extractArray, parseApiError, isAdminRole, formatMoney, isDeletedProduct, formatDeletedAt } from '@/lib/utils'
+import { cacheKey, getCached, setCached } from '@/lib/offlineDb'
 import {
   filterProducts,
   inventoryStatus,
@@ -139,15 +140,22 @@ export default function ProductsPage() {
   const load = useCallback(async (silent = false) => {
     if (!businessId || isNaN(businessId)) return
     if (!silent) setLoading(true)
+    const key = cacheKey('products', businessId)
+    const cached = await getCached<any[]>(key)
+    if (cached && !silent) {
+      setAllProducts(cached)
+      setCategories([...new Set(cached.filter(p => !isDeletedProduct(p)).map(p => p.category).filter(Boolean))] as string[])
+    }
     try {
       const res = await productAPI.list(businessId)
       const items = extractArray(res.data).map(normalizeProduct)
       setAllProducts(items)
+      await setCached(key, items)
       const cats = [...new Set(items.filter(p => !isDeletedProduct(p)).map(p => p.category).filter(Boolean))] as string[]
       setCategories(cats)
       setError('')
     } catch (err: any) {
-      setError(parseApiError(err))
+      setError(cached ? 'Showing saved products. Updates will sync when you are back online.' : parseApiError(err))
     } finally {
       if (!silent) setLoading(false)
     }
