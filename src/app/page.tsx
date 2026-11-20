@@ -9,28 +9,31 @@ import FeatureGrid from '@/components/landing/FeatureGrid'
 import FactCards from '@/components/landing/FactCards'
 import DebtLedgerPreview from '@/components/landing/DebtLedgerPreview'
 import ProfitChart from '@/components/landing/ProfitChart'
-import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, COMPANY_NAME, SUPPORT_PHONE_DISPLAY, SUPPORT_PHONE_TEL, absoluteUrl, SITE_URL } from '@/lib/site'
-import { getActiveCurrency } from '@/lib/currency'
+import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, COMPANY_NAME, SUPPORT_PHONE_DISPLAY, SUPPORT_PHONE_TEL, SUPPORTED_COUNTRY_NAMES, absoluteUrl, SITE_URL } from '@/lib/site'
+
+const COUNTRY_LIST = SUPPORTED_COUNTRY_NAMES
+const CURRENCY_LIST = 'GHS, NGN, KES, UGX, TZS, ZAR, USD and GBP'
 
 export const metadata: Metadata = {
   title: 'Free Sales, Inventory & Debt Tracking App with SMS Reminders | Business Bot GH',
-  description: 'Free sales and inventory tracking app for Ghanaian businesses. Record sales, manage stock, track debts with automatic SMS reminders, customers & profit reports. Works on any phone.',
+  description: `Free sales and inventory tracking app for traders in ${COUNTRY_LIST}. Record sales, manage stock, track debts with automatic SMS reminders, customers & profit reports. Works on any phone.`,
   keywords: [
-    'sales and inventory tracking app Ghana',
-    'free inventory management system Ghana',
+    'sales and inventory tracking app',
+    'free inventory management system',
     'debt tracking with sms reminders',
-    'automatic sms reminders Ghana',
-    'credit sales management software Ghana',
-    'pos system for small business Ghana',
-    'stock tracking app Ghana',
-    'business management app Ghana free',
+    'automatic sms reminders',
+    'credit sales management software',
+    'pos system for small business',
+    'stock tracking app',
+    'business management app free',
+    'ghana nigeria kenya uganda tanzania south africa us uk',
   ],
   alternates: { canonical: SITE_URL },
   openGraph: {
     type: 'website',
     url: SITE_URL,
     title: 'Free Sales, Inventory & Debt Tracking App with SMS Reminders | Business Bot GH',
-    description: 'Track sales, inventory, debts with automatic SMS reminders. Free for Ghanaian traders & small businesses. Works on any phone.',
+    description: `Track sales, inventory, debts with automatic SMS reminders. Free for traders in ${COUNTRY_LIST}. Works on any phone.`,
     images: [
       {
         url: '/og-image.png',
@@ -43,13 +46,13 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Free Sales, Inventory & Debt Tracking App with SMS Reminders | Business Bot GH',
-    description: 'Track sales, inventory, debts with automatic SMS reminders. Free for Ghanaian traders & small businesses.',
+    description: `Track sales, inventory, debts with automatic SMS reminders. Free for traders in ${COUNTRY_LIST}.`,
     images: ['/og-image.png'],
   },
 }
 
 const facts = [
-  { value: getActiveCurrency(), label: 'Prices and totals in your local currency', icon: 'cedi' as const },
+  { value: '8 countries', label: CURRENCY_LIST, icon: 'globe' as const },
   { value: 'MoMo', label: 'Mobile money payments recognised', icon: 'momo' as const },
   { value: 'Any phone', label: 'Works on a basic Android handset', icon: 'phone' as const },
   { value: 'Free', label: 'No card, no setup fee, no trial clock', icon: 'free' as const },
@@ -247,7 +250,7 @@ const faqs = [
   },
   {
     q: 'Do I need a computer?',
-    a: 'No. It works in the browser on any phone, including the basic Android handsets common in Ghana, and it is fine on a slow connection. It also works on tablets and laptops.',
+    a: 'No. It works in the browser on any phone, including basic Android handsets, and it is fine on a slow connection. It also works on tablets and laptops.',
   },
   {
     q: 'What if the internet goes off?',
@@ -259,7 +262,7 @@ const faqs = [
   },
   {
     q: 'What currency does it use?',
-    a: 'Business Bot uses the currency for the country you choose when you sign up — Ghanaian cedis, Nigerian naira, Kenyan shillings, Ugandan shillings, Tanzanian shillings, South African rand, US dollars or British pounds — and formats every amount the same way.',
+    a: `Business Bot supports ${COUNTRY_LIST}. Pick your country at sign-up and amounts are shown in its currency — ${CURRENCY_LIST} — formatted the same way throughout the app.`,
   },
   {
     q: 'How do debt SMS reminders work?',
@@ -286,8 +289,8 @@ export default function Home() {
     description: SITE_DESCRIPTION,
     logo: absoluteUrl('/icon-512.png'),
     image: absoluteUrl('/og-image.png'),
-    offers: { '@type': 'Offer', price: '0', priceCurrency: 'GHS' },
-    areaServed: 'GH',
+    offers: { '@type': 'Offer', price: '0' },
+    areaServed: ['GH', 'NG', 'KE', 'UG', 'TZ', 'ZA', 'US', 'GB'],
     author: { '@type': 'Organization', name: COMPANY_NAME },
     publisher: { '@type': 'Organization', name: COMPANY_NAME },
     contactPoint: {
@@ -366,7 +369,7 @@ export default function Home() {
                 five times in one hero. It now appears once, at the CTA. */}
             <p className="mb-5 inline-flex max-w-full items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-medium text-slate-600 sm:text-xs">
               <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-success" />
-              <span className="truncate">Free Sales & Inventory Tracking for Ghanaian Traders</span>
+              <span className="truncate">Free Sales & Inventory Tracking for Traders in 8 Countries</span>
             </p>
 
             {/* The headline states the outcome, not the product label - the brand
@@ -383,7 +386,7 @@ export default function Home() {
                 where the headline sets the width and the body copy sits inside
                 it. One sentence, brand named once. */}
             <p className="mx-auto mt-5 max-w-xl text-pretty text-[15px] leading-relaxed text-slate-600 sm:mt-6 sm:text-lg">
-              Business Bot GH helps Ghanaian traders record sales, manage stock, track debts with automatic SMS reminders, and see real profit - all from your phone.
+              Business Bot GH helps traders in {COUNTRY_LIST} record sales, manage stock, track debts with automatic SMS reminders, and see real profit - all from your phone.
             </p>
 
             <div className="mx-auto mt-8 flex max-w-sm flex-col items-stretch gap-3 sm:max-w-none sm:flex-row sm:items-center sm:justify-center">
@@ -409,7 +412,7 @@ export default function Home() {
                 anchored before the reader reaches the facts section. */}
             <dl className="mx-auto mt-10 grid max-w-2xl grid-cols-3 gap-4 border-t border-slate-200 pt-8 sm:gap-8">
               {[
-                { k: 'Your currency', v: 'Matched to your country' },
+                { k: 'Your currency', v: 'One of 8 local currencies' },
                 { k: 'Debt + SMS', v: 'Automatic reminders' },
                 { k: 'Live Stock', v: 'Updates as you sell' },
               ].map((s) => (
@@ -534,7 +537,7 @@ export default function Home() {
                 numbers you would see on a desktop are waiting when you get home.
               </p>
               <p className="mt-4 text-[15px] leading-relaxed text-pretty text-slate-600 sm:text-base">
-                Built for the handsets most traders in Ghana actually own, and for the network they
+                Built for the handsets most traders actually own, and for the networks they
                 actually have.
               </p>
             </div>
@@ -558,7 +561,7 @@ export default function Home() {
                 The money you are owed, in one place
               </h2>
               <p className="mt-5 text-[15px] leading-relaxed text-pretty text-slate-600 sm:text-base">
-                Most shops in Ghana sell on credit, and most lose track of it. Every part
+                Most shops sell on credit, and most lose track of it. Every part
                 payment you take is attached to the customer&rsquo;s name, so the balance
                 follows them. You can see who has gone quiet, how long they have been
                 holding your money, and what they paid last.

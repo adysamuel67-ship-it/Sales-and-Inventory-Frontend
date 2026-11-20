@@ -50,7 +50,7 @@ export default async function OpengraphImage() {
               maxWidth: 940,
             }}
           >
-            Sales &amp; Inventory Tracking for Ghanaian Businesses
+            Sales &amp; Inventory Tracking for Traders in 8 Countries
           </div>
           <div style={{ color: '#CBD5E1', fontSize: 28, marginTop: 24 }}>
             Record sales, track stock and follow up on debts with SMS reminders — free, from any phone.

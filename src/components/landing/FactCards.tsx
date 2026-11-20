@@ -5,8 +5,8 @@
  * deliberate tiles instead of a table of numbers competing with the hero.
  */
 const ICONS: Record<string, React.ReactNode> = {
-  cedi: (
-    <path strokeLinecap="round" strokeLinejoin="round" d="M14.706 7.459a4.5 4.5 0 01-5.177 5.772L4.5 18.75l-.75-.75 4.519-5.029a4.5 4.5 0 015.437-5.443zm0 0l1.5-1.5m0 0l3 3m-3-3l-3-3m-1.5 1.5L12 6m0 0l3 3" />
+  globe: (
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18zm0 0c2.5-2.5 3.75-5.5 3.75-9S14.5 5.5 12 3m0 18c-2.5-2.5-3.75-5.5-3.75-9S9.5 5.5 12 3m-8.25 6h16.5m-16.5 6h16.5" />
   ),
   momo: (
     <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
@@ -20,7 +20,7 @@ const ICONS: Record<string, React.ReactNode> = {
 }
 
 const TONE: Record<string, string> = {
-  cedi: 'bg-primary-light text-primary',
+  globe: 'bg-sky-50 text-sky-600',
   momo: 'bg-emerald-50 text-success',
   phone: 'bg-amber-50 text-warning',
   free: 'bg-violet-50 text-violet-600',

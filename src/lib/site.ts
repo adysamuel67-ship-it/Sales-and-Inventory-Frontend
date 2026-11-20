@@ -1,6 +1,9 @@
 export const SITE_NAME = 'Business Bot GH'
 
-export const SITE_TAGLINE = 'Sales, Inventory, Debt Tracking & SMS Reminders for Ghanaian Businesses'
+export const SUPPORTED_COUNTRY_NAMES =
+  'Ghana, Nigeria, Kenya, Uganda, Tanzania, South Africa, the United States and the United Kingdom'
+
+export const SITE_TAGLINE = 'Sales, Inventory, Debt Tracking & SMS Reminders for Modern Traders'
 
 export const COMPANY_NAME = 'Whisper Systems'
 
@@ -23,7 +26,7 @@ export const SUPPORT_EMAIL = 'adysamuel68@gmail.com'
 export const SUPPORT_EMAIL_SUBJECT = 'Business Bot GH — Support Request'
 
 export const SITE_DESCRIPTION =
-  'Business Bot GH is a free sales and inventory tracking platform built for Ghanaian traders, market shops and small businesses. Record sales, manage stock, track debts with automatic SMS reminders, follow up on customers and see clear profit reports from your phone or laptop.'
+  `Business Bot GH is a free sales and inventory tracking platform for traders in ${SUPPORTED_COUNTRY_NAMES}. Record sales, manage stock, track debts with automatic SMS reminders, follow up on customers and see clear profit reports from your phone or laptop.`
 
 export const SITE_URL = (
   process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
