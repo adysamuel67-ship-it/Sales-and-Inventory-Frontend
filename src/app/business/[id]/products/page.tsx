@@ -22,10 +22,12 @@ import {
   type StockFilter,
 } from '@/lib/products'
 import type { Product } from '@/lib/types'
+import { normalizeBarcode } from '@/lib/barcode'
 import { useAuth } from '@/lib/auth'
 import ProductDetailModal from '@/components/ProductDetailModal'
 import ProductUploadModal from '@/components/ProductUploadModal'
 import BarcodeScanModal from '@/components/BarcodeScanModal'
+import BarcodeCaptureModal from '@/components/BarcodeCaptureModal'
 import KpiCard from '@/components/KpiCard'
 import PageHeader from '@/components/ui/PageHeader'
 import Alert from '@/components/ui/Alert'
@@ -117,6 +119,7 @@ export default function ProductsPage() {
   const [sortAsc, setSortAsc] = useState(true)
   const [showAdd, setShowAdd] = useState(false)
   const [showScan, setShowScan] = useState(false)
+  const [showBarcodeCapture, setShowBarcodeCapture] = useState(false)
   const [showUpload, setShowUpload] = useState(false)
   const [uploadNotice, setUploadNotice] = useState('')
   const [selected, setSelected] = useState<Set<number>>(new Set())
@@ -232,7 +235,7 @@ export default function ProductsPage() {
       category: form.category || undefined,
       description: form.description || undefined,
       sku: form.sku || undefined,
-      barcode: form.barcode.trim() || null,
+      barcode: normalizeBarcode(form.barcode) || null,
     }
 
     // Close the form and paint the change straight away. The server call runs
@@ -1170,6 +1173,17 @@ export default function ProductsPage() {
         />
       )}
 
+      {showBarcodeCapture && (
+        <BarcodeCaptureModal
+          initialValue={form.barcode}
+          onClose={() => {
+            setShowBarcodeCapture(false)
+            setShowAdd(true)
+          }}
+          onCapture={(code) => setForm((current) => ({ ...current, barcode: code }))}
+        />
+      )}
+
       {/* Product Detail Modal */}
       {detailProduct && (
         <ProductDetailModal
@@ -1312,14 +1326,29 @@ export default function ProductsPage() {
                 </div>
                 <div>
                   <label htmlFor="product-barcode" className="block text-xs font-medium text-slate-700 mb-1">Barcode</label>
-                  <input
-                    id="product-barcode"
-                    value={form.barcode}
-                    onChange={e => setForm({ ...form, barcode: e.target.value })}
-                    placeholder="Scan or type"
-                    autoComplete="off"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg font-mono text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      id="product-barcode"
+                      value={form.barcode}
+                      onChange={e => setForm({ ...form, barcode: e.target.value })}
+                      placeholder="Scan or type"
+                      autoComplete="off"
+                      className="min-w-0 flex-1 px-3 py-2 border border-slate-300 rounded-lg font-mono text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                    />
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => {
+                        setShowAdd(false)
+                        setShowBarcodeCapture(true)
+                      }}
+                      aria-label="Scan barcode to update"
+                      leftIcon={<ScanIcon className="h-4 w-4" />}
+                    >
+                      Scan
+                    </Button>
+                  </div>
                 </div>
               </div>
               <div>

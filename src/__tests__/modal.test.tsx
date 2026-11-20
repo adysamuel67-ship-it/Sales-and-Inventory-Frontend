@@ -105,6 +105,30 @@ describe('ProductsPage restock modal', () => {
     expect(screen.getByRole('dialog')).toBeInTheDocument()
     expect(input).toHaveValue(50)
   })
+
+  it('lets the edit form open the barcode scanner', async () => {
+    render(<ProductsPage />)
+
+    const [row] = await screen.findAllByText('Rice')
+    fireEvent.click(row)
+    fireEvent.click(await screen.findByText('Edit Product'))
+
+    const barcodeInput = await screen.findByLabelText('Barcode')
+    expect(barcodeInput).toHaveValue('')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Scan barcode to update' }))
+
+    expect(
+      await screen.findByText(/Point the camera at the barcode/i)
+    ).toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText('Barcode'), { target: { value: ' 0012345678905 ' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Use barcode' }))
+
+    const updatedBarcode = await screen.findByLabelText('Barcode')
+    expect(updatedBarcode).toHaveValue('0012345678905')
+    expect(await screen.findByText('Edit Product')).toBeInTheDocument()
+  })
 })
 
 describe('OfflineBanner', () => {
