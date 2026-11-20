@@ -66,7 +66,8 @@ export default function OfflineBanner() {
           role="status"
           className="fixed inset-x-0 top-0 z-[100] bg-amber-500 text-white text-center text-sm font-medium py-2 px-4 shadow-md"
         >
-          You are offline. Saved data is safe — new changes need a connection.
+          You are offline. Saved data is safe and sales can be queued here.
+          Sign-in, chat, SMS, uploads, reports and live updates need a connection.
         </div>
       )}
       {conflicts > 0 && (
