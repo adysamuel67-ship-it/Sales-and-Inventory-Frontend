@@ -1,16 +1,27 @@
-import { clearOfflineStorage, dequeue, enqueue, getCached, listOutbox, setCached } from '@/lib/offlineDb'
 import {
+  clearOfflineStorage,
+  dequeue,
+  enqueue,
+  getCached,
+  listOutbox,
+  scopeKey,
+  setCached,
+} from '@/lib/offlineDb'
+import {
+  clearOfflineData,
+  discardConflicts,
+  flushOutbox,
+  OUTBOX_CONFLICT_EVENT,
   OUTBOX_FAILURE_EVENT,
   OUTBOX_SUCCESS_EVENT,
-  flushOutbox,
   registerSyncHandler,
 } from '@/lib/offlineSync'
 
 describe('offline storage and sync', () => {
   const unregisters: (() => void)[] = []
 
-  beforeEach(() => {
-    clearOfflineStorage()
+  beforeEach(async () => {
+    await clearOfflineStorage()
     Object.defineProperty(window.navigator, 'onLine', { value: true, configurable: true })
   })
 
@@ -77,5 +88,50 @@ describe('offline storage and sync', () => {
 
     expect(handler).not.toHaveBeenCalled()
     expect(await listOutbox()).toHaveLength(1)
+  })
+
+  it('isolates cached data and queued writes by account', async () => {
+    const first = scopeKey(1, 5, 'sales:5')
+    const second = scopeKey(2, 5, 'sales:5')
+    await setCached(first, ['first account'])
+    await setCached(second, ['second account'])
+
+    expect(await getCached(first)).toEqual(['first account'])
+    expect(await getCached(second)).toEqual(['second account'])
+
+    await enqueue({ type: 'sale.record', businessId: 5, userId: 1, payload: {} })
+    await enqueue({ type: 'sale.record', businessId: 5, userId: 2, payload: {} })
+
+    expect(await listOutbox(5, 1)).toHaveLength(1)
+    expect(await listOutbox(5, 2)).toHaveLength(1)
+  })
+
+  it('flags conflicting writes and stops retrying them until discarded', async () => {
+    const conflictError = { response: { status: 409 } }
+    const handler = jest.fn().mockRejectedValue(conflictError)
+    unregisters.push(registerSyncHandler('sale.record', handler))
+    const onConflict = jest.fn()
+    window.addEventListener(OUTBOX_CONFLICT_EVENT, onConflict)
+
+    const op = await enqueue({ type: 'sale.record', businessId: 1, userId: 7, payload: {} })
+    await flushOutbox()
+    await flushOutbox()
+
+    expect(onConflict).toHaveBeenCalledTimes(1)
+    expect(handler).toHaveBeenCalledTimes(1)
+    expect(await listOutbox()).toEqual([expect.objectContaining({ id: op.id, conflict: true })])
+
+    await discardConflicts()
+    expect(await listOutbox()).toEqual([])
+    window.removeEventListener(OUTBOX_CONFLICT_EVENT, onConflict)
+  })
+
+  it('clears offline data during account changes', async () => {
+    await setCached('session-data', ['private'])
+    await enqueue({ type: 'sale.record', businessId: 1, payload: {} })
+    await clearOfflineData()
+
+    expect(await getCached('session-data')).toBeNull()
+    expect(await listOutbox()).toEqual([])
   })
 })

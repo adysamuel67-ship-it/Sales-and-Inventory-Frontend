@@ -100,7 +100,7 @@ describe('Recording a sale does not wait for the API', () => {
     fillSale()
     fireEvent.click(screen.getByRole('button', { name: /confirm sale/i }))
 
-    expect(await screen.findByText('Sale saved')).toBeInTheDocument()
+    expect(await screen.findByText(/Sale saved/)).toBeInTheDocument()
     expect((await screen.findAllByText('Rice 50kg')).length).toBeGreaterThan(0)
     expect(recordMock).toHaveBeenCalledTimes(1)
     expect(gate.promise).toBeDefined()
@@ -111,7 +111,7 @@ describe('Recording a sale does not wait for the API', () => {
     gate.resolve({ data: { sale_id: 555, total_amount: 800, payment_method: 'cash', sales_items: [] } })
 
     await waitFor(() => expect(screen.queryByText(/Saving/)).not.toBeInTheDocument())
-    expect(screen.queryByText('Sale saved')).toBeInTheDocument()
+    expect(screen.queryByText(/Sale saved and synced/)).toBeInTheDocument()
   })
 
   it('replaces the placeholder id once the server responds', async () => {
@@ -121,7 +121,7 @@ describe('Recording a sale does not wait for the API', () => {
     await renderPage()
     fillSale()
     fireEvent.click(screen.getByRole('button', { name: /confirm sale/i }))
-    await screen.findByText('Sale saved')
+    await screen.findByText(/Sale saved/)
 
     gate.resolve({ data: { sale_id: 777, total_amount: 800, payment_method: 'cash', sales_items: [] } })
     await waitFor(() => expect(screen.queryByText(/Saving/)).not.toBeInTheDocument())
@@ -139,7 +139,7 @@ describe('Recording a sale does not wait for the API', () => {
     expect(await screen.findByText(/did not save/i)).toBeInTheDocument()
     expect((await screen.findAllByText(/Insufficient stock/)).length).toBeGreaterThan(0)
     expect(screen.getByRole('button', { name: /retry/i })).toBeInTheDocument()
-    expect(screen.queryByText('Sale saved')).not.toBeInTheDocument()
+    expect(screen.queryByText(/Sale saved and synced/)).not.toBeInTheDocument()
   })
 
   it('clears the error once a retry succeeds', async () => {

@@ -1,20 +1,24 @@
 /* Business Bot GH service worker.
  *
- * Conservative by design: it never serves stale authenticated pages or API
- * responses. Static build assets are cache-first (immutable hashed filenames),
- * public images are stale-while-revalidate, navigations fall back to a static
- * offline page when the network is gone, and everything else passes straight
- * through to the network.
+ * Static build assets are cache-first (immutable hashed filenames), public
+ * images are stale-while-revalidate, and previously visited pages are kept so
+ * they can be reopened offline. API calls are never cached here: cross-origin
+ * requests pass straight through, and all offline business data lives in the
+ * app's IndexedDB stores instead.
  */
 
-const VERSION = 'bbgh-v1'
+const VERSION = 'bbgh-v2'
 const STATIC_CACHE = `${VERSION}-static`
 const PAGE_CACHE = `${VERSION}-pages`
 const OFFLINE_URL = '/offline.html'
+const APP_SHELL = [OFFLINE_URL, '/', '/manifest.json', '/icon-192.png', '/icon-512.png']
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(PAGE_CACHE).then((cache) => cache.add(OFFLINE_URL)).then(() => self.skipWaiting())
+    Promise.all([
+      caches.open(PAGE_CACHE).then((cache) => cache.addAll(APP_SHELL).catch(() => undefined)),
+      caches.open(STATIC_CACHE).then((cache) => cache.addAll(['/favicon.ico']).catch(() => undefined)),
+    ]).then(() => self.skipWaiting())
   )
 })
 
@@ -25,6 +29,14 @@ self.addEventListener('activate', (event) => {
       .then((keys) => Promise.all(keys.filter((k) => !k.startsWith(VERSION)).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
   )
+})
+
+self.addEventListener('message', (event) => {
+  if (event.data?.type !== 'BBGH_CLEAR_CACHES') return
+  const cleared = caches
+    .keys()
+    .then((keys) => Promise.all(keys.filter((k) => k.startsWith(VERSION)).map((k) => caches.delete(k))))
+  if (event.waitUntil) event.waitUntil(cleared)
 })
 
 self.addEventListener('sync', (event) => {

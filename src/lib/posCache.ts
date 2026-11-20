@@ -156,3 +156,14 @@ export async function getCachedProducts(businessId: number): Promise<Product[]> 
 export function clearProductCache(): void {
   memory.clear()
 }
+
+export async function clearAllProductCaches(): Promise<void> {
+  memory.clear()
+  const db = await openDb()
+  if (!db) return
+  try {
+    db.transaction(STORE, 'readwrite').objectStore(STORE).clear()
+  } catch {
+    // Sign-out must not fail because storage is unavailable.
+  }
+}

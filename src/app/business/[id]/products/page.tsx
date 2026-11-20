@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import { productAPI } from '@/lib/api'
 import { normalizeProduct, extractArray, parseApiError, isAdminRole, formatMoney, isDeletedProduct, formatDeletedAt } from '@/lib/utils'
-import { cacheKey, getCached, setCached } from '@/lib/offlineDb'
+import { cacheKey, getCachedEntry, scopeKey, setCached } from '@/lib/offlineDb'
 import {
   filterProducts,
   inventoryStatus,
@@ -140,8 +140,9 @@ export default function ProductsPage() {
   const load = useCallback(async (silent = false) => {
     if (!businessId || isNaN(businessId)) return
     if (!silent) setLoading(true)
-    const key = cacheKey('products', businessId)
-    const cached = await getCached<any[]>(key)
+    const key = scopeKey(user?.id, businessId, cacheKey('products', businessId))
+    const entry = await getCachedEntry<any[]>(key)
+    const cached = entry?.data ?? null
     if (cached && !silent) {
       setAllProducts(cached)
       setCategories([...new Set(cached.filter(p => !isDeletedProduct(p)).map(p => p.category).filter(Boolean))] as string[])
@@ -155,11 +156,15 @@ export default function ProductsPage() {
       setCategories(cats)
       setError('')
     } catch (err: any) {
-      setError(cached ? 'Showing saved products. Updates will sync when you are back online.' : parseApiError(err))
+      setError(
+        cached
+          ? `Showing saved products from ${new Date(entry!.savedAt).toLocaleString()}. Updates will sync when you are back online.`
+          : parseApiError(err)
+      )
     } finally {
       if (!silent) setLoading(false)
     }
-  }, [businessId])
+  }, [businessId, user?.id])
 
   useEffect(() => { if (businessId) load() }, [businessId, load])
 

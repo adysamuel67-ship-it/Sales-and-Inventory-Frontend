@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
 import { debtAPI, customerAPI } from '@/lib/api'
 import { extractArray, parseApiError, isAdminRole, formatMoney } from '@/lib/utils'
+import { cacheKey, getCached, scopeKey, setCached } from '@/lib/offlineDb'
 import { formatDateLabel } from '@/lib/dates'
 import {
   AGING_BUCKETS,
@@ -163,24 +164,35 @@ export default function DebtsPage() {
     if (!businessId || isNaN(businessId)) return
     setLoading(true)
     setError('')
+    const debtKey = scopeKey(user?.id, businessId, cacheKey('debts', businessId))
+    const customerKey = scopeKey(user?.id, businessId, cacheKey('all-customers', businessId))
+    const [cachedDebts, cachedCustomers] = await Promise.all([getCached<any[]>(debtKey), getCached<any[]>(customerKey)])
+    if (cachedDebts) {
+      setCustomers(cachedDebts)
+      setSummary(summarizeDebts(cachedDebts))
+    }
+    if (cachedCustomers) setAllCustomers(cachedCustomers)
     try {
       const debtRes = await debtAPI.listCustomersWithDebt(businessId)
       const customerList = aggregateDebtRows(extractArray(debtRes.data))
       setCustomers(customerList)
       setSummary(summarizeDebts(customerList))
+      void setCached(debtKey, customerList)
     } catch (err: any) {
-      setError(parseApiError(err))
+      setError(cachedDebts ? 'Showing saved debts. New data will load when you are back online.' : parseApiError(err))
     }
 
     try {
       const custRes = await customerAPI.list(businessId)
-      setAllCustomers(extractArray(custRes.data))
+      const list = extractArray(custRes.data)
+      setAllCustomers(list)
+      void setCached(customerKey, list)
     } catch {
       // Non-critical
     }
 
     setLoading(false)
-  }, [businessId])
+  }, [businessId, user?.id])
 
   useEffect(() => {
     if (businessId) loadDebts()

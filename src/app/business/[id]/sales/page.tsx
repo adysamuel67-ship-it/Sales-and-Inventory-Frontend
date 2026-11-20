@@ -6,8 +6,8 @@ import { useAuth } from '@/lib/auth'
 import { saleAPI, productAPI, customerAPI, adminAPI } from '@/lib/api'
 import { extractArray, normalizeProduct, mapSale, parseApiError, isStaffRole, isAdminRole, MappedSale, formatPayment, formatMoney, isDeletedProduct } from '@/lib/utils'
 import { resolvePendingProducts } from '@/lib/pendingProducts'
-import { cacheKey, createIdempotencyKey, dequeue, enqueue, getCached, listOutbox, setCached } from '@/lib/offlineDb'
-import { OUTBOX_SUCCESS_EVENT, registerSyncHandler, requestBackgroundSync, type OutboxSuccessDetail } from '@/lib/offlineSync'
+import { cacheKey, createIdempotencyKey, dequeue, enqueue, getCached, getCachedEntry, listOutbox, scopeKey, setCached } from '@/lib/offlineDb'
+import { OUTBOX_CONFLICT_EVENT, OUTBOX_SUCCESS_EVENT, discardConflicts, requestBackgroundSync, type OutboxSuccessDetail } from '@/lib/offlineSync'
 import SaleDetailModal from '@/components/SaleDetailModal'
 import SaleEditModal from '@/components/SaleEditModal'
 import SaleReceiptModal from '@/components/SaleReceiptModal'
@@ -236,9 +236,10 @@ export default function SalesPage() {
     if (!businessId) return
     setLoading(true)
     setError('')
-    const salesKey = cacheKey('sales', businessId)
-    const productsKey = cacheKey('products', businessId)
-    const [cachedSales, cachedProducts] = await Promise.all([getCached<MappedSale[]>(salesKey), getCached<Product[]>(productsKey)])
+    const salesKey = scopeKey(user?.id, businessId, cacheKey('sales', businessId))
+    const productsKey = scopeKey(user?.id, businessId, cacheKey('products', businessId))
+    const [salesEntry, cachedProducts] = await Promise.all([getCachedEntry<MappedSale[]>(salesKey), getCached<Product[]>(productsKey)])
+    const cachedSales = salesEntry?.data ?? null
     if (cachedProducts) setProducts(cachedProducts)
     if (cachedSales) setAllSales((prev) => [...prev.filter((s) => s.pending), ...cachedSales])
     try {
@@ -275,7 +276,7 @@ export default function SalesPage() {
         setError('Failed to load data')
       }
 
-      const pending = (await listOutbox(businessId)).filter((op) => op.type === 'sale.record')
+      const pending = (await listOutbox(businessId, user?.id)).filter((op) => op.type === 'sale.record')
       if (pending.length) {
         for (const op of pending) {
           const localId = Number(op.localId)
@@ -291,11 +292,17 @@ export default function SalesPage() {
       }
     } catch (err: any) {
       const detail = err.response?.data?.detail
-      setError(typeof detail === 'string' ? detail : cachedSales ? 'Showing saved sales. Updates will sync when you are back online.' : 'Failed to load data')
+      setError(
+        typeof detail === 'string'
+          ? detail
+          : cachedSales
+            ? `Showing saved sales from ${new Date(salesEntry!.savedAt).toLocaleString()}. Updates will sync when you are back online.`
+            : 'Failed to load data'
+      )
     } finally {
       setLoading(false)
     }
-  }, [businessId, buildPendingSale])
+  }, [businessId, buildPendingSale, user?.id])
 
   const filteredSales = useMemo(() => {
     if (!dateFilter.start && !dateFilter.end) return allSales
@@ -394,10 +401,6 @@ export default function SalesPage() {
 
   useEffect(() => {
     if (!businessId) return
-    const unregister = registerSyncHandler('sale.record', async (op) => {
-      const res = await saleAPI.record(op.businessId, op.payload, op.idempotencyKey)
-      return res.data?.data ?? res.data
-    })
     const onSynced = (event: Event) => {
       const { op, result } = (event as CustomEvent<OutboxSuccessDetail>).detail
       if (op.type !== 'sale.record' || op.businessId !== businessId) return
@@ -418,10 +421,18 @@ export default function SalesPage() {
         return next
       })
     }
+    const onConflict = (event: Event) => {
+      const { op } = (event as CustomEvent<OutboxSuccessDetail>).detail
+      if (op.type !== 'sale.record' || op.businessId !== businessId) return
+      const localId = Number(op.localId)
+      setSyncFailures((prev) => ({ ...prev, [localId]: 'Conflict: this sale changed on the server. Review before retrying.' }))
+      setError('A queued sale conflicts with the server. Review it below before retrying.')
+    }
     window.addEventListener(OUTBOX_SUCCESS_EVENT, onSynced)
+    window.addEventListener(OUTBOX_CONFLICT_EVENT, onConflict)
     return () => {
-      unregister()
       window.removeEventListener(OUTBOX_SUCCESS_EVENT, onSynced)
+      window.removeEventListener(OUTBOX_CONFLICT_EVENT, onConflict)
     }
   }, [businessId])
 
@@ -431,6 +442,7 @@ export default function SalesPage() {
     const op = await enqueue({
       type: 'sale.record',
       businessId,
+      userId: user?.id,
       payload,
       idempotencyKey,
       localId: String(tempId),
@@ -445,6 +457,7 @@ export default function SalesPage() {
       const raw = res.data?.data ?? res.data
       const saved = mapSale(raw)
       setAllSales((prev) => prev.map((s) => (s.id === tempId ? mergeConfirmedSale(s, saved) : s)))
+      setSuccess('Sale saved and synced')
       retryRef.current.delete(tempId)
       setSyncFailures((prev) => {
         if (!(tempId in prev)) return prev
@@ -541,7 +554,7 @@ export default function SalesPage() {
     setCustomerPhone('')
     setCustomerEmail('')
     setShowForm(false)
-    setSuccess('Sale saved')
+    setSuccess('Sale saved on this device — syncing now')
 
     const payload: any = { list_items: items, amount_paid: paid, payment_method: method }
 
@@ -606,10 +619,12 @@ export default function SalesPage() {
         return
       }
     }
+    if (String(syncFailures[tempId] || '').startsWith('Conflict:')) await discardConflicts()
     await sendSale(tempId, payload)
   }
 
   const discardSale = (tempId: number) => {
+    void discardConflicts()
     const opId = outboxIdsRef.current.get(tempId)
     if (opId) void dequeue(opId)
     outboxIdsRef.current.delete(tempId)

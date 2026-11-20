@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { profileAPI, businessAPI, setTokenRefreshCallback, setAuthLogoutCallback, getUserIdFromToken, tryProactiveRefresh, startAutoRefresh, stopAutoRefresh, isTokenExpired, decodeJwt, resetLogoutGuard } from '@/lib/api'
 import { SUPER_ADMIN_EMAIL } from '@/lib/utils'
 import { setActiveCurrency, currencyForCountry, normalizeCurrency, getStoredCurrency, DEFAULT_CURRENCY } from '@/lib/currency'
+import { clearOfflineData } from '@/lib/offlineSync'
 
 interface User {
   id: number
@@ -205,6 +206,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setCurrentBusiness(null)
     setProfileLoaded(false)
     setActiveCurrency(DEFAULT_CURRENCY)
+    void clearOfflineData()
     // Clearing state is not the same as signing out. The button lives on
     // /settings, which has no auth guard of its own, so without this the user
     // was left sitting on a signed-out page while the dialog promised they had
@@ -302,6 +304,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = useCallback((newToken: string, newUser: User | null, newRefreshToken?: string) => {
     resetLogoutGuard()
+    void clearOfflineData()
     localStorage.setItem('token', newToken)
     localStorage.removeItem('current_business_id')
     if (newRefreshToken) {

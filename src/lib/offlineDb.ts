@@ -15,11 +15,13 @@ export interface OutboxOp<T = any> {
   id: string
   type: string
   businessId: number
+  userId?: number | string | null
   payload: T
   idempotencyKey: string
   localId?: string
   createdAt: number
   attempts: number
+  conflict?: boolean
 }
 
 const DB_NAME = 'bbgh-offline'
@@ -84,16 +86,29 @@ export function cacheKey(...parts: (string | number)[]): string {
   return parts.join(':')
 }
 
-export async function getCached<T = any>(key: string): Promise<T | null> {
+/** Keeps one account's cached data unreachable from another account. */
+export function scopeKey(
+  userId: string | number | null | undefined,
+  businessId: string | number | null | undefined,
+  key: string
+): string {
+  return `u${userId ?? 'anon'}:b${businessId ?? 'none'}:${key}`
+}
+
+export async function getCachedEntry<T = any>(key: string): Promise<CachedEntry<T> | null> {
   const local = memoryCache.get(key)
-  if (local) return local.data as T
+  if (local) return local as CachedEntry<T>
 
   const entry = await runTransaction<CachedEntry<T>>(CACHE_STORE, 'readonly', (store) => store.get(key))
   if (entry?.data != null) {
     memoryCache.set(key, entry)
-    return entry.data
+    return entry
   }
   return null
+}
+
+export async function getCached<T = any>(key: string): Promise<T | null> {
+  return (await getCachedEntry<T>(key))?.data ?? null
 }
 
 export async function setCached<T = any>(key: string, data: T): Promise<void> {
@@ -121,6 +136,7 @@ export function createIdempotencyKey(prefix = 'op'): string {
 export async function enqueue<T = any>(op: {
   type: string
   businessId: number
+  userId?: number | string | null
   payload: T
   idempotencyKey?: string
   localId?: string
@@ -129,6 +145,7 @@ export async function enqueue<T = any>(op: {
     id: createIdempotencyKey('outbox'),
     type: op.type,
     businessId: op.businessId,
+    userId: op.userId,
     payload: op.payload,
     idempotencyKey: op.idempotencyKey || createIdempotencyKey(op.type),
     localId: op.localId,
@@ -148,7 +165,7 @@ export async function enqueue<T = any>(op: {
   return record
 }
 
-export async function listOutbox(businessId?: number): Promise<OutboxOp[]> {
+export async function listOutbox(businessId?: number, userId?: number | string | null): Promise<OutboxOp[]> {
   const db = await openDb()
   const records = await runTransaction<OutboxOp[]>(OUTBOX_STORE, 'readonly', (store) => store.getAll())
 
@@ -158,6 +175,7 @@ export async function listOutbox(businessId?: number): Promise<OutboxOp[]> {
 
   return Array.from(all.values())
     .filter((op) => businessId == null || op.businessId === businessId)
+    .filter((op) => userId == null || op.userId === userId)
     .sort((a, b) => a.createdAt - b.createdAt)
 }
 
@@ -167,6 +185,18 @@ export async function dequeue(id: string): Promise<void> {
   if (!db) return
   try {
     db.transaction(OUTBOX_STORE, 'readwrite').objectStore(OUTBOX_STORE).delete(id)
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
+export async function markConflict(op: OutboxOp, conflict = true): Promise<void> {
+  const next = { ...op, conflict }
+  memoryOutbox.set(op.id, next)
+  const db = await openDb()
+  if (!db) return
+  try {
+    db.transaction(OUTBOX_STORE, 'readwrite').objectStore(OUTBOX_STORE).put(next)
   } catch {
     // Ignore storage failures.
   }
@@ -184,8 +214,18 @@ export async function updateOutboxAttempts(op: OutboxOp): Promise<void> {
   }
 }
 
-/** Test/helper hook; not used by the app at runtime. */
-export function clearOfflineStorage(): void {
+/** Clears cached data and queued writes across memory and IndexedDB. */
+export async function clearOfflineStorage(): Promise<void> {
   memoryCache.clear()
   memoryOutbox.clear()
+
+  const db = await openDb()
+  if (!db) return
+  try {
+    const tx = db.transaction([CACHE_STORE, OUTBOX_STORE], 'readwrite')
+    tx.objectStore(CACHE_STORE).clear()
+    tx.objectStore(OUTBOX_STORE).clear()
+  } catch {
+    // Storage failures must not block sign-out.
+  }
 }

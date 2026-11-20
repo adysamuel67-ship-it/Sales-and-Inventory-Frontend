@@ -5,6 +5,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
 import { customerAPI, saleAPI, debtAPI } from '@/lib/api'
 import { extractArray, parseApiError, isAdminRole, isStaffRole, MappedSale, formatMoney } from '@/lib/utils'
+import { cacheKey, getCached, scopeKey, setCached } from '@/lib/offlineDb'
 import PageHeader from '@/components/ui/PageHeader'
 import Alert from '@/components/ui/Alert'
 import Button from '@/components/ui/Button'
@@ -140,6 +141,11 @@ function CustomersContent() {
     setLoading(true)
     setError('')
     setDebtError('')
+    const customerKey = scopeKey(user?.id, businessId, cacheKey('customers', businessId))
+    const debtKey = scopeKey(user?.id, businessId, cacheKey('customer-debts', businessId))
+    const [cachedCustomers, cachedDebts] = await Promise.all([getCached<any[]>(customerKey), getCached<any[]>(debtKey)])
+    if (cachedCustomers) setCustomers(cachedCustomers)
+    if (cachedDebts) setDebtData(cachedDebts)
     try {
       const [custRes, debtRes] = await Promise.allSettled([
         customerAPI.list(businessId),
@@ -148,6 +154,7 @@ function CustomersContent() {
       if (custRes.status === 'fulfilled') {
         const custData = extractArray(custRes.value.data)
         setCustomers(custData)
+        void setCached(customerKey, custData)
       } else {
         const detail = custRes.reason?.response?.data?.detail
         setError(typeof detail === 'string' ? detail : 'Failed to load customers')
@@ -168,6 +175,7 @@ function CustomersContent() {
           customer_debt,
         }))
         setDebtData(mapped)
+        void setCached(debtKey, mapped)
       } else {
         const detail = debtRes.reason?.response?.data?.detail
         setDebtError(typeof detail === 'string' ? detail : 'Could not load debt data')
@@ -178,7 +186,7 @@ function CustomersContent() {
     } finally {
       setLoading(false)
     }
-  }, [businessId])
+  }, [businessId, user?.id])
 
   useEffect(() => {
     if (businessId) loadCustomers()

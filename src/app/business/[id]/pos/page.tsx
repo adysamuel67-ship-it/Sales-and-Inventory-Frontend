@@ -268,6 +268,7 @@ export default function PosPage() {
       const op = await enqueue({
         type: 'sale.record',
         businessId,
+        userId: user?.id,
         payload,
         idempotencyKey: idempotencyKeyRef.current,
       })

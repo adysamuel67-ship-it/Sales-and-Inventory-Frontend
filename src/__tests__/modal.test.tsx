@@ -46,6 +46,7 @@ jest.mock('@/lib/api', () => ({
 import Modal from '@/components/ui/Modal'
 import OfflineBanner from '@/components/OfflineBanner'
 import ProductsPage from '@/app/business/[id]/products/page'
+import { enqueue } from '@/lib/offlineDb'
 
 describe('Modal', () => {
   const renderModal = (onClose = jest.fn()) => {
@@ -132,5 +133,14 @@ describe('OfflineBanner', () => {
     setOnline(true)
     fireEvent(window, new Event('online'))
     await waitFor(() => expect(container).toBeEmptyDOMElement())
+  })
+
+  it('reports queued changes that belong to the signed-in account', async () => {
+    setOnline(true)
+    await enqueue({ type: 'sale.record', businessId: 1, userId: 1, payload: {} })
+    await enqueue({ type: 'sale.record', businessId: 1, userId: 2, payload: {} })
+
+    render(<OfflineBanner />)
+    await waitFor(() => expect(screen.getByText(/1 change waiting to sync/i)).toBeInTheDocument())
   })
 })
